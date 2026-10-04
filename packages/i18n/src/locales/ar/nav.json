@@ -1,0 +1,33 @@
+{
+  "groups": {
+    "main": "العمل اليومي",
+    "members": "الأعضاء والاشتراكات",
+    "finance": "المالية",
+    "services": "الخدمات",
+    "management": "الإدارة",
+    "system": "النظام"
+  },
+  "items": {
+    "home": "الرئيسية",
+    "checkin": "تسجيل الحضور",
+    "members": "الأعضاء",
+    "plans": "الباقات",
+    "subscriptions": "الاشتراكات",
+    "payments": "المدفوعات",
+    "shop": "المتجر",
+    "cashRegister": "الصندوق",
+    "lockers": "الخزائن",
+    "spa": "السبا",
+    "classes": "الحصص",
+    "trainers": "المدربون",
+    "staff": "الموظفون",
+    "roles": "الأدوار والصلاحيات",
+    "branches": "الفروع",
+    "reports": "التقارير",
+    "notifications": "الإشعارات",
+    "auditLog": "سجل النشاطات",
+    "sync": "المزامنة",
+    "devices": "الأجهزة",
+    "settings": "الإعدادات"
+  }
+}

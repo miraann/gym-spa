@@ -1,0 +1,6 @@
+{
+  "title": "Home",
+  "today": "Today: {{date}}",
+  "emptyTitle": "Your daily summary will appear here",
+  "emptyHint": "Member visits, today's revenue and expiring subscriptions will be shown here."
+}

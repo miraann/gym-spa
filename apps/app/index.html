@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="ckb" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#0f766e" />
+    <link rel="icon" href="/favicon.ico" sizes="48x48" />
+    <link rel="icon" href="/logo.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon-180x180.png" />
+    <title>%APP_NAME%</title>
+    <script>
+      // Applies the saved language and theme before the first paint (no flash of the wrong
+      // direction or colors). Keep in sync with src/lib/preferences.ts and src/lib/document.ts.
+      (function () {
+        try {
+          var saved = JSON.parse(localStorage.getItem('gym.preferences') || '{}');
+          var language =
+            saved.language === 'en' || saved.language === 'ar' ? saved.language : 'ckb';
+          var root = document.documentElement;
+          root.lang = language;
+          root.dir = language === 'en' ? 'ltr' : 'rtl';
+          var dark =
+            saved.theme === 'dark' ||
+            (saved.theme !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+          root.classList.toggle('dark', dark);
+        } catch (error) {
+          // Storage blocked: keep the Kurdish defaults from the <html> tag.
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

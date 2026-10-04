@@ -1,0 +1,33 @@
+{
+  "groups": {
+    "main": "Daily work",
+    "members": "Members & subscriptions",
+    "finance": "Finance",
+    "services": "Services",
+    "management": "Management",
+    "system": "System"
+  },
+  "items": {
+    "home": "Home",
+    "checkin": "Check-in",
+    "members": "Members",
+    "plans": "Plans",
+    "subscriptions": "Subscriptions",
+    "payments": "Payments",
+    "shop": "Shop",
+    "cashRegister": "Cash register",
+    "lockers": "Lockers",
+    "spa": "Spa",
+    "classes": "Classes",
+    "trainers": "Trainers",
+    "staff": "Staff",
+    "roles": "Roles & permissions",
+    "branches": "Branches",
+    "reports": "Reports",
+    "notifications": "Notifications",
+    "auditLog": "Activity log",
+    "sync": "Sync",
+    "devices": "Devices",
+    "settings": "Settings"
+  }
+}

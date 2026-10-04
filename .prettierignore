@@ -1,0 +1,9 @@
+pnpm-lock.yaml
+**/dist/
+**/dev-dist/
+**/playwright-report/
+**/test-results/
+**/routeTree.gen.ts
+apps/app/public/
+# Docs are written by hand; don't reflow them.
+*.md

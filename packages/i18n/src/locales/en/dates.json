@@ -1,0 +1,28 @@
+{
+  "months": [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December"
+  ],
+  "weekdays": ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+  "periods": {
+    "am": "AM",
+    "pm": "PM"
+  },
+  "patterns": {
+    "short": "{{day}}/{{month}}/{{year}}",
+    "long": "{{day}} {{month}} {{year}}",
+    "full": "{{weekday}}, {{date}}",
+    "time": "{{hour}}:{{minute}} {{period}}",
+    "dateTime": "{{date}}, {{time}}"
+  }
+}

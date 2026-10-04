@@ -1,0 +1,66 @@
+{
+  "app": {
+    "name": "Gym & Spa",
+    "fullName": "Gym & Spa Management System",
+    "description": "Manage members, subscriptions, payments and the spa — even without internet"
+  },
+  "skipToContent": "Skip to content",
+  "actions": {
+    "reload": "Reload page",
+    "tryAgain": "Try again",
+    "goHome": "Back to home",
+    "update": "Update",
+    "later": "Later",
+    "close": "Close"
+  },
+  "language": {
+    "label": "Language",
+    "change": "Change language"
+  },
+  "theme": {
+    "label": "Theme",
+    "change": "Change theme",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "Same as device"
+  },
+  "digits": {
+    "label": "Number style",
+    "latn": "Western",
+    "arab": "Eastern Arabic"
+  },
+  "connection": {
+    "online": "Online",
+    "offline": "Offline",
+    "onlineHint": "Connected to the internet",
+    "offlineHint": "No internet. Your work is saved on this device and synced when the connection comes back."
+  },
+  "pwa": {
+    "offlineReady": "The app now works without internet too",
+    "updateAvailable": "A new version of the app is ready",
+    "updateHint": "Reload to start using the new version"
+  },
+  "search": {
+    "open": "Search",
+    "placeholder": "Search for a page...",
+    "empty": "No results found",
+    "pages": "Pages",
+    "shortcut": "Ctrl K"
+  },
+  "sidebar": {
+    "title": "Main menu",
+    "description": "Sections of the system",
+    "toggle": "Show or hide the menu",
+    "soon": "Soon"
+  },
+  "errors": {
+    "notFoundTitle": "Page not found",
+    "notFoundHint": "The link may be wrong or the page may have been removed.",
+    "unexpectedTitle": "Something went wrong",
+    "unexpectedHint": "Sorry, something went wrong. Try again. If the problem continues, tell a manager."
+  },
+  "money": {
+    "IQD": "{{amount}} IQD",
+    "USD": "${{amount}}"
+  }
+}

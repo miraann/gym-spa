@@ -1,0 +1,153 @@
+/**
+ * Project lint rules that enforce the language rules in CLAUDE.md:
+ * - no-physical-direction-classes: only logical Tailwind classes, so layouts mirror in RTL.
+ * - no-hardcoded-ui-text: user-facing text must come from translations.
+ */
+
+/** Utilities that need a value: `ml-4`, `left-0`, `scroll-pr-2` (bare `left` is not a class). */
+const PHYSICAL_WITH_VALUE = /^(?:m[lr]|p[lr]|scroll-m[lr]|scroll-p[lr]|left|right|inset-[lr])-/;
+/** Utilities that may be bare or take a value: `border-l`, `rounded-r-md`. */
+const PHYSICAL_BARE_OR_VALUE = /^(?:border-[lr]|rounded-[lr]|rounded-(?:tl|tr|bl|br))(?:-|$)/;
+const PHYSICAL_EXACT = new Set([
+  'text-left',
+  'text-right',
+  'float-left',
+  'float-right',
+  'clear-left',
+  'clear-right',
+]);
+
+const LOGICAL_HINT =
+  'ml/mr → ms/me, pl/pr → ps/pe, left/right → start/end, text-left → text-start, border-l → border-s, rounded-l → rounded-s';
+
+/** Strips variants (`md:`, `hover:`, `data-[x=y]:`), the important flag and a negative sign. */
+function utilityOf(token) {
+  let depth = 0;
+  let start = 0;
+  for (let index = 0; index < token.length; index += 1) {
+    const char = token[index];
+    if (char === '[') depth += 1;
+    else if (char === ']') depth -= 1;
+    else if (char === ':' && depth === 0) start = index + 1;
+  }
+  return token.slice(start).replace(/^!/, '').replace(/!$/, '').replace(/^-/, '');
+}
+
+export function findPhysicalClasses(text) {
+  return text
+    .split(/\s+/)
+    .filter(Boolean)
+    .filter((token) => {
+      const utility = utilityOf(token);
+      return (
+        PHYSICAL_WITH_VALUE.test(utility) ||
+        PHYSICAL_BARE_OR_VALUE.test(utility) ||
+        PHYSICAL_EXACT.has(utility)
+      );
+    });
+}
+
+const noPhysicalDirectionClasses = {
+  meta: {
+    type: 'problem',
+    docs: { description: 'Disallow physical-direction Tailwind classes (they break RTL).' },
+    messages: {
+      physical:
+        '"{{token}}" does not mirror in Kurdish/Arabic (RTL). Use a logical class: {{hint}}.',
+    },
+    schema: [],
+  },
+  create(context) {
+    const check = (node, text) => {
+      for (const token of findPhysicalClasses(text)) {
+        context.report({ node, messageId: 'physical', data: { token, hint: LOGICAL_HINT } });
+      }
+    };
+    return {
+      Literal(node) {
+        if (typeof node.value === 'string') check(node, node.value);
+      },
+      TemplateElement(node) {
+        check(node, node.value.cooked ?? node.value.raw);
+      },
+    };
+  },
+};
+
+const HAS_LETTER = /\p{L}/u;
+/** JSX props whose string value is shown to the user or read by screen readers. */
+const USER_FACING_PROPS = new Set([
+  'alt',
+  'aria-description',
+  'aria-label',
+  'aria-placeholder',
+  'aria-roledescription',
+  'aria-valuetext',
+  'description',
+  'heading',
+  'label',
+  'placeholder',
+  'title',
+  'tooltip',
+]);
+
+function staticString(node) {
+  if (!node) return null;
+  if (node.type === 'Literal' && typeof node.value === 'string') return node.value;
+  if (node.type === 'TemplateLiteral' && node.expressions.length === 0) {
+    return node.quasis[0]?.value.cooked ?? null;
+  }
+  return null;
+}
+
+const noHardcodedUiText = {
+  meta: {
+    type: 'problem',
+    docs: { description: 'Disallow user-facing text that does not come from translations.' },
+    messages: {
+      hardcoded:
+        'User-facing text must come from translations: t("..."). Add the Kurdish text first in packages/i18n/src/locales/ckb.',
+    },
+    schema: [],
+  },
+  create(context) {
+    const report = (node) => context.report({ node, messageId: 'hardcoded' });
+    return {
+      JSXText(node) {
+        if (HAS_LETTER.test(node.value)) report(node);
+      },
+      JSXExpressionContainer(node) {
+        if (node.parent.type === 'JSXAttribute') return;
+        const text = staticString(node.expression);
+        if (text !== null && HAS_LETTER.test(text)) report(node);
+      },
+      JSXAttribute(node) {
+        const name = node.name.type === 'JSXIdentifier' ? node.name.name : null;
+        if (!name || !USER_FACING_PROPS.has(name) || !node.value) return;
+        const value =
+          node.value.type === 'JSXExpressionContainer' ? node.value.expression : node.value;
+        const text = staticString(value);
+        if (text !== null && HAS_LETTER.test(text)) report(node.value);
+      },
+      CallExpression(node) {
+        const { callee } = node;
+        const isToast =
+          (callee.type === 'Identifier' && callee.name === 'toast') ||
+          (callee.type === 'MemberExpression' &&
+            callee.object.type === 'Identifier' &&
+            callee.object.name === 'toast');
+        if (!isToast) return;
+        const text = staticString(node.arguments[0]);
+        if (text !== null && HAS_LETTER.test(text)) report(node.arguments[0]);
+      },
+    };
+  },
+};
+
+export default {
+  meta: { name: 'eslint-plugin-gym', version: '0.1.0' },
+  rules: {
+    'no-physical-direction-classes': noPhysicalDirectionClasses,
+    'no-hardcoded-ui-text': noHardcodedUiText,
+  },
+};

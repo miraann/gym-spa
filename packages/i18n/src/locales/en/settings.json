@@ -1,0 +1,16 @@
+{
+  "display": {
+    "title": "Appearance & language",
+    "description": "Choose the language, number style and theme for this device.",
+    "languageHint": "The language of the app's screens.",
+    "digitsHint": "Phone numbers, card codes and receipt numbers always use Western digits.",
+    "themeHint": "Light or dark appearance.",
+    "previewTitle": "Preview",
+    "previewHint": "Numbers and dates will look like this.",
+    "previewNumber": "Number",
+    "previewIqd": "Amount in dinars",
+    "previewUsd": "Amount in dollars",
+    "previewDate": "Date",
+    "previewTime": "Time"
+  }
+}
