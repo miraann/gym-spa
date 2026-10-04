@@ -79,7 +79,7 @@ Inside the app, shared code goes in `components/ui` and `lib`.
 - **Never hardcode user-facing text:** components, errors, toasts, Zod messages, receipts/PDFs, notifications. **Write Kurdish first**; it is the source language.
 - Use simple, natural, everyday Sorani, never formal or machine-translated wording. Use the correct Sorani letters (ە ێ ۆ ڕ ڵ ڤ ک گ ی), never Arabic substitutes (ي ك, or ه where ە is meant).
 - **Use logical Tailwind classes only** (`ms- me- ps- pe- start- end- text-start`), never `ml- mr- pl- pr- left- right- text-left`. Mirror directional icons. Set `<html dir lang>` dynamically. Charts, tables and date pickers must work in RTL.
-- Fonts are bundled locally (Vazirmatn / Noto Sans Arabic + Inter) and never loaded from the internet.
+- Fonts are bundled locally and never loaded from the internet: **UniSalar_F_007** for Kurdish (`apps/app/src/assets/fonts`, chosen by the user), Vazirmatn for Arabic and as the Kurdish fallback, Inter for English. UniSalar's `unicode-range` covers only Arabic-script characters because the font draws ASCII digits as Eastern Arabic and the comma as "،". Don't widen it; `apps/app/test/fonts.test.ts` guards it.
 - Latin digits by default (a setting allows Eastern Arabic). Phone numbers, card UIDs and invoice numbers are always Latin and LTR.
 - IQD: `25,000 د.ع` with no decimals. USD: 2 decimals. Gregorian calendar with Sorani month names.
 - Translatable config columns: `name_ckb` (required), `name_en`, `name_ar` (optional, fall back to Kurdish).

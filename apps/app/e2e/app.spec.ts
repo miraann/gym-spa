@@ -26,6 +26,13 @@ test('keeps working without internet after the first visit', async ({ page, cont
   await expect(page.getByRole('heading', { level: 1, name: 'سەرەکی' })).toBeVisible();
   await expect(page.getByRole('status')).toContainText('ئۆفلاین');
 
+  // The Kurdish font comes from the offline cache too.
+  const kurdishFontLoaded = await page.evaluate(async () => {
+    const faces = await document.fonts.load("16px 'UniSalar'", 'ڕێ');
+    return faces.length > 0 && faces.every((face) => face.status === 'loaded');
+  });
+  expect(kurdishFontLoaded).toBe(true);
+
   // A page that was never opened online also works: the service worker serves the app.
   await page.goto('/settings/display');
   await expect(page.getByRole('heading', { level: 1, name: 'ڕووکار و زمان' })).toBeVisible();

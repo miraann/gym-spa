@@ -4,14 +4,53 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* Fonts are bundled in main.tsx. Kurdish and Arabic use Vazirmatn first (its Latin digits match
-   the Arabic letters); English uses Inter first. */
+/* Kurdish UI font: UniSalar_F_007 by Salar Shwani (one weight). Its unicode-range covers only
+   Arabic-script characters and spaces, because the font draws ASCII digits as Eastern Arabic
+   (٠١٢) and the comma as "،". That would break the Western-digit default and the rule that phone
+   numbers, card UIDs and invoice numbers stay Latin. Digits, Latin text and ASCII punctuation
+   come from Vazirmatn instead. test/fonts.test.ts guards this range. */
+@font-face {
+  font-family: 'UniSalar';
+  src: url('./assets/fonts/unisalar-f-007.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  unicode-range:
+    U+0020, U+00A0, U+0600-06FF, U+0750-077F, U+08A0-08FF, U+200C-200F, U+FB50-FDFF, U+FE70-FEFF;
+}
+
+/* One font stack per language. Vazirmatn and Inter are bundled in main.tsx. */
+:root {
+  --font-ckb:
+    'UniSalar', 'Vazirmatn Variable', 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-ar: 'Vazirmatn Variable', 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-en: 'Inter Variable', 'Vazirmatn Variable', ui-sans-serif, system-ui, sans-serif;
+}
+
 @theme {
-  --font-sans: 'Vazirmatn Variable', 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-ckb);
+}
+
+:root:lang(ar) {
+  --font-sans: var(--font-ar);
 }
 
 :root:lang(en) {
-  --font-sans: 'Inter Variable', 'Vazirmatn Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-en);
+}
+
+/* Text marked with its own language (e.g. the language names in the language menu) uses that
+   language's font. In the base layer so utility classes can still override it. */
+@layer base {
+  [lang='ckb'] {
+    font-family: var(--font-ckb);
+  }
+  [lang='ar'] {
+    font-family: var(--font-ar);
+  }
+  [lang='en'] {
+    font-family: var(--font-en);
+  }
 }
 
 /* Letter-spacing breaks the joined letters of Arabic script, so tracking utilities are ignored

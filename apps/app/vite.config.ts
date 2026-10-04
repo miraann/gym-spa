@@ -56,7 +56,7 @@ export default defineConfig({
       },
       workbox: {
         // Precache the whole app (code, fonts, icons, and later the SQLite WASM) so it opens offline.
-        globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2,wasm,webmanifest}'],
+        globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2,ttf,wasm,webmanifest}'],
         navigateFallback: '/index.html',
         cleanupOutdatedCaches: true,
         clientsClaim: true,
