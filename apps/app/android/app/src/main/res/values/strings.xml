@@ -2,6 +2,6 @@
 <resources>
     <string name="app_name">جیم و سپا</string>
     <string name="title_activity_main">جیم و سپا</string>
-    <string name="package_name">io.github.miraann.gymspa</string>
-    <string name="custom_url_scheme">io.github.miraann.gymspa</string>
+    <string name="package_name">site.clickgroup.gymspa</string>
+    <string name="custom_url_scheme">site.clickgroup.gymspa</string>
 </resources>

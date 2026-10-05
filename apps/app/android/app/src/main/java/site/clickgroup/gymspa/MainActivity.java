@@ -1,4 +1,4 @@
-package io.github.miraann.gymspa;
+package site.clickgroup.gymspa;
 
 import android.os.Bundle;
 import androidx.activity.EdgeToEdge;

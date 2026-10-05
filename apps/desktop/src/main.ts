@@ -23,7 +23,7 @@ import {
 import { nextZoomLevel, shortcutFor } from './shortcuts';
 
 /** Same id as the Android app and the installer (electron-builder.config.mjs). */
-const APP_ID = 'io.github.miraann.gymspa';
+const APP_ID = 'site.clickgroup.gymspa';
 const DEV_SERVER_URL = 'http://localhost:5173';
 /** `electron . --dev` loads the Vite dev server (`pnpm dev`) instead of the built app. */
 const devServerUrl = !app.isPackaged && process.argv.includes('--dev') ? DEV_SERVER_URL : undefined;

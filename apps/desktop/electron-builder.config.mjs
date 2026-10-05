@@ -4,14 +4,15 @@ import appPackage from '../app/package.json' with { type: 'json' };
 
 /** @type {import('electron-builder').Configuration} */
 export default {
-  appId: 'io.github.miraann.gymspa',
+  appId: 'site.clickgroup.gymspa',
   productName: ckb.app.name,
   executableName: 'gym-spa',
   extraMetadata: {
     // One version for the web, Android and Windows builds: the one in apps/app/package.json.
     version: appPackage.version,
-    // Shown as the publisher in Windows. Replace with the business name before release (Phase 11).
-    author: { name: ckb.app.name },
+    // Shown as the publisher in Windows (installed apps list, the exe's properties). When the exe is
+    // signed (Phase 11), the certificate's publisher must match this name.
+    author: { name: 'Click Group' },
   },
   directories: { output: 'release' },
   // Main and preload are bundled by esbuild, so the app ships without node_modules.

@@ -3,7 +3,7 @@ import ckb from '../../packages/i18n/src/locales/ckb/common.json' with { type: '
 
 const config: CapacitorConfig = {
   // Becomes the Play Store identity once published (Phase 11); it can't change after that.
-  appId: 'io.github.miraann.gymspa',
+  appId: 'site.clickgroup.gymspa',
   appName: ckb.app.name,
   webDir: 'dist',
   // The app is served from https://localhost inside the APK. The local database belongs to that
