@@ -1,0 +1,13 @@
+{
+  "name": "@gym/db",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Database types generated from the Supabase schema (and, from step 1d, the PowerSync schema)",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  }
+}

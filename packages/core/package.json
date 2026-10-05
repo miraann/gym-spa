@@ -1,0 +1,13 @@
+{
+  "name": "@gym/core",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Business rules shared by the app, the server scripts and the tests (pure TypeScript)",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  }
+}

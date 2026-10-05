@@ -6,7 +6,7 @@ Offline-first, multi-branch gym & spa system with NFC check-in. One codebase for
 - Full spec: [gym-spa-system-prompt.md](gym-spa-system-prompt.md)
 - Working rules for contributors and Claude: [CLAUDE.md](CLAUDE.md)
 
-> **Status:** Phase 1b: the web app (offline PWA) also runs as an Android app (Capacitor) and a Windows app (Electron); the debug APK and the Windows installer build. Supabase, PowerSync and auth arrive in steps 1c–1e. This README grows with each step.
+> **Status:** Phase 1c: the database (Supabase) for branches, staff, roles and permissions, devices, settings and the audit log, with row level security and its tests. The web app also runs as an Android app and a Windows app. PowerSync, login and the offline PIN arrive in step 1d, the admin screens in 1e. This README grows with each step.
 
 ## Requirements
 
@@ -18,13 +18,17 @@ Offline-first, multi-branch gym & spa system with NFC check-in. One codebase for
 - The project folder path must not contain `&`. Windows batch scripts (like Gradle's `gradlew.bat`, used for Android builds) break on it.
 - **Android builds:** JDK 21 and the Android SDK (install Android Studio). The build finds the SDK through `ANDROID_HOME`, or in Android Studio's default folder (`%LOCALAPPDATA%\Android\Sdk` on Windows).
 - **Windows builds:** nothing extra. Electron and the installer tools download on first use.
+- **Local database:** [Docker Desktop](https://www.docker.com/products/docker-desktop/), which runs Supabase in containers. On Windows it needs WSL 2: the installer turns it on, which needs a restart and virtualization enabled in the BIOS. The Supabase CLI comes with `pnpm install`.
 
 ## Getting started
 
 ```sh
 pnpm install
-cp apps/app/.env.example apps/app/.env.local   # then fill in the values
-pnpm dev                                       # http://localhost:5173
+pnpm db:start          # local Supabase in Docker (the first start downloads its images)
+pnpm db:reset          # build the database: migrations, then demo data
+pnpm bootstrap:admin   # create your Super Admin login
+cp apps/app/.env.example apps/app/.env.local   # then fill in the values (pnpm db:status shows them)
+pnpm dev               # http://localhost:5173
 ```
 
 ## Commands
@@ -47,8 +51,17 @@ Run from the repository root:
 | `pnpm desktop:dev` | Run the Windows app against the dev server (start `pnpm dev` first) |
 | `pnpm desktop:start` | Run the Windows app with the production web build |
 | `pnpm desktop:exe` | Build the Windows installer |
+| `pnpm db:start` / `pnpm db:stop` | Start or stop local Supabase (Docker) |
+| `pnpm db:status` | Local URLs and keys: API, Studio (the database UI, http://localhost:54323), database |
+| `pnpm db:reset` | Rebuild the local database: every migration, then the demo data in `supabase/seed.sql`. Deletes local data, including your admin login |
+| `pnpm db:test` | Database tests (pgTAP in `supabase/tests`): row level security and the access rules |
+| `pnpm db:lint` | Check the SQL functions for errors (plpgsql_check) |
+| `pnpm db:types` | Regenerate the TypeScript types of the database (`packages/db`). Run after changing migrations |
+| `pnpm bootstrap:admin` | Create the first Super Admin. Add `--remote` for a cloud project (see [Database](#database-supabase)) |
 
 First-time setup for the browser tests: `pnpm --filter @gym/app exec playwright install chromium`.
+
+The database commands need Docker running, so `pnpm check` doesn't include `pnpm db:test`.
 
 ## Project layout
 
@@ -66,8 +79,15 @@ apps/desktop         Windows app: an Electron shell around the same web build
   src/main.ts        window, app:// protocol, security rules
   src/preload.ts     the small bridge the web app gets (window.gymDesktop)
   e2e                Playwright tests that launch the real Electron app
+packages/core        business rules in plain TypeScript, shared by the app and server scripts
+packages/db          database types, generated from the schema (pnpm db:types)
 packages/platform    platform detection and native adapters; the only code that touches Capacitor or Electron
 packages/i18n        translations (ckb, en, ar), typed keys, number/money/date formatting
+supabase             the database
+  migrations         schema changes, in order (tables, RLS policies, triggers, built-in roles)
+  tests              pgTAP tests, run with pnpm db:test
+  seed.sql           demo data for local development (Kurdish)
+  scripts            bootstrap-admin.ts
 tools/eslint-plugin-gym  project lint rules
 ```
 
@@ -81,12 +101,52 @@ tools/eslint-plugin-gym  project lint rules
 - Fonts (all bundled, so they work offline): **UniSalar_F_007** for Kurdish (`apps/app/src/assets/fonts`), Vazirmatn for Arabic, Inter for English. UniSalar is limited to Arabic-script characters with `unicode-range`, because it draws ASCII digits as Eastern Arabic. Digits and Latin text in Kurdish screens use Vazirmatn.
 - Dates are shown in Baghdad time. Kurdish uses Sorani month names (`4ی تشرینی یەکەمی 2026`). Digits are Western by default, with Eastern Arabic (`٢٥٬٠٠٠ د.ع`) as a setting.
 
+## Database (Supabase)
+
+Supabase runs locally in Docker for development (`supabase/config.toml` is the local setup). Devices will keep their own copy of the data and sync it through PowerSync (step 1d); the app never waits for the database.
+
+### Migrations
+
+- Every schema change is a new file in `supabase/migrations`. Create one with `pnpm --filter @gym/supabase exec supabase migration new <name> --workdir ..`. Never change a migration that has already run on a shared database.
+- After changing migrations or tests: `pnpm db:reset`, `pnpm db:test`, then `pnpm db:types`.
+- Nothing is reachable through the API by default (`auto_expose_new_tables = false`, like new cloud projects): each migration grants exactly what it needs.
+
+### How access works
+
+- Staff log in with a username. Supabase Auth gets `<username>@staff.gym-spa.invalid` behind the scenes (`packages/core/src/staff.ts`); `.invalid` is a reserved domain, so no mail can go there.
+- Every table has row level security. Policies use helpers in the private `app` schema, which the API doesn't expose:
+  - `app.has_permission('members.create')`: the signed-in staff member's role has that permission. Super Admin has all of them.
+  - `app.accessible_branch_ids()` and `app.has_branch_access(id)`: every branch for staff with `all_branches`, otherwise their rows in `staff_branches`. This is the only place the rule is written.
+- Guard triggers stop privilege escalation. Nobody can give a permission (or a role with a permission) they don't have, change their own role or access, or manage someone with access they lack. Only Super Admin can give the Super Admin role or edit the built-in roles.
+- Changes made without a staff session (migrations, server code using the secret key) skip the per-user checks. The secret key never goes into the app.
+- These rules reject a change with a stable key as the error message (`cannot_grant_role`, `read_only_column`, ...) for the app to translate, and an English detail for the logs.
+- Every change to the important tables goes into `audit_logs`: who, when, the old and new values, IP and device. Nobody can change or delete it, and secrets such as PIN hashes are logged as `redacted`.
+- The permission catalog and the 8 built-in roles are in `supabase/migrations/20261005100300_permission_catalog.sql`.
+
+### Adding a table
+
+1. Columns: `id uuid primary key` (generated by the device), `branch_id` if it belongs to a branch, `created_at`, `created_by`, `updated_at`, `updated_by`, and `deleted_at` (rows are soft-deleted). Money is `numeric(14,2)`, times are `timestamptz`.
+2. Triggers: `stamp` (`app.stamp_row()`), `read_only` for columns that never change, and `audit` (`app.audit_row()`).
+3. `enable row level security`, `revoke all ... from anon, authenticated`, grant only what is needed, then the policies. Write checks as `(select app.has_permission('...'))` and `branch_id in (select app.accessible_branch_ids())` so Postgres runs them once per query, not once per row.
+4. pgTAP tests in `supabase/tests` for every policy and guard. `001-schema-rules.test.sql` fails when a table has no RLS, no policies, no audit trigger, an unindexed foreign key, or any access for anonymous visitors.
+5. If devices need the table: add it to the `powersync` publication and the sync rules.
+
+### A cloud project
+
+1. Create a project on supabase.com, then link it and push the migrations:
+   ```sh
+   pnpm --filter @gym/supabase exec supabase link --project-ref <project-ref> --workdir ..
+   pnpm --filter @gym/supabase exec supabase db push --workdir ..
+   ```
+2. In Dashboard → Authentication, turn off "Allow new users to sign up" and set the minimum password length to 8, as in `config.toml` (that file only configures the local setup). Keep the Email provider turned on: staff log in through it with their username.
+3. Copy `supabase/.env.example` to `supabase/.env.local`, fill in the URL and the secret key, then run `pnpm bootstrap:admin --remote`. Keep the secret key in that file only: it bypasses every security rule.
+
 ## Android app
 
 - `pnpm android:apk` builds `apps/app/android/app/build/outputs/apk/debug/app-debug.apk`. Install it with `adb install -r <apk>`, or copy it to the device and allow installing unknown apps. It is signed with the debug key; release signing comes in Phase 11.
 - The APK carries the production web build and serves it from `https://localhost`, so it works offline from the first launch. The local database will belong to that origin: never change Capacitor's scheme or hostname.
 - After changing web code, run `pnpm android:apk` again. To build or debug in Android Studio instead, run `pnpm --filter @gym/app android:sync` first, then `pnpm android:open`.
-- App ID: `io.github.miraann.gymspa`. It becomes permanent once the app is published (Phase 11). The version comes from `apps/app/package.json`.
+- App ID: `site.clickgroup.gymspa`. It becomes permanent once the app is published (Phase 11). The version comes from `apps/app/package.json`.
 - The app draws behind the status and navigation bars (Android 15+ requires it); the layout keeps content clear of them with `env(safe-area-inset-*)`.
 - Cloud backup is turned off: a restored backup would clone this device's identity (its receipt-number prefix) onto another device.
 - Icons: run `pnpm --filter @gym/app generate:icons` after changing `public/logo.svg`. The adaptive icon (Android 8+) is a vector, `android/app/src/main/res/drawable/ic_launcher_foreground.xml`, which has to be updated by hand.
@@ -94,6 +154,7 @@ tools/eslint-plugin-gym  project lint rules
 ## Windows app
 
 - `pnpm desktop:exe` builds `apps/desktop/release/gym-spa-setup-<version>.exe`. It installs for the current user without admin rights, and keeps its data in `%APPDATA%\gym-spa`.
+- App ID: `site.clickgroup.gymspa` (the same as Android). Publisher: Click Group.
 - The installer is not signed until Phase 11, so Windows SmartScreen warns about an unknown publisher: click **More info → Run anyway**.
 - The app serves the same production web build from `app://gym-spa`. IndexedDB, OPFS, workers and WebAssembly work there (the e2e tests check this). The local database will belong to that origin: never change it.
 - No menu bar. Shortcuts: Ctrl and `=` / `-` / `0` zoom (by key position, so they also work with a Kurdish or Arabic keyboard layout), F11 full screen. When run from source (`pnpm desktop:dev`, `pnpm desktop:start`) there are also Ctrl+R (reload) and F12 or Ctrl+Shift+I (DevTools).

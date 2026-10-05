@@ -1,6 +1,9 @@
 packages:
   - apps/*
   - packages/*
+  - supabase
 allowBuilds:
   electron-winstaller: false
   esbuild: true
+  # Downloads the Supabase CLI binary.
+  supabase: true

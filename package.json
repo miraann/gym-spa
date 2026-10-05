@@ -22,7 +22,15 @@
     "android:open": "pnpm --filter @gym/app android:open",
     "desktop:dev": "pnpm --filter @gym/desktop dev",
     "desktop:start": "pnpm build && pnpm --filter @gym/desktop start",
-    "desktop:exe": "pnpm build && pnpm --filter @gym/desktop exe"
+    "desktop:exe": "pnpm build && pnpm --filter @gym/desktop exe",
+    "db:start": "pnpm --filter @gym/supabase start",
+    "db:stop": "pnpm --filter @gym/supabase stop",
+    "db:status": "pnpm --filter @gym/supabase status",
+    "db:reset": "pnpm --filter @gym/supabase reset",
+    "db:test": "pnpm --filter @gym/supabase test",
+    "db:lint": "pnpm --filter @gym/supabase lint",
+    "db:types": "pnpm --filter @gym/supabase types && prettier --write --log-level warn packages/db/src/database.types.ts",
+    "bootstrap:admin": "pnpm --filter @gym/supabase bootstrap:admin"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

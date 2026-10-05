@@ -47,8 +47,9 @@ Inside the app, shared code goes in `components/ui` and `lib`.
 
 ## Local development
 
-- Supabase runs locally with Docker (`supabase start`). Use the CLI through `pnpm exec supabase` / `npx supabase`.
-- RLS tests are pgTAP files in `supabase/tests`, run locally with `supabase test db`. Every table's policies get tests.
+- Supabase runs locally with Docker: `pnpm db:start`, `pnpm db:reset` (migrations + seed), `pnpm db:test`, `pnpm db:lint`. The CLI is a devDependency of `@gym/supabase` (the `supabase/` folder): `pnpm --filter @gym/supabase exec supabase <command> --workdir ..`.
+- RLS tests are pgTAP files in `supabase/tests`. Every table's policies and guards get tests. `000-setup-test-helpers.sql` installs shared helpers (`tests.create_fixture()`, `tests.authenticate_as()`, ...), so always run the whole folder. `001-schema-rules.test.sql` fails on any table without RLS, policies or the audit trigger, any anon access, unindexed foreign keys, or functions without a fixed `search_path`.
+- `pnpm bootstrap:admin` creates the first Super Admin (`--remote` for a cloud project, with `supabase/.env.local`).
 
 ## Offline-first rules (every module)
 
@@ -91,6 +92,8 @@ Inside the app, shared code goes in `components/ui` and `lib`.
 - `uuid` PKs. Every business table has `id`, `branch_id` (where relevant), `created_at`, `updated_at`, `created_by`, `deleted_at` (soft delete).
 - Money is `numeric(14,2)`, never float. Use enums or check constraints for statuses.
 - **RLS is enabled on every table; no table is left open.** Permission checks go through `has_permission(perm text)`.
+- SQL helpers live in the private `app` schema (not exposed to the API). In policies write `(select app.has_permission('x'))` and `branch_id in (select app.accessible_branch_ids())` so they run once per query, not per row.
+- New tables follow README → Database → Adding a table (`stamp`, `read_only` and `audit` triggers, explicit grants, tests). Guards reject with a stable key as the error message (e.g. `cannot_grant_role`) and an English detail; the app translates the key.
 - All schema changes go in numbered migrations in `supabase/migrations`. Generate TS types with `supabase gen types`.
 - Never delete financial rows. Refunds and voids need a permission and a reason. Staff accounts are deactivated, never hard-deleted.
 - Postgres audit trigger on important tables: who, when, table, row id, old/new values, IP/device.
@@ -99,7 +102,7 @@ Inside the app, shared code goes in `components/ui` and `lib`.
 ## Security & RBAC
 
 - Use permission strings (`members.create`, `payments.refund`, ...), never role-name checks.
-- **One role per staff member.** Branch access: `staff_users.all_branches` flag, otherwise the rows in the `staff_branches` join table (a staff member can have several branches). `has_branch_access(branch_id)` is the single SQL implementation of this rule, and the PowerSync sync rules apply the same rule.
+- **One role per staff member.** Branch access: `staff_users.all_branches` flag, otherwise the rows in the `staff_branches` join table (a staff member can have several branches). The rule is written once in SQL, `app.accessible_branch_ids()` (`app.has_branch_access()` wraps it), and the PowerSync sync rules apply the same rule.
 - Enforce in **three layers**: RLS, server validation of synced uploads, and UI (cached permissions).
 - The Supabase service/secret key never reaches the client.
 - Sensitive actions (payments, refunds) require a staff login. Never trust an NFC UID alone.
@@ -117,7 +120,7 @@ Inside the app, shared code goes in `components/ui` and `lib`.
 ## Approved architecture decisions (Phase 1 plan)
 
 - **Electron:** a minimal hand-written shell (not the Capacitor Electron platform), packaged with electron-builder. The build is served over a privileged custom `app://` protocol so IndexedDB/OPFS, workers and WASM have a stable origin.
-- **Staff login:** username + password, mapped to an internal email behind the scenes.
+- **Staff login:** username + password, mapped to an internal email behind the scenes (`<username>@staff.gym-spa.invalid`, `packages/core/src/staff.ts`).
 - **Offline PIN:** a staff member logs in with their password once per device (online); the device then keeps their session, PIN hash and permissions, encrypted. Every queued change is tagged with its author and uploaded under **that author's own session**, so the server checks permissions with `auth.uid()` and never trusts a staff ID in the payload. PIN hashes are never synced to other devices. 6-digit PIN, lockout after 5 wrong tries, auto-lock when idle.
 - **Devices:** a `devices` table gives each device a code (the `D03` in receipt numbers), a default language and a last-seen time.
 - **Sync scope:** the device's branch decides what syncs; the staff login only authorizes it. Switching staff by PIN never wipes or re-downloads local data.
@@ -126,3 +129,5 @@ Inside the app, shared code goes in `components/ui` and `lib`.
 - **Tooling:** pnpm workspaces only (no Turborepo). Shared packages are plain TypeScript source without a build step, except Electron's main process. TypeScript stays on 6.0.x until typescript-eslint supports TS 7. Run `pnpm check` (typecheck, lint, format, unit tests) and `pnpm test:e2e` before handing over a step.
 - **Language rules are enforced by tooling:** the `gym/no-hardcoded-ui-text` and `gym/no-physical-direction-classes` lint rules (`tools/eslint-plugin-gym`), plus tests for translation parity, Sorani/Arabic spelling and font glyph coverage. After `shadcn add`, run `pnpm format` and fix any hardcoded English the lint rule reports.
 - **Deploys:** Vercel Git integration for the web app; GitHub Actions for checks and APK/EXE artifacts. Signing waits for Phase 11.
+- **App ID:** `site.clickgroup.gymspa` on Android and Windows. Windows publisher: "Click Group". Permanent once published.
+- **Platform adapters** (`nfc`, `printer`, `camera`, `storage`, `updater`) are added when first used, not as empty stubs.

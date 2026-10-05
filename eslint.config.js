@@ -14,6 +14,8 @@ export default defineConfig(
     '**/playwright-report/',
     '**/test-results/',
     '**/routeTree.gen.ts',
+    // Generated from the database: pnpm db:types.
+    'packages/db/src/database.types.ts',
     // Generated native project (its build output contains copies of the web app).
     'apps/app/android/',
     'apps/desktop/release/',
