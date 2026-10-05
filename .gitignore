@@ -3,6 +3,8 @@ node_modules/
 
 # Build output
 dist/
+# Desktop installers (apps/desktop)
+release/
 dev-dist/
 *.tsbuildinfo
 .vite/
@@ -18,7 +20,8 @@ playwright-report/
 test-results/
 blob-report/
 
-# OS / editor
+# OS / editor (settings.json holds per-machine settings, e.g. from VS Code's Java extension)
+.vscode/settings.json
 .DS_Store
 Thumbs.db
 *.log

@@ -7,8 +7,6 @@ export interface Choice<T extends string> {
   readonly value: T;
   readonly label: string;
   readonly icon?: LucideIcon;
-  /** Small example shown at the end of the option, e.g. "١٢٣". */
-  readonly sample?: string;
   /** Language of the label when it differs from the page (language names). */
   readonly lang?: string;
 }
@@ -51,9 +49,6 @@ export function ChoiceGroup<T extends string>({
             <span lang={choice.lang} className="font-medium">
               {choice.label}
             </span>
-            {choice.sample && (
-              <span className="ms-auto text-muted-foreground">{choice.sample}</span>
-            )}
           </Label>
         );
       })}

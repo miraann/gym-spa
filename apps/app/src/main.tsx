@@ -2,16 +2,21 @@
 import '@fontsource-variable/vazirmatn';
 import '@fontsource-variable/inter';
 import './styles.css';
+import { platform } from '@gym/platform';
 import { RouterProvider } from '@tanstack/react-router';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
+import { startBackButtonHandling } from '@/app/back-button';
 import { AppProviders } from '@/app/providers';
 import { registerPwa } from '@/app/pwa';
 import { startPreferenceSync } from '@/lib/i18n';
 import { router } from '@/router';
 
 startPreferenceSync();
-registerPwa();
+startBackButtonHandling();
+// The Android and Windows apps already carry every file, so only the web app needs the
+// service worker (it would also show web-only "new version" prompts there).
+if (platform === 'web') registerPwa();
 
 const container = document.getElementById('root');
 if (!container) throw new Error('Missing #root element in index.html');

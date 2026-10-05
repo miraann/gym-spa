@@ -67,7 +67,7 @@ test('Eastern Arabic digits can be turned on', async ({ page }) => {
   await page.goto('/settings/display');
   await expect(page.getByText('25,000 د.ع')).toBeVisible();
 
-  await page.getByRole('radio', { name: /عەرەبی/ }).click();
+  await page.getByRole('radio', { name: '١٢٣' }).click();
   await expect(page.getByText('٢٥٬٠٠٠ د.ع')).toBeVisible();
 });
 
@@ -85,6 +85,39 @@ test('Ctrl+K searches pages, also with a Kurdish keyboard layout', async ({ page
   await page.keyboard.type('ڕێکخستن');
   await page.keyboard.press('Enter');
   await expect(page).toHaveURL(/\/settings\/display$/);
+});
+
+test('keeps content clear of the system bars on edge-to-edge screens', async ({ page }) => {
+  // What the Android app gets when it draws behind the status bar, the navigation bar and a
+  // camera cutout on the right (the side the Kurdish sidebar is on).
+  const cdp = await page.context().newCDPSession(page);
+  await cdp.send('Emulation.setSafeAreaInsetsOverride', {
+    insets: { top: 24, bottom: 16, left: 0, right: 32 },
+  });
+
+  // Tablet: the sidebar is always shown.
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto('/');
+  const header = page.locator('header');
+  await expect(header).toHaveCSS('padding-top', '24px');
+  // The top bar starts at the very top, so its background fills the strip behind the status bar.
+  expect((await header.boundingBox())?.y).toBe(0);
+  const searchTop = (await page.getByRole('button', { name: 'گەڕان' }).boundingBox())?.y;
+  expect(searchTop).toBeGreaterThanOrEqual(24);
+  const sidebar = page.locator('[data-slot="sidebar-container"]');
+  await expect(sidebar).toHaveCSS('padding-top', '24px');
+  await expect(sidebar).toHaveCSS('padding-bottom', '16px');
+  await expect(sidebar).toHaveCSS('padding-right', '32px');
+  await expect(page.locator('[data-slot="sidebar-inset"]')).toHaveCSS('padding-bottom', '16px');
+
+  // Phone: the sidebar slides in as a sheet.
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.getByRole('button', { name: 'پیشاندان یان شاردنەوەی لیستە' }).click();
+  const sheet = page.locator('[data-slot="sidebar"][data-mobile="true"]');
+  await expect(sheet).toBeVisible();
+  await expect(sheet).toHaveCSS('padding-top', '24px');
+  await expect(sheet).toHaveCSS('padding-bottom', '16px');
+  await expect(sheet).toHaveCSS('padding-right', '32px');
 });
 
 test('unknown pages show a friendly message', async ({ page }) => {

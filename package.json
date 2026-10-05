@@ -16,8 +16,13 @@
     "format:check": "prettier --check .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "pnpm --filter @gym/app test:e2e",
-    "check": "pnpm typecheck && pnpm lint && pnpm format:check && pnpm test"
+    "test:e2e": "pnpm --filter @gym/app test:e2e && pnpm --filter @gym/desktop test:e2e",
+    "check": "pnpm typecheck && pnpm lint && pnpm format:check && pnpm test",
+    "android:apk": "pnpm --filter @gym/app android:apk",
+    "android:open": "pnpm --filter @gym/app android:open",
+    "desktop:dev": "pnpm --filter @gym/desktop dev",
+    "desktop:start": "pnpm build && pnpm --filter @gym/desktop start",
+    "desktop:exe": "pnpm build && pnpm --filter @gym/desktop exe"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

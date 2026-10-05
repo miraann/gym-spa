@@ -38,8 +38,7 @@ export function DisplaySettingsPage() {
           value={preferences.digits}
           choices={DIGIT_STYLES.map((digits) => ({
             value: digits,
-            label: t(`common:digits.${digits}`),
-            sample: localizeDigits('123', digits),
+            label: localizeDigits('123', digits),
           }))}
           onChange={(digits) => {
             setPreference('digits', digits);

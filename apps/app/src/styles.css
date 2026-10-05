@@ -59,6 +59,30 @@
   letter-spacing: normal;
 }
 
+/* Edge-to-edge screens (the Android app, phones in landscape): the page is drawn behind the
+   status bar, the navigation bar and camera cutouts, so content keeps out of those areas.
+   env(safe-area-inset-*) is 0 everywhere else. The top bar pads itself (top-bar.tsx), so its
+   background also fills the area behind the status bar. The sidebar rules cover the desktop
+   sidebar and the mobile one (a sheet); they are unlayered to win over the sheet's p-0. A new
+   side sheet must handle the insets itself. Insets are physical (left/right), not start/end. */
+body {
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+[data-slot='sidebar-inset'] {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+:is([data-slot='sidebar-container'], [data-slot='sidebar'][data-mobile='true']) {
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+:is([data-slot='sidebar-container'], [data-slot='sidebar'][data-mobile='true'])[data-side='left'] {
+  padding-left: env(safe-area-inset-left);
+}
+:is([data-slot='sidebar-container'], [data-slot='sidebar'][data-mobile='true'])[data-side='right'] {
+  padding-right: env(safe-area-inset-right);
+}
+
 @theme inline {
   --font-heading: var(--font-sans);
   --color-sidebar-ring: var(--sidebar-ring);

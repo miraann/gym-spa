@@ -5,5 +5,7 @@ pnpm-lock.yaml
 **/test-results/
 **/routeTree.gen.ts
 apps/app/public/
+apps/app/android/
+apps/desktop/release/
 # Docs are written by hand; don't reflow them.
 *.md

@@ -1,0 +1,23 @@
+{
+  "name": "@gym/desktop",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Windows desktop shell (Electron) for the Gym & Spa app",
+  "main": "dist/main.cjs",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "start": "pnpm build && node scripts/start.mjs",
+    "dev": "pnpm build && node scripts/start.mjs --dev",
+    "exe": "pnpm build && electron-builder --win --config electron-builder.config.mjs",
+    "typecheck": "tsc -p tsconfig.json",
+    "test:e2e": "pnpm build && playwright test"
+  },
+  "devDependencies": {
+    "@gym/platform": "workspace:*",
+    "@playwright/test": "^1.63.0",
+    "electron": "^44.5.1",
+    "electron-builder": "^26.15.3",
+    "esbuild": "^0.28.2"
+  }
+}

@@ -25,9 +25,7 @@
     "system": "Same as device"
   },
   "digits": {
-    "label": "Number style",
-    "latn": "Western",
-    "arab": "Eastern Arabic"
+    "label": "Number style"
   },
   "connection": {
     "online": "Online",
