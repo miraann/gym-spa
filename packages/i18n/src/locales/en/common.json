@@ -27,11 +27,27 @@
   "digits": {
     "label": "Number style"
   },
-  "connection": {
+  "sync": {
+    "title": "Sync",
     "online": "Online",
     "offline": "Offline",
-    "onlineHint": "Connected to the internet",
-    "offlineHint": "No internet. Your work is saved on this device and synced when the connection comes back."
+    "syncing": "Syncing… {{count}}",
+    "error": "Sync error",
+    "notSyncing": "Not syncing",
+    "onlineHint": "All changes have been sent.",
+    "offlineHint": "No internet. Your work is saved on this device and synced when the connection comes back.",
+    "syncingHint": "Sending and receiving changes.",
+    "errorHint": "Syncing failed. It will try again automatically.",
+    "notSyncingHint": "Log in to sync. Your work is saved on this device.",
+    "lastSynced": "Last synced: {{time}}",
+    "neverSynced": "Not synced yet",
+    "pending": "Changes waiting to be sent: {{count}}",
+    "rejected": "Refused changes: {{count}}",
+    "syncNow": "Sync now"
+  },
+  "database": {
+    "openFailedTitle": "This device's data can't be opened",
+    "openFailedHint": "Use a newer browser, or reload the page. If it keeps happening, contact your manager."
   },
   "pwa": {
     "offlineReady": "The app now works without internet too",

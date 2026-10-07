@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Kbd } from '@/components/ui/kbd';
 import { Separator } from '@/components/ui/separator';
 import { SidebarTrigger } from '@/components/ui/sidebar';
-import { ConnectionStatus } from './connection-status';
+import { SyncStatus } from './sync-status';
 import { LanguageMenu } from './language-menu';
 import { ThemeMenu } from './theme-menu';
 
@@ -30,7 +30,7 @@ export function TopBar({ onOpenSearch }: { readonly onOpenSearch: () => void }) 
         </Kbd>
       </Button>
       <div className="ms-auto flex items-center gap-1">
-        <ConnectionStatus />
+        <SyncStatus />
         <LanguageMenu />
         <ThemeMenu />
       </div>

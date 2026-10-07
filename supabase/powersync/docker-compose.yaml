@@ -1,0 +1,54 @@
+# Local PowerSync for development (`pnpm sync:start`), next to local Supabase (`pnpm db:start`).
+# Production uses PowerSync Cloud with the same sync-config.yaml.
+name: gym-spa-powersync
+
+services:
+  powersync:
+    image: journeyapps/powersync-service:1.26.1
+    command: ['start', '-r', 'unified']
+    environment:
+      POWERSYNC_CONFIG_PATH: /config/service.yaml
+      # powersync_role is created by a migration; seed.sql sets this local-only password.
+      PS_DATA_SOURCE_URI: postgresql://powersync_role:powersync-local-dev@db:5432/postgres
+      PS_STORAGE_URI: postgresql://powersync:powersync@storage:5432/powersync
+      PS_PORT: '8080'
+      NODE_OPTIONS: --max-old-space-size=1000
+    volumes:
+      - ./:/config:ro
+    ports:
+      - '54380:8080'
+    depends_on:
+      storage:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://localhost:8080/probes/liveness').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
+      interval: 3s
+      timeout: 2s
+      retries: 40
+    networks: [default, supabase]
+
+  # PowerSync's own bucket storage. In memory only: every `pnpm sync:start` begins clean and
+  # re-reads the database, which keeps it right after `pnpm db:reset`.
+  storage:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: powersync
+      POSTGRES_PASSWORD: powersync
+      POSTGRES_DB: powersync
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD', 'pg_isready', '-U', 'powersync']
+      interval: 2s
+      timeout: 2s
+      retries: 30
+
+networks:
+  # Created by the Supabase CLI for project_id "gym-spa" (supabase/config.toml).
+  supabase:
+    name: supabase_network_gym-spa
+    external: true

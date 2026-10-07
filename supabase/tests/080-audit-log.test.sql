@@ -45,7 +45,8 @@ select results_eq(
 );
 select results_eq(
   $$ select action, old_values ->> 'key', new_values ->> 'key' from public.audit_logs
-      where table_name = 'settings' order by occurred_at, action desc $$,
+      where table_name = 'settings' and occurred_at = now() -- only this test's entries
+      order by action desc $$,
   $$ values ('insert', null, 'security.pin_max_attempts'), ('delete', 'security.pin_max_attempts', null) $$,
   'a delete records the removed row'
 );

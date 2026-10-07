@@ -50,6 +50,7 @@ Inside the app, shared code goes in `components/ui` and `lib`.
 - Supabase runs locally with Docker: `pnpm db:start`, `pnpm db:reset` (migrations + seed), `pnpm db:test`, `pnpm db:lint`. The CLI is a devDependency of `@gym/supabase` (the `supabase/` folder): `pnpm --filter @gym/supabase exec supabase <command> --workdir ..`.
 - RLS tests are pgTAP files in `supabase/tests`. Every table's policies and guards get tests. `000-setup-test-helpers.sql` installs shared helpers (`tests.create_fixture()`, `tests.authenticate_as()`, ...), so always run the whole folder. `001-schema-rules.test.sql` fails on any table without RLS, policies or the audit trigger, any anon access, unindexed foreign keys, or functions without a fixed `search_path`.
 - `pnpm bootstrap:admin` creates the first Super Admin (`--remote` for a cloud project, with `supabase/.env.local`).
+- Local PowerSync runs in Docker: `pnpm sync:start` (again after every `db:reset`). `pnpm test:sync` runs the end-to-end sync tests (Node devices against local Supabase + PowerSync). What devices download is `supabase/powersync/sync-config.yaml`; the local schema is `packages/db/src/schema.ts` (typecheck fails if it drifts from Postgres).
 
 ## Offline-first rules (every module)
 
@@ -102,7 +103,7 @@ Inside the app, shared code goes in `components/ui` and `lib`.
 ## Security & RBAC
 
 - Use permission strings (`members.create`, `payments.refund`, ...), never role-name checks.
-- **One role per staff member.** Branch access: `staff_users.all_branches` flag, otherwise the rows in the `staff_branches` join table (a staff member can have several branches). The rule is written once in SQL, `app.accessible_branch_ids()` (`app.has_branch_access()` wraps it), and the PowerSync sync rules apply the same rule.
+- **One role per staff member.** Branch access: `staff_users.all_branches` flag, otherwise the rows in the `staff_branches` join table (a staff member can have several branches). The rule is written once in SQL, `app.refresh_branch_access()`, which keeps it as rows in `staff_branch_access`; RLS (`app.accessible_branch_ids()`, `app.has_branch_access()`) and the sync streams both read those rows.
 - Enforce in **three layers**: RLS, server validation of synced uploads, and UI (cached permissions).
 - The Supabase service/secret key never reaches the client.
 - Sensitive actions (payments, refunds) require a staff login. Never trust an NFC UID alone.
@@ -125,6 +126,7 @@ Inside the app, shared code goes in `components/ui` and `lib`.
 - **Devices:** a `devices` table gives each device a code (the `D03` in receipt numbers), a default language and a last-seen time.
 - **Sync scope:** the device's branch decides what syncs; the staff login only authorizes it. Switching staff by PIN never wipes or re-downloads local data.
 - **Rejected uploads** go to a local "rejected changes" list shown on the Sync screen: never dropped silently, never retried forever.
+- **Every local write to a synced table sets `_metadata` with `writeMetadata(authorId)`** (`@gym/db`); the upload connector sends it under that author's session and rejects changes without an author.
 - **Language order:** staff preference → device default → `ckb`. Sorani month names come from our own translation files, not the browser's `ckb` locale data (support varies between Chromium and Android WebView).
 - **Tooling:** pnpm workspaces only (no Turborepo). Shared packages are plain TypeScript source without a build step, except Electron's main process. TypeScript stays on 6.0.x until typescript-eslint supports TS 7. Run `pnpm check` (typecheck, lint, format, unit tests) and `pnpm test:e2e` before handing over a step.
 - **Language rules are enforced by tooling:** the `gym/no-hardcoded-ui-text` and `gym/no-physical-direction-classes` lint rules (`tools/eslint-plugin-gym`), plus tests for translation parity, Sorani/Arabic spelling and font glyph coverage. After `shadcn add`, run `pnpm format` and fix any hardcoded English the lint rule reports.

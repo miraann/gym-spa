@@ -11,7 +11,7 @@ function subscribe(listener: () => void): () => void {
 
 /**
  * Whether the device has a network connection. "Online" does not guarantee the servers are
- * reachable; in 1d the sync status adds the real connection state.
+ * reachable; the sync indicator adds the real connection state.
  */
 export function useOnlineStatus(): boolean {
   return useSyncExternalStore(subscribe, () => navigator.onLine);

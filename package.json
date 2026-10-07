@@ -17,6 +17,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "pnpm --filter @gym/app test:e2e && pnpm --filter @gym/desktop test:e2e",
+    "test:sync": "pnpm --filter @gym/db test:sync",
     "check": "pnpm typecheck && pnpm lint && pnpm format:check && pnpm test",
     "android:apk": "pnpm --filter @gym/app android:apk",
     "android:open": "pnpm --filter @gym/app android:open",
@@ -30,6 +31,9 @@
     "db:test": "pnpm --filter @gym/supabase test",
     "db:lint": "pnpm --filter @gym/supabase lint",
     "db:types": "pnpm --filter @gym/supabase types && prettier --write --log-level warn packages/db/src/database.types.ts",
+    "sync:start": "pnpm --filter @gym/supabase sync:start",
+    "sync:stop": "pnpm --filter @gym/supabase sync:stop",
+    "sync:logs": "pnpm --filter @gym/supabase sync:logs",
     "bootstrap:admin": "pnpm --filter @gym/supabase bootstrap:admin"
   },
   "devDependencies": {

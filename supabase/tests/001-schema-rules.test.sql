@@ -1,7 +1,7 @@
 -- Rules every table and function must follow (CLAUDE.md → Database rules). These also catch new
 -- tables in later phases that forget one of them.
 begin;
-select plan(11);
+select plan(12);
 
 select is_empty($$
   select c.relname from pg_class c
@@ -46,9 +46,9 @@ $$, 'every foreign key has an index');
 select is_empty($$
   select c.relname from pg_class c
    where c.relnamespace = 'public'::regnamespace and c.relkind = 'r'
-     and c.relname not in ('permissions', 'device_status', 'audit_logs')
+     and c.relname not in ('permissions', 'device_status', 'staff_branch_access', 'audit_logs')
      and not exists (select 1 from pg_trigger t where t.tgrelid = c.oid and t.tgname = 'audit')
-$$, 'every table is audited, except the permission catalog, device status reports and the log itself');
+$$, 'every table is audited, except the permission catalog, device reports, derived branch access and the log itself');
 
 select is_empty($$
   select pt.tablename from pg_publication_tables pt
@@ -79,6 +79,12 @@ select is_empty($$
      )
      and c.relname <> 'permissions'
 $$, 'every primary key is a uuid (the permission catalog uses its key)');
+
+select is_empty($$
+  select pt.tablename from pg_publication_tables pt
+   where pt.pubname = 'powersync'
+     and not has_table_privilege('powersync_role', format('%I.%I', pt.schemaname, pt.tablename), 'SELECT')
+$$, 'PowerSync can read every table in the powersync publication');
 
 select * from finish();
 rollback;

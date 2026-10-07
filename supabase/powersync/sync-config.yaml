@@ -1,0 +1,43 @@
+# What each device downloads (Sync Streams). Used by local PowerSync and by PowerSync Cloud.
+#
+# Branch access comes from staff_branch_access, which Postgres keeps from the one branch rule
+# (app.refresh_branch_access). It has rows only for active staff, so deactivated staff lose access
+# here too. Never synced: staff_pins (secrets) and audit_logs (read online).
+config:
+  edition: 3
+
+streams:
+  # The role and permission catalog, and settings for every branch: on every signed-in device.
+  catalog:
+    auto_subscribe: true
+    queries:
+      - SELECT * FROM roles
+      - SELECT key AS id, module, sort_order FROM permissions
+      - SELECT * FROM role_permissions
+      - SELECT * FROM settings WHERE branch_id IS NULL
+
+  # The branches the signed-in staff member can access, to choose the device's branch.
+  my_branches:
+    auto_subscribe: true
+    query: |
+      SELECT * FROM branches
+       WHERE id IN (SELECT branch_id FROM staff_branch_access WHERE staff_id = auth.user_id())
+
+  # Everything about the device's own branch. The app subscribes with { branch_id }; the server
+  # sends nothing for a branch the staff member can't access.
+  branch:
+    with:
+      this_branch: |
+        SELECT branch_id FROM staff_branch_access
+         WHERE staff_id = auth.user_id() AND branch_id = subscription.parameter('branch_id')
+    queries:
+      - SELECT * FROM branches WHERE id IN this_branch
+      - SELECT * FROM devices WHERE branch_id IN this_branch
+      - SELECT * FROM settings WHERE branch_id IN this_branch
+      - SELECT * FROM staff_branches WHERE branch_id IN this_branch
+      - SELECT * FROM staff_branch_access WHERE branch_id IN this_branch
+      - |
+        SELECT id, username, full_name, phone, role_id, all_branches, preferred_language,
+               is_active, must_change_password, created_at, created_by, updated_at, updated_by, deleted_at
+          FROM staff_users
+         WHERE id IN (SELECT staff_id FROM staff_branch_access WHERE branch_id IN this_branch)

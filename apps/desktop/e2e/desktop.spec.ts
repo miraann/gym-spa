@@ -181,6 +181,16 @@ test('has what the local database needs: storage, workers and WebAssembly', asyn
   });
 });
 
+test('opens the local database', async () => {
+  const page = await mainWindow();
+  const indicator = page.getByRole('status');
+  await expect(indicator).toContainText('هاوکات ناکرێت');
+  // These counts come from the local database (SQLite on OPFS, in a worker).
+  await indicator.click();
+  await expect(page.getByText('گۆڕانکارییە نەنێردراوەکان: 0')).toBeVisible();
+  await page.keyboard.press('Escape');
+});
+
 test('keeps settings after a restart', async () => {
   let page = await mainWindow();
   await page.getByRole('button', { name: 'گۆڕینی زمان' }).click();

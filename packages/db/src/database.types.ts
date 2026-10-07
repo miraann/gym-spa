@@ -327,6 +327,39 @@ export type Database = {
           },
         ];
       };
+      staff_branch_access: {
+        Row: {
+          branch_id: string;
+          id: string;
+          staff_id: string;
+        };
+        Insert: {
+          branch_id: string;
+          id?: string;
+          staff_id: string;
+        };
+        Update: {
+          branch_id?: string;
+          id?: string;
+          staff_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'staff_branch_access_branch_id_fkey';
+            columns: ['branch_id'];
+            isOneToOne: false;
+            referencedRelation: 'branches';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'staff_branch_access_staff_id_fkey';
+            columns: ['staff_id'];
+            isOneToOne: false;
+            referencedRelation: 'staff_users';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       staff_branches: {
         Row: {
           branch_id: string;

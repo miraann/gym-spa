@@ -6,7 +6,7 @@ Offline-first, multi-branch gym & spa system with NFC check-in. One codebase for
 - Full spec: [gym-spa-system-prompt.md](gym-spa-system-prompt.md)
 - Working rules for contributors and Claude: [CLAUDE.md](CLAUDE.md)
 
-> **Status:** Phase 1c: the database (Supabase) for branches, staff, roles and permissions, devices, settings and the audit log, with row level security and its tests. The web app also runs as an Android app and a Windows app. PowerSync, login and the offline PIN arrive in step 1d, the admin screens in 1e. This README grows with each step.
+> **Status:** Phase 1d, first half: every device has its own local database (PowerSync) and the sync indicator; local development runs PowerSync in Docker, and end-to-end tests sync real devices against it. Login, the offline PIN and the per-author sessions come in the second half of 1d, the admin screens in 1e. This README grows with each step.
 
 ## Requirements
 
@@ -26,6 +26,7 @@ Offline-first, multi-branch gym & spa system with NFC check-in. One codebase for
 pnpm install
 pnpm db:start          # local Supabase in Docker (the first start downloads its images)
 pnpm db:reset          # build the database: migrations, then demo data
+pnpm sync:start        # local PowerSync in Docker (after db:start; again after every db:reset)
 pnpm bootstrap:admin   # create your Super Admin login
 cp apps/app/.env.example apps/app/.env.local   # then fill in the values (pnpm db:status shows them)
 pnpm dev               # http://localhost:5173
@@ -57,11 +58,14 @@ Run from the repository root:
 | `pnpm db:test` | Database tests (pgTAP in `supabase/tests`): row level security and the access rules |
 | `pnpm db:lint` | Check the SQL functions for errors (plpgsql_check) |
 | `pnpm db:types` | Regenerate the TypeScript types of the database (`packages/db`). Run after changing migrations |
+| `pnpm sync:start` / `pnpm sync:stop` | Start or stop local PowerSync (Docker), at http://localhost:54380. Start it again after `pnpm db:reset` |
+| `pnpm sync:logs` | PowerSync's log (sync config errors show up here) |
+| `pnpm test:sync` | End-to-end sync tests: Node devices go offline, edit and reconnect against local Supabase and PowerSync |
 | `pnpm bootstrap:admin` | Create the first Super Admin. Add `--remote` for a cloud project (see [Database](#database-supabase)) |
 
 First-time setup for the browser tests: `pnpm --filter @gym/app exec playwright install chromium`.
 
-The database commands need Docker running, so `pnpm check` doesn't include `pnpm db:test`.
+The database and sync commands need Docker running, so `pnpm check` includes neither `pnpm db:test` nor `pnpm test:sync`.
 
 ## Project layout
 
@@ -80,14 +84,16 @@ apps/desktop         Windows app: an Electron shell around the same web build
   src/preload.ts     the small bridge the web app gets (window.gymDesktop)
   e2e                Playwright tests that launch the real Electron app
 packages/core        business rules in plain TypeScript, shared by the app and server scripts
-packages/db          database types, generated from the schema (pnpm db:types)
+packages/db          the local database: PowerSync schema, upload connector, generated Supabase types
+  test               end-to-end sync tests (pnpm test:sync)
 packages/platform    platform detection and native adapters; the only code that touches Capacitor or Electron
 packages/i18n        translations (ckb, en, ar), typed keys, number/money/date formatting
 supabase             the database
   migrations         schema changes, in order (tables, RLS policies, triggers, built-in roles)
   tests              pgTAP tests, run with pnpm db:test
   seed.sql           demo data for local development (Kurdish)
-  scripts            bootstrap-admin.ts
+  powersync          local PowerSync (Docker) and sync-config.yaml: what each device downloads
+  scripts            bootstrap-admin.ts, powersync.mjs
 tools/eslint-plugin-gym  project lint rules
 ```
 
@@ -140,6 +146,17 @@ Supabase runs locally in Docker for development (`supabase/config.toml` is the l
    ```
 2. In Dashboard → Authentication, turn off "Allow new users to sign up" and set the minimum password length to 8, as in `config.toml` (that file only configures the local setup). Keep the Email provider turned on: staff log in through it with their username.
 3. Copy `supabase/.env.example` to `supabase/.env.local`, fill in the URL and the secret key, then run `pnpm bootstrap:admin --remote`. Keep the secret key in that file only: it bypasses every security rule.
+
+## Sync (PowerSync)
+
+Every device works on its own SQLite database: the app reads and writes locally and never waits for the network. PowerSync downloads what the device needs and sends local changes to Supabase when it can.
+
+- **Where the local database lives:** Android uses native SQLite (`@powersync/capacitor`). The browser and the Windows app use SQLite compiled to WebAssembly, stored in the Origin Private File System (`@powersync/web`). `packages/platform/src/database.ts` picks one.
+- **What a device downloads:** `supabase/powersync/sync-config.yaml` (Sync Streams). Every signed-in device gets the role and permission catalog. It gets only its own branch's data, and only if the staff member can access that branch. Staff PINs and the audit log are never synced.
+- **Branch access:** sync streams can't call SQL functions, so the branch rule is also kept as rows in `staff_branch_access`, maintained by triggers from `app.refresh_branch_access()`. RLS and the sync streams both read it, so the rule is still written once.
+- **Uploads:** `packages/db/src/upload.ts`. Each change records its author in `_metadata` (`writeMetadata()`) and is sent with that staff member's own session. Network problems and server errors are retried with backoff. Changes the server refuses are recorded in the local `rejected_changes` table with a key the app translates, and the row goes back to the server's version.
+- **Schema changes:** add the table or column to the migration, to `sync-config.yaml` (and the `powersync` publication, with `grant select ... to powersync_role`), and to `packages/db/src/schema.ts`. After `pnpm db:types`, `pnpm typecheck` fails if the local schema doesn't match Postgres.
+- **Local development:** `pnpm sync:start` runs PowerSync in Docker next to local Supabase. It checks logins with Supabase's public keys, and its own storage starts empty each time. Production uses PowerSync Cloud with the same `sync-config.yaml` (set up in its own step).
 
 ## Android app
 

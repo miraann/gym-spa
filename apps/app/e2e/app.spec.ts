@@ -126,3 +126,17 @@ test('unknown pages show a friendly message', async ({ page }) => {
   await page.getByRole('link', { name: 'گەڕانەوە بۆ سەرەکی' }).click();
   await expect(page.getByRole('heading', { level: 1, name: 'سەرەکی' })).toBeVisible();
 });
+
+test('opens the local database and shows the sync state', async ({ page }) => {
+  await page.goto('/');
+
+  // Nobody is logged in yet, so the device keeps its work locally and doesn't sync.
+  const indicator = page.getByRole('status');
+  await expect(indicator).toContainText('هاوکات ناکرێت');
+
+  // The details come from the local database (the upload queue and refused changes).
+  await indicator.click();
+  await expect(page.getByText('گۆڕانکارییە نەنێردراوەکان: 0')).toBeVisible();
+  await expect(page.getByText('هێشتا هاوکات نەکراوە')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'ئێستا هاوکاتی بکە' })).toBeDisabled();
+});

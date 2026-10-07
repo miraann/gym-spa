@@ -1,0 +1,27 @@
+# yaml-language-server: $schema=https://unpkg.com/@powersync/service-schema@latest/json-schema/powersync-config.json
+# Local PowerSync service (docker-compose.yaml). Values come from the PS_* environment variables.
+
+telemetry:
+  disable_telemetry_sharing: true
+
+replication:
+  connections:
+    - type: postgresql
+      uri: !env PS_DATA_SOURCE_URI
+      sslmode: disable
+
+storage:
+  type: postgresql
+  uri: !env PS_STORAGE_URI
+  sslmode: disable
+
+port: !env PS_PORT::number
+
+sync_config:
+  path: sync-config.yaml
+
+# Staff sign in with Supabase Auth; PowerSync checks their access token with Supabase's public
+# keys. "kong" is Supabase's API gateway on its Docker network.
+client_auth:
+  jwks_uri: http://kong:8000/auth/v1/.well-known/jwks.json
+  audience: ['authenticated']
