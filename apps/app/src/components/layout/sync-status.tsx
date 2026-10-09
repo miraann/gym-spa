@@ -1,3 +1,4 @@
+import { readAuthor } from '@gym/db';
 import { useQuery, useStatus } from '@powersync/react';
 import {
   CloudAlertIcon,
@@ -38,13 +39,19 @@ export function SyncStatus() {
   const format = useFormat();
   const online = useOnlineStatus();
   const status = useStatus();
-  const { signedIn, syncNow } = useSyncControls();
-  // ps_crud is PowerSync's upload queue.
-  const { data: queued } = useQuery<{ count: number }>('SELECT count(*) AS count FROM ps_crud');
+  const { signedIn, syncNow, waitingForLogin = [] } = useSyncControls();
+  // ps_crud is PowerSync's upload queue; each change carries its author in its metadata.
+  const { data: queuedByAuthor } = useQuery<{ metadata: string | null; count: number }>(
+    "SELECT json_extract(data, '$.metadata') AS metadata, count(*) AS count FROM ps_crud GROUP BY 1",
+  );
   const { data: refused } = useQuery<{ count: number }>(
     'SELECT count(*) AS count FROM rejected_changes',
   );
-  const pending = queued[0]?.count ?? 0;
+  const pending = queuedByAuthor.reduce((sum, row) => sum + row.count, 0);
+  const waitingAuthors = new Set(
+    queuedByAuthor.map((row) => readAuthor(row.metadata ?? undefined)),
+  );
+  const mustLogIn = waitingForLogin.filter((staff) => waitingAuthors.has(staff.staffId));
   const rejected = refused[0]?.count ?? 0;
 
   const state = syncIndicatorState({
@@ -109,6 +116,11 @@ export function SyncStatus() {
               : t('sync.neverSynced')}
           </li>
           <li>{t('sync.pending', { count: format.number(pending) })}</li>
+          {mustLogIn.map((staff) => (
+            <li key={staff.staffId} className="text-amber-700 dark:text-amber-300">
+              {t('sync.waitingForLogin', { name: staff.fullName })}
+            </li>
+          ))}
           {rejected > 0 && (
             <li className="text-destructive">
               {t('sync.rejected', { count: format.number(rejected) })}

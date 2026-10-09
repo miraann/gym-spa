@@ -10,11 +10,13 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { setPreference, usePreferences } from '@/lib/preferences';
+import { useChangeLanguage } from '@/features/auth/use-change-language';
+import { usePreferences } from '@/lib/preferences';
 
 export function LanguageMenu() {
   const { t } = useTranslation();
   const { language } = usePreferences();
+  const changeLanguage = useChangeLanguage();
 
   return (
     <DropdownMenu>
@@ -29,7 +31,7 @@ export function LanguageMenu() {
         <DropdownMenuRadioGroup
           value={language}
           onValueChange={(value) => {
-            if (isLanguage(value)) setPreference('language', value);
+            if (isLanguage(value)) changeLanguage(value);
           }}
         >
           {LANGUAGE_CODES.map((code) => (

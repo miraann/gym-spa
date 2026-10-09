@@ -1,7 +1,8 @@
 import { useNavigate } from '@tanstack/react-router';
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { NAV_PAGES } from '@/app/navigation';
+import { navPages } from '@/app/navigation';
+import { usePermissions } from '@/features/auth/use-permissions';
 import {
   Command,
   CommandDialog,
@@ -21,6 +22,7 @@ export function CommandPalette({
   readonly onOpenChange: (open: boolean) => void;
 }) {
   const { t } = useTranslation(['common', 'nav']);
+  const pages = navPages(usePermissions());
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -49,7 +51,7 @@ export function CommandPalette({
         <CommandList>
           <CommandEmpty>{t('search.empty')}</CommandEmpty>
           <CommandGroup heading={t('search.pages')}>
-            {NAV_PAGES.map((item) => {
+            {pages.map((item) => {
               const label = t(`nav:items.${item.key}`);
               const Icon = item.icon;
               return (

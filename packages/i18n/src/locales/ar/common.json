@@ -43,7 +43,8 @@
     "neverSynced": "لم تتم المزامنة بعد",
     "pending": "تغييرات بانتظار الإرسال: {{count}}",
     "rejected": "تغييرات مرفوضة: {{count}}",
-    "syncNow": "زامن الآن"
+    "syncNow": "زامن الآن",
+    "waitingForLogin": "يجب أن يسجّل {{name}} الدخول لإرسال تغييراته"
   },
   "database": {
     "openFailedTitle": "تعذّر فتح بيانات هذا الجهاز",

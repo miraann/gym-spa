@@ -1,5 +1,5 @@
 import { existsSync } from 'node:fs';
-import { cp, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { cp, mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -10,6 +10,8 @@ import {
   type ElectronApplication,
   type Page,
 } from '@playwright/test';
+// Test staff in local Supabase (`pnpm db:start`, `pnpm sync:start`), shared with the web tests.
+import { TestData, type TestStaff } from '../../app/e2e/support/backend';
 
 // path.resolve drops the trailing backslash: on Windows, `"...\desktop\"` would escape the quote.
 const desktopDir = path.resolve(fileURLToPath(new URL('..', import.meta.url)));
@@ -42,6 +44,30 @@ async function mainWindow(): Promise<Page> {
   return page;
 }
 
+const LOGIN_HEADING = { level: 1, name: 'چوونەژوورەوە' } as const;
+const HOME_HEADING = { level: 1, name: 'سەرەکی' } as const;
+
+let data: TestData;
+/** A receptionist of a new branch, with a PIN already set. */
+async function newStaff(): Promise<TestStaff> {
+  return data.staff({ branchIds: [await data.branch()] });
+}
+
+/** Password login on a fresh install; ends on the home page. */
+async function signIn(page: Page, staff: TestStaff): Promise<void> {
+  await expect(page.getByRole('heading', LOGIN_HEADING)).toBeVisible();
+  await page.getByLabel('ناوی بەکارهێنەر').fill(staff.username);
+  await page.getByLabel('وشەی نهێنی', { exact: true }).fill(staff.password);
+  await page.getByRole('button', { name: 'چوونەژوورەوە' }).click();
+  await expect(page.getByRole('heading', HOME_HEADING)).toBeVisible();
+}
+
+async function unlock(page: Page, staff: TestStaff): Promise<void> {
+  await expect(page.getByRole('heading', { level: 1, name: 'کێ کار دەکات؟' })).toBeVisible();
+  await page.getByRole('button', { name: staff.fullName }).click();
+  await page.locator('input[inputmode="numeric"]').pressSequentially(staff.pin ?? '');
+}
+
 test.beforeAll(async () => {
   if (!existsSync(path.join(webBuild, 'index.html'))) {
     throw new Error(
@@ -71,6 +97,7 @@ test.afterAll(async () => {
 });
 
 test.beforeEach(async () => {
+  data = new TestData();
   userData = await mkdtemp(path.join(tmpdir(), 'gym-desktop-data-'));
   app = await launch();
 });
@@ -79,6 +106,7 @@ test.afterEach(async () => {
   await app?.close();
   app = undefined;
   await rm(userData, { recursive: true, force: true });
+  await data.cleanup();
 });
 
 test('opens in Kurdish from its own app:// origin', async () => {
@@ -88,11 +116,12 @@ test('opens in Kurdish from its own app:// origin', async () => {
   await expect(html).toHaveAttribute('lang', 'ckb');
   await expect(html).toHaveAttribute('dir', 'rtl');
   await expect(page).toHaveTitle('جیم و سپا');
-  await expect(page.getByRole('heading', { level: 1, name: 'سەرەکی' })).toBeVisible();
+  await expect(page.getByRole('heading', LOGIN_HEADING)).toBeVisible();
 
   const runtime = await page.evaluate(async () => ({
     origin: location.origin,
     bridge: typeof window.gymDesktop?.setTheme,
+    secureStorage: typeof window.gymDesktop?.secureGet,
     // The page must never reach Node or Electron directly.
     nodeRequire: typeof (globalThis as { require?: unknown }).require,
     nodeProcess: typeof (globalThis as { process?: unknown }).process,
@@ -106,6 +135,7 @@ test('opens in Kurdish from its own app:// origin', async () => {
   expect(runtime).toEqual({
     origin: 'app://gym-spa',
     bridge: 'function',
+    secureStorage: 'function',
     nodeRequire: 'undefined',
     nodeProcess: 'undefined',
     serviceWorkers: 0,
@@ -113,9 +143,36 @@ test('opens in Kurdish from its own app:// origin', async () => {
 });
 
 test('reloading an inner page works', async () => {
+  const staff = await newStaff();
   const page = await mainWindow();
+  await signIn(page, staff);
   await page.goto('app://gym-spa/settings/display');
+  // A reload locks the app; the PIN opens the same page.
+  await unlock(page, staff);
   await expect(page.getByRole('heading', { level: 1, name: 'ڕووکار و زمان' })).toBeVisible();
+});
+
+test('keeps staff logged in across a restart, encrypted with Windows', async () => {
+  const staff = await newStaff();
+  let page = await mainWindow();
+  await signIn(page, staff);
+
+  await running().close();
+  app = await launch();
+  page = await mainWindow();
+  await unlock(page, staff);
+  await expect(page.getByRole('heading', HOME_HEADING)).toBeVisible();
+
+  // Sessions and PIN hashes are in files Windows encrypted (DPAPI), never in plain text.
+  const folder = path.join(userData, 'secure');
+  const files = await readdir(folder);
+  expect(files).toContain('accounts.bin');
+  expect(files).toContain(`auth.${staff.id}.bin`);
+  for (const file of files) {
+    const content = await readFile(path.join(folder, file), 'latin1');
+    expect(content).not.toContain(staff.username);
+    expect(content).not.toContain('refresh_token');
+  }
 });
 
 test('has what the local database needs: storage, workers and WebAssembly', async () => {
@@ -181,10 +238,11 @@ test('has what the local database needs: storage, workers and WebAssembly', asyn
   });
 });
 
-test('opens the local database', async () => {
+test('opens the local database and syncs', async () => {
   const page = await mainWindow();
+  await signIn(page, await newStaff());
   const indicator = page.getByRole('status');
-  await expect(indicator).toContainText('هاوکات ناکرێت');
+  await expect(indicator).toContainText('ئۆنلاین');
   // These counts come from the local database (SQLite on OPFS, in a worker).
   await indicator.click();
   await expect(page.getByText('گۆڕانکارییە نەنێردراوەکان: 0')).toBeVisible();
@@ -201,7 +259,7 @@ test('keeps settings after a restart', async () => {
   app = await launch();
   page = await mainWindow();
   await expect(page.locator('html')).toHaveAttribute('lang', 'en');
-  await expect(page.getByRole('heading', { level: 1, name: 'Home' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: 'Log in' })).toBeVisible();
 });
 
 test('the window never leaves the app', async () => {
@@ -212,7 +270,7 @@ test('the window never leaves the app', async () => {
     location.href = 'file:///C:/Windows/win.ini';
   });
 
-  await expect(page.getByRole('heading', { level: 1, name: 'سەرەکی' })).toBeVisible();
+  await expect(page.getByRole('heading', LOGIN_HEADING)).toBeVisible();
   expect(await page.evaluate(() => location.origin)).toBe('app://gym-spa');
   expect(running().windows()).toHaveLength(1);
 });
@@ -222,8 +280,8 @@ test('the title bar follows the app theme', async () => {
   const themeSource = () => running().evaluate(({ nativeTheme }) => nativeTheme.themeSource);
   await expect.poll(themeSource).toBe('system');
 
-  await page.goto('app://gym-spa/settings/display');
-  await page.getByRole('radio', { name: 'تاریک' }).click();
+  await page.getByRole('button', { name: 'گۆڕینی ڕووکار' }).click();
+  await page.getByRole('menuitemradio', { name: 'تاریک' }).click();
   await expect.poll(themeSource).toBe('dark');
 
   // The main process ignores values the bridge doesn't allow.

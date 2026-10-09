@@ -13,6 +13,8 @@ dev-dist/
 .env
 .env.*
 !.env.example
+# Local Supabase + PowerSync addresses for the end-to-end tests (no secrets)
+!apps/app/.env.e2e
 
 # Tests
 coverage/

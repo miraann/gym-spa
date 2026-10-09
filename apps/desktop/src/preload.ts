@@ -11,6 +11,10 @@ const bridge: DesktopBridge = {
   setTheme: (theme) => {
     ipcRenderer.send(DESKTOP_CHANNELS.setTheme, theme);
   },
+  secureGet: (key) => ipcRenderer.invoke(DESKTOP_CHANNELS.secureGet, key) as Promise<string | null>,
+  secureSet: (key, value) =>
+    ipcRenderer.invoke(DESKTOP_CHANNELS.secureSet, key, value) as Promise<void>,
+  secureDelete: (key) => ipcRenderer.invoke(DESKTOP_CHANNELS.secureDelete, key) as Promise<void>,
 };
 
 contextBridge.exposeInMainWorld(DESKTOP_BRIDGE_KEY, bridge);

@@ -8,6 +8,7 @@ import {
   Menu,
   nativeTheme,
   protocol,
+  safeStorage,
   session,
   shell,
   type WebContents,
@@ -20,6 +21,7 @@ import {
   isExternalWebLink,
   resolveAppFile,
 } from './app-protocol';
+import { createSecureStore } from './secure-store';
 import { nextZoomLevel, shortcutFor } from './shortcuts';
 
 /** Same id as the Android app and the installer (electron-builder.config.mjs). */
@@ -122,10 +124,30 @@ function lockDownWebContents(): void {
   });
 
   ipcMain.on(DESKTOP_CHANNELS.setTheme, (event, theme: unknown) => {
-    const sender = event.senderFrame?.url;
-    if (sender === undefined || !isAppUrl(sender, devServerUrl) || !isThemeSource(theme)) return;
+    if (!fromApp(event) || !isThemeSource(theme)) return;
     nativeTheme.themeSource = theme;
   });
+
+  // Staff sessions and PIN hashes (see @gym/platform secure-storage).
+  const secureStore = createSecureStore(path.join(app.getPath('userData'), 'secure'), safeStorage);
+  ipcMain.handle(DESKTOP_CHANNELS.secureGet, (event, key: unknown) => {
+    if (!fromApp(event)) throw new Error('Not allowed');
+    return secureStore.get(key);
+  });
+  ipcMain.handle(DESKTOP_CHANNELS.secureSet, (event, key: unknown, value: unknown) => {
+    if (!fromApp(event)) throw new Error('Not allowed');
+    return secureStore.set(key, value);
+  });
+  ipcMain.handle(DESKTOP_CHANNELS.secureDelete, (event, key: unknown) => {
+    if (!fromApp(event)) throw new Error('Not allowed');
+    return secureStore.delete(key);
+  });
+}
+
+/** Only the app's own pages may use the bridge. */
+function fromApp(event: Electron.IpcMainEvent | Electron.IpcMainInvokeEvent): boolean {
+  const sender = event.senderFrame?.url;
+  return sender !== undefined && isAppUrl(sender, devServerUrl);
 }
 
 let mainWindow: BrowserWindow | undefined;

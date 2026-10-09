@@ -10,6 +10,8 @@ const OPEN_LAYER =
 /** What Android's Back does: close what's on top first, then go back a page, then leave the app. */
 export function resolveBackAction(canGoBack: boolean, root: ParentNode = document): BackAction {
   if (root.querySelector(OPEN_LAYER)) return 'close-layer';
+  // The login and lock screens have their own Back buttons; the pages behind them stay put.
+  if (root.querySelector('[data-auth-screen]')) return 'minimize';
   return canGoBack ? 'go-back' : 'minimize';
 }
 

@@ -6,7 +6,7 @@ Offline-first, multi-branch gym & spa system with NFC check-in. One codebase for
 - Full spec: [gym-spa-system-prompt.md](gym-spa-system-prompt.md)
 - Working rules for contributors and Claude: [CLAUDE.md](CLAUDE.md)
 
-> **Status:** Phase 1d, first half: every device has its own local database (PowerSync) and the sync indicator; local development runs PowerSync in Docker, and end-to-end tests sync real devices against it. Login, the offline PIN and the per-author sessions come in the second half of 1d, the admin screens in 1e. This README grows with each step.
+> **Status:** Phase 1d done: every device has its own local database (PowerSync) and syncs its branch. Staff log in with their password once per device, then unlock with a PIN, also offline; each change uploads under its author's own session. The admin screens (staff, roles, branches, devices, sync) come in 1e. This README grows with each step.
 
 ## Requirements
 
@@ -28,8 +28,8 @@ pnpm db:start          # local Supabase in Docker (the first start downloads its
 pnpm db:reset          # build the database: migrations, then demo data
 pnpm sync:start        # local PowerSync in Docker (after db:start; again after every db:reset)
 pnpm bootstrap:admin   # create your Super Admin login
-cp apps/app/.env.example apps/app/.env.local   # then fill in the values (pnpm db:status shows them)
-pnpm dev               # http://localhost:5173
+cp apps/app/.env.e2e apps/app/.env.development.local   # pnpm dev talks to the local Supabase and PowerSync
+pnpm dev               # http://localhost:5173, log in with the Super Admin you just created
 ```
 
 ## Commands
@@ -42,7 +42,7 @@ Run from the repository root:
 | `pnpm build` | Production build into `apps/app/dist` |
 | `pnpm preview` | Serve the production build at http://localhost:4173. Use this to try offline mode. |
 | `pnpm test` | Unit tests (Vitest): formatting, translations, Sorani spelling, fonts, lint rules |
-| `pnpm test:e2e` | Build, then run Playwright tests for the web app (offline, RTL, language switching) and the Windows app (storage, workers and WebAssembly on `app://`, security rules) |
+| `pnpm test:e2e` | Build against the local backend (`--mode e2e`, `apps/app/.env.e2e`), then run Playwright tests for the web app (login, PIN, lock, offline, two devices syncing, RTL) and the Windows app (encrypted sessions, storage, workers and WebAssembly on `app://`, security rules). Needs `pnpm db:start` and `pnpm sync:start` |
 | `pnpm lint` | ESLint, including the project rules below |
 | `pnpm typecheck` | TypeScript type checking for every package |
 | `pnpm format` | Format all files with Prettier |
@@ -65,7 +65,7 @@ Run from the repository root:
 
 First-time setup for the browser tests: `pnpm --filter @gym/app exec playwright install chromium`.
 
-The database and sync commands need Docker running, so `pnpm check` includes neither `pnpm db:test` nor `pnpm test:sync`.
+The database, sync and end-to-end commands need Docker running, so `pnpm check` includes none of `pnpm db:test`, `pnpm test:sync` and `pnpm test:e2e`. The end-to-end tests create their own branches and staff and remove them afterwards.
 
 ## Project layout
 
@@ -73,8 +73,8 @@ The database and sync commands need Docker running, so `pnpm check` includes nei
 apps/app             React + Vite app (PWA)
   src/app            app-level wiring: providers, navigation, service worker
   src/components     shared components; ui/ holds the shadcn/ui components
-  src/features       one folder per module (home, settings, members, ...)
-  src/lib            preferences, formatting, logging
+  src/features       one folder per module (auth, home, settings, members, ...)
+  src/lib            preferences, formatting, logging, Supabase clients, the sync connection
   src/routes         TanStack Router file routes (thin; pages live in features/)
   e2e                Playwright tests
   android            Android project (Capacitor); its build output is not committed
@@ -147,6 +147,19 @@ Supabase runs locally in Docker for development (`supabase/config.toml` is the l
 2. In Dashboard → Authentication, turn off "Allow new users to sign up" and set the minimum password length to 8, as in `config.toml` (that file only configures the local setup). Keep the Email provider turned on: staff log in through it with their username.
 3. Copy `supabase/.env.example` to `supabase/.env.local`, fill in the URL and the secret key, then run `pnpm bootstrap:admin --remote`. Keep the secret key in that file only: it bypasses every security rule.
 
+## Login, PIN and lock
+
+Code: `apps/app/src/features/auth`, rules in `packages/core` (`pin.ts`, `settings.ts`, `permissions.ts`).
+
+- **First login on a device** (online): username and password, then a new password if a manager set it (`must_change_password`), then a 6-digit PIN if the staff member has none yet, then the device's branch if they have more than one. The branch is kept on the device (`local_kv`); changing it comes with the devices screen in 1e.
+- **The PIN** is hashed on the device (PBKDF2-SHA256, 600,000 rounds, random salt) and saved in `staff_pins`, so it also works on the staff member's other devices. Easy guesses (`111111`, `123456`, `121212`) are refused. PIN hashes never sync to other staff.
+- **What the device keeps per staff member**, encrypted: their Supabase session, PIN hash, permissions and wrong-PIN count (`packages/platform/src/secure-storage.ts`). Windows: DPAPI through Electron `safeStorage` (files in `%APPDATA%\gym-spa\secure`). Android: the Keystore. Browser: AES-GCM with a key the browser won't export, which is weaker: someone with the browser profile can still use the key.
+- **The lock screen** ("who's working") lists the staff who logged in on this device. The PIN unlocks offline. After `security.pin_max_attempts` wrong PINs (default 5) that staff member needs their password again. The app locks after `security.idle_lock_minutes` without activity (default 10), from the account menu ("Lock"), and on every reload or restart. Locking covers the app instead of closing it, so a half-filled form survives.
+- **Online checks** (after each unlock, when the network comes back, and every 5 minutes) refresh names, roles and permissions. A PIN removed by a manager (`reset_staff_pin`) or a deactivated account takes effect there.
+- **Uploads** use each change's author's own session. If that session has ended, their changes wait (the sync popover says who must log in) and are never dropped. "Log out of this device" is refused while the staff member has unsent changes.
+- **Sync** connects with the token of the staff member who unlocked last; switching staff reconnects but never clears or downloads the local data again.
+- **Permissions in the UI** (`usePermissions()`) come from the synced role permissions, with the copy from the last online check as a fallback. They only hide things: the server checks every change again.
+
 ## Sync (PowerSync)
 
 Every device works on its own SQLite database: the app reads and writes locally and never waits for the network. PowerSync downloads what the device needs and sends local changes to Supabase when it can.
@@ -163,6 +176,15 @@ Every device works on its own SQLite database: the app reads and writes locally 
 - `pnpm android:apk` builds `apps/app/android/app/build/outputs/apk/debug/app-debug.apk`. Install it with `adb install -r <apk>`, or copy it to the device and allow installing unknown apps. It is signed with the debug key; release signing comes in Phase 11.
 - The APK carries the production web build and serves it from `https://localhost`, so it works offline from the first launch. The local database will belong to that origin: never change Capacitor's scheme or hostname.
 - After changing web code, run `pnpm android:apk` again. To build or debug in Android Studio instead, run `pnpm --filter @gym/app android:sync` first, then `pnpm android:open`.
+- **Against the local backend** (emulator or USB device): build with the local addresses, then forward the two ports so `127.0.0.1` on the device reaches your PC:
+  ```sh
+  pnpm --filter @gym/app exec vite build --mode e2e
+  pnpm --filter @gym/app exec cap sync android
+  node apps/app/scripts/gradle.mjs assembleDebug
+  adb reverse tcp:54321 tcp:54321   # Supabase
+  adb reverse tcp:54380 tcp:54380   # PowerSync
+  ```
+  Debug builds allow plain HTTP to `localhost` only (`android/app/src/debug`); release builds are HTTPS-only.
 - App ID: `site.clickgroup.gymspa`. It becomes permanent once the app is published (Phase 11). The version comes from `apps/app/package.json`.
 - The app draws behind the status and navigation bars (Android 15+ requires it); the layout keeps content clear of them with `env(safe-area-inset-*)`.
 - Cloud backup is turned off: a restored backup would clone this device's identity (its receipt-number prefix) onto another device.
@@ -176,8 +198,11 @@ Every device works on its own SQLite database: the app reads and writes locally 
 - The app serves the same production web build from `app://gym-spa`. IndexedDB, OPFS, workers and WebAssembly work there (the e2e tests check this). The local database will belong to that origin: never change it.
 - No menu bar. Shortcuts: Ctrl and `=` / `-` / `0` zoom (by key position, so they also work with a Kurdish or Arabic keyboard layout), F11 full screen. When run from source (`pnpm desktop:dev`, `pnpm desktop:start`) there are also Ctrl+R (reload) and F12 or Ctrl+Shift+I (DevTools).
 - Security: the page has no Node or Electron access, only `window.gymDesktop`; the window can't navigate away from the app (https links open in the default browser); permissions such as camera or location are refused; Electron's security fuses are burned into the installed exe.
+- The secure store (`gymDesktop.secureGet/secureSet/secureDelete`) accepts calls only from the app's own pages, checks every key and value, and refuses to write when Windows encryption isn't available.
 - Kiosk mode, start with Windows, silent receipt printing and auto-update are built in later phases.
 
 ## Deploying the web app (Vercel)
 
 Import [miraann/gym-spa](https://github.com/miraann/gym-spa) in Vercel with **Root Directory = `apps/app`**. `apps/app/vercel.json` sets the install and build commands, the SPA rewrite and cache headers. Add the `VITE_*` environment variables from `apps/app/.env.example` in the Vercel project settings.
+
+**Content-Security-Policy:** every production build (web, Windows and Android) carries a CSP `<meta>` tag made by `vite.config.ts`. The app may only connect to itself and the Supabase and PowerSync addresses in the build's `VITE_*` variables, and only run its own scripts (the inline start-up script by its hash). Changing those addresses needs a new build. `pnpm dev` has no CSP, because Vite injects inline scripts there.

@@ -23,6 +23,11 @@ describe('resolveBackAction', () => {
     expect(resolveBackAction(false)).toBe('close-layer');
   });
 
+  it('leaves the app from the login and lock screens, whatever page is behind them', () => {
+    document.body.innerHTML = '<div data-auth-screen></div>';
+    expect(resolveBackAction(true)).toBe('minimize');
+  });
+
   it('ignores closed dialogs', () => {
     document.body.innerHTML = '<div role="dialog" data-state="closed"></div>';
     expect(resolveBackAction(true)).toBe('go-back');

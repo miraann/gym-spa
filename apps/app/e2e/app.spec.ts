@@ -1,4 +1,6 @@
-import { expect, test } from '@playwright/test';
+import { HOME_HEADING, expect, signIn, test, unlock } from './support/app';
+
+const LOGIN_HEADING = { level: 1, name: 'چوونەژوورەوە' } as const;
 
 test('opens in Kurdish, right-to-left, on first launch', async ({ page }) => {
   await page.goto('/');
@@ -7,11 +9,12 @@ test('opens in Kurdish, right-to-left, on first launch', async ({ page }) => {
   await expect(html).toHaveAttribute('lang', 'ckb');
   await expect(html).toHaveAttribute('dir', 'rtl');
   await expect(page).toHaveTitle('جیم و سپا');
-  await expect(page.getByRole('heading', { level: 1, name: 'سەرەکی' })).toBeVisible();
+  // Nobody has logged in on this device yet.
+  await expect(page.getByRole('heading', LOGIN_HEADING)).toBeVisible();
 });
 
-test('keeps working without internet after the first visit', async ({ page, context }) => {
-  await page.goto('/');
+test('keeps working without internet after the first visit', async ({ page, context, staff }) => {
+  await signIn(page, staff);
   // Wait until the service worker has cached the app and controls this page.
   await page.waitForFunction(async () => {
     await navigator.serviceWorker.ready;
@@ -23,7 +26,8 @@ test('keeps working without internet after the first visit', async ({ page, cont
   await context.setOffline(true);
 
   await page.reload();
-  await expect(page.getByRole('heading', { level: 1, name: 'سەرەکی' })).toBeVisible();
+  await unlock(page, staff);
+  await expect(page.getByRole('heading', HOME_HEADING)).toBeVisible();
   await expect(page.getByRole('status')).toContainText('ئۆفلاین');
 
   // The Kurdish font comes from the offline cache too.
@@ -35,10 +39,12 @@ test('keeps working without internet after the first visit', async ({ page, cont
 
   // A page that was never opened online also works: the service worker serves the app.
   await page.goto('/settings/display');
+  await unlock(page, staff);
   await expect(page.getByRole('heading', { level: 1, name: 'ڕووکار و زمان' })).toBeVisible();
 });
 
 test('switching to English flips to left-to-right and is remembered', async ({ page }) => {
+  // The login screen has the language menu too.
   await page.goto('/');
   await page.getByRole('button', { name: 'گۆڕینی زمان' }).click();
   await page.getByRole('menuitemradio', { name: 'English' }).click();
@@ -46,15 +52,15 @@ test('switching to English flips to left-to-right and is remembered', async ({ p
   const html = page.locator('html');
   await expect(html).toHaveAttribute('lang', 'en');
   await expect(html).toHaveAttribute('dir', 'ltr');
-  await expect(page.getByRole('heading', { level: 1, name: 'Home' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: 'Log in' })).toBeVisible();
 
   await page.reload();
   await expect(html).toHaveAttribute('dir', 'ltr');
-  await expect(page.getByRole('heading', { level: 1, name: 'Home' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: 'Log in' })).toBeVisible();
 });
 
-test('Arabic is right-to-left', async ({ page }) => {
-  await page.goto('/settings/display');
+test('Arabic is right-to-left', async ({ page, staff }) => {
+  await signIn(page, staff, '/settings/display');
   await page.getByRole('radio', { name: 'العربية' }).click();
 
   const html = page.locator('html');
@@ -63,17 +69,17 @@ test('Arabic is right-to-left', async ({ page }) => {
   await expect(page.getByRole('heading', { level: 1, name: 'المظهر واللغة' })).toBeVisible();
 });
 
-test('Eastern Arabic digits can be turned on', async ({ page }) => {
-  await page.goto('/settings/display');
+test('Eastern Arabic digits can be turned on', async ({ page, staff }) => {
+  await signIn(page, staff, '/settings/display');
   await expect(page.getByText('25,000 د.ع')).toBeVisible();
 
   await page.getByRole('radio', { name: '١٢٣' }).click();
   await expect(page.getByText('٢٥٬٠٠٠ د.ع')).toBeVisible();
 });
 
-test('Ctrl+K searches pages, also with a Kurdish keyboard layout', async ({ page }) => {
-  await page.goto('/');
-  await page.getByRole('heading', { level: 1 }).waitFor();
+test('Ctrl+K searches pages, also with a Kurdish keyboard layout', async ({ page, staff }) => {
+  await signIn(page, staff);
+  await expect(page.getByRole('heading', HOME_HEADING)).toBeVisible();
   // What a Sorani keyboard sends for Ctrl+K: the letter ک on the physical K key.
   await page.evaluate(() => {
     document.dispatchEvent(
@@ -87,7 +93,7 @@ test('Ctrl+K searches pages, also with a Kurdish keyboard layout', async ({ page
   await expect(page).toHaveURL(/\/settings\/display$/);
 });
 
-test('keeps content clear of the system bars on edge-to-edge screens', async ({ page }) => {
+test('keeps content clear of the system bars on edge-to-edge screens', async ({ page, staff }) => {
   // What the Android app gets when it draws behind the status bar, the navigation bar and a
   // camera cutout on the right (the side the Kurdish sidebar is on).
   const cdp = await page.context().newCDPSession(page);
@@ -97,7 +103,8 @@ test('keeps content clear of the system bars on edge-to-edge screens', async ({ 
 
   // Tablet: the sidebar is always shown.
   await page.setViewportSize({ width: 1280, height: 800 });
-  await page.goto('/');
+  await signIn(page, staff);
+  await expect(page.getByRole('heading', HOME_HEADING)).toBeVisible();
   const header = page.locator('header');
   await expect(header).toHaveCSS('padding-top', '24px');
   // The top bar starts at the very top, so its background fills the strip behind the status bar.
@@ -120,23 +127,35 @@ test('keeps content clear of the system bars on edge-to-edge screens', async ({ 
   await expect(sheet).toHaveCSS('padding-right', '32px');
 });
 
-test('unknown pages show a friendly message', async ({ page }) => {
-  await page.goto('/no-such-page');
-  await expect(page.getByText('ئەم پەڕەیە نەدۆزرایەوە')).toBeVisible();
-  await page.getByRole('link', { name: 'گەڕانەوە بۆ سەرەکی' }).click();
-  await expect(page.getByRole('heading', { level: 1, name: 'سەرەکی' })).toBeVisible();
+test('the login screen also stays clear of the system bars', async ({ page }) => {
+  const cdp = await page.context().newCDPSession(page);
+  await cdp.send('Emulation.setSafeAreaInsetsOverride', {
+    insets: { top: 24, bottom: 16, left: 0, right: 0 },
+  });
+  await page.goto('/');
+  await expect(page.locator('[data-auth-screen]')).toHaveCSS('padding-top', '24px');
+  await expect(page.locator('[data-auth-screen]')).toHaveCSS('padding-bottom', '16px');
 });
 
-test('opens the local database and shows the sync state', async ({ page }) => {
-  await page.goto('/');
+test('unknown pages show a friendly message', async ({ page, staff }) => {
+  await signIn(page, staff, '/no-such-page');
+  await expect(page.getByText('ئەم پەڕەیە نەدۆزرایەوە')).toBeVisible();
+  await page.getByRole('link', { name: 'گەڕانەوە بۆ سەرەکی' }).click();
+  await expect(page.getByRole('heading', HOME_HEADING)).toBeVisible();
+});
 
-  // Nobody is logged in yet, so the device keeps its work locally and doesn't sync.
+test('syncs once someone has logged in', async ({ page, staff }) => {
+  await signIn(page, staff);
+
   const indicator = page.getByRole('status');
-  await expect(indicator).toContainText('هاوکات ناکرێت');
+  await expect(indicator).toContainText('ئۆنلاین');
 
   // The details come from the local database (the upload queue and refused changes).
   await indicator.click();
   await expect(page.getByText('گۆڕانکارییە نەنێردراوەکان: 0')).toBeVisible();
-  await expect(page.getByText('هێشتا هاوکات نەکراوە')).toBeVisible();
-  await expect(page.getByRole('button', { name: 'ئێستا هاوکاتی بکە' })).toBeDisabled();
+  await expect(page.getByText(/^دوایین هاوکاتکردن:/)).toBeVisible();
+  const syncNow = page.getByRole('button', { name: 'ئێستا هاوکاتی بکە' });
+  await expect(syncNow).toBeEnabled();
+  await syncNow.click();
+  await expect(indicator).toContainText('ئۆنلاین');
 });

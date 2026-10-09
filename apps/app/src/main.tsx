@@ -10,6 +10,8 @@ import { startBackButtonHandling } from '@/app/back-button';
 import { AppProviders } from '@/app/providers';
 import { registerPwa } from '@/app/pwa';
 import { DatabaseError } from '@/components/database-error';
+import { AuthProvider } from '@/features/auth/auth-provider';
+import { AuthGate } from '@/features/auth/auth-gate';
 import { startPreferenceSync } from '@/lib/i18n';
 import { openAppDatabase } from '@/lib/local-database';
 import { logError } from '@/lib/logger';
@@ -33,10 +35,23 @@ async function start(root: HTMLElement) {
     return undefined;
   });
 
+  // End-to-end tests read the local database to check what synced. Only in `vite build --mode e2e`.
+  if (import.meta.env.MODE === 'e2e' && database) {
+    Object.assign(window, { gymTestDatabase: database });
+  }
+
   createRoot(root).render(
     <StrictMode>
       <AppProviders database={database}>
-        {database ? <RouterProvider router={router} /> : <DatabaseError />}
+        {database ? (
+          <AuthProvider database={database}>
+            <AuthGate>
+              <RouterProvider router={router} />
+            </AuthGate>
+          </AuthProvider>
+        ) : (
+          <DatabaseError />
+        )}
       </AppProviders>
     </StrictMode>,
   );

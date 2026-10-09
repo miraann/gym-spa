@@ -43,7 +43,8 @@
     "neverSynced": "Not synced yet",
     "pending": "Changes waiting to be sent: {{count}}",
     "rejected": "Refused changes: {{count}}",
-    "syncNow": "Sync now"
+    "syncNow": "Sync now",
+    "waitingForLogin": "{{name}} must log in so their changes can be sent"
   },
   "database": {
     "openFailedTitle": "This device's data can't be opened",

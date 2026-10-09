@@ -5,6 +5,7 @@ import { PageHeader } from '@/components/page-header';
 import { THEME_CHOICES } from '@/components/theme-choices';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useFormat } from '@/lib/format';
+import { useChangeLanguage } from '@/features/auth/use-change-language';
 import { setPreference, usePreferences } from '@/lib/preferences';
 
 const DIGIT_STYLES: readonly Digits[] = ['latn', 'arab'];
@@ -12,6 +13,7 @@ const DIGIT_STYLES: readonly Digits[] = ['latn', 'arab'];
 export function DisplaySettingsPage() {
   const { t } = useTranslation(['settings', 'common']);
   const preferences = usePreferences();
+  const changeLanguage = useChangeLanguage();
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6">
@@ -26,9 +28,7 @@ export function DisplaySettingsPage() {
             label: LANGUAGES[code].nativeName,
             lang: code,
           }))}
-          onChange={(language) => {
-            setPreference('language', language);
-          }}
+          onChange={changeLanguage}
         />
       </SettingCard>
 

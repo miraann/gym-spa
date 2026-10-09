@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { detectPlatform } from './runtime';
+import type { DesktopBridge } from './desktop-bridge';
 
-const bridge = { setTheme: () => undefined };
+const bridge: DesktopBridge = {
+  setTheme: () => undefined,
+  secureGet: () => Promise.resolve(null),
+  secureSet: () => Promise.resolve(),
+  secureDelete: () => Promise.resolve(),
+};
 
 describe('detectPlatform', () => {
   it('is the web app in a normal browser', () => {

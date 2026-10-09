@@ -8,7 +8,11 @@ import { randomUUID } from 'node:crypto';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { UpdateType, type PowerSyncBackendConnector } from '@powersync/common';
+import {
+  UpdateType,
+  type PowerSyncBackendConnector,
+  type SyncStreamSubscription,
+} from '@powersync/common';
 import { PowerSyncDatabase } from '@powersync/node';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -115,6 +119,8 @@ interface Device {
   disconnect(): Promise<void>;
   subscribeBranch(branchId: string): Promise<void>;
   waitForUploads(): Promise<void>;
+  /** Unsubscribes its streams and closes its database. */
+  close(): Promise<void>;
 }
 
 function createDevice(name: string, signedIn: Staff, authors: Staff[] = [signedIn]): Device {
@@ -137,16 +143,23 @@ function createDevice(name: string, signedIn: Staff, authors: Staff[] = [signedI
       backoffMs: () => 100,
     }),
   };
+  // Kept so they can be unsubscribed in cleanup: a dropped subscription is reported as leaked.
+  const subscriptions: SyncStreamSubscription[] = [];
   return {
     db,
     connect: () => db.connect(connector, { retryDelayMs: 200 }),
     disconnect: () => db.disconnect(),
     async subscribeBranch(branchId) {
       const subscription = await db.syncStream('branch', { branch_id: branchId }).subscribe();
+      subscriptions.push(subscription);
       await subscription.waitForFirstSync();
     },
     async waitForUploads() {
       await waitFor(async () => (await db.getUploadQueueStats()).count === 0);
+    },
+    async close() {
+      for (const subscription of subscriptions.splice(0)) subscription.unsubscribe();
+      await db.close();
     },
   };
 }
@@ -186,7 +199,7 @@ beforeAll(async () => {
 }, 60_000);
 
 afterAll(async () => {
-  await Promise.all(devices.map((device) => device.db.close()));
+  await Promise.all(devices.map((device) => device.close()));
   // Test data only. Real staff are never deleted.
   await admin.from('settings').delete().in('branch_id', [branchX, branchY]);
   await admin.from('staff_branches').delete().in('staff_id', staffIds);

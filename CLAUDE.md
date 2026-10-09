@@ -96,6 +96,7 @@ Inside the app, shared code goes in `components/ui` and `lib`.
 - SQL helpers live in the private `app` schema (not exposed to the API). In policies write `(select app.has_permission('x'))` and `branch_id in (select app.accessible_branch_ids())` so they run once per query, not per row.
 - New tables follow README → Database → Adding a table (`stamp`, `read_only` and `audit` triggers, explicit grants, tests). Guards reject with a stable key as the error message (e.g. `cannot_grant_role`) and an English detail; the app translates the key.
 - All schema changes go in numbered migrations in `supabase/migrations`. Generate TS types with `supabase gen types`.
+- **Multi-row business operations are atomic on the server:** all rows succeed or all are rejected together, never a partial application. Examples: payment + invoice + invoice_items + subscription (Phase 3), locker assignment, spa booking. The row-by-row upload of Phase 1 is not enough for these; propose the mechanism when Phase 3 starts.
 - Never delete financial rows. Refunds and voids need a permission and a reason. Staff accounts are deactivated, never hard-deleted.
 - Postgres audit trigger on important tables: who, when, table, row id, old/new values, IP/device.
 - NFC UIDs are normalized to uppercase hex with no separators, with a unique index.

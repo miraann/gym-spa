@@ -1,7 +1,8 @@
 import { Link, useRouterState } from '@tanstack/react-router';
 import { DumbbellIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { NAV_GROUPS, type NavItem } from '@/app/navigation';
+import { visibleNavGroups, type NavItem } from '@/app/navigation';
+import { usePermissions } from '@/features/auth/use-permissions';
 import {
   Sidebar,
   SidebarContent,
@@ -19,6 +20,7 @@ import {
 
 export function AppSidebar({ side }: { readonly side: 'left' | 'right' }) {
   const { t } = useTranslation(['common', 'nav']);
+  const groups = visibleNavGroups(usePermissions());
 
   return (
     <Sidebar side={side} collapsible="icon">
@@ -43,7 +45,7 @@ export function AppSidebar({ side }: { readonly side: 'left' | 'right' }) {
       </SidebarHeader>
 
       <SidebarContent>
-        {NAV_GROUPS.map((group) => (
+        {groups.map((group) => (
           <SidebarGroup key={group.key}>
             <SidebarGroupLabel>{t(`nav:groups.${group.key}`)}</SidebarGroupLabel>
             <SidebarMenu>

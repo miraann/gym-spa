@@ -4,3 +4,4 @@ export { minimizeApp, onBackButton } from './back-button';
 export { applyNativeTheme } from './theme';
 export { openLocalDatabase, type LocalDatabaseOptions } from './database';
 export type { ThemeSource } from './desktop-bridge';
+export { secureStorage, type SecureStorage } from './secure-storage';
