@@ -56,6 +56,7 @@ export default defineConfig(
     rules: {
       'gym/no-physical-direction-classes': 'error',
       'gym/no-hardcoded-ui-text': 'error',
+      'gym/no-import-meta-env-object': 'error',
       'no-restricted-imports': [
         'error',
         {
@@ -95,6 +96,8 @@ export default defineConfig(
     plugins: { gym },
     rules: {
       'gym/no-physical-direction-classes': 'error',
+      // These packages are bundled into the app too.
+      'gym/no-import-meta-env-object': 'error',
     },
   },
 );

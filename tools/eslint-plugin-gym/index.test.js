@@ -46,6 +46,25 @@ tester.run('no-physical-direction-classes', plugin.rules['no-physical-direction-
   ],
 });
 
+tester.run('no-import-meta-env-object', plugin.rules['no-import-meta-env-object'], {
+  valid: [
+    'const url = import.meta.env.VITE_SUPABASE_URL',
+    'if (import.meta.env.DEV) start()',
+    'const here = import.meta.url',
+    // A define key in vite.config.ts is a string, not a use.
+    'export default { define: { "import.meta.env.VITE_APP_VERSION": "1.0.0" } }',
+  ],
+  invalid: [
+    'readBackendConfig(import.meta.env)',
+    'function read(env = import.meta.env) { return env.VITE_SUPABASE_URL }',
+    'const { VITE_SUPABASE_URL } = import.meta.env',
+    'const value = import.meta.env[name]',
+    'const value = import.meta.env["VITE_SUPABASE_URL"]',
+    'const value = import.meta.env?.VITE_SUPABASE_URL',
+    'console.log({ ...import.meta.env })',
+  ].map((code) => ({ code, errors: [{ messageId: 'wholeObject' }] })),
+});
+
 tester.run('no-hardcoded-ui-text', plugin.rules['no-hardcoded-ui-text'], {
   valid: [
     '<p>{t("home.title")}</p>',

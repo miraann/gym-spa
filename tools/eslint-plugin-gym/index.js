@@ -1,7 +1,8 @@
 /**
- * Project lint rules that enforce the language rules in CLAUDE.md:
+ * Project lint rules:
  * - no-physical-direction-classes: only logical Tailwind classes, so layouts mirror in RTL.
  * - no-hardcoded-ui-text: user-facing text must come from translations.
+ * - no-import-meta-env-object: read build variables one at a time, so only those reach the bundle.
  */
 
 /** Utilities that need a value: `ml-4`, `left-0`, `scroll-pr-2` (bare `left` is not a class). */
@@ -144,10 +145,54 @@ const noHardcodedUiText = {
   },
 };
 
+/**
+ * Vite replaces `import.meta.env.VITE_NAME` with that one value. Any other use of `import.meta.env`
+ * (the object itself, destructuring, `[name]`, `?.`) becomes an object holding every VITE_*
+ * variable of the build, which then ships in the public bundle. Vercel adds its own: git author,
+ * commit messages, project ids.
+ */
+const noImportMetaEnvObject = {
+  meta: {
+    type: 'problem',
+    docs: {
+      description:
+        'Read build variables one at a time (import.meta.env.VITE_NAME): any other use puts every VITE_* variable into the bundle.',
+    },
+    messages: {
+      wholeObject:
+        'Read one variable at a time: import.meta.env.VITE_NAME. Any other use of import.meta.env puts every VITE_* variable of the build (Vercel adds its own) into the public bundle.',
+    },
+    schema: [],
+  },
+  create(context) {
+    return {
+      MetaProperty(node) {
+        if (node.meta.name !== 'import' || node.property.name !== 'meta') return;
+        const env = node.parent;
+        const isEnv =
+          env.type === 'MemberExpression' &&
+          env.object === node &&
+          !env.computed &&
+          env.property.type === 'Identifier' &&
+          env.property.name === 'env';
+        if (!isEnv) return;
+        const read = env.parent;
+        const readsOneVariable =
+          read.type === 'MemberExpression' &&
+          read.object === env &&
+          !read.computed &&
+          !read.optional;
+        if (!readsOneVariable) context.report({ node: env, messageId: 'wholeObject' });
+      },
+    };
+  },
+};
+
 export default {
   meta: { name: 'eslint-plugin-gym', version: '0.1.0' },
   rules: {
     'no-physical-direction-classes': noPhysicalDirectionClasses,
     'no-hardcoded-ui-text': noHardcodedUiText,
+    'no-import-meta-env-object': noImportMetaEnvObject,
   },
 };

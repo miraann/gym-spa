@@ -6,8 +6,19 @@ export interface BackendConfig {
   readonly supabaseKey: string;
 }
 
+/** The build values the backend address comes from. */
+export type BackendEnv = Pick<ImportMetaEnv, 'VITE_SUPABASE_URL' | 'VITE_SUPABASE_PUBLISHABLE_KEY'>;
+
+// One variable at a time, so Vite puts only these two values into the bundle. Using
+// import.meta.env as an object would publish every VITE_* variable of the build, Vercel's own
+// included (git author, commit messages, project ids); gym/no-import-meta-env-object forbids it.
+const BUILD_ENV: BackendEnv = {
+  VITE_SUPABASE_URL: import.meta.env.VITE_SUPABASE_URL,
+  VITE_SUPABASE_PUBLISHABLE_KEY: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+};
+
 /** The backend address from the build; null when a build has none. */
-export function readBackendConfig(env: ImportMetaEnv = import.meta.env): BackendConfig | null {
+export function readBackendConfig(env: BackendEnv = BUILD_ENV): BackendConfig | null {
   const supabaseUrl = env.VITE_SUPABASE_URL?.trim();
   const supabaseKey = env.VITE_SUPABASE_PUBLISHABLE_KEY?.trim();
   if (!supabaseUrl || !supabaseKey) return null;

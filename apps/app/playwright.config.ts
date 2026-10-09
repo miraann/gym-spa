@@ -4,7 +4,7 @@ const PORT = 4173;
 const isCI = Boolean(process.env.CI);
 
 // Runs against the production build (`pnpm test:e2e` builds first), because the service worker
-// that makes the app work offline only exists in production builds.
+// and the Content-Security-Policy only exist in production builds.
 export default defineConfig({
   testDir: './e2e',
   fullyParallel: true,
