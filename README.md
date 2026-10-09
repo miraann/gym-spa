@@ -145,7 +145,7 @@ Supabase runs locally in Docker for development (`supabase/config.toml` is the l
    pnpm --filter @gym/supabase exec supabase db push --workdir ..
    ```
 2. In Dashboard → Authentication, turn off "Allow new users to sign up" and set the minimum password length to 8, as in `config.toml` (that file only configures the local setup). Keep the Email provider turned on: staff log in through it with their username.
-3. Copy `supabase/.env.example` to `supabase/.env.local`, fill in the URL and the secret key, then run `pnpm bootstrap:admin --remote`. Keep the secret key in that file only: it bypasses every security rule.
+3. Copy `supabase/.env.example` to `supabase/.env.local`, fill in the URL and the secret key, then run `pnpm bootstrap:admin --remote`. In a new project it also creates the first branch (`B1`), so the admin can log in. Keep the secret key in that file only: it bypasses every security rule.
 
 ## Login, PIN and lock
 

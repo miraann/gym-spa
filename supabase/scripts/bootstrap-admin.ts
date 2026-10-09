@@ -1,10 +1,12 @@
 // Creates the first Super Admin account of a Supabase project. Everyone else is added from the app.
+// A new project (no branches yet) also gets its first branch, B1, so the admin can log in.
 //
 //   pnpm bootstrap:admin            local Supabase (start it first with `pnpm db:start`)
 //   pnpm bootstrap:admin --remote   the project in supabase/.env.local (SUPABASE_URL, SUPABASE_SECRET_KEY)
 //
-// Asks for the username, full name and password. For automation, pass --username and --full-name,
-// and the password in BOOTSTRAP_ADMIN_PASSWORD. The secret key is used only here, on this
+// Asks for the username, full name and password (and the first branch's Kurdish name). For
+// automation, pass --username, --full-name and --branch-name, and the password in
+// BOOTSTRAP_ADMIN_PASSWORD. The secret key is used only here, on this
 // computer: it never goes into the app or into git.
 import { execSync } from 'node:child_process';
 import { createInterface } from 'node:readline/promises';
@@ -14,12 +16,17 @@ import { isValidUsername, normalizeUsername, staffEmail } from '@gym/core';
 import type { Database } from '@gym/db';
 
 const MIN_PASSWORD_LENGTH = 8;
+/** The first branch's code; it is printed in receipt numbers and never changes. */
+const FIRST_BRANCH_CODE = 'B1';
+/** "Main branch"; renamed later in the app. */
+const DEFAULT_BRANCH_NAME = 'لقی سەرەکی';
 
 const { values: args } = parseArgs({
   options: {
     remote: { type: 'boolean', default: false },
     username: { type: 'string' },
     'full-name': { type: 'string' },
+    'branch-name': { type: 'string' },
   },
 });
 
@@ -96,10 +103,27 @@ function readHidden(question: string): Promise<string> {
   });
 }
 
-async function askDetails(): Promise<{ username: string; fullName: string; password: string }> {
+interface Details {
+  readonly username: string;
+  readonly fullName: string;
+  readonly password: string;
+  /** null: the project has branches already. */
+  readonly branchName: string | null;
+}
+
+async function askDetails(needsBranch: boolean): Promise<Details> {
   const prompt = createInterface({ input: process.stdin, output: process.stdout });
   const username = normalizeUsername(args.username ?? (await prompt.question('Username: ')));
   const fullName = (args['full-name'] ?? (await prompt.question('Full name: '))).trim();
+  let branchName: string | null = null;
+  if (needsBranch) {
+    const answer =
+      args['branch-name'] ??
+      (await prompt.question(
+        `First branch name in Kurdish (Enter for "${DEFAULT_BRANCH_NAME}"): `,
+      ));
+    branchName = answer.trim() || DEFAULT_BRANCH_NAME;
+  }
   prompt.close();
 
   if (!isValidUsername(username)) {
@@ -107,6 +131,9 @@ async function askDetails(): Promise<{ username: string; fullName: string; passw
   }
   if (fullName.length < 1 || fullName.length > 100) {
     fail('The full name must be 1-100 characters.');
+  }
+  if (branchName !== null && branchName.length > 100) {
+    fail('The branch name must be at most 100 characters.');
   }
 
   let password = process.env.BOOTSTRAP_ADMIN_PASSWORD;
@@ -119,7 +146,7 @@ async function askDetails(): Promise<{ username: string; fullName: string; passw
   if (password.length < MIN_PASSWORD_LENGTH) {
     fail(`The password must be at least ${MIN_PASSWORD_LENGTH} characters.`);
   }
-  return { username, fullName, password };
+  return { username, fullName, password, branchName };
 }
 
 async function main() {
@@ -151,7 +178,26 @@ async function main() {
     fail('This project already has a Super Admin. Add other staff from the app.');
   }
 
-  const { username, fullName, password } = await askDetails();
+  const { count: branchCount, error: branchCountError } = await supabase
+    .from('branches')
+    .select('id', { count: 'exact', head: true });
+  if (branchCountError) {
+    fail(`Could not read the branches: ${branchCountError.message}`);
+  }
+
+  const { username, fullName, password, branchName } = await askDetails(branchCount === 0);
+
+  // The branch first: the new admin (all branches) gets access to it as soon as they are created.
+  // If creating the admin fails after this, running the script again keeps the branch.
+  if (branchName !== null) {
+    const { error: branchError } = await supabase
+      .from('branches')
+      .insert({ code: FIRST_BRANCH_CODE, name_ckb: branchName });
+    if (branchError) {
+      fail(`Could not create the first branch: ${branchError.message}`);
+    }
+    console.log(`✔ Branch ${FIRST_BRANCH_CODE} "${branchName}" created.`);
+  }
 
   const { data: created, error: createError } = await supabase.auth.admin.createUser({
     email: staffEmail(username),
