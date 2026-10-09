@@ -2,7 +2,7 @@
 
 Offline-first, multi-branch gym & spa system with NFC check-in. Targets: Web/PWA, Android, Windows (iOS later).
 
-**Repository:** https://github.com/miraann/gym-spa (git remote `origin`, public).
+**Repository:** https://github.com/miraann/gym-spa (git remote `origin`, private).
 
 **Full spec: [gym-spa-system-prompt.md](gym-spa-system-prompt.md).** It is the source of truth. This file is only a summary; if the two disagree, the spec wins. Read the relevant spec section before starting any phase or module.
 

@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   AccountStore,
   authStorageKey,
+  canUseBranch,
   parseAccounts,
   pinBlocker,
   staffStorageKey,
@@ -36,6 +37,7 @@ function account(overrides: Partial<DeviceAccount> = {}): DeviceAccount {
     fullName: 'ئاراس کەریم',
     roleId: 'role-1',
     permissions: ['members.view'],
+    branchIds: ['branch-1'],
     preferredLanguage: null,
     mustChangePassword: false,
     pin: { algorithm: 'pbkdf2-sha256', iterations: 600_000, salt: 'c2FsdA==', hash: 'aGFzaA==' },
@@ -58,6 +60,18 @@ describe('pinBlocker', () => {
     expect(pinBlocker(account({ pinAttempts: { failures: 5, lockedOut: true } }))).toBe(
       'locked_out',
     );
+  });
+});
+
+describe('canUseBranch', () => {
+  it('lets staff in only on a device working in one of their branches', () => {
+    expect(canUseBranch(account(), 'branch-1')).toBe(true);
+    expect(canUseBranch(account(), 'branch-2')).toBe(false);
+    expect(canUseBranch(account({ branchIds: [] }), 'branch-1')).toBe(false);
+  });
+
+  it('allows the first login before the device has a branch', () => {
+    expect(canUseBranch(account({ branchIds: [] }), null)).toBe(true);
   });
 });
 
@@ -94,6 +108,13 @@ describe('parseAccounts', () => {
     expect(parsed?.pin).toBeNull();
     expect(parsed?.preferredLanguage).toBeNull();
     expect(parsed?.passwordRequired).toBeNull();
+  });
+
+  it('gives an account saved without branches no branch until the next online check', () => {
+    // JSON leaves out undefined values: the key is missing, as in older saves.
+    const [parsed] = parseAccounts(JSON.stringify([{ ...account(), branchIds: undefined }]));
+    expect(parsed?.branchIds).toEqual([]);
+    expect(parsed && canUseBranch(parsed, 'branch-1')).toBe(false);
   });
 });
 

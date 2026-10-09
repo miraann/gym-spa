@@ -21,6 +21,7 @@ import { setPreference } from '@/lib/preferences';
 import { SyncConnection, pendingByAuthor, usableSession } from '@/lib/sync-connection';
 import {
   AccountStore,
+  canUseBranch,
   pinBlocker,
   staffStorageKey,
   withAttemptsCleared,
@@ -53,6 +54,7 @@ export type AuthStep =
 export type UnlockResult =
   | { readonly kind: 'unlocked' }
   | { readonly kind: 'wrong_pin'; readonly triesLeft: number }
+  | { readonly kind: 'no_branch_access' }
   | { readonly kind: 'password_required'; readonly reason: PasswordReason };
 
 export type LogoutResult =
@@ -211,7 +213,7 @@ export class AuthController {
       const existing = this.store.get(staffId);
       await this.store.save(
         withAttemptsCleared({
-          ...accountFromProfile(profile, existing),
+          ...accountFromProfile(profile, branches, existing),
           passwordRequired: null,
         }),
       );
@@ -280,6 +282,8 @@ export class AuthController {
   async unlock(staffId: string, pinInput: string): Promise<UnlockResult> {
     const account = this.store.get(staffId);
     if (!account) return { kind: 'password_required', reason: 'session_ended' };
+    // Checked first, so it never uses up a PIN try. A password login refuses them too.
+    if (!canUseBranch(account, this.state.branchId)) return { kind: 'no_branch_access' };
     const blocker = pinBlocker(account);
     if (blocker || !account.pin) return { kind: 'password_required', reason: blocker ?? 'setup' };
 
@@ -361,13 +365,22 @@ export class AuthController {
         await this.markPasswordRequired(staffId, 'inactive');
         return;
       }
-      await this.store.update(staffId, (account) => ({
-        ...accountFromProfile(profile, account),
+      const branches = await fetchBranches(client);
+      const updated = await this.store.update(staffId, (account) => ({
+        ...accountFromProfile(profile, branches, account),
         passwordRequired:
           account.pin && !profile.pin && account.passwordRequired === null
             ? 'pin_reset'
             : account.passwordRequired,
       }));
+      // Access to this device's branch was taken away: they stop at once, like a deactivation.
+      if (
+        updated &&
+        this.state.activeId === staffId &&
+        !canUseBranch(updated, this.state.branchId)
+      ) {
+        this.lock();
+      }
     } catch (error) {
       // Network trouble: the next check tries again.
       if (!(error instanceof AuthFlowError && error.key === 'network')) {
@@ -439,13 +452,18 @@ export class AuthController {
   }
 }
 
-function accountFromProfile(profile: StaffProfile, existing?: DeviceAccount): DeviceAccount {
+function accountFromProfile(
+  profile: StaffProfile,
+  branches: readonly BranchChoice[],
+  existing?: DeviceAccount,
+): DeviceAccount {
   return {
     staffId: profile.staffId,
     username: profile.username,
     fullName: profile.fullName,
     roleId: profile.roleId,
     permissions: profile.permissions,
+    branchIds: branches.map((branch) => branch.id),
     preferredLanguage: profile.preferredLanguage,
     mustChangePassword: profile.mustChangePassword,
     pin: profile.pin,

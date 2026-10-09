@@ -265,6 +265,33 @@ test('a deactivated staff member is locked out as soon as the device checks', as
   await expect(page.getByRole('alert')).toContainText('ئەم هەژمارە ناچالاک کراوە.');
 });
 
+test("staff who lose access to the device's branch can't unlock it", async ({ page, staff }) => {
+  await signIn(page, staff);
+  await expect(page.getByRole('heading', HOME_HEADING)).toBeVisible();
+
+  await write(admin().from('staff_branches').delete().eq('staff_id', staff.id));
+  await page.evaluate(() => window.dispatchEvent(new Event('online')));
+
+  // Locked at the next online check, and the PIN no longer opens this device.
+  await expect(page.getByRole('heading', { level: 1, name: 'کێ کار دەکات؟' })).toBeVisible();
+  await expect(page.getByRole('button', { name: staff.fullName })).toContainText(
+    'دەستی بەم لقە ناگات',
+  );
+  await page.getByRole('button', { name: staff.fullName }).click();
+  await expect(page.getByRole('alert')).toHaveText(
+    'دەستت بەم لقە ناگات. پەیوەندی بە بەڕێوەبەر بکە.',
+  );
+  await expect(page.locator('input[inputmode="numeric"]')).toHaveCount(0);
+
+  // Their password doesn't get them in either.
+  await page.getByRole('button', { name: 'گەڕانەوە' }).click();
+  await page.getByRole('button', { name: 'کارمەندێکی تر' }).click();
+  await submitPasswordLogin(page, staff);
+  await expect(page.getByRole('alert')).toHaveText(
+    'دەستت بەم لقە ناگات. پەیوەندی بە بەڕێوەبەر بکە.',
+  );
+});
+
 test('the menu shows only what the role allows', async ({ page, staff, data }) => {
   await signIn(page, staff);
   const sidebar = page.locator('[data-slot="sidebar"]').first();

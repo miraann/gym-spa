@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { useFormat } from '@/lib/format';
 import { logError } from '@/lib/logger';
-import { pinBlocker, type DeviceAccount, type PasswordReason } from '../accounts';
+import { canUseBranch, pinBlocker, type DeviceAccount, type PasswordReason } from '../accounts';
 import { useAuthController, useAuthState } from '../auth-context';
 import { AuthLayout } from './auth-layout';
 import { FormError } from './form-error';
@@ -29,7 +29,7 @@ export function LockScreen({
   readonly onOtherStaff: () => void;
 }) {
   const { t } = useTranslation('auth');
-  const { accounts } = useAuthState();
+  const { accounts, branchId } = useAuthState();
 
   return (
     <AuthLayout title={t('lock.title')} description={t('lock.description')}>
@@ -55,11 +55,15 @@ export function LockScreen({
                   {account.username}
                 </span>
               </span>
-              {pinBlocker(account) && (
-                <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                  <KeyRoundIcon className="size-3.5" />
-                  {t('lock.needsPassword')}
-                </span>
+              {!canUseBranch(account, branchId) ? (
+                <span className="text-xs text-muted-foreground">{t('lock.noBranchAccess')}</span>
+              ) : (
+                pinBlocker(account) && (
+                  <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <KeyRoundIcon className="size-3.5" />
+                    {t('lock.needsPassword')}
+                  </span>
+                )
               )}
             </Button>
           </li>
@@ -88,6 +92,7 @@ export function PinScreen({
 }) {
   const { t } = useTranslation('auth');
   const controller = useAuthController();
+  const { branchId } = useAuthState();
   const format = useFormat();
   const [busy, setBusy] = useState(false);
   const [wrong, setWrong] = useState<number | null>(null);
@@ -112,8 +117,14 @@ export function PinScreen({
   };
 
   return (
-    <AuthLayout title={account.fullName} description={blocker ? undefined : t('pin.title')}>
-      {blocker ? (
+    <AuthLayout
+      title={account.fullName}
+      description={blocker || !canUseBranch(account, branchId) ? undefined : t('pin.title')}
+    >
+      {!canUseBranch(account, branchId) ? (
+        // A password login wouldn't help: only a manager can give them this branch.
+        <FormError message={t('errors.no_branch_access')} />
+      ) : blocker ? (
         <>
           <FormError message={t(`passwordRequired.${blocker}`)} />
           <Button

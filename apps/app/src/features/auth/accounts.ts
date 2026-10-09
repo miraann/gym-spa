@@ -27,6 +27,8 @@ export interface DeviceAccount {
   readonly roleId: string;
   /** From the last online check, for when the local database doesn't have the role yet. */
   readonly permissions: readonly string[];
+  /** The branches they could access at the last online check; they work only in these. */
+  readonly branchIds: readonly string[];
   readonly preferredLanguage: Language | null;
   readonly mustChangePassword: boolean;
   readonly pin: PinHash | null;
@@ -68,6 +70,10 @@ function parseAccount(value: unknown): DeviceAccount | null {
     fullName,
     roleId,
     permissions: permissions.filter((key): key is string => typeof key === 'string'),
+    // Saved before branch access was cached: no branch until the next online check.
+    branchIds: Array.isArray(record.branchIds)
+      ? record.branchIds.filter((id): id is string => typeof id === 'string')
+      : [],
     preferredLanguage: isLanguage(record.preferredLanguage) ? record.preferredLanguage : null,
     mustChangePassword: record.mustChangePassword === true,
     pin: parsePinHash(record.pin),
@@ -98,6 +104,14 @@ export function pinBlocker(account: DeviceAccount): PasswordReason | null {
   if (account.pinAttempts.lockedOut) return 'locked_out';
   if (!account.pin || account.mustChangePassword) return 'setup';
   return null;
+}
+
+/**
+ * Whether the staff member may log in or unlock on a device working in this branch. Without a
+ * branch yet (first login), the login itself asks them to choose one of theirs.
+ */
+export function canUseBranch(account: DeviceAccount, branchId: string | null): boolean {
+  return branchId === null || account.branchIds.includes(branchId);
 }
 
 /** The account after a wrong PIN; locked out on the last allowed try. */
