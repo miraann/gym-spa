@@ -27,7 +27,7 @@ One app and one set of migrations, with two backends that expose the same API (P
 ## How to work
 
 - Build in the phases from spec §8, in order. **Stop for the user's review after each phase.**
-- **When a phase is split into sub-steps (Phase 1: 1a–1e, then 1d-R (PowerSync removed), 1e, 1f (offline-edition server test)), stop for review after each sub-step** and say how to test it and what to commit. The user makes the commits.
+- **When a phase is split into sub-steps (Phase 1: 1a–1d, then 1d-R (PowerSync removed), the auth spike (Supabase Auth on the offline edition's Windows server PC), the design step (Calm Bento theme, adaptive navigation and Appearance settings, see Design below), 1e, 1f (offline-edition server test)), stop for review after each sub-step** and say how to test it and what to commit. The user makes the commits.
 - Before writing code for a phase, present the plan (tables, files, assumptions) and **wait for approval**.
 - At the end of each phase (and sub-step), report: what was built, migrations added, how to test manually, and known limitations.
 - §4.7 Staff & HR is built in Phase 7 (together with classes and personal training).
@@ -97,10 +97,11 @@ Inside the app, shared code goes in `components/ui` and `lib`.
 Soft, tonal, rounded, touch-first. The app looks like a modern phone/tablet app, not an old admin panel. Calm surfaces for reception staff who use it all day; the check-in kiosk is the one loud screen. This extends spec §6 and doesn't replace it.
 
 - **Tokens only.** Colors, radii and shadows are CSS variables in `apps/app/src/styles.css` (OKLCH). Components use semantic classes (`bg-primary`, `text-muted-foreground`, `bg-success`), never raw palette classes like `bg-indigo-600` or hex values.
-- **Color:** one brand accent, **indigo-violet** (about `oklch(0.51 0.23 277)` light, `oklch(0.68 0.17 277)` dark), for primary buttons, the active nav item, focus rings and selected chips. **Green / amber / red are reserved for status** (allowed, warning, denied, paid/overdue) through `--success`, `--warning` and `--destructive`. Never use them as decoration or brand. Status is never shown by color alone: always add an icon and text too.
+- **Color:** one brand color per gym, set in Appearance settings (spec §6.1). The default is **indigo-violet** (about `oklch(0.51 0.23 277)` light, `oklch(0.68 0.17 277)` dark); presets blue, purple, gray, or a custom color. It is used for primary buttons, the active nav item, focus rings and selected chips. **Green / amber / red are reserved for status** (allowed, warning, denied, paid/overdue) through `--success`, `--warning` and `--destructive`. They are fixed: they never follow the brand color, and they are never decoration or brand. Status is never shown by color alone: always add an icon and text too.
 - **Surfaces:** layer by tone, not by heavy borders or shadows. The page background is a slightly tinted off-white (dark: tinted near-black); cards are one step lighter. Dark mode gets the same care as light mode.
-- **Shape:** `--radius` about `1rem`. Cards `rounded-2xl`/`rounded-3xl`, buttons and inputs `rounded-xl`, chips, badges and the tab bar are pills.
-- **Type:** UniSalar has one weight, so in Kurdish the browser fakes bold. Build hierarchy with size, color and space, not font weight. KPIs and money totals use big numerals; money and count columns use `tabular-nums`.
+- **Shape:** corner style per gym: soft (default, `--radius` about `1rem`), medium or sharp. Cards `rounded-2xl`/`rounded-3xl`, buttons and inputs `rounded-xl`. These all derive from `--radius`, so the corner style switches everywhere. Chips, badges and the tab bar stay pills.
+- **Type:** UniSalar has one weight, so in Kurdish the browser fakes bold. Build hierarchy with size, color and space, not font weight. KPIs and money totals use big numerals; money and count columns use `tabular-nums`. All sizes are in `rem`, so the personal "large text" setting scales text, spacing and touch targets together.
+- **Appearance (ڕووکار) settings, spec §6.1:** the app never has just one look. The **gym** look (needs `settings.edit`, gym-wide rows in `settings`) sets the brand color (with a WCAG AA contrast warning for custom colors), corner style and logo (kept in Postgres, not Storage, so both editions work). The **personal** look (staff profile, cached on the device) sets light / dark / follow device and text size normal / large. All of it is CSS variables set at runtime, so changes apply without a reload. The color math and contrast check live in `packages/core`, with tests.
 - **Layout by width** (the sidebar's mobile breakpoint is 768px):
   - **Phone (< 768px):** a floating pill **bottom tab bar** (safe-area aware) with the staff member's 4 most-used destinations plus "More", which opens a bottom sheet with the full grouped menu. If they can check members in, the middle tab is a raised scan button. Dialogs become bottom sheets, tables become card lists, and primary actions sit in the thumb zone (sticky bottom bar).
   - **Tablet (768–1279px):** the sidebar collapsed to an icon **rail** on the reading-start side. In landscape, list and detail sit side by side (e.g. members list + profile).
@@ -112,6 +113,10 @@ Soft, tonal, rounded, touch-first. The app looks like a modern phone/tablet app,
 - **Motion:** short (150–250ms), spring-like for sheets and the kiosk result; wrap it in `motion-safe:` so reduced-motion users get none. Motion never delays work.
 - **Check-in kiosk (spec §6):** dark idle screen; the result fills the whole screen with the status color, a large member photo, the name in very large text, one line of reason, and a countdown ring for the 5-second auto-reset. Readable from 2 meters, in portrait and landscape.
 - **States:** skeletons shaped like the real content; empty states with an icon, one line of text and an action; contrast at least WCAG AA; visible focus rings.
+- **Layout guards** (seen in the design preview):
+  - Rail labels never overflow: a long one like "ڕێکخستنەکان" wraps to at most two lines or uses a short label, with the full name as tooltip and accessible name.
+  - Filter chip rows are never clipped: they scroll sideways with padding at both ends on phones and wrap on wider screens.
+  - Phone scroll areas end with bottom padding equal to the tab bar, the safe area and any floating button, so the last item is never hidden behind the bottom bar.
 
 ## Database rules
 

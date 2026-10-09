@@ -174,7 +174,8 @@ Do not hardcode role checks in the UI only. Use a permission-based model:
 - Reports (filter by date range + branch, export to Excel/PDF): revenue by source, payments by method, attendance trends, peak hours heatmap, member retention / churn, plan popularity, staff performance, therapist/trainer commissions, outstanding debts, inventory, cash register differences, discount usage by staff
 
 ### 4.10 Settings
-- Gym info, logo, branches, working hours, holidays
+- Gym info, branches, working hours, holidays
+- Appearance: brand color, corner style, gym logo, and each staff member's own light/dark and text size (§6.1)
 - Check-in rules (cooldown minutes, debt limit, deny/warn behaviour)
 - Tax, currency, exchange rate, invoice footer, receipt layout
 - Backup/export of all data
@@ -201,7 +202,8 @@ Core tables (expand as needed):
 `branches, staff_users, staff_branches, roles, permissions, role_permissions, members, member_measurements, member_documents, nfc_cards, plans, subscriptions, subscription_freezes, attendance, payments, invoices, invoice_items, installments, cash_registers, products, stock_movements, lockers, locker_assignments, spa_services, spa_rooms, spa_bookings, packages, member_packages, classes, class_sessions, class_bookings, trainers, pt_sessions, notifications, notification_templates, settings, audit_logs`
 
 ## 6. UI/UX requirements
-- Clean, modern admin dashboard; sidebar navigation grouped by module; dark/light mode
+- Clean, modern, touch-first look ("Calm Bento", see CLAUDE.md → Design); dark/light mode; the look is adjustable (§6.1)
+- Navigation fits the screen: sidebar grouped by module on desktop, an icon rail on tablets, a bottom tab bar with a "More" sheet on phones
 - **Check-in screen**: full-screen, large text, member photo, big colored status, sound feedback (success/fail beep), auto-reset after 5 seconds, works on a tablet in kiosk mode
 - Fast reception workflow: global search (Ctrl+K) by name, phone, code, or card scan from anywhere
 - Every table: search, filters, sorting, pagination (server-side, through PostgREST), column visibility, export
@@ -209,6 +211,23 @@ Core tables (expand as needed):
 - Loading skeletons, empty states, toast notifications, optimistic updates where safe
 - Fully responsive; reception works on desktop, managers check dashboard on phone
 - Accessible (keyboard navigation, focus states, labels)
+- Nothing overflows or hides:
+  - Navigation labels never overflow the tablet icon rail (a long label like "ڕێکخستنەکان" wraps to at most two lines or uses a short label, with the full name as tooltip).
+  - Filter chips are never clipped (they scroll sideways with padding at both ends on phones and wrap on wider screens).
+  - Lists on phones end with enough bottom padding (tab bar + safe area + any floating button) that the last item is never hidden behind the bottom tab bar.
+
+### 6.1 Appearance (ڕووکار)
+The app must not have only one look. The default is indigo + light + soft corners. Settings → Appearance has two parts:
+
+1. **Gym appearance** (needs `settings.edit`; stored in the `settings` table as gym-wide rows, so every device of that gym gets it; works the same in both editions; one look for the whole gym, no per-branch override, so saving also needs access to all branches like every gym-wide setting):
+   - **Brand color:** 4 presets (indigo, blue, purple, gray) or a custom color. The app derives the light- and dark-mode shades from it and checks contrast automatically. If text on the brand color, or the brand color used as text on the page background (light or dark), would fail WCAG AA (4.5:1 for text, 3:1 for icons and borders), it warns before saving. It also warns when a custom color looks like a status color. The presets always pass.
+   - **Corner style:** soft / medium / sharp.
+   - **Gym logo upload**, shown in the top bar and on receipts (printed in black and white on 80mm printers). PNG, JPEG or WebP only (no SVG). The app resizes it to at most 512 px before upload. It is kept in Postgres, not Supabase Storage, so it works in both editions. Without a logo the gym's name is shown.
+2. **Personal appearance** (each staff member, saved in their profile and cached on the device for the login and lock screens):
+   - Light / dark / follow device (default: follow device).
+   - Text size: normal / large. Every size is in `rem`, so "large" scales text, spacing and touch targets together.
+3. **Status colors are fixed:** green (allowed / paid), amber (warning / expiring) and red (denied / overdue) never follow the brand color.
+4. **Everything is built from theme variables:** colors, corners and text size are CSS variables set at runtime, so a change applies instantly without a reload. Other devices pick up a gym change on their next settings refresh (on focus or on a timer).
 
 ## 7. Code quality rules
 - Strict TypeScript, no `any`
@@ -222,7 +241,7 @@ Core tables (expand as needed):
 - CI (GitHub Actions): build and deploy web on every push; produce the signed APK and Windows EXE as release artifacts
 
 ## 8. Build phases (do them in order, stop for my review after each)
-1. **Foundation:** monorepo + Vite PWA + Vercel deploy + Capacitor (Android) + Electron (Windows) projects — debug APK and EXE build from day one, Supabase connection, connection indicator, PIN switching (checked by the server), i18n + RTL, auth, branches, RBAC tables + RLS + permission matrix UI, staff management, audit log trigger, layout & navigation
+1. **Foundation:** monorepo + Vite PWA + Vercel deploy + Capacitor (Android) + Electron (Windows) projects — debug APK and EXE build from day one, Supabase connection, connection indicator, PIN switching (checked by the server), i18n + RTL, auth, branches, RBAC tables + RLS + permission matrix UI, staff management, audit log trigger, layout & navigation. Sub-step order after 1d-R: the auth spike, then the **design step** (Calm Bento theme, phone tab bar / tablet rail / desktop sidebar, the §6.1 Appearance settings and the §6 layout rules), then 1e (admin screens), then 1f (offline-edition server test)
 2. **Members & NFC:** member CRUD, photo capture, NFC card assign/replace, NFC reader abstraction, global search
 3. **Plans, subscriptions & payments:** plans, subscribe/renew/freeze/upgrade, payments, invoices, receipts, debts, installments
 4. **Check-in engine:** `check_in` function + tests, check-in kiosk screen, attendance list, live occupancy
