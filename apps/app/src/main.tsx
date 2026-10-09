@@ -9,12 +9,9 @@ import { createRoot } from 'react-dom/client';
 import { startBackButtonHandling } from '@/app/back-button';
 import { AppProviders } from '@/app/providers';
 import { registerPwa } from '@/app/pwa';
-import { DatabaseError } from '@/components/database-error';
 import { AuthProvider } from '@/features/auth/auth-provider';
 import { AuthGate } from '@/features/auth/auth-gate';
 import { startPreferenceSync } from '@/lib/i18n';
-import { openAppDatabase } from '@/lib/local-database';
-import { logError } from '@/lib/logger';
 import { router } from '@/router';
 
 startPreferenceSync();
@@ -26,35 +23,14 @@ if (platform === 'web') registerPwa();
 const container = document.getElementById('root');
 if (!container) throw new Error('Missing #root element in index.html');
 
-// Everything works from the local database, so it opens before the first screen. Not a top-level
-// await: the database chunk imports shared code from this entry module, and in the production
-// build that would wait for this module to finish first, a deadlock.
-async function start(root: HTMLElement) {
-  const database = await openAppDatabase().catch((error: unknown) => {
-    logError(error, { area: 'database' });
-    return undefined;
-  });
-
-  // End-to-end tests read the local database to check what synced. Only in `vite build --mode e2e`.
-  if (import.meta.env.MODE === 'e2e' && database) {
-    Object.assign(window, { gymTestDatabase: database });
-  }
-
-  createRoot(root).render(
-    <StrictMode>
-      <AppProviders database={database}>
-        {database ? (
-          <AuthProvider database={database}>
-            <AuthGate>
-              <RouterProvider router={router} />
-            </AuthGate>
-          </AuthProvider>
-        ) : (
-          <DatabaseError />
-        )}
-      </AppProviders>
-    </StrictMode>,
-  );
-}
-
-void start(container);
+createRoot(container).render(
+  <StrictMode>
+    <AppProviders>
+      <AuthProvider>
+        <AuthGate>
+          <RouterProvider router={router} />
+        </AuthGate>
+      </AuthProvider>
+    </AppProviders>
+  </StrictMode>,
+);

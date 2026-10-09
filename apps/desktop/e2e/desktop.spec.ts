@@ -10,7 +10,7 @@ import {
   type ElectronApplication,
   type Page,
 } from '@playwright/test';
-// Test staff in local Supabase (`pnpm db:start`, `pnpm sync:start`), shared with the web tests.
+// Test staff in local Supabase (`pnpm db:start`), shared with the web tests.
 import { TestData, type TestStaff } from '../../app/e2e/support/backend';
 
 // path.resolve drops the trailing backslash: on Windows, `"...\desktop\"` would escape the quote.
@@ -74,7 +74,7 @@ test.beforeAll(async () => {
       'Build the web app first (pnpm build), or run pnpm test:e2e from the repo root.',
     );
   }
-  // The real web build, plus small probes for what the local database (PowerSync) will need.
+  // The real web build, plus small probes for browser storage and workers.
   webRoot = await mkdtemp(path.join(tmpdir(), 'gym-desktop-web-'));
   await cp(webBuild, webRoot, { recursive: true });
   await writeFile(
@@ -84,11 +84,6 @@ test.beforeAll(async () => {
   await writeFile(
     path.join(webRoot, 'probe-shared-worker.js'),
     'onconnect = (event) => event.ports[0].postMessage("connected");',
-  );
-  // The smallest valid WebAssembly module: magic number and version.
-  await writeFile(
-    path.join(webRoot, 'probe.wasm'),
-    new Uint8Array([0x00, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00]),
   );
 });
 
@@ -175,7 +170,7 @@ test('keeps staff logged in across a restart, encrypted with Windows', async () 
   }
 });
 
-test('has what the local database needs: storage, workers and WebAssembly', async () => {
+test('has browser storage and workers on its app:// origin', async () => {
   const page = await mainWindow();
 
   const result = await page.evaluate(async () => {
@@ -217,15 +212,11 @@ test('has what the local database needs: storage, workers and WebAssembly', asyn
       };
     });
 
-    // Streaming compilation needs the application/wasm content type.
-    const wasm = await WebAssembly.instantiateStreaming(fetch('/probe.wasm'));
-
     return {
       indexedDb,
       opfs,
       workerReply,
       sharedWorkerReply,
-      wasm: wasm.module instanceof WebAssembly.Module,
     };
   });
 
@@ -234,19 +225,13 @@ test('has what the local database needs: storage, workers and WebAssembly', asyn
     opfs: 'ok',
     workerReply: 42,
     sharedWorkerReply: 'connected',
-    wasm: true,
   });
 });
 
-test('opens the local database and syncs', async () => {
+test('logs in and connects to the server', async () => {
   const page = await mainWindow();
   await signIn(page, await newStaff());
-  const indicator = page.getByRole('status');
-  await expect(indicator).toContainText('ئۆنلاین');
-  // These counts come from the local database (SQLite on OPFS, in a worker).
-  await indicator.click();
-  await expect(page.getByText('گۆڕانکارییە نەنێردراوەکان: 0')).toBeVisible();
-  await page.keyboard.press('Escape');
+  await expect(page.getByRole('status')).toContainText('پەیوەندی هەیە');
 });
 
 test('keeps settings after a restart', async () => {

@@ -189,6 +189,23 @@ begin
 end
 $$;
 
+-- Like authenticate_as(), for a session that began with a password login at the given time (the
+-- JWT's amr claim, which Supabase Auth keeps across token refreshes).
+create or replace function tests.authenticate_with_password(staff_id uuid, logged_in_at timestamptz)
+returns void
+language plpgsql
+set search_path = ''
+as $$
+begin
+  perform set_config('request.jwt.claims', json_build_object(
+    'sub', staff_id,
+    'role', 'authenticated',
+    'amr', json_build_array(json_build_object('method', 'password', 'timestamp', floor(extract(epoch from logged_in_at))::bigint))
+  )::text, true);
+  perform set_config('role', 'authenticated', true);
+end
+$$;
+
 create or replace function tests.authenticate_as_service_role()
 returns void
 language plpgsql

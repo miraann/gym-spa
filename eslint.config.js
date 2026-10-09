@@ -61,7 +61,7 @@ export default defineConfig(
         {
           patterns: [
             {
-              group: ['@capacitor/*', '@capacitor-community/*', '@powersync/capacitor', 'electron'],
+              group: ['@capacitor/*', '@capacitor-community/*', 'electron'],
               message: 'Platform code lives in the @gym/platform adapters (see CLAUDE.md).',
             },
           ],

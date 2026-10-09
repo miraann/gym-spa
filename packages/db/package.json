@@ -3,21 +3,14 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Database types generated from the Supabase schema (and, from step 1d, the PowerSync schema)",
+  "description": "Database types generated from the Supabase schema",
   "exports": {
     ".": "./src/index.ts"
   },
   "scripts": {
-    "typecheck": "tsc -p tsconfig.json",
-    "test:sync": "vitest run --config vitest.sync.config.ts"
+    "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
-    "@powersync/common": "^2.3.1",
     "@supabase/supabase-js": "^2.117.2"
-  },
-  "devDependencies": {
-    "@powersync/node": "^1.1.1",
-    "@types/node": "^24.19.1",
-    "better-sqlite3": "^13.0.3"
   }
 }

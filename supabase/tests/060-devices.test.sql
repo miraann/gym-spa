@@ -80,28 +80,28 @@ select throws_ok(
 -- Heartbeats
 select tests.authenticate_as(tests.staff('reception_a'));
 select lives_ok(
-  $$ select public.device_heartbeat('d0000000-0000-4000-8000-000000000001', '0.1.0', 3, now() - interval '2 hours') $$,
+  $$ select public.device_heartbeat('d0000000-0000-4000-8000-000000000001', '0.1.0') $$,
   'staff of the branch can report a device''s state'
 );
 select is_empty('select device_id from public.device_status', 'staff without devices.manage cannot read device reports');
 
 select tests.authenticate_as(tests.staff('reception_b'));
 select throws_ok(
-  $$ select public.device_heartbeat('d0000000-0000-4000-8000-000000000001', '0.1.0', 0, null) $$,
+  $$ select public.device_heartbeat('d0000000-0000-4000-8000-000000000001', '0.1.0') $$,
   '42501', 'device_not_accessible', 'staff cannot report for a device of another branch'
 );
 
 select tests.authenticate_as(tests.staff('manager_a'));
 select results_eq(
-  'select pending_changes, last_seen_by from public.device_status',
-  $$ values (3, tests.staff('reception_a')) $$,
+  'select app_version, last_seen_by from public.device_status',
+  $$ values ('0.1.0'::text, tests.staff('reception_a')) $$,
   'devices.manage reads the reports of their branches'' devices'
 );
 select lives_ok(
-  $$ select public.device_heartbeat('d0000000-0000-4000-8000-000000000001', '0.1.0', 1, now() + interval '1 day') $$,
+  $$ select public.device_heartbeat('d0000000-0000-4000-8000-000000000001', '0.2.0') $$,
   'a device can report again'
 );
-select ok((select pending_since <= now() from public.device_status), 'a report never claims a time in the future');
+select is((select app_version from public.device_status), '0.2.0', 'the latest report replaces the previous one');
 
 select * from finish();
 rollback;

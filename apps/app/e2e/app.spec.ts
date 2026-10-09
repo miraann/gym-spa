@@ -13,7 +13,11 @@ test('opens in Kurdish, right-to-left, on first launch', async ({ page }) => {
   await expect(page.getByRole('heading', LOGIN_HEADING)).toBeVisible();
 });
 
-test('keeps working without internet after the first visit', async ({ page, context, staff }) => {
+test('opens without a connection, and says the server is needed', async ({
+  page,
+  context,
+  staff,
+}) => {
   await signIn(page, staff);
   // Wait until the service worker has cached the app and controls this page.
   await page.waitForFunction(async () => {
@@ -25,22 +29,27 @@ test('keeps working without internet after the first visit', async ({ page, cont
   await context.route('**/*', (route) => route.abort('internetdisconnected'));
   await context.setOffline(true);
 
+  // The service worker still opens the app, but the PIN needs the server.
   await page.reload();
   await unlock(page, staff);
-  await expect(page.getByRole('heading', HOME_HEADING)).toBeVisible();
-  await expect(page.getByRole('status')).toContainText('ئۆفلاین');
+  await expect(page.getByRole('alert')).toHaveText(
+    'پەیوەندی بە سێرڤەرەوە نەکرا. ئینتەرنێتەکەت بپشکنە و دووبارە هەوڵ بدەرەوە.',
+  );
 
-  // The Kurdish font comes from the offline cache too.
+  // The Kurdish font comes from the cache too.
   const kurdishFontLoaded = await page.evaluate(async () => {
     const faces = await document.fonts.load("16px 'UniSalar'", 'ڕێ');
     return faces.length > 0 && faces.every((face) => face.status === 'loaded');
   });
   expect(kurdishFontLoaded).toBe(true);
 
-  // A page that was never opened online also works: the service worker serves the app.
-  await page.goto('/settings/display');
+  // Back online, the same PIN opens the app.
+  await context.unrouteAll();
+  await context.setOffline(false);
+  await page.getByRole('button', { name: 'گەڕانەوە' }).click();
   await unlock(page, staff);
-  await expect(page.getByRole('heading', { level: 1, name: 'ڕووکار و زمان' })).toBeVisible();
+  await expect(page.getByRole('heading', HOME_HEADING)).toBeVisible();
+  await expect(page.getByRole('status')).toContainText('پەیوەندی هەیە');
 });
 
 test('switching to English flips to left-to-right and is remembered', async ({ page }) => {
@@ -144,18 +153,17 @@ test('unknown pages show a friendly message', async ({ page, staff }) => {
   await expect(page.getByRole('heading', HOME_HEADING)).toBeVisible();
 });
 
-test('syncs once someone has logged in', async ({ page, staff }) => {
+test('shows the connection to the server', async ({ page, context, staff }) => {
   await signIn(page, staff);
 
   const indicator = page.getByRole('status');
-  await expect(indicator).toContainText('ئۆنلاین');
-
-  // The details come from the local database (the upload queue and refused changes).
+  await expect(indicator).toContainText('پەیوەندی هەیە');
   await indicator.click();
-  await expect(page.getByText('گۆڕانکارییە نەنێردراوەکان: 0')).toBeVisible();
-  await expect(page.getByText(/^دوایین هاوکاتکردن:/)).toBeVisible();
-  const syncNow = page.getByRole('button', { name: 'ئێستا هاوکاتی بکە' });
-  await expect(syncNow).toBeEnabled();
-  await syncNow.click();
-  await expect(indicator).toContainText('ئۆنلاین');
+  await expect(page.getByText(/^دوایین پشکنین:/)).toBeVisible();
+  await page.keyboard.press('Escape');
+
+  await context.setOffline(true);
+  await expect(indicator).toContainText('پەیوەندی نییە');
+  await context.setOffline(false);
+  await expect(indicator).toContainText('پەیوەندی هەیە');
 });

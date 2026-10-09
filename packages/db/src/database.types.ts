@@ -102,24 +102,18 @@ export type Database = {
           device_id: string;
           last_seen_at: string;
           last_seen_by: string | null;
-          pending_changes: number;
-          pending_since: string | null;
         };
         Insert: {
           app_version?: string | null;
           device_id: string;
           last_seen_at: string;
           last_seen_by?: string | null;
-          pending_changes?: number;
-          pending_since?: string | null;
         };
         Update: {
           app_version?: string | null;
           device_id?: string;
           last_seen_at?: string;
           last_seen_by?: string | null;
-          pending_changes?: number;
-          pending_since?: string | null;
         };
         Relationships: [
           {
@@ -401,34 +395,31 @@ export type Database = {
       };
       staff_pins: {
         Row: {
-          algorithm: string;
           created_at: string;
           created_by: string | null;
-          hash: string;
-          iterations: number;
-          salt: string;
+          failed_attempts: number;
+          locked_at: string | null;
+          pin_hash: string;
           staff_id: string;
           updated_at: string;
           updated_by: string | null;
         };
         Insert: {
-          algorithm: string;
           created_at?: string;
           created_by?: string | null;
-          hash: string;
-          iterations: number;
-          salt: string;
+          failed_attempts?: number;
+          locked_at?: string | null;
+          pin_hash: string;
           staff_id: string;
           updated_at?: string;
           updated_by?: string | null;
         };
         Update: {
-          algorithm?: string;
           created_at?: string;
           created_by?: string | null;
-          hash?: string;
-          iterations?: number;
-          salt?: string;
+          failed_attempts?: number;
+          locked_at?: string | null;
+          pin_hash?: string;
           staff_id?: string;
           updated_at?: string;
           updated_by?: string | null;
@@ -507,13 +498,9 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      clear_my_pin_lockout: { Args: Record<PropertyKey, never>; Returns: undefined };
       device_heartbeat: {
-        Args: {
-          p_app_version: string;
-          p_device_id: string;
-          p_pending_changes: number;
-          p_pending_since: string;
-        };
+        Args: { p_app_version: string; p_device_id: string };
         Returns: undefined;
       };
       register_device: {
@@ -546,6 +533,8 @@ export type Database = {
         };
       };
       reset_staff_pin: { Args: { p_staff_id: string }; Returns: undefined };
+      set_my_pin: { Args: { p_pin: string }; Returns: undefined };
+      unlock_with_pin: { Args: { p_branch_id: string; p_pin: string }; Returns: Json };
     };
     Enums: {
       language_code: 'ckb' | 'en' | 'ar';

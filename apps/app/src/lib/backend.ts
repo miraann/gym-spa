@@ -4,16 +4,14 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 export interface BackendConfig {
   readonly supabaseUrl: string;
   readonly supabaseKey: string;
-  readonly powersyncUrl: string;
 }
 
-/** The Supabase and PowerSync addresses from the build; null when a build has none. */
+/** The backend address from the build; null when a build has none. */
 export function readBackendConfig(env: ImportMetaEnv = import.meta.env): BackendConfig | null {
   const supabaseUrl = env.VITE_SUPABASE_URL?.trim();
   const supabaseKey = env.VITE_SUPABASE_PUBLISHABLE_KEY?.trim();
-  const powersyncUrl = env.VITE_POWERSYNC_URL?.trim();
-  if (!supabaseUrl || !supabaseKey || !powersyncUrl) return null;
-  return { supabaseUrl, supabaseKey, powersyncUrl };
+  if (!supabaseUrl || !supabaseKey) return null;
+  return { supabaseUrl, supabaseKey };
 }
 
 export type AppSupabaseClient = SupabaseClient<Database>;

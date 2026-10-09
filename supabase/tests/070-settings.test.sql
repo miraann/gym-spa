@@ -39,7 +39,7 @@ select throws_ok(
 
 select tests.authenticate_as(tests.staff('manager_a'));
 select throws_ok(
-  $$ insert into public.settings (key, value) values ('sync.unsynced_alert_hours', '12') $$,
+  $$ insert into public.settings (key, value) values ('security.pin_max_attempts', '4') $$,
   '42501', 'new row violates row-level security policy for table "settings"',
   'a branch manager cannot change settings for every branch'
 );
@@ -48,7 +48,7 @@ select lives_ok(
   'a branch manager can set their branch''s own value'
 );
 select throws_ok(
-  $$ insert into public.settings (branch_id, key, value) values (tests.branch('B902'), 'sync.unsynced_alert_hours', '12') $$,
+  $$ insert into public.settings (branch_id, key, value) values (tests.branch('B902'), 'security.pin_max_attempts', '4') $$,
   '42501', 'new row violates row-level security policy for table "settings"',
   'a branch manager cannot set another branch''s value'
 );

@@ -13,10 +13,7 @@
     "lint": "supabase db lint --workdir .. --local --schema public,app --level warning --fail-on warning",
     "types": "supabase gen types typescript --local --workdir .. --schema public > ../packages/db/src/database.types.ts",
     "bootstrap:admin": "tsx scripts/bootstrap-admin.ts",
-    "typecheck": "tsc -p tsconfig.json",
-    "sync:start": "node scripts/powersync.mjs start",
-    "sync:stop": "node scripts/powersync.mjs stop",
-    "sync:logs": "docker compose -f powersync/docker-compose.yaml logs powersync"
+    "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
     "@gym/core": "workspace:*",

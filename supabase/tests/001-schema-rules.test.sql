@@ -1,7 +1,7 @@
 -- Rules every table and function must follow (CLAUDE.md → Database rules). These also catch new
 -- tables in later phases that forget one of them.
 begin;
-select plan(12);
+select plan(11);
 
 select is_empty($$
   select c.relname from pg_class c
@@ -50,10 +50,11 @@ select is_empty($$
      and not exists (select 1 from pg_trigger t where t.tgrelid = c.oid and t.tgname = 'audit')
 $$, 'every table is audited, except the permission catalog, device reports, derived branch access and the log itself');
 
-select is_empty($$
-  select pt.tablename from pg_publication_tables pt
-   where pt.pubname = 'powersync' and pt.tablename in ('staff_pins', 'audit_logs')
-$$, 'PIN hashes and the audit log are never synced to devices');
+select ok(
+  not has_column_privilege('authenticated', 'public.staff_pins', 'pin_hash', 'SELECT')
+    and not has_column_privilege('anon', 'public.staff_pins', 'pin_hash', 'SELECT'),
+  'no client can read PIN hashes'
+);
 
 select is_empty($$
   select c.relname, a.attname from pg_attribute a
@@ -79,12 +80,6 @@ select is_empty($$
      )
      and c.relname <> 'permissions'
 $$, 'every primary key is a uuid (the permission catalog uses its key)');
-
-select is_empty($$
-  select pt.tablename from pg_publication_tables pt
-   where pt.pubname = 'powersync'
-     and not has_table_privilege('powersync_role', format('%I.%I', pt.schemaname, pt.tablename), 'SELECT')
-$$, 'PowerSync can read every table in the powersync publication');
 
 select * from finish();
 rollback;

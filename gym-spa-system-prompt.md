@@ -4,19 +4,18 @@
 You are a senior full-stack engineer and database architect. Build a production-grade, secure, multi-branch **Gym & Spa Management System**. Work in phases (listed at the end). Before writing code for each phase, briefly state your plan, the tables/files you will touch, and any assumptions. Never skip migrations, RLS policies, or validation. Ask me only when a decision is truly blocking; otherwise pick a sensible default and note it.
 
 ## Tech stack (do not change without asking)
-The system is **offline-first**: the gym must keep working (check-in, registration, payments, lockers, spa bookings) when the internet is down, and sync automatically when it returns.
+The system is sold in **two editions** (decided 2026-10-09, see §2.5): an **online edition** that always talks to Supabase in the cloud, and an **offline edition** for gyms without internet, where several Windows PCs talk to a server PC on the gym's local network. Both editions always need their server; neither keeps a local copy of the data.
 
-- **Frontend app:** React + TypeScript + Vite (SPA, no SSR — the local database runs in the client), TanStack Router, TanStack Query, Tailwind CSS, shadcn/ui, React Hook Form + Zod, TanStack Table, Recharts
+- **Frontend app:** React + TypeScript + Vite (SPA, no SSR), TanStack Router, TanStack Query, Tailwind CSS, shadcn/ui, React Hook Form + Zod, TanStack Table, Recharts
 - **One codebase, three targets now (iOS later):**
-  - **Web / PWA** → deployed on **Vercel** as a static site, with a service worker (vite-plugin-pwa) caching the whole app so it opens and works offline after the first load. Add a `vercel.json` SPA rewrite so all routes serve `index.html`.
+  - **Web / PWA** → deployed on **Vercel** as a static site, with a service worker (vite-plugin-pwa) caching the whole app so it opens fast (data always comes from the server). Add a `vercel.json` SPA rewrite so all routes serve `index.html`.
   - **Android (APK/AAB)** → **Capacitor 8+** wrapping the same Vite build
   - **iOS → NOT in scope now.** Do not create the `ios/` project yet, but keep all code iOS-ready (use Capacitor plugins that support iOS, no Android-only APIs in shared code) so iOS can be added later with `npx cap add ios`.
   - **Windows (EXE installer)** → **Electron** (via the Capacitor Electron platform or a minimal Electron shell) wrapping the same Vite build, with auto-update, kiosk/full-screen mode, auto-start on boot, and silent printing to 80mm thermal printers
   - Keep all platform-specific code behind small adapters in `/packages/platform` (`nfc`, `printer`, `camera`, `storage`, `updater`) so the React app never imports Capacitor/Electron directly
-- **Local database:** PowerSync — Web SDK (`@powersync/web` + `@powersync/react`) for web and Electron, PowerSync Capacitor SDK for Android/iOS (native SQLite). Same schema and same queries on every platform, synced with Supabase Postgres.
-- **Cloud backend:** Supabase (Postgres, Auth, Row Level Security, Storage, Edge Functions, pg_cron)
-- **Sync service:** PowerSync Cloud (or self-hosted PowerSync Open Edition later)
-- **Database logic:** business rules (check-in, pricing, locker assignment) live in a shared TypeScript package (`/packages/core`) that runs locally against SQLite, so they work offline. Postgres functions/triggers on the server re-validate every uploaded change and are the final source of truth.
+- **Data access:** supabase-js (PostgREST) + TanStack Query, directly against the server. No local database and no sync service.
+- **Backend:** Supabase (Postgres, Auth, Row Level Security) for the online edition; the same migrations on the offline edition's server PC (Postgres for Windows + PostgREST + Supabase-compatible Auth). Supabase-only features (Storage, Edge Functions, pg_cron, Realtime) may be used only if the offline edition gets its own version of them.
+- **Database logic:** business rules (check-in, pricing, locker assignment) are Postgres functions and triggers, the same in both editions and the final source of truth. A shared TypeScript package (`/packages/core`) holds what the screens need: validation, previews (e.g. prices), formatting.
 - **Note:** newer Supabase projects do not expose `public` tables to the Data API by default — grant access explicitly in migrations where needed.
 - **Languages (very important):** **Kurdish Sorani is the default language** of the whole system, with **English** and **Arabic** as additional languages. See section 0 for full rules.
 - **Currency:** IQD default, optional USD with exchange rate stored per transaction
@@ -33,9 +32,9 @@ Every member gets an **NFC card** (MIFARE / NTAG). At the entrance, staff or a k
 - **Library:** `i18next` + `react-i18next`, translation files in `/packages/i18n/locales/{ckb,en,ar}/*.json`, split by feature (`common.json`, `members.json`, `checkin.json`, ...). Use typed translation keys so a missing key is a TypeScript error.
 - **Never hardcode text** in components, error messages, toasts, Zod validation messages, PDF receipts, or notifications — everything goes through translation keys. Write the Kurdish text first; it is the source language.
 - **Kurdish quality:** use simple, natural, everyday Sorani (not formal or machine-translated wording). Use correct Sorani letters (ە، ێ، ۆ، ڕ، ڵ، ڤ، ک، گ، ی) — never Arabic substitutes like ه or ي/ك.
-- **Language switcher:** in the top bar and on the login screen. Each staff user's choice is saved in their profile (synced) and also cached locally so it works offline. Each device can also have a default language (e.g. kiosk screen always Kurdish).
+- **Language switcher:** in the top bar and on the login screen. Each staff user's choice is saved in their profile and also cached on the device. Each device can also have a default language (e.g. kiosk screen always Kurdish).
 - **RTL/LTR:** set `<html dir lang>` dynamically. Use only logical Tailwind classes (`ms-`, `me-`, `ps-`, `pe-`, `start-`, `end-`, `text-start`); mirror icons that show direction (arrows, chevrons); charts, tables, calendars, and date pickers must render correctly in RTL.
-- **Fonts:** a clear Kurdish/Arabic font (e.g. Vazirmatn or Noto Sans Arabic, bundled locally — not loaded from the internet, so it works offline) + Inter for English. Test that all Sorani letters render correctly.
+- **Fonts:** a clear Kurdish/Arabic font (e.g. Vazirmatn or Noto Sans Arabic, bundled locally — never loaded from the internet) + Inter for English. Test that all Sorani letters render correctly.
 - **Numbers:** setting to show Latin digits (123) or Eastern Arabic digits (١٢٣); default Latin digits for clarity. Phone numbers, card UIDs, and invoice numbers always stay Latin and LTR.
 - **Currency formatting:** IQD with thousands separators and no decimals (e.g. `25,000 د.ع`); USD with 2 decimals.
 - **Dates:** Gregorian calendar, format per language, Asia/Baghdad time; Kurdish month names in Sorani.
@@ -60,9 +59,9 @@ Rules:
 - Manual fallback: search member by name/phone/member code if the card is forgotten (log it as `method = 'manual'`).
 
 ## 2. Check-in engine (most important part)
-Implement as a pure TypeScript function `checkIn({ cardUid, branchId, staffId, method, deviceId, now })` in `/packages/core`, running inside a single local SQLite transaction (works offline, result in < 300 ms). It returns a typed result object. A matching server-side validation (trigger on `attendance` insert) re-checks the rules when the record syncs and flags conflicts instead of silently dropping data.
+Implement as one Postgres function `check_in(card_uid, branch_id, method, device_id)`, called with `rpc()` and running in a single transaction (result in < 300 ms). It checks the rules and inserts the attendance row together, so two devices scanning at once can't both use the last visit. It returns a typed result object (parsed with Zod in the app). The staff member comes from the session (`auth.uid()`), never from the request.
 
-**Important for offline safety:** do NOT store "remaining visits" as a counter that gets decremented. Store attendance as append-only rows and compute `remaining_visits = plan_visits + adjustments - count(valid attendance)`. This makes sync conflict-free when two devices check in offline.
+**Important:** do NOT store "remaining visits" as a counter that gets decremented. Store attendance as append-only rows and compute `remaining_visits = plan_visits + adjustments - count(valid attendance)`.
 
 Logic order:
 1. Card exists, is active, not blacklisted → else deny `CARD_INVALID`
@@ -82,24 +81,24 @@ Logic order:
 11. Insert `attendance` row (check-in time, branch, method, staff, plan snapshot)
 12. Return: member photo URL, name, plan name, remaining visits / days, expiry date, warnings, assigned locker (if any), unpaid balance, birthday flag
 
-Also implement `check_out(...)` (optional, for occupancy tracking and locker release) and a **live occupancy counter** (from local data on each device; cross-branch totals when online).
+Also implement `check_out(...)` (optional, for occupancy tracking and locker release) and a **live occupancy counter** (per branch, with cross-branch totals for managers).
 
-## 2.5 Offline-first & sync (applies to every module)
-- **Every device has a full local copy** of the data it needs (scoped by branch via PowerSync Sync Streams/rules — a device syncs its own branch, and the server allows it only if the logged-in staff member has access to that branch, see §3): members, active subscriptions, NFC cards, plans, lockers, today's and upcoming spa bookings, products, settings, staff + permissions. Heavy history (old attendance, old invoices) syncs on demand or only for managers.
-- **Writes go to local SQLite first**, then an upload queue sends them to Supabase when online. UI never waits for the network.
+## 2.5 Two editions & the server (applies to every module)
+- **Online edition:** Web/PWA, Android and Windows, against Supabase in the cloud. **Always needs internet.**
+- **Offline edition:** **Windows EXE only**, never uses the internet. Several PCs (reception, kiosk, cashier) share one **server PC on the gym's local network**, which runs Postgres + PostgREST + Supabase-compatible Auth as Windows services behind a small `gym-server` proxy. One installer with two modes ("This PC is the server" / "Connect to the server"), a pairing code per PC, encrypted LAN traffic (a certificate the server makes for itself), LAN discovery with a manual address fallback, daily automatic backups + restore, updates by installer on USB (server and PCs must run the same version).
+- **One app, one set of migrations:** the app only knows one server address. The same end-to-end tests run against both servers.
+- **No local data:** every screen reads and saves through the server under the acting staff member's own session. Without a connection the app shows a clear message (always-visible connection indicator: Connected / No connection / Server not responding, last check time, "Check again") and saves nothing.
 - **IDs:** generate UUIDs on the client (never rely on server sequences for primary keys).
-- **Invoice / receipt numbers:** offline-safe format with a device prefix, e.g. `B1-D03-000457` (branch – device – local sequence). Optionally assign a global sequential number on the server after sync.
-- **Conflict rules (document and implement each):**
-  - Attendance, payments, stock movements, audit logs: append-only → no conflicts
-  - Member profile edits: last-write-wins per field, with `updated_at` + `updated_by`
-  - Locker assignment and spa room/therapist booking: server is authority; if two offline devices booked the same slot/locker, the server keeps the first, marks the second as `conflict`, and the app shows it in a **"Sync conflicts"** screen for a manager to resolve
-  - Visit limits exceeded because of offline double-use: allow, but flag on the server and show in a report
-- **Offline auth:** Supabase session cached locally; staff can unlock the reception app with a **PIN** while offline (PIN hash + permissions cached). Permissions are re-checked on the server during upload.
-- **Sync status UI:** always-visible indicator (Online / Offline / Syncing N changes / Error), last sync time, pending-upload count, and a manual "Sync now" button.
-- **What requires internet** (show a clear message offline): sending SMS/WhatsApp, online payment gateways, cross-branch reports, photo uploads to Storage (queue the photo locally and upload later), creating new staff accounts.
-- **Photos:** store compressed member photos locally as well so the check-in screen shows the face offline.
-- **Data safety:** never lose a queued change — persist the upload queue, retry with backoff, and alert the manager if a device has unsynced data older than 24 hours.
-- **Testing:** include tests that simulate going offline, making changes on two devices, and reconnecting.
+- **Invoice / receipt numbers:** given by the server per branch, e.g. `B1-000457`.
+- **Multi-row operations** (payment + invoice + items + subscription, locker assignment, spa booking) are one Postgres function each, all-or-nothing.
+- **Concurrency rules:**
+  - Attendance, payments, stock movements, audit logs: append-only
+  - Member profile edits: last write wins, with `updated_at` + `updated_by`
+  - Locker assignment and spa room/therapist booking: constraints in Postgres; the second booking of the same slot/locker gets an error at once
+  - Visit limits: checked and recorded in one transaction (`check_in`), so no double use
+- **PIN switching on shared PCs:** a staff member logs in with their password once per device; others switch to them with a PIN. The server checks the PIN, counts wrong tries and locks it (a password login unlocks it); PIN hashes never leave the server.
+- **Internet-only features** (online edition only; hidden in the offline edition): SMS/WhatsApp, online payment gateways, cross-branch cloud reports.
+- **Photos:** Supabase Storage in the online edition, files on the server PC in the offline edition, behind one storage adapter.
 
 ## 3. Roles & permissions (RBAC)
 Do not hardcode role checks in the UI only. Use a permission-based model:
@@ -107,8 +106,8 @@ Do not hardcode role checks in the UI only. Use a permission-based model:
 - Default roles: **Super Admin** (owner, all branches), **Admin**, **Branch Manager**, **Receptionist**, **Trainer**, **Spa Therapist**, **Accountant**, **Cashier**
 - Permissions are granular strings, e.g. `members.create`, `members.delete`, `payments.refund`, `reports.financial.view`, `settings.edit`, `staff.manage`, `lockers.assign`, `discount.apply.max_10`
 - Admin can create custom roles and toggle permissions from a matrix UI
-- Enforce permissions in **three layers**: RLS policies (via a `has_permission(perm text)` SQL function), server-side validation of synced uploads (triggers / Edge Functions), and UI (hide/disable, using locally cached permissions)
-- Data is scoped by branch: a staff member only sees the branches they have access to — every branch if `all_branches` is true, otherwise the branches listed for them in `staff_branches`. One SQL function, `has_branch_access(branch_id)`, implements this rule for RLS, and the PowerSync sync rules apply the same rule
+- Enforce permissions in **three layers**: RLS policies (via a `has_permission(perm text)` SQL function), server-side validation (guards, Postgres functions), and UI (hide/disable, using the permissions from the last server check)
+- Data is scoped by branch: a staff member only sees the branches they have access to — every branch if `all_branches` is true, otherwise the branches listed for them in `staff_branches`. One SQL function, `has_branch_access(branch_id)`, implements this rule for RLS
 - Staff features: PIN quick-login for shared reception PCs, session timeout, force password change, deactivate account (never hard delete)
 
 ## 4. Modules
@@ -205,7 +204,7 @@ Core tables (expand as needed):
 - Clean, modern admin dashboard; sidebar navigation grouped by module; dark/light mode
 - **Check-in screen**: full-screen, large text, member photo, big colored status, sound feedback (success/fail beep), auto-reset after 5 seconds, works on a tablet in kiosk mode
 - Fast reception workflow: global search (Ctrl+K) by name, phone, code, or card scan from anywhere
-- Every table: search, filters, sorting, pagination (queried from local SQLite, so it is instant and works offline), column visibility, export
+- Every table: search, filters, sorting, pagination (server-side, through PostgREST), column visibility, export
 - Forms: Zod validation, clear error messages in the user's language (Kurdish by default), confirmation dialogs for destructive actions
 - Loading skeletons, empty states, toast notifications, optimistic updates where safe
 - Fully responsive; reception works on desktop, managers check dashboard on phone
@@ -213,9 +212,9 @@ Core tables (expand as needed):
 
 ## 7. Code quality rules
 - Strict TypeScript, no `any`
-- Monorepo (pnpm workspaces): `/apps/app` (React + Vite app, with `android/` from Capacitor), `/apps/desktop` (Electron shell for the Windows EXE), `/packages/platform` (NFC, printer, camera, updater adapters per platform), `/packages/core` (business rules, pure TS, fully tested), `/packages/db` (PowerSync schema + generated types), `/supabase` (migrations, Edge Functions). Inside the app use feature folders (`/features/members`, `/features/checkin`, ...) with shared `/components/ui`, `/lib`
+- Monorepo (pnpm workspaces): `/apps/app` (React + Vite app, with `android/` from Capacitor), `/apps/desktop` (Electron shell for the Windows EXE), `/packages/platform` (NFC, printer, camera, updater adapters per platform), `/packages/core` (validation and screen rules, pure TS, fully tested), `/packages/db` (generated types), `/supabase` (migrations, functions). Inside the app use feature folders (`/features/members`, `/features/checkin`, ...) with shared `/components/ui`, `/lib`
 - Server-only Supabase service key never reaches the client
-- All inputs validated with Zod in the app, and re-validated on the server when changes sync (never trust uploaded data)
+- All inputs validated with Zod in the app, and re-validated on the server (never trust client data)
 - Reusable hooks and components; no duplicated logic
 - Error handling with user-friendly messages + logged details
 - Unit tests for the check-in engine and pricing calculations (pro-rata, freeze, installments); test edge cases: expired today, last visit, frozen, double scan, wrong branch, wrong hours
@@ -223,7 +222,7 @@ Core tables (expand as needed):
 - CI (GitHub Actions): build and deploy web on every push; produce the signed APK and Windows EXE as release artifacts
 
 ## 8. Build phases (do them in order, stop for my review after each)
-1. **Foundation:** monorepo + Vite PWA + Vercel deploy + Capacitor (Android) + Electron (Windows) projects — debug APK and EXE build from day one, Supabase + PowerSync connection, sync status indicator, offline PIN unlock, i18n + RTL, auth, branches, RBAC tables + RLS + permission matrix UI, staff management, audit log trigger, layout & navigation
+1. **Foundation:** monorepo + Vite PWA + Vercel deploy + Capacitor (Android) + Electron (Windows) projects — debug APK and EXE build from day one, Supabase connection, connection indicator, PIN switching (checked by the server), i18n + RTL, auth, branches, RBAC tables + RLS + permission matrix UI, staff management, audit log trigger, layout & navigation
 2. **Members & NFC:** member CRUD, photo capture, NFC card assign/replace, NFC reader abstraction, global search
 3. **Plans, subscriptions & payments:** plans, subscribe/renew/freeze/upgrade, payments, invoices, receipts, debts, installments
 4. **Check-in engine:** `check_in` function + tests, check-in kiosk screen, attendance list, live occupancy
@@ -234,7 +233,7 @@ Core tables (expand as needed):
 9. **Notifications & scheduled jobs**
 10. **Dashboard, reports, exports, settings, backups**
 11. **Release:** production Vercel deploy, signed Android APK/AAB, signed Windows EXE installer with auto-update
-12. **Polish:** test on all 3 targets (web, Android, Windows), offline/sync stress tests (2 devices, reconnect, conflicts), performance, security review of every RLS policy, accessibility, final tests, README
+12. **Polish:** test on all 3 targets (web, Android, Windows), offline-edition tests (server PC + several PCs on a LAN, lost connection, concurrent bookings), performance, security review of every RLS policy, accessibility, final tests, README
 
 13. **Later (separate request):** iOS build — `npx cap add ios`, Core NFC, TestFlight/App Store
 

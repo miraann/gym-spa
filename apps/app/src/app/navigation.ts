@@ -14,7 +14,6 @@ import {
   KeyRoundIcon,
   MonitorSmartphoneIcon,
   NfcIcon,
-  RefreshCwIcon,
   SettingsIcon,
   ShieldCheckIcon,
   ShoppingBagIcon,
@@ -90,7 +89,6 @@ export const NAV_GROUPS: readonly NavGroup[] = [
   {
     key: 'system',
     items: [
-      { key: 'sync', icon: RefreshCwIcon },
       { key: 'devices', icon: MonitorSmartphoneIcon, permission: 'devices.manage' },
       { key: 'settings', icon: SettingsIcon, to: '/settings/display' },
     ],

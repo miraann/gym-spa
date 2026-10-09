@@ -1,15 +1,33 @@
 # Gym & Spa Management System
 
-Offline-first, multi-branch gym & spa system with NFC check-in. Targets: Web/PWA, Android, Windows (iOS later).
+Multi-branch gym & spa system with NFC check-in, sold in **two editions** (see below). Targets: Web/PWA, Android, Windows (iOS later).
 
 **Repository:** https://github.com/miraann/gym-spa (git remote `origin`, private).
 
 **Full spec: [gym-spa-system-prompt.md](gym-spa-system-prompt.md).** It is the source of truth. This file is only a summary; if the two disagree, the spec wins. Read the relevant spec section before starting any phase or module.
 
+The two-edition design below was decided by the user on 2026-10-09 and replaced the earlier offline-first / PowerSync design (spec §2.5).
+
+## Two editions
+
+One app and one set of migrations, with two backends that expose the same API (Postgres + PostgREST + Supabase-compatible Auth):
+
+| | Online edition | Offline edition |
+|---|---|---|
+| Targets | Web/PWA, Android, Windows EXE | **Windows EXE only** |
+| Backend | Supabase cloud | A **server PC on the gym's local network** (Postgres for Windows + PostgREST + Auth, run as Windows services, behind a small `gym-server` proxy) |
+| Internet | **Always required.** No local database, no sync. With no connection the app shows a clear message and saves nothing | **Never used.** Several PCs (reception, kiosk, cashier) talk to the server PC over the LAN |
+| Updates | Auto-update | Installer on USB; server and PCs must run the same version |
+
+- The app only knows one backend address (cloud Supabase, or the server PC).
+- **Server-side logic goes in Postgres functions and triggers**, so it runs the same in both editions. Don't use Supabase-only features (Edge Functions, pg_cron, Realtime, Storage) unless the offline edition gets its own version too. Screens refresh with TanStack Query (on focus or on a timer), not Realtime.
+- There is no PowerSync and no powersync.com.
+- Offline edition extras (planned): one installer with two modes ("This PC is the server" / "Connect to the server"), pairing code per PC, encrypted LAN traffic (self-made certificate), daily automatic backups + restore, LAN discovery with manual address fallback.
+
 ## How to work
 
 - Build in the phases from spec §8, in order. **Stop for the user's review after each phase.**
-- **When a phase is split into sub-steps (Phase 1: 1a–1e), stop for review after each sub-step** and say how to test it and what to commit. The user makes the commits.
+- **When a phase is split into sub-steps (Phase 1: 1a–1e, then 1d-R (PowerSync removed), 1e, 1f (offline-edition server test)), stop for review after each sub-step** and say how to test it and what to commit. The user makes the commits.
 - Before writing code for a phase, present the plan (tables, files, assumptions) and **wait for approval**.
 - At the end of each phase (and sub-step), report: what was built, migrations added, how to test manually, and known limitations.
 - §4.7 Staff & HR is built in Phase 7 (together with classes and personal training).
@@ -25,9 +43,9 @@ Offline-first, multi-branch gym & spa system with NFC check-in. Targets: Web/PWA
   - Windows EXE: Electron (auto-update, kiosk mode, auto-start, silent 80mm thermal printing).
   - iOS: **not in scope.** Don't create `ios/`, but keep code iOS-ready (only Capacitor plugins that support iOS, no Android-only APIs in shared code).
 - **Platform code lives only in `packages/platform` adapters** (`nfc`, `printer`, `camera`, `storage`, `updater`). The React app never imports Capacitor or Electron directly.
-- **Local DB:** PowerSync. `@powersync/web` + `@powersync/react` on web and Electron; PowerSync Capacitor SDK (native SQLite) on Android. Same schema and queries everywhere.
-- **Backend:** Supabase (Postgres, Auth, RLS, Storage, Edge Functions, pg_cron). **Sync:** PowerSync Cloud.
-- **Business rules** live in `packages/core` (pure TS, runs offline against local SQLite). Postgres triggers/functions re-validate every uploaded change and are the final authority.
+- **Data access:** supabase-js (PostgREST) + TanStack Query, directly against the backend. No local database.
+- **Backend:** Supabase (Postgres, Auth, RLS) online; the same migrations on the offline edition's server PC.
+- **Business rules:** the authority is Postgres (functions, triggers, RLS). `packages/core` (pure TS, tested) holds what the screens need: price previews, Zod validation, formatting, username mapping.
 - Newer Supabase projects don't expose `public` tables to the Data API by default. Grant access explicitly in migrations.
 - **Currency:** IQD default; optional USD with the exchange rate stored per transaction. **Timezone:** Asia/Baghdad; store all timestamps as `timestamptz` (UTC).
 
@@ -38,7 +56,7 @@ apps/app            React + Vite app (+ android/ from Capacitor); feature folder
 apps/desktop        Electron shell for the Windows EXE
 packages/platform   nfc, printer, camera, storage, updater adapters per platform
 packages/core       business rules, pure TS, fully tested
-packages/db         PowerSync schema + generated types
+packages/db         generated Supabase types
 packages/i18n       locales/{ckb,en,ar}/<feature>.json
 supabase/           migrations, Edge Functions, seed
 ```
@@ -50,29 +68,15 @@ Inside the app, shared code goes in `components/ui` and `lib`.
 - Supabase runs locally with Docker: `pnpm db:start`, `pnpm db:reset` (migrations + seed), `pnpm db:test`, `pnpm db:lint`. The CLI is a devDependency of `@gym/supabase` (the `supabase/` folder): `pnpm --filter @gym/supabase exec supabase <command> --workdir ..`.
 - RLS tests are pgTAP files in `supabase/tests`. Every table's policies and guards get tests. `000-setup-test-helpers.sql` installs shared helpers (`tests.create_fixture()`, `tests.authenticate_as()`, ...), so always run the whole folder. `001-schema-rules.test.sql` fails on any table without RLS, policies or the audit trigger, any anon access, unindexed foreign keys, or functions without a fixed `search_path`.
 - `pnpm bootstrap:admin` creates the first Super Admin (`--remote` for a cloud project, with `supabase/.env.local`).
-- Local PowerSync runs in Docker: `pnpm sync:start` (again after every `db:reset`). `pnpm test:sync` runs the end-to-end sync tests (Node devices against local Supabase + PowerSync). What devices download is `supabase/powersync/sync-config.yaml`; the local schema is `packages/db/src/schema.ts` (typecheck fails if it drifts from Postgres).
 
-## Offline-first rules (every module)
+## Data rules (every module)
 
-- **Writes go to local SQLite first**; an upload queue sends them to Supabase. The UI never waits for the network.
-- **Client-generated UUIDs** for every primary key. Never depend on server sequences for PKs.
+- **Client-generated UUIDs** for every primary key are still fine; never depend on server sequences for PKs.
 - **Never store decrementing counters** (e.g. remaining visits). Store append-only rows and compute the value.
-- Invoice/receipt numbers use an offline-safe device prefix: `B1-D03-000457` (branch-device-local sequence). The server may add a global number after sync.
-- **Never lose a queued change:** persist the queue, retry with backoff, alert the manager if a device has unsynced data older than 24 h. The server flags conflicts instead of silently dropping data.
-- **Offline auth:** cached Supabase session + staff PIN unlock (PIN hash + permissions cached locally). The server re-checks permissions on upload.
-- **Sync status indicator** always visible: Online / Offline / Syncing N / Error, last sync time, pending count, "Sync now" button.
-- Online-only features must show a clear offline message: SMS/WhatsApp, payment gateways, cross-branch reports, photo uploads (queue locally, upload later), creating staff accounts.
-- Each device syncs only its branch's data (PowerSync Sync Streams). Heavy history syncs on demand or only for managers.
-- Tests must simulate going offline, changes on two devices, and reconnecting.
-
-## Sync conflict rules
-
-| Data | Rule |
-|---|---|
-| Attendance, payments, stock movements, audit logs | Append-only, so no conflicts |
-| Member profile edits | Last-write-wins **per field**, using `updated_at` + `updated_by` |
-| Locker assignments, spa room/therapist bookings | Server is the authority: first one wins, the second is marked `conflict` and shown on the **Sync conflicts** screen for a manager to resolve |
-| Visit limits exceeded by offline double use | Allow it, flag it on the server, show it in a report |
+- Invoice/receipt numbers come from the server, per branch: `B1-000457`.
+- **Always-online UI:** a connection indicator is always visible (Connected / No connection). Without a connection, actions are disabled with a clear translated message; nothing is queued.
+- Internet-only features (online edition only; hidden in the offline edition): SMS/WhatsApp, payment gateways, cross-branch cloud reports.
+- Conflicts are decided by the server at once: locker and spa room/therapist bookings use constraints (the second one gets an error right away); visit limits are checked and recorded in one Postgres function, so no double use. Member profile edits: last write wins.
 
 ## Language: Kurdish Sorani is the default
 
@@ -96,7 +100,7 @@ Inside the app, shared code goes in `components/ui` and `lib`.
 - SQL helpers live in the private `app` schema (not exposed to the API). In policies write `(select app.has_permission('x'))` and `branch_id in (select app.accessible_branch_ids())` so they run once per query, not per row.
 - New tables follow README → Database → Adding a table (`stamp`, `read_only` and `audit` triggers, explicit grants, tests). Guards reject with a stable key as the error message (e.g. `cannot_grant_role`) and an English detail; the app translates the key.
 - All schema changes go in numbered migrations in `supabase/migrations`. Generate TS types with `supabase gen types`.
-- **Multi-row business operations are atomic on the server:** all rows succeed or all are rejected together, never a partial application. Examples: payment + invoice + invoice_items + subscription (Phase 3), locker assignment, spa booking. The row-by-row upload of Phase 1 is not enough for these; propose the mechanism when Phase 3 starts.
+- **Multi-row business operations are atomic on the server:** all rows succeed or all are rejected together, never a partial application. Examples: payment + invoice + invoice_items + subscription (Phase 3), locker assignment, spa booking. Each one is **one Postgres function** called by RPC.
 - Never delete financial rows. Refunds and voids need a permission and a reason. Staff accounts are deactivated, never hard-deleted.
 - Postgres audit trigger on important tables: who, when, table, row id, old/new values, IP/device.
 - NFC UIDs are normalized to uppercase hex with no separators, with a unique index.
@@ -104,30 +108,27 @@ Inside the app, shared code goes in `components/ui` and `lib`.
 ## Security & RBAC
 
 - Use permission strings (`members.create`, `payments.refund`, ...), never role-name checks.
-- **One role per staff member.** Branch access: `staff_users.all_branches` flag, otherwise the rows in the `staff_branches` join table (a staff member can have several branches). The rule is written once in SQL, `app.refresh_branch_access()`, which keeps it as rows in `staff_branch_access`; RLS (`app.accessible_branch_ids()`, `app.has_branch_access()`) and the sync streams both read those rows.
-- Enforce in **three layers**: RLS, server validation of synced uploads, and UI (cached permissions).
+- **One role per staff member.** Branch access: `staff_users.all_branches` flag, otherwise the rows in the `staff_branches` join table (a staff member can have several branches). The rule is written once in SQL, `app.refresh_branch_access()`, which keeps it as rows in `staff_branch_access`; RLS (`app.accessible_branch_ids()`, `app.has_branch_access()`) reads those rows.
+- Enforce in **three layers**: RLS, server validation (guards, Postgres functions), and UI (permissions).
 - The Supabase service/secret key never reaches the client.
 - Sensitive actions (payments, refunds) require a staff login. Never trust an NFC UID alone.
 
 ## Code quality
 
 - Strict TypeScript, **no `any`**.
-- Zod validation in the app, re-validated on the server when changes sync. Never trust uploaded data.
+- Zod validation in the app, re-validated on the server. Never trust client data.
 - Reusable hooks and components; no duplicated logic.
 - Errors: user-friendly translated message + logged details.
-- Unit tests for the check-in engine and pricing (pro-rata, freeze, installments), including edge cases: expires today, last visit, frozen, double scan, wrong branch, wrong hours.
+- Tests (pgTAP for the Postgres functions, unit tests for TS helpers) for the check-in engine and pricing (pro-rata, freeze, installments), including edge cases: expires today, last visit, frozen, double scan, wrong branch, wrong hours.
 - README: setup, env vars, NFC reader setup, build steps per target (Vercel, signed APK/AAB, Windows installer).
 - CI (GitHub Actions): build and deploy web on every push; signed APK and Windows EXE as release artifacts.
 
 ## Approved architecture decisions (Phase 1 plan)
 
-- **Electron:** a minimal hand-written shell (not the Capacitor Electron platform), packaged with electron-builder. The build is served over a privileged custom `app://` protocol so IndexedDB/OPFS, workers and WASM have a stable origin.
+- **Electron:** a minimal hand-written shell (not the Capacitor Electron platform), packaged with electron-builder. The build is served over a privileged custom `app://` protocol so storage has a stable origin.
 - **Staff login:** username + password, mapped to an internal email behind the scenes (`<username>@staff.gym-spa.invalid`, `packages/core/src/staff.ts`).
-- **Offline PIN:** a staff member logs in with their password once per device (online); the device then keeps their session, PIN hash and permissions, encrypted. Every queued change is tagged with its author and uploaded under **that author's own session**, so the server checks permissions with `auth.uid()` and never trusts a staff ID in the payload. PIN hashes are never synced to other devices. 6-digit PIN, lockout after 5 wrong tries, auto-lock when idle.
-- **Devices:** a `devices` table gives each device a code (the `D03` in receipt numbers), a default language and a last-seen time.
-- **Sync scope:** the device's branch decides what syncs; the staff login only authorizes it. Switching staff by PIN never wipes or re-downloads local data.
-- **Rejected uploads** go to a local "rejected changes" list shown on the Sync screen: never dropped silently, never retried forever.
-- **Every local write to a synced table sets `_metadata` with `writeMetadata(authorId)`** (`@gym/db`); the upload connector sends it under that author's session and rejects changes without an author.
+- **PIN switching:** a staff member logs in with their password once per device; the device keeps their session so others can switch to them with a 6-digit PIN. **The server checks the PIN and the lockout** (5 wrong tries); PIN hashes never leave the server. Auto-lock when idle. Every request runs under the acting staff member's own session, so the server checks permissions with `auth.uid()`.
+- **Devices:** a `devices` table gives each device a code, its branch, a default language and a last-seen time.
 - **Language order:** staff preference → device default → `ckb`. Sorani month names come from our own translation files, not the browser's `ckb` locale data (support varies between Chromium and Android WebView).
 - **Tooling:** pnpm workspaces only (no Turborepo). Shared packages are plain TypeScript source without a build step, except Electron's main process. TypeScript stays on 6.0.x until typescript-eslint supports TS 7. Run `pnpm check` (typecheck, lint, format, unit tests) and `pnpm test:e2e` before handing over a step.
 - **Language rules are enforced by tooling:** the `gym/no-hardcoded-ui-text` and `gym/no-physical-direction-classes` lint rules (`tools/eslint-plugin-gym`), plus tests for translation parity, Sorani/Arabic spelling and font glyph coverage. After `shadcn add`, run `pnpm format` and fix any hardcoded English the lint rule reports.

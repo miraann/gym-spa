@@ -7,7 +7,3 @@ allowBuilds:
   esbuild: true
   # Downloads the Supabase CLI binary.
   supabase: true
-  # Native SQLite for the Node PowerSync client used by the sync tests.
-  better-sqlite3: true
-minimumReleaseAgeExclude:
-  - '@journeyapps/wa-sqlite@2.0.7'

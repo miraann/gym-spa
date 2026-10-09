@@ -1,4 +1,4 @@
-// Login, PIN and lock against local Supabase + PowerSync (`pnpm db:start`, `pnpm sync:start`).
+// Login, PIN and lock against local Supabase (`pnpm db:start`).
 import type { Page } from '@playwright/test';
 import { admin, write, type TestStaff } from './support/backend';
 import {
@@ -70,12 +70,9 @@ test('first login: new password, then a PIN, then the app', async ({ page, data 
     .eq('id', staff.id)
     .single();
   expect(server.data?.must_change_password).toBe(false);
-  const pin = await admin()
-    .from('staff_pins')
-    .select('iterations')
-    .eq('staff_id', staff.id)
-    .single();
-  expect(pin.data?.iterations).toBe(600_000);
+  const pin = await admin().from('staff_pins').select('pin_hash').eq('staff_id', staff.id).single();
+  // Hashed by the server (bcrypt), never sent back to the app.
+  expect(pin.data?.pin_hash).toMatch(/^\$2[abxy]\$/);
 
   // Reloading locks the app; the PIN opens it.
   await page.reload();
@@ -120,7 +117,13 @@ test('five wrong PINs lock the staff member out until they use their password', 
   );
   await expect(page.locator('input[inputmode="numeric"]')).toHaveCount(0);
 
-  // Still locked out after a reload: the count is kept on the device.
+  // The server keeps the lockout, for every device.
+  const { data: pin } = await admin()
+    .from('staff_pins')
+    .select('locked_at')
+    .eq('staff_id', staff.id)
+    .single();
+  expect(pin?.locked_at).not.toBeNull();
   await page.reload();
   await page.getByRole('button', { name: staff.fullName }).click();
   await page.getByRole('button', { name: 'چوونەژوورەوە بە وشەی نهێنی' }).click();
@@ -145,24 +148,13 @@ test('locks itself when idle, and keeps the page that was open', async ({ page, 
   );
 
   await page.clock.install();
+  // The app reads the setting from the server once someone is using it.
+  const settingRead = page.waitForResponse(
+    (response) => response.url().includes('/rest/v1/settings') && response.ok(),
+  );
   await signIn(page, staff, '/settings/display');
   await expect(page.getByRole('heading', { level: 1, name: 'ڕووکار و زمان' })).toBeVisible();
-  // Wait until the branch's setting has reached the device's local database.
-  await expect
-    .poll(() =>
-      page.evaluate(async () => {
-        const db = (
-          window as unknown as {
-            gymTestDatabase: { getOptional(sql: string): Promise<{ value: string } | null> };
-          }
-        ).gymTestDatabase;
-        const row = await db.getOptional(
-          "SELECT value FROM settings WHERE key = 'security.idle_lock_minutes'",
-        );
-        return row?.value ?? null;
-      }),
-    )
-    .toBe('2');
+  await settingRead;
 
   await page.clock.fastForward('01:30');
   await expect(page.getByRole('heading', { level: 1, name: 'ڕووکار و زمان' })).toBeVisible();
@@ -173,29 +165,31 @@ test('locks itself when idle, and keeps the page that was open', async ({ page, 
   await expect(page.getByRole('heading', { level: 1, name: 'ڕووکار و زمان' })).toBeVisible();
 });
 
-test('unlocks with the PIN without internet', async ({ page, context, staff }) => {
+test('without a connection neither the PIN nor the password works, and the app says so', async ({
+  page,
+  context,
+  staff,
+}) => {
   await signIn(page, staff);
-  await expect(page.getByRole('status')).toContainText('ئۆنلاین');
-  await page.waitForFunction(async () => {
-    await navigator.serviceWorker.ready;
-    return navigator.serviceWorker.controller !== null;
-  });
+  await expect(page.getByRole('status')).toContainText('پەیوەندی هەیە');
+  await lockFromMenu(page);
 
-  await context.route('**/*', (route) => route.abort('internetdisconnected'));
   await context.setOffline(true);
-  await page.reload();
+  await unlock(page, staff);
+  await expect(page.getByRole('alert')).toHaveText(
+    'پەیوەندی بە سێرڤەرەوە نەکرا. ئینتەرنێتەکەت بپشکنە و دووبارە هەوڵ بدەرەوە.',
+  );
 
+  await page.getByRole('button', { name: 'گەڕانەوە' }).click();
+  await page.getByRole('button', { name: 'کارمەندێکی تر' }).click();
+  await expect(page.getByText('بۆ چوونەژوورەوە پەیوەندی بە سێرڤەرەوە پێویستە.')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'چوونەژوورەوە' })).toBeDisabled();
+
+  // Once the connection is back, the PIN works (and no try was used up).
+  await context.setOffline(false);
+  await page.getByRole('button', { name: 'گەڕانەوە بۆ لیستی کارمەندان' }).click();
   await unlock(page, staff);
   await expect(page.getByRole('heading', HOME_HEADING)).toBeVisible();
-  await expect(page.getByRole('status')).toContainText('ئۆفلاین');
-
-  // Password login needs the internet, and says so.
-  await lockFromMenu(page);
-  await page.getByRole('button', { name: 'کارمەندێکی تر' }).click();
-  await expect(
-    page.getByText('بۆ چوونەژوورەوە بە وشەی نهێنی ئینتەرنێت پێویستە.', { exact: false }),
-  ).toBeVisible();
-  await expect(page.getByRole('button', { name: 'چوونەژوورەوە' })).toBeDisabled();
 });
 
 test('two staff members share a device; logging out removes only one', async ({
@@ -226,20 +220,13 @@ test('two staff members share a device; logging out removes only one', async ({
   await expect(page.getByRole('button', { name: second.fullName })).toHaveCount(0);
 });
 
-test('a PIN removed by a manager stops working at the next online check', async ({
-  page,
-  staff,
-}) => {
+test('a PIN removed by a manager stops working at once', async ({ page, staff }) => {
   await signIn(page, staff);
   await expect(page.getByRole('heading', HOME_HEADING)).toBeVisible();
   await lockFromMenu(page);
 
   await write(admin().from('staff_pins').delete().eq('staff_id', staff.id));
-  // The old PIN still opens the app (the device didn't know yet); the check runs right after.
   await unlock(page, staff);
-  await expect(page.getByRole('heading', HOME_HEADING)).toBeVisible();
-  await lockFromMenu(page);
-  await page.getByRole('button', { name: staff.fullName }).click();
   await expect(page.getByRole('alert')).toContainText('بەڕێوەبەر پینەکەتی سڕییەوە.');
 
   // Password login asks for a new PIN.
@@ -272,7 +259,7 @@ test("staff who lose access to the device's branch can't unlock it", async ({ pa
   await write(admin().from('staff_branches').delete().eq('staff_id', staff.id));
   await page.evaluate(() => window.dispatchEvent(new Event('online')));
 
-  // Locked at the next online check, and the PIN no longer opens this device.
+  // Locked at the next check, and the PIN no longer opens this device.
   await expect(page.getByRole('heading', { level: 1, name: 'کێ کار دەکات؟' })).toBeVisible();
   await expect(page.getByRole('button', { name: staff.fullName })).toContainText(
     'دەستی بەم لقە ناگات',

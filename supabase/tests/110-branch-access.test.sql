@@ -1,4 +1,4 @@
--- staff_branch_access: the branch rule kept as rows, for RLS and the sync streams.
+-- staff_branch_access: the branch rule kept as rows, read by RLS.
 begin;
 select plan(11);
 select tests.create_fixture();

@@ -5,10 +5,9 @@ import {
   authStorageKey,
   canUseBranch,
   parseAccounts,
+  passwordReasonAfterCheck,
   pinBlocker,
   staffStorageKey,
-  withAttemptsCleared,
-  withWrongPin,
   type DeviceAccount,
 } from './accounts';
 
@@ -40,8 +39,7 @@ function account(overrides: Partial<DeviceAccount> = {}): DeviceAccount {
     branchIds: ['branch-1'],
     preferredLanguage: null,
     mustChangePassword: false,
-    pin: { algorithm: 'pbkdf2-sha256', iterations: 600_000, salt: 'c2FsdA==', hash: 'aGFzaA==' },
-    pinAttempts: { failures: 0, lockedOut: false },
+    hasPin: true,
     passwordRequired: null,
     lastActiveAt: '2026-10-07T08:00:00.000Z',
     ...overrides,
@@ -54,12 +52,52 @@ describe('pinBlocker', () => {
   });
 
   it('asks for the password when the PIN cannot be used', () => {
-    expect(pinBlocker(account({ pin: null }))).toBe('setup');
+    expect(pinBlocker(account({ hasPin: false }))).toBe('setup');
     expect(pinBlocker(account({ mustChangePassword: true }))).toBe('setup');
     expect(pinBlocker(account({ passwordRequired: 'pin_reset' }))).toBe('pin_reset');
-    expect(pinBlocker(account({ pinAttempts: { failures: 5, lockedOut: true } }))).toBe(
+    expect(pinBlocker(account({ passwordRequired: 'locked_out' }))).toBe('locked_out');
+  });
+});
+
+describe('passwordReasonAfterCheck', () => {
+  const fine = { hasPin: true, pinLocked: false };
+
+  it('follows a lockout or a removed PIN on the server', () => {
+    expect(passwordReasonAfterCheck(account(), { hasPin: true, pinLocked: true })).toBe(
       'locked_out',
     );
+    expect(passwordReasonAfterCheck(account(), { hasPin: false, pinLocked: false })).toBe(
+      'pin_reset',
+    );
+  });
+
+  it('clears them once the server is fine again (password login or new PIN elsewhere)', () => {
+    expect(passwordReasonAfterCheck(account({ passwordRequired: 'locked_out' }), fine)).toBeNull();
+    expect(
+      passwordReasonAfterCheck(account({ hasPin: false, passwordRequired: 'pin_reset' }), fine),
+    ).toBeNull();
+  });
+
+  it('keeps a removed PIN removed', () => {
+    expect(
+      passwordReasonAfterCheck(account({ hasPin: false, passwordRequired: 'pin_reset' }), {
+        hasPin: false,
+        pinLocked: false,
+      }),
+    ).toBe('pin_reset');
+  });
+
+  it('keeps reasons only a password login on this device clears', () => {
+    for (const reason of ['session_ended', 'inactive', 'setup'] as const) {
+      expect(passwordReasonAfterCheck(account({ passwordRequired: reason }), fine)).toBe(reason);
+    }
+    expect(passwordReasonAfterCheck(account(), fine)).toBeNull();
+  });
+
+  it('does not ask a staff member without a PIN for a reset', () => {
+    expect(
+      passwordReasonAfterCheck(account({ hasPin: false }), { hasPin: false, pinLocked: false }),
+    ).toBeNull();
   });
 });
 
@@ -75,19 +113,6 @@ describe('canUseBranch', () => {
   });
 });
 
-describe('wrong PINs', () => {
-  it('locks out on the last allowed try, and a right PIN clears the count', () => {
-    let current = account();
-    for (let index = 0; index < 4; index += 1) current = withWrongPin(current, 5);
-    expect(pinBlocker(current)).toBeNull();
-    expect(withAttemptsCleared(current).pinAttempts.failures).toBe(0);
-
-    current = withWrongPin(current, 5);
-    expect(current.passwordRequired).toBe('locked_out');
-    expect(pinBlocker(current)).toBe('locked_out');
-  });
-});
-
 describe('parseAccounts', () => {
   it('reads what the store wrote', () => {
     expect(parseAccounts(JSON.stringify([account()]))).toEqual([account()]);
@@ -99,15 +124,23 @@ describe('parseAccounts', () => {
     expect(parseAccounts(JSON.stringify([{ staffId: 1 }, account()]))).toEqual([account()]);
   });
 
-  it('drops a cached PIN it cannot check, and unknown values', () => {
+  it('drops unknown values', () => {
     const [parsed] = parseAccounts(
-      JSON.stringify([
-        { ...account(), pin: { algorithm: 'md5' }, preferredLanguage: 'fr', passwordRequired: 'x' },
-      ]),
+      JSON.stringify([{ ...account(), preferredLanguage: 'fr', passwordRequired: 'x' }]),
     );
-    expect(parsed?.pin).toBeNull();
     expect(parsed?.preferredLanguage).toBeNull();
     expect(parsed?.passwordRequired).toBeNull();
+  });
+
+  it('reads accounts saved when the device kept the PIN hash', () => {
+    const saved = {
+      ...account(),
+      hasPin: undefined,
+      pin: { algorithm: 'pbkdf2-sha256' },
+      pinAttempts: { failures: 1 },
+    };
+    expect(parseAccounts(JSON.stringify([saved]))).toEqual([account()]);
+    expect(parseAccounts(JSON.stringify([{ ...saved, pin: null }]))[0]?.hasPin).toBe(false);
   });
 
   it('gives an account saved without branches no branch until the next online check', () => {

@@ -5,16 +5,12 @@ import { tanstackRouter } from '@tanstack/router-plugin/vite';
 import react from '@vitejs/plugin-react';
 import { defineConfig, loadEnv, type Plugin } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
-import viteWasm from 'vite-plugin-wasm';
 import ckb from '../../packages/i18n/src/locales/ckb/common.json' with { type: 'json' };
 import pkg from './package.json' with { type: 'json' };
 
 const THEME_COLOR = '#0f766e';
 
 /** Fills `%APP_NAME%` in index.html from the Kurdish translations, so no text is hardcoded there. */
-// vite-plugin-wasm has no return type.
-const wasm: () => Plugin = viteWasm;
-
 function appNameInHtml(): Plugin {
   return {
     name: 'gym:app-name-in-html',
@@ -32,7 +28,7 @@ function connectOrigins(address: string | undefined): string[] {
 
 /**
  * Content-Security-Policy for production builds (web, Windows and Android share the build). The
- * app may only talk to its own origin and the configured Supabase and PowerSync servers, and only
+ * app may only talk to its own origin and the configured Supabase server, and only
  * run its own scripts: the inline boot script in index.html is allowed by its hash. Dev mode has
  * none, because Vite injects its own inline scripts there.
  */
@@ -49,16 +45,12 @@ function contentSecurityPolicy(env: Record<string, string>): Plugin {
               .update(match[1] ?? '')
               .digest('base64')}'`,
         );
-        const servers = [
-          ...connectOrigins(env.VITE_SUPABASE_URL),
-          ...connectOrigins(env.VITE_POWERSYNC_URL),
-        ];
+        const servers = connectOrigins(env.VITE_SUPABASE_URL);
         const supabase = env.VITE_SUPABASE_URL ? [new URL(env.VITE_SUPABASE_URL).origin] : [];
         const policy = [
           "default-src 'self'",
-          // The local database is SQLite compiled to WebAssembly.
-          `script-src 'self' 'wasm-unsafe-eval' ${inlineScripts.join(' ')}`,
-          "worker-src 'self' blob:",
+          `script-src 'self' ${inlineScripts.join(' ')}`,
+          "worker-src 'self'",
           `connect-src 'self' ${servers.join(' ')}`,
           // Radix and sonner position things with inline styles.
           "style-src 'self' 'unsafe-inline'",
@@ -90,8 +82,6 @@ export default defineConfig(({ mode }) => ({
     tailwindcss(),
     appNameInHtml(),
     contentSecurityPolicy(loadEnv(mode, fileURLToPath(new URL('.', import.meta.url)), 'VITE_')),
-    // The local database (PowerSync) is SQLite compiled to WebAssembly, run in web workers.
-    wasm(),
     VitePWA({
       // Ask before reloading into a new version, so nobody loses a half-filled form.
       registerType: 'prompt',
@@ -123,10 +113,8 @@ export default defineConfig(({ mode }) => ({
         ],
       },
       workbox: {
-        // Precache the whole app (code, fonts, icons, the SQLite WebAssembly) so it opens offline.
-        globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2,ttf,wasm,webmanifest}'],
-        // The encrypted-database builds of SQLite (mc-*) aren't used: keep 2.5 MB out of the first load.
-        globIgnores: ['**/mc-wa-sqlite*.wasm'],
+        // Precache the whole app (code, fonts, icons), so it opens fast. Data always needs the server.
+        globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2,ttf,webmanifest}'],
         navigateFallback: '/index.html',
         cleanupOutdatedCaches: true,
         clientsClaim: true,
@@ -134,14 +122,6 @@ export default defineConfig(({ mode }) => ({
       },
     }),
   ],
-  worker: {
-    format: 'es',
-    plugins: () => [wasm()],
-  },
-  optimizeDeps: {
-    // They ship their own workers and WebAssembly, which pre-bundling would break.
-    exclude: ['@journeyapps/wa-sqlite', '@powersync/web'],
-  },
   define: {
     'import.meta.env.VITE_APP_VERSION': JSON.stringify(pkg.version),
   },

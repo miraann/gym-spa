@@ -27,31 +27,20 @@
   "digits": {
     "label": "Number style"
   },
-  "sync": {
-    "title": "Sync",
-    "online": "Online",
-    "offline": "Offline",
-    "syncing": "Syncing… {{count}}",
-    "error": "Sync error",
-    "notSyncing": "Not syncing",
-    "onlineHint": "All changes have been sent.",
-    "offlineHint": "No internet. Your work is saved on this device and synced when the connection comes back.",
-    "syncingHint": "Sending and receiving changes.",
-    "errorHint": "Syncing failed. It will try again automatically.",
-    "notSyncingHint": "Log in to sync. Your work is saved on this device.",
-    "lastSynced": "Last synced: {{time}}",
-    "neverSynced": "Not synced yet",
-    "pending": "Changes waiting to be sent: {{count}}",
-    "rejected": "Refused changes: {{count}}",
-    "syncNow": "Sync now",
-    "waitingForLogin": "{{name}} must log in so their changes can be sent"
-  },
-  "database": {
-    "openFailedTitle": "This device's data can't be opened",
-    "openFailedHint": "Use a newer browser, or reload the page. If it keeps happening, contact your manager."
+  "connection": {
+    "title": "Connection",
+    "connected": "Connected",
+    "offline": "No connection",
+    "unreachable": "Server not responding",
+    "checking": "Checking…",
+    "connectedHint": "The app is connected to the server.",
+    "offlineHint": "This device isn't connected to a network. Nothing can be saved until the connection is back.",
+    "unreachableHint": "The server isn't responding. Nothing can be saved until it's back.",
+    "lastChecked": "Last checked: {{time}}",
+    "retry": "Check again"
   },
   "pwa": {
-    "offlineReady": "The app now works without internet too",
+    "offlineReady": "The app is ready and will open faster",
     "updateAvailable": "A new version of the app is ready",
     "updateHint": "Reload to start using the new version"
   },

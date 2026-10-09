@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Spinner } from '@/components/ui/spinner';
-import { useOnlineStatus } from '@/lib/online-status';
+import { useConnection } from '@/lib/connection';
 import { useAuthController } from '../auth-context';
 import type { AuthStep } from '../auth-controller';
 import { authErrorKey, type AuthErrorKey } from '../staff-api';
@@ -41,7 +41,8 @@ export function LoginScreen({
 }) {
   const { t } = useTranslation('auth');
   const controller = useAuthController();
-  const online = useOnlineStatus();
+  const { state: connection } = useConnection();
+  const online = connection !== 'offline' && connection !== 'unreachable';
   const [error, setError] = useState<AuthErrorKey | null>(
     controller.configured ? null : 'not_configured',
   );

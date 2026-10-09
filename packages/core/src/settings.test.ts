@@ -4,20 +4,20 @@ import { SETTINGS, isSettingKey, parseSettingValue, resolveSetting } from './set
 
 describe('parseSettingValue', () => {
   it('reads whole numbers inside the allowed range', () => {
-    expect(parseSettingValue('security.pin_max_attempts', '4')).toBe(4);
-    expect(parseSettingValue('security.idle_lock_minutes', '240')).toBe(240);
+    expect(parseSettingValue('security.pin_max_attempts', 4)).toBe(4);
+    expect(parseSettingValue('security.idle_lock_minutes', 240)).toBe(240);
   });
 
-  it.each(['2', '11', '4.5', '"5"', 'null', 'not json'])('ignores %s', (json) => {
-    expect(parseSettingValue('security.pin_max_attempts', json)).toBeNull();
+  it.each([2, 11, 4.5, '5', null, undefined, { value: 5 }])('ignores %j', (value) => {
+    expect(parseSettingValue('security.pin_max_attempts', value)).toBeNull();
   });
 });
 
 describe('resolveSetting', () => {
   const rows = [
-    { branch_id: null, key: 'security.idle_lock_minutes', value: '20' },
-    { branch_id: 'b1', key: 'security.idle_lock_minutes', value: '5' },
-    { branch_id: 'b2', key: 'security.idle_lock_minutes', value: '9999' },
+    { branch_id: null, key: 'security.idle_lock_minutes', value: 20 },
+    { branch_id: 'b1', key: 'security.idle_lock_minutes', value: 5 },
+    { branch_id: 'b2', key: 'security.idle_lock_minutes', value: 9999 },
   ];
 
   it("uses the branch's own value first", () => {

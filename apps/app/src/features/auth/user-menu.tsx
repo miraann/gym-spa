@@ -21,31 +21,22 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useFormat } from '@/lib/format';
 import { logError } from '@/lib/logger';
 import { useActiveAccount, useAuthController } from './auth-context';
 
 /** The active staff member, with Lock (let someone else in) and Log out of this device. */
 export function UserMenu() {
   const { t } = useTranslation('auth');
-  const format = useFormat();
   const controller = useAuthController();
   const account = useActiveAccount();
   const [confirmLogout, setConfirmLogout] = useState(false);
   if (!account) return null;
 
   const logout = () => {
-    controller
-      .logout(account.staffId)
-      .then((result) => {
-        if (result.kind === 'pending_changes') {
-          toast.error(t('menu.logoutPending', { count: format.number(result.count) }));
-        }
-      })
-      .catch((error: unknown) => {
-        logError(error, { area: 'auth', action: 'logout' });
-        toast.error(t('errors.unexpected'));
-      });
+    controller.logout(account.staffId).catch((error: unknown) => {
+      logError(error, { area: 'auth', action: 'logout' });
+      toast.error(t('errors.unexpected'));
+    });
   };
 
   return (

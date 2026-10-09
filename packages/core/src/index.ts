@@ -7,21 +7,11 @@ export {
 } from './password';
 export { SUPER_ADMIN_ROLE, resolvePermissions } from './permissions';
 export {
-  NO_PIN_ATTEMPTS,
-  PIN_ALGORITHM,
-  PIN_ITERATIONS,
   PIN_LENGTH,
-  hashPin,
   isWeakPin,
   isWellFormedPin,
   newPinProblem,
   normalizePin,
-  parsePinHash,
-  pinTriesLeft,
-  recordWrongPin,
-  verifyPin,
-  type PinAttempts,
-  type PinHash,
   type PinProblem,
 } from './pin';
 export {

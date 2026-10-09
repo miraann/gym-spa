@@ -1,16 +1,27 @@
 import { resolveSetting, type SettingKey, type SettingRow } from '@gym/core';
-import { useQuery } from '@powersync/react';
+import { useQuery } from '@tanstack/react-query';
 import { useEffect, useRef } from 'react';
 import { useAuthController, useAuthState } from './auth-context';
 
-/** A setting for this device's branch, from the synced settings (live). */
+/** A setting for this device's branch, read from the server (the default until it answers). */
 export function useSetting(key: SettingKey): number {
-  const { branchId } = useAuthState();
-  const { data } = useQuery<SettingRow>(
-    'SELECT branch_id, key, value FROM settings WHERE key = ?',
-    [key],
-  );
-  return resolveSetting(key, data, branchId);
+  const controller = useAuthController();
+  const { branchId, activeId } = useAuthState();
+  const client = controller.activeClient;
+  const { data } = useQuery({
+    queryKey: ['settings', key, activeId],
+    enabled: client !== undefined,
+    queryFn: async (): Promise<SettingRow[]> => {
+      if (!client) return [];
+      const { data: rows, error } = await client
+        .from('settings')
+        .select('branch_id, key, value')
+        .eq('key', key);
+      if (error) throw error;
+      return rows;
+    },
+  });
+  return resolveSetting(key, data ?? [], branchId);
 }
 
 const ACTIVITY_EVENTS = ['pointerdown', 'keydown', 'wheel', 'touchstart'] as const;
@@ -46,7 +57,7 @@ export function useIdleLock(): void {
     const check = () => {
       if (Date.now() - lastActivity.current >= minutes * 60_000) controller.lock();
     };
-    // At once too: a shorter limit that just synced may already have passed.
+    // At once too: a shorter limit that just arrived may already have passed.
     check();
     const timer = setInterval(check, Math.min(CHECK_EVERY_MS, minutes * 60_000));
     return () => {

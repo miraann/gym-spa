@@ -1,17 +1,10 @@
-import {
-  NO_PIN_ATTEMPTS,
-  parsePinHash,
-  recordWrongPin,
-  type PinAttempts,
-  type PinHash,
-} from '@gym/core';
 import { isLanguage, type Language } from '@gym/i18n';
 import type { SecureStorage } from '@gym/platform';
 import { SECURE_KEY_PATTERN } from '@gym/platform/desktop-bridge';
 
 /**
- * Why a staff member's PIN doesn't open the app right now; a password login (online) fixes each.
- *   - locked_out: too many wrong PINs on this device.
+ * Why a staff member's PIN doesn't open the app right now; a password login fixes each.
+ *   - locked_out: too many wrong PINs (the server counts them, on every device).
  *   - pin_reset: a manager removed their PIN.
  *   - session_ended: their login on this device ended (signed out elsewhere, password changed).
  *   - inactive: their account was deactivated.
@@ -19,20 +12,23 @@ import { SECURE_KEY_PATTERN } from '@gym/platform/desktop-bridge';
  */
 export type PasswordReason = 'locked_out' | 'pin_reset' | 'session_ended' | 'inactive' | 'setup';
 
-/** A staff member who has logged in on this device, kept encrypted in secure storage. */
+/**
+ * A staff member who has logged in on this device, kept encrypted in secure storage. Their PIN is
+ * never kept here: the server checks it.
+ */
 export interface DeviceAccount {
   readonly staffId: string;
   readonly username: string;
   readonly fullName: string;
   readonly roleId: string;
-  /** From the last online check, for when the local database doesn't have the role yet. */
+  /** From the last check with the server; only for showing and hiding things. */
   readonly permissions: readonly string[];
-  /** The branches they could access at the last online check; they work only in these. */
+  /** The branches they could access at the last check; they work only in these. */
   readonly branchIds: readonly string[];
   readonly preferredLanguage: Language | null;
   readonly mustChangePassword: boolean;
-  readonly pin: PinHash | null;
-  readonly pinAttempts: PinAttempts;
+  /** They have set a PIN (and a manager hasn't removed it). */
+  readonly hasPin: boolean;
   /** Set when only a password login unlocks this staff member. */
   readonly passwordRequired: PasswordReason | null;
   /** ISO time; the lock screen lists the most recent first. */
@@ -43,7 +39,7 @@ const ACCOUNTS_KEY = 'accounts';
 
 function parseAccount(value: unknown): DeviceAccount | null {
   if (typeof value !== 'object' || value === null) return null;
-  const record: Partial<Record<keyof DeviceAccount, unknown>> = value;
+  const record: Partial<Record<keyof DeviceAccount | 'pin', unknown>> = value;
   const { staffId, username, fullName, roleId, permissions, lastActiveAt } = record;
   if (
     typeof staffId !== 'string' ||
@@ -55,8 +51,6 @@ function parseAccount(value: unknown): DeviceAccount | null {
   ) {
     return null;
   }
-  const attempts: Partial<Record<keyof PinAttempts, unknown>> =
-    typeof record.pinAttempts === 'object' && record.pinAttempts !== null ? record.pinAttempts : {};
   const reasons: readonly PasswordReason[] = [
     'locked_out',
     'pin_reset',
@@ -76,11 +70,8 @@ function parseAccount(value: unknown): DeviceAccount | null {
       : [],
     preferredLanguage: isLanguage(record.preferredLanguage) ? record.preferredLanguage : null,
     mustChangePassword: record.mustChangePassword === true,
-    pin: parsePinHash(record.pin),
-    pinAttempts: {
-      failures: typeof attempts.failures === 'number' ? attempts.failures : 0,
-      lockedOut: attempts.lockedOut === true,
-    },
+    // Saved by earlier versions, which kept the PIN hash itself on the device.
+    hasPin: record.hasPin === true || (typeof record.pin === 'object' && record.pin !== null),
     passwordRequired: reasons.find((reason) => reason === record.passwordRequired) ?? null,
     lastActiveAt,
   };
@@ -101,9 +92,26 @@ export function parseAccounts(json: string | null): DeviceAccount[] {
 /** Whether the PIN can open the app for this staff member (otherwise: why not). */
 export function pinBlocker(account: DeviceAccount): PasswordReason | null {
   if (account.passwordRequired) return account.passwordRequired;
-  if (account.pinAttempts.lockedOut) return 'locked_out';
-  if (!account.pin || account.mustChangePassword) return 'setup';
+  if (!account.hasPin || account.mustChangePassword) return 'setup';
   return null;
+}
+
+/**
+ * Why only a password login opens the app for this staff member, after a check with the server.
+ * The PIN's own states (locked, removed) follow the server, so a password login or a new PIN on
+ * another device counts here too. The other reasons need a password login on this device.
+ */
+export function passwordReasonAfterCheck(
+  account: DeviceAccount,
+  server: { readonly hasPin: boolean; readonly pinLocked: boolean },
+): PasswordReason | null {
+  if (server.pinLocked) return 'locked_out';
+  if (!server.hasPin && (account.hasPin || account.passwordRequired === 'pin_reset')) {
+    return 'pin_reset';
+  }
+  const reason = account.passwordRequired;
+  if (reason === 'locked_out' || reason === 'pin_reset') return null;
+  return reason;
 }
 
 /**
@@ -112,21 +120,6 @@ export function pinBlocker(account: DeviceAccount): PasswordReason | null {
  */
 export function canUseBranch(account: DeviceAccount, branchId: string | null): boolean {
   return branchId === null || account.branchIds.includes(branchId);
-}
-
-/** The account after a wrong PIN; locked out on the last allowed try. */
-export function withWrongPin(account: DeviceAccount, maxAttempts: number): DeviceAccount {
-  const pinAttempts = recordWrongPin(account.pinAttempts, maxAttempts);
-  return {
-    ...account,
-    pinAttempts,
-    passwordRequired: pinAttempts.lockedOut ? 'locked_out' : account.passwordRequired,
-  };
-}
-
-/** The account after the right PIN or a password login: the wrong tries are forgotten. */
-export function withAttemptsCleared(account: DeviceAccount): DeviceAccount {
-  return { ...account, pinAttempts: NO_PIN_ATTEMPTS };
 }
 
 /** Most recently active first. */

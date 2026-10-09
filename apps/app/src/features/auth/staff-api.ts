@@ -1,11 +1,11 @@
-import { parsePinHash, resolvePermissions, type PinHash } from '@gym/core';
+import { normalizePin, resolvePermissions } from '@gym/core';
 import { isLanguage, type Language } from '@gym/i18n';
 import { isAuthApiError, isAuthRetryableFetchError } from '@supabase/supabase-js';
 import type { AppSupabaseClient } from '@/lib/backend';
 import { logError } from '@/lib/logger';
 
-// The online calls of login and the PIN, made with the staff member's own session. RLS decides
-// what each one may read or change.
+// The server calls of login and the PIN, made with the staff member's own session. RLS and the
+// server functions decide what each one may read or change.
 
 /** A stable key the login screens translate. */
 export type AuthErrorKey =
@@ -16,6 +16,8 @@ export type AuthErrorKey =
   | 'network'
   | 'same_password'
   | 'weak_password'
+  /** Setting a PIN needs a recent password login. */
+  | 'password_login_required'
   | 'not_configured'
   | 'unexpected';
 
@@ -56,6 +58,13 @@ export function authErrorKey(error: unknown, action: string): AuthErrorKey {
 function failIfError(result: { error: unknown }): void {
   if (!result.error) return;
   const { error } = result;
+  if (
+    typeof error === 'object' &&
+    'message' in error &&
+    error.message === 'password_login_required'
+  ) {
+    throw new AuthFlowError('password_login_required', { cause: error });
+  }
   // PostgREST returns network failures as an error object, not a thrown TypeError.
   if (
     typeof error === 'object' &&
@@ -87,8 +96,10 @@ export interface StaffProfile {
   readonly permissions: readonly string[];
   readonly preferredLanguage: Language | null;
   readonly mustChangePassword: boolean;
-  /** null: no PIN yet, or a manager removed it. */
-  readonly pin: PinHash | null;
+  /** False: no PIN yet, or a manager removed it. */
+  readonly hasPin: boolean;
+  /** Too many wrong PINs; a password login clears it. */
+  readonly pinLocked: boolean;
 }
 
 /** null: no active account (deactivated, removed, or the row isn't visible to them). */
@@ -111,11 +122,7 @@ export async function fetchProfile(
   const [rolePermissions, catalog, pin] = await Promise.all([
     client.from('role_permissions').select('permission_key').eq('role_id', row.role_id),
     client.from('permissions').select('key'),
-    client
-      .from('staff_pins')
-      .select('algorithm, iterations, salt, hash')
-      .eq('staff_id', staffId)
-      .maybeSingle(),
+    client.from('staff_pins').select('staff_id, locked_at').eq('staff_id', staffId).maybeSingle(),
   ]);
   failIfError(rolePermissions);
   failIfError(catalog);
@@ -133,7 +140,8 @@ export async function fetchProfile(
     ),
     preferredLanguage: isLanguage(row.preferred_language) ? row.preferred_language : null,
     mustChangePassword: row.must_change_password,
-    pin: parsePinHash(pin.data),
+    hasPin: pin.data !== null,
+    pinLocked: pin.data?.locked_at != null,
   };
 }
 
@@ -163,17 +171,64 @@ export async function fetchBranches(client: AppSupabaseClient): Promise<BranchCh
   }));
 }
 
-/** Saves the PIN hash for the signed-in staff member (it works on their other devices too). */
-export async function savePin(
+/** A staff member's session, if it can be used right now. */
+export async function usableSession(
   client: AppSupabaseClient,
-  staffId: string,
-  pin: PinHash,
-): Promise<void> {
-  failIfError(
-    await client
-      .from('staff_pins')
-      .upsert({ staff_id: staffId, ...pin }, { onConflict: 'staff_id' }),
-  );
+): Promise<'ready' | 'unavailable' | 'ended'> {
+  const { data, error } = await client.auth.getSession();
+  if (data.session) return 'ready';
+  // The server didn't answer: the session is kept and tried again later.
+  if (error && isAuthRetryableFetchError(error)) return 'unavailable';
+  return 'ended';
+}
+
+/** Sets the signed-in staff member's PIN. The server hashes it; it works on all their devices. */
+export async function setPin(client: AppSupabaseClient, pin: string): Promise<void> {
+  failIfError(await client.rpc('set_my_pin', { p_pin: normalizePin(pin) }));
+}
+
+/** Clears a PIN lockout after a password login (the server checks that the login came after it). */
+export async function clearPinLockout(client: AppSupabaseClient): Promise<void> {
+  failIfError(await client.rpc('clear_my_pin_lockout'));
+}
+
+export type PinCheck =
+  | { readonly result: 'ok' | 'locked_out' | 'no_pin' | 'no_branch_access' | 'inactive' }
+  | { readonly result: 'wrong_pin'; readonly triesLeft: number };
+
+/** Asks the server whether the PIN is right; it counts wrong tries on every device. */
+export async function checkPin(
+  client: AppSupabaseClient,
+  pin: string,
+  branchId: string,
+): Promise<PinCheck> {
+  const response = await client.rpc('unlock_with_pin', {
+    p_pin: normalizePin(pin),
+    p_branch_id: branchId,
+  });
+  failIfError(response);
+  return parsePinCheck(response.data);
+}
+
+export function parsePinCheck(data: unknown): PinCheck {
+  if (typeof data !== 'object' || data === null || !('result' in data)) {
+    throw new AuthFlowError('unexpected', { cause: data });
+  }
+  const { result } = data;
+  if (result === 'wrong_pin') {
+    const triesLeft = 'tries_left' in data ? data.tries_left : null;
+    if (typeof triesLeft === 'number') return { result, triesLeft };
+  }
+  if (
+    result === 'ok' ||
+    result === 'locked_out' ||
+    result === 'no_pin' ||
+    result === 'no_branch_access' ||
+    result === 'inactive'
+  ) {
+    return { result };
+  }
+  throw new AuthFlowError('unexpected', { cause: data });
 }
 
 /** Changes the signed-in staff member's password. The server then clears must_change_password. */

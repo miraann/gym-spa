@@ -13,8 +13,6 @@ export const SETTINGS = {
   'security.pin_max_attempts': { min: 3, max: 10, default: 5 },
   /** Minutes without activity before the app locks. */
   'security.idle_lock_minutes': { min: 1, max: 240, default: 10 },
-  /** Hours of unsynced data on a device before managers are alerted. */
-  'sync.unsynced_alert_hours': { min: 1, max: 168, default: 24 },
 } as const satisfies Record<string, IntegerSetting>;
 
 export type SettingKey = keyof typeof SETTINGS;
@@ -23,15 +21,8 @@ export function isSettingKey(key: string): key is SettingKey {
   return Object.hasOwn(SETTINGS, key);
 }
 
-/** A stored value (JSON text, as kept in the local database) if it's valid for the key. */
-export function parseSettingValue(key: SettingKey, json: string | null | undefined): number | null {
-  if (json === null || json === undefined) return null;
-  let value: unknown;
-  try {
-    value = JSON.parse(json);
-  } catch {
-    return null;
-  }
+/** A stored value (settings.value, jsonb) if it's valid for the key. */
+export function parseSettingValue(key: SettingKey, value: unknown): number | null {
   const rule: IntegerSetting = SETTINGS[key];
   if (typeof value !== 'number' || !Number.isInteger(value)) return null;
   return value >= rule.min && value <= rule.max ? value : null;
@@ -41,7 +32,8 @@ export interface SettingRow {
   /** null: applies to every branch */
   readonly branch_id: string | null;
   readonly key: string;
-  readonly value: string | null;
+  /** jsonb, as PostgREST returns it */
+  readonly value: unknown;
 }
 
 /**

@@ -1,22 +1,22 @@
-// Test data in the local Supabase (`pnpm db:start`, `pnpm sync:start`) for the end-to-end tests of
+// Test data in the local Supabase (`pnpm db:start`) for the end-to-end tests of
 // the web and Windows apps. Each test creates its own branch and staff and removes them after, so
 // tests don't depend on the demo data, on your local accounts, or on each other.
 import { execSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
-import { hashPin } from '@gym/core';
 import type { Database } from '@gym/db';
 import { createClient } from '@supabase/supabase-js';
 
 interface LocalStatus {
   API_URL: string;
   SECRET_KEY: string;
+  PUBLISHABLE_KEY: string;
 }
 
 let adminClient: ReturnType<typeof createClient<Database>> | undefined;
+let localStatus: LocalStatus | undefined;
 
-/** A Supabase client with the local secret key (tests only; never in the app). */
-export function admin() {
-  if (adminClient) return adminClient;
+function status(): LocalStatus {
+  if (localStatus) return localStatus;
   let output: string;
   try {
     output = execSync(
@@ -24,15 +24,29 @@ export function admin() {
       { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] },
     );
   } catch {
-    throw new Error(
-      'Local Supabase is not running. Start it with pnpm db:start and pnpm sync:start.',
-    );
+    throw new Error('Local Supabase is not running. Start it with pnpm db:start.');
   }
-  const status = JSON.parse(output) as LocalStatus;
-  adminClient = createClient<Database>(status.API_URL, status.SECRET_KEY, {
+  localStatus = JSON.parse(output) as LocalStatus;
+  return localStatus;
+}
+
+/** A Supabase client with the local secret key (tests only; never in the app). */
+export function admin() {
+  adminClient ??= createClient<Database>(status().API_URL, status().SECRET_KEY, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
   return adminClient;
+}
+
+/** Sets a staff member's PIN the way the app does: right after their password login. */
+async function setPinAs(email: string, password: string, pin: string): Promise<void> {
+  const client = createClient<Database>(status().API_URL, status().PUBLISHABLE_KEY, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+  const signIn = await client.auth.signInWithPassword({ email, password });
+  if (signIn.error) throw new Error(signIn.error.message);
+  await write(client.rpc('set_my_pin', { p_pin: pin }));
+  await client.auth.signOut({ scope: 'local' });
 }
 
 /** The data of a Supabase call; throws on an error or when nothing came back. */
@@ -102,8 +116,9 @@ export class TestData {
     const username = `e2e_${this.run}_${String(this.count)}`;
     const password = `E2e-pass-${this.run}`;
     const fullName = options.fullName ?? `کارمەندی تاقیکردنەوە ${String(this.count)}`;
+    const email = `${username}@staff.gym-spa.invalid`;
     const created = await admin().auth.admin.createUser({
-      email: `${username}@staff.gym-spa.invalid`,
+      email,
       password,
       email_confirm: true,
     });
@@ -136,11 +151,7 @@ export class TestData {
     let pin: string | null = null;
     if (options.withPin ?? true) {
       pin = '482917';
-      await write(
-        admin()
-          .from('staff_pins')
-          .insert({ staff_id: id, ...(await hashPin(pin)) }),
-      );
+      await setPinAs(email, password, pin);
     }
     return { id, username, fullName, password, pin };
   }

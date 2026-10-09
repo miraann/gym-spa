@@ -80,7 +80,7 @@ export function LockScreen({
   );
 }
 
-/** PIN unlock for one staff member; works offline. */
+/** PIN unlock for one staff member; the server checks the PIN. */
 export function PinScreen({
   account,
   onBack,
@@ -96,20 +96,21 @@ export function PinScreen({
   const format = useFormat();
   const [busy, setBusy] = useState(false);
   const [wrong, setWrong] = useState<number | null>(null);
-  const [failure, setFailure] = useState(false);
+  const [failure, setFailure] = useState<'network' | 'unexpected' | null>(null);
   const blocker: PasswordReason | null = pinBlocker(account);
 
   const submit = (pin: string) => {
     setBusy(true);
-    setFailure(false);
+    setFailure(null);
     controller
       .unlock(account.staffId, pin)
       .then((result) => {
         setWrong(result.kind === 'wrong_pin' ? result.triesLeft : null);
+        if (result.kind === 'network') setFailure('network');
       })
       .catch((error: unknown) => {
         logError(error, { area: 'auth', action: 'unlock' });
-        setFailure(true);
+        setFailure('unexpected');
       })
       .finally(() => {
         setBusy(false);
@@ -141,7 +142,7 @@ export function PinScreen({
           <FormError
             message={wrong === null ? null : t('pin.wrong', { count: format.number(wrong) })}
           />
-          <FormError message={failure ? t('errors.unexpected') : null} />
+          <FormError message={failure ? t(`errors.${failure}`) : null} />
         </>
       )}
       <Button variant="ghost" onClick={onBack}>

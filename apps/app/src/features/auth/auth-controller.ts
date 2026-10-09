@@ -1,42 +1,30 @@
-import {
-  hashPin,
-  isValidUsername,
-  normalizePin,
-  normalizeUsername,
-  pinTriesLeft,
-  resolveSetting,
-  staffEmail,
-  verifyPin,
-  type SettingKey,
-  type SettingRow,
-} from '@gym/core';
-import { writeMetadata } from '@gym/db';
+import { isValidUsername, normalizeUsername, staffEmail } from '@gym/core';
 import type { Language } from '@gym/i18n';
 import type { SecureStorage } from '@gym/platform';
-import type { CommonPowerSyncDatabase } from '@powersync/common';
 import { createAppClient, type AppSupabaseClient, type BackendConfig } from '@/lib/backend';
-import { ensureDeviceId } from '@/lib/local-database';
 import { logError } from '@/lib/logger';
 import { setPreference } from '@/lib/preferences';
-import { SyncConnection, pendingByAuthor, usableSession } from '@/lib/sync-connection';
 import {
   AccountStore,
   canUseBranch,
+  passwordReasonAfterCheck,
   pinBlocker,
   staffStorageKey,
-  withAttemptsCleared,
-  withWrongPin,
   type DeviceAccount,
   type PasswordReason,
 } from './accounts';
 import {
   AuthFlowError,
   changePassword,
+  checkPin,
+  clearPinLockout,
   fetchBranches,
   fetchProfile,
-  savePin,
+  setPin,
   toAuthError,
+  usableSession,
   type BranchChoice,
+  type PinCheck,
   type StaffProfile,
 } from './staff-api';
 
@@ -55,10 +43,9 @@ export type UnlockResult =
   | { readonly kind: 'unlocked' }
   | { readonly kind: 'wrong_pin'; readonly triesLeft: number }
   | { readonly kind: 'no_branch_access' }
-  | { readonly kind: 'password_required'; readonly reason: PasswordReason };
-
-export type LogoutResult =
-  { readonly kind: 'logged_out' } | { readonly kind: 'pending_changes'; readonly count: number };
+  | { readonly kind: 'password_required'; readonly reason: PasswordReason }
+  /** The server couldn't be reached, so the PIN can't be checked. */
+  | { readonly kind: 'network' };
 
 export interface AuthState {
   /** False until the accounts have been read from secure storage. */
@@ -68,25 +55,22 @@ export interface AuthState {
   readonly accounts: readonly DeviceAccount[];
   /** The staff member using the app; null while locked. */
   readonly activeId: string | null;
-  /** The branch this device works in (local_kv), null until chosen. */
+  /** The branch this device works in, null until chosen. */
   readonly branchId: string | null;
-  /** Whose token the device syncs with (the last one unlocked), null when nobody can. */
-  readonly syncingAs: string | null;
 }
 
-const BRANCH_KEY = 'branch_id';
-/** These can't sync until their owner logs in with their password again. */
-const ENDED: readonly (PasswordReason | null)[] = ['session_ended', 'inactive'];
+/** Secure storage keys of this install. */
+const DEVICE_ID_KEY = 'device.id';
+const BRANCH_KEY = 'device.branch_id';
 
 /**
  * Login, PIN unlock, lock and logout on this device. Several staff members can be logged in on one
- * device; one of them uses the app at a time (after their PIN), and each one's changes upload
- * under their own session.
+ * device; one of them uses the app at a time (after their PIN), and every request runs under that
+ * staff member's own session.
  */
 export class AuthController {
   private readonly store: AccountStore;
   private readonly clients = new Map<string, AppSupabaseClient>();
-  private readonly sync: SyncConnection | null;
   private deviceId = '';
   private state: AuthState = {
     ready: false,
@@ -94,25 +78,17 @@ export class AuthController {
     accounts: [],
     activeId: null,
     branchId: null,
-    syncingAs: null,
   };
   private readonly listeners = new Set<() => void>();
 
   constructor(
-    private readonly db: CommonPowerSyncDatabase,
     private readonly config: BackendConfig | null,
-    storage: SecureStorage,
+    private readonly storage: SecureStorage,
   ) {
     this.store = new AccountStore(storage);
     this.store.subscribe(() => {
       this.setState({ accounts: this.store.list() });
     });
-    this.sync = config
-      ? new SyncConnection(db, config.powersyncUrl, {
-          client: (staffId) => (this.store.get(staffId) ? this.clientFor(staffId) : undefined),
-          sessionEnded: (staffId) => this.markPasswordRequired(staffId, 'session_ended'),
-        })
-      : null;
   }
 
   // State -----------------------------------------------------------------------------------------
@@ -139,23 +115,32 @@ export class AuthController {
     return this.config !== null;
   }
 
+  /** The active staff member's client: requests from the app run under their own session. */
+  get activeClient(): AppSupabaseClient | undefined {
+    return this.state.activeId && this.config ? this.clientFor(this.state.activeId) : undefined;
+  }
+
   async init(): Promise<void> {
+    let branchId: string | null;
     try {
-      this.deviceId = await ensureDeviceId(this.db);
+      this.deviceId = await this.ensureDeviceId();
+      branchId = await this.storage.get(BRANCH_KEY);
       await this.store.load();
     } catch (error) {
       this.setState({ failed: true });
       throw error;
     }
-    const branch = await this.db.getOptional<{ value: string }>(
-      'SELECT value FROM local_kv WHERE id = ?',
-      [BRANCH_KEY],
-    );
-    const branchId = branch?.value ?? null;
     // Always starts locked: a reload or restart asks for a PIN again.
     this.setState({ ready: true, branchId });
-    await this.sync?.setBranch(branchId);
-    await this.updateSyncIdentity();
+  }
+
+  /** This install's id, made on first launch. It goes with every request (X-Device-Id). */
+  private async ensureDeviceId(): Promise<string> {
+    const existing = await this.storage.get(DEVICE_ID_KEY);
+    if (existing) return existing;
+    const id = crypto.randomUUID();
+    await this.storage.set(DEVICE_ID_KEY, id);
+    return id;
   }
 
   private clientFor(staffId: string): AppSupabaseClient {
@@ -173,7 +158,7 @@ export class AuthController {
 
   // Password login --------------------------------------------------------------------------------
 
-  /** Logs in online with username and password; returns what the staff member must do next. */
+  /** Logs in with username and password; returns what the staff member must do next. */
   async passwordLogin(usernameInput: string, password: string): Promise<AuthStep> {
     if (!this.config) throw new AuthFlowError('not_configured');
     const username = normalizeUsername(usernameInput);
@@ -201,6 +186,8 @@ export class AuthController {
     if (stored.error) throw toAuthError(stored.error);
 
     try {
+      // A password login ends a PIN lockout.
+      await clearPinLockout(client);
       const profile = await fetchProfile(client, staffId);
       if (!profile) throw new AuthFlowError('account_inactive');
       const branches = await fetchBranches(client);
@@ -211,12 +198,10 @@ export class AuthController {
       if (!canUseBranch) throw new AuthFlowError('no_branch_access');
 
       const existing = this.store.get(staffId);
-      await this.store.save(
-        withAttemptsCleared({
-          ...accountFromProfile(profile, branches, existing),
-          passwordRequired: null,
-        }),
-      );
+      await this.store.save({
+        ...accountFromProfile(profile, branches, existing),
+        passwordRequired: null,
+      });
       return await this.nextStep(staffId, branches);
     } catch (error) {
       if (!this.store.get(staffId)) await this.forgetClient(staffId);
@@ -234,28 +219,25 @@ export class AuthController {
     return this.nextStep(staffId);
   }
 
-  /** Saves a new PIN (on the server, so it works on the staff member's other devices too). */
+  /** Saves a new PIN on the server, so it works on the staff member's other devices too. */
   async setPin(staffId: string, pin: string): Promise<AuthStep> {
-    const hashed = await hashPin(normalizePin(pin));
     try {
-      await savePin(this.clientFor(staffId), staffId, hashed);
+      await setPin(this.clientFor(staffId), pin);
     } catch (error) {
       throw toAuthError(error);
     }
-    await this.store.update(staffId, (account) =>
-      withAttemptsCleared({ ...account, pin: hashed, passwordRequired: null }),
-    );
+    await this.store.update(staffId, (account) => ({
+      ...account,
+      hasPin: true,
+      passwordRequired: null,
+    }));
     return this.nextStep(staffId);
   }
 
   /** Sets the branch this device works in. Changing it later is the devices screen (step 1e). */
   async chooseBranch(staffId: string, branchId: string): Promise<AuthStep> {
-    await this.db.execute('INSERT OR REPLACE INTO local_kv (id, value) VALUES (?, ?)', [
-      BRANCH_KEY,
-      branchId,
-    ]);
+    await this.storage.set(BRANCH_KEY, branchId);
     this.setState({ branchId });
-    await this.sync?.setBranch(branchId);
     return this.nextStep(staffId);
   }
 
@@ -266,7 +248,7 @@ export class AuthController {
     const account = this.store.get(staffId);
     if (!account) throw new AuthFlowError('unexpected');
     if (account.mustChangePassword) return { kind: 'change_password', staffId };
-    if (!account.pin) return { kind: 'set_pin', staffId };
+    if (!account.hasPin) return { kind: 'set_pin', staffId };
     if (!this.state.branchId) {
       const branches = knownBranches ?? (await fetchBranches(this.clientFor(staffId)));
       const [only] = branches;
@@ -279,26 +261,63 @@ export class AuthController {
 
   // PIN, lock and logout --------------------------------------------------------------------------
 
-  async unlock(staffId: string, pinInput: string): Promise<UnlockResult> {
+  /** Asks the server to check the PIN; it counts wrong tries for every device. */
+  async unlock(staffId: string, pin: string): Promise<UnlockResult> {
     const account = this.store.get(staffId);
+    const { branchId } = this.state;
     if (!account) return { kind: 'password_required', reason: 'session_ended' };
+    // The first login stopped before a branch was chosen: the password login asks for it.
+    if (!branchId) {
+      await this.markPasswordRequired(staffId, 'setup');
+      return { kind: 'password_required', reason: 'setup' };
+    }
     // Checked first, so it never uses up a PIN try. A password login refuses them too.
-    if (!canUseBranch(account, this.state.branchId)) return { kind: 'no_branch_access' };
+    if (!canUseBranch(account, branchId)) return { kind: 'no_branch_access' };
     const blocker = pinBlocker(account);
-    if (blocker || !account.pin) return { kind: 'password_required', reason: blocker ?? 'setup' };
+    if (blocker) return { kind: 'password_required', reason: blocker };
 
-    if (await verifyPin(normalizePin(pinInput), account.pin)) {
-      await this.store.save(withAttemptsCleared(account));
-      await this.activate(staffId);
-      void this.refreshFromServer(staffId);
-      return { kind: 'unlocked' };
+    const client = this.clientFor(staffId);
+    const session = await usableSession(client);
+    if (session === 'unavailable') return { kind: 'network' };
+    if (session === 'ended') {
+      await this.markPasswordRequired(staffId, 'session_ended');
+      return { kind: 'password_required', reason: 'session_ended' };
     }
 
-    const maxAttempts = await this.setting('security.pin_max_attempts');
-    const updated = withWrongPin(account, maxAttempts);
-    await this.store.save(updated);
-    if (updated.pinAttempts.lockedOut) return { kind: 'password_required', reason: 'locked_out' };
-    return { kind: 'wrong_pin', triesLeft: pinTriesLeft(updated.pinAttempts, maxAttempts) };
+    let check: PinCheck;
+    try {
+      check = await checkPin(client, pin, branchId);
+    } catch (error) {
+      const authError = toAuthError(error);
+      if (authError.key === 'network') return { kind: 'network' };
+      throw authError;
+    }
+
+    switch (check.result) {
+      case 'ok':
+        await this.activate(staffId);
+        void this.refreshFromServer(staffId);
+        return { kind: 'unlocked' };
+      case 'wrong_pin':
+        return { kind: 'wrong_pin', triesLeft: check.triesLeft };
+      case 'locked_out':
+        await this.markPasswordRequired(staffId, 'locked_out');
+        return { kind: 'password_required', reason: 'locked_out' };
+      case 'no_pin':
+        await this.store.update(staffId, (current) => ({ ...current, hasPin: false }));
+        await this.markPasswordRequired(staffId, 'pin_reset');
+        return { kind: 'password_required', reason: 'pin_reset' };
+      case 'inactive':
+        await this.markPasswordRequired(staffId, 'inactive');
+        return { kind: 'password_required', reason: 'inactive' };
+      case 'no_branch_access':
+        // Their access changed since the last check: this device's copy forgets the branch.
+        await this.store.update(staffId, (current) => ({
+          ...current,
+          branchIds: current.branchIds.filter((id) => id !== branchId),
+        }));
+        return { kind: 'no_branch_access' };
+    }
   }
 
   private async activate(staffId: string): Promise<void> {
@@ -310,23 +329,16 @@ export class AuthController {
     // Language order: the staff member's own choice, otherwise the device's current language.
     if (account?.preferredLanguage) setPreference('language', account.preferredLanguage);
     this.setState({ activeId: staffId });
-    // Never waits for the network: (re)connecting to the sync service happens in the background.
-    void this.updateSyncIdentity();
   }
 
-  /** Locks the app (idle, or to let someone else in). Sync carries on in the background. */
+  /** Locks the app (idle, or to let someone else in). */
   lock(): void {
     if (this.state.activeId) this.setState({ activeId: null });
   }
 
-  /**
-   * Removes a staff member's session and PIN from this device only; the device's data stays.
-   * Refused while they have unsent changes, which need their session to upload.
-   */
-  async logout(staffId: string): Promise<LogoutResult> {
-    const pending = (await pendingByAuthor(this.db)).get(staffId) ?? 0;
-    if (pending > 0) return { kind: 'pending_changes', count: pending };
-    // Ends this device's session on the server too, when online. Offline, it simply expires.
+  /** Removes a staff member's session from this device only. */
+  async logout(staffId: string): Promise<void> {
+    // Ends this device's session on the server too. Without a connection, it simply expires.
     await this.clients
       .get(staffId)
       ?.auth.signOut({ scope: 'local' })
@@ -334,8 +346,6 @@ export class AuthController {
     await this.store.remove(staffId);
     await this.forgetClient(staffId);
     if (this.state.activeId === staffId) this.setState({ activeId: null });
-    await this.updateSyncIdentity();
-    return { kind: 'logged_out' };
   }
 
   private async forgetClient(staffId: string): Promise<void> {
@@ -344,22 +354,23 @@ export class AuthController {
     await client?.removeAllChannels();
   }
 
-  // Online checks ---------------------------------------------------------------------------------
+  // Server checks ---------------------------------------------------------------------------------
 
   /**
    * Brings a staff member's cached details up to date: name, role and permissions, and their PIN.
-   * A PIN removed by a manager, or a deactivated account, takes effect here. Does nothing offline.
+   * A PIN removed by a manager, a lockout or a deactivated account takes effect here. Does nothing
+   * while the server can't be reached.
    */
   async refreshFromServer(staffId: string): Promise<void> {
     if (!this.store.get(staffId)) return;
     try {
       const client = this.clientFor(staffId);
       const session = await usableSession(client);
-      if (session.kind === 'ended') {
+      if (session === 'ended') {
         await this.markPasswordRequired(staffId, 'session_ended');
         return;
       }
-      if (session.kind === 'unavailable') return;
+      if (session === 'unavailable') return;
       const profile = await fetchProfile(client, staffId);
       if (!profile) {
         await this.markPasswordRequired(staffId, 'inactive');
@@ -368,10 +379,7 @@ export class AuthController {
       const branches = await fetchBranches(client);
       const updated = await this.store.update(staffId, (account) => ({
         ...accountFromProfile(profile, branches, account),
-        passwordRequired:
-          account.pin && !profile.pin && account.passwordRequired === null
-            ? 'pin_reset'
-            : account.passwordRequired,
+        passwordRequired: passwordReasonAfterCheck(account, profile),
       }));
       // Access to this device's branch was taken away: they stop at once, like a deactivation.
       if (
@@ -397,58 +405,22 @@ export class AuthController {
     const account = this.store.get(staffId);
     if (!account || account.passwordRequired === reason) return;
     await this.store.update(staffId, (current) => ({ ...current, passwordRequired: reason }));
-    // A deactivated staff member stops at once; others keep working locally until they lock.
+    // A deactivated staff member stops at once.
     if (reason === 'inactive' && this.state.activeId === staffId) this.lock();
-    // Not from inside the sync service's own callbacks.
-    setTimeout(() => void this.updateSyncIdentity(), 0);
   }
 
-  /** Syncs as the active staff member, else the most recent one whose login still works. */
-  private async updateSyncIdentity(): Promise<void> {
-    if (!this.sync) return;
-    const usable = (staffId: string | null) => {
-      const account = staffId ? this.store.get(staffId) : undefined;
-      return account && !ENDED.includes(account.passwordRequired) ? account.staffId : null;
-    };
-    const identity =
-      usable(this.state.activeId) ??
-      usable(this.sync.syncingAs) ??
-      this.store.list().find((account) => !ENDED.includes(account.passwordRequired))?.staffId ??
-      null;
-    this.setState({ syncingAs: identity });
-    await this.sync.setIdentity(identity);
-  }
+  // Preferences -----------------------------------------------------------------------------------
 
-  /** "Sync now". */
-  async syncNow(): Promise<void> {
-    await this.sync?.reconnect();
-  }
-
-  // Settings and preferences ----------------------------------------------------------------------
-
-  /** A setting for this device's branch, from the local database (synced settings). */
-  async setting(key: SettingKey): Promise<number> {
-    const rows = await this.db.getAll<SettingRow>(
-      'SELECT branch_id, key, value FROM settings WHERE key = ?',
-      [key],
-    );
-    return resolveSetting(key, rows, this.state.branchId);
-  }
-
-  /** Remembers the active staff member's language on their profile (synced to their devices). */
+  /** Remembers the active staff member's language on their profile, for their other devices. */
   async saveLanguage(language: Language): Promise<void> {
     const staffId = this.state.activeId;
     if (!staffId) return;
     await this.store.update(staffId, (account) => ({ ...account, preferredLanguage: language }));
-    await this.db.execute(
-      `UPDATE staff_users SET preferred_language = ?, _metadata = ?
-        WHERE id = ? AND preferred_language IS NOT ?`,
-      [language, writeMetadata(staffId), staffId, language],
-    );
-  }
-
-  async close(): Promise<void> {
-    await this.sync?.close();
+    const { error } = await this.clientFor(staffId)
+      .from('staff_users')
+      .update({ preferred_language: language })
+      .eq('id', staffId);
+    if (error) throw toAuthError(error);
   }
 }
 
@@ -466,8 +438,7 @@ function accountFromProfile(
     branchIds: branches.map((branch) => branch.id),
     preferredLanguage: profile.preferredLanguage,
     mustChangePassword: profile.mustChangePassword,
-    pin: profile.pin,
-    pinAttempts: existing?.pinAttempts ?? { failures: 0, lockedOut: false },
+    hasPin: profile.hasPin,
     passwordRequired: existing?.passwordRequired ?? null,
     lastActiveAt: existing?.lastActiveAt ?? new Date().toISOString(),
   };
