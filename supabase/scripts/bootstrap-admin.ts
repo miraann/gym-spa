@@ -30,9 +30,21 @@ const { values: args } = parseArgs({
   },
 });
 
+/**
+ * Stops the script with a message. Thrown instead of process.exit(): exiting while a fetch
+ * connection is still open crashes Node on Windows (libuv assertion UV_HANDLE_CLOSING).
+ */
+class BootstrapError extends Error {
+  constructor(
+    message: string,
+    readonly exitCode = 1,
+  ) {
+    super(message);
+  }
+}
+
 function fail(message: string): never {
-  console.error(`\n✖ ${message}`);
-  process.exit(1);
+  throw new BootstrapError(message);
 }
 
 function connection(): { url: string; secretKey: string } {
@@ -76,21 +88,18 @@ function readHidden(question: string): Promise<string> {
   if (!stdin.isTTY) {
     fail('Run this in a terminal, or pass the password in BOOTSTRAP_ADMIN_PASSWORD.');
   }
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     let value = '';
     const onData = (chunk: string) => {
       for (const char of chunk) {
-        if (char === '\r' || char === '\n') {
+        if (char === '\r' || char === '\n' || char === '\u0003') {
           stdin.setRawMode(false);
           stdin.pause();
           stdin.off('data', onData);
           stdout.write('\n');
-          resolve(value);
+          if (char === '\u0003') reject(new BootstrapError('Cancelled.', 130));
+          else resolve(value);
           return;
-        }
-        if (char === '\u0003') {
-          stdout.write('\n');
-          process.exit(130);
         }
         value = char === '\u007f' || char === '\b' ? value.slice(0, -1) : value + char;
       }
@@ -228,4 +237,10 @@ async function main() {
   );
 }
 
-await main();
+try {
+  await main();
+} catch (error) {
+  if (!(error instanceof BootstrapError)) throw error;
+  console.error(`\n✖ ${error.message}`);
+  process.exitCode = error.exitCode;
+}
