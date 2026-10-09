@@ -6,7 +6,7 @@ Offline-first, multi-branch gym & spa system with NFC check-in. One codebase for
 - Full spec: [gym-spa-system-prompt.md](gym-spa-system-prompt.md)
 - Working rules for contributors and Claude: [CLAUDE.md](CLAUDE.md)
 
-> **Status:** Phase 1d done: every device has its own local database (PowerSync) and syncs its branch. Staff log in with their password once per device, then unlock with a PIN, also offline; each change uploads under its author's own session. The admin screens (staff, roles, branches, devices, sync) come in 1e. This README grows with each step.
+> **Status:** Phase 1d done: every device has its own local database (PowerSync) and syncs its branch. Staff log in with their password once per device, then unlock with a PIN, also offline; each change uploads under its author's own session. The cloud setup (Supabase, PowerSync Cloud, Vercel) is live. The admin screens (staff, roles, branches, devices, sync) come in 1e. This README grows with each step.
 
 ## Requirements
 
@@ -61,7 +61,7 @@ Run from the repository root:
 | `pnpm sync:start` / `pnpm sync:stop` | Start or stop local PowerSync (Docker), at http://localhost:54380. Start it again after `pnpm db:reset` |
 | `pnpm sync:logs` | PowerSync's log (sync config errors show up here) |
 | `pnpm test:sync` | End-to-end sync tests: Node devices go offline, edit and reconnect against local Supabase and PowerSync |
-| `pnpm bootstrap:admin` | Create the first Super Admin. Add `--remote` for a cloud project (see [Database](#database-supabase)) |
+| `pnpm bootstrap:admin` | Create the first Super Admin. Add `--remote` for a cloud project (see [A cloud project](#a-cloud-project)) |
 
 First-time setup for the browser tests: `pnpm --filter @gym/app exec playwright install chromium`.
 
@@ -109,7 +109,7 @@ tools/eslint-plugin-gym  project lint rules
 
 ## Database (Supabase)
 
-Supabase runs locally in Docker for development (`supabase/config.toml` is the local setup). Devices will keep their own copy of the data and sync it through PowerSync (step 1d); the app never waits for the database.
+Supabase runs locally in Docker for development (`supabase/config.toml` is the local setup). Devices keep their own copy of the data and sync it through PowerSync; the app never waits for the database. For the cloud project, see [A cloud project](#a-cloud-project).
 
 ### Migrations
 
@@ -137,16 +137,6 @@ Supabase runs locally in Docker for development (`supabase/config.toml` is the l
 4. pgTAP tests in `supabase/tests` for every policy and guard. `001-schema-rules.test.sql` fails when a table has no RLS, no policies, no audit trigger, an unindexed foreign key, or any access for anonymous visitors.
 5. If devices need the table: add it to the `powersync` publication and the sync rules.
 
-### A cloud project
-
-1. Create a project on supabase.com, then link it and push the migrations:
-   ```sh
-   pnpm --filter @gym/supabase exec supabase link --project-ref <project-ref> --workdir ..
-   pnpm --filter @gym/supabase exec supabase db push --workdir ..
-   ```
-2. In Dashboard → Authentication, turn off "Allow new users to sign up" and set the minimum password length to 8, as in `config.toml` (that file only configures the local setup). Keep the Email provider turned on: staff log in through it with their username.
-3. Copy `supabase/.env.example` to `supabase/.env.local`, fill in the URL and the secret key, then run `pnpm bootstrap:admin --remote`. In a new project it also creates the first branch (`B1`), so the admin can log in. Keep the secret key in that file only: it bypasses every security rule.
-
 ## Login, PIN and lock
 
 Code: `apps/app/src/features/auth`, rules in `packages/core` (`pin.ts`, `settings.ts`, `permissions.ts`).
@@ -169,7 +159,58 @@ Every device works on its own SQLite database: the app reads and writes locally 
 - **Branch access:** sync streams can't call SQL functions, so the branch rule is also kept as rows in `staff_branch_access`, maintained by triggers from `app.refresh_branch_access()`. RLS and the sync streams both read it, so the rule is still written once.
 - **Uploads:** `packages/db/src/upload.ts`. Each change records its author in `_metadata` (`writeMetadata()`) and is sent with that staff member's own session. Network problems and server errors are retried with backoff. Changes the server refuses are recorded in the local `rejected_changes` table with a key the app translates, and the row goes back to the server's version.
 - **Schema changes:** add the table or column to the migration, to `sync-config.yaml` (and the `powersync` publication, with `grant select ... to powersync_role`), and to `packages/db/src/schema.ts`. After `pnpm db:types`, `pnpm typecheck` fails if the local schema doesn't match Postgres.
-- **Local development:** `pnpm sync:start` runs PowerSync in Docker next to local Supabase. It checks logins with Supabase's public keys, and its own storage starts empty each time. Production uses PowerSync Cloud with the same `sync-config.yaml` (set up in its own step).
+- **Local development:** `pnpm sync:start` runs PowerSync in Docker next to local Supabase. It checks logins with Supabase's public keys, and its own storage starts empty each time. Production uses PowerSync Cloud with the same `sync-config.yaml` (see [A cloud project](#a-cloud-project)).
+
+## A cloud project
+
+The production setup: Supabase, PowerSync Cloud and the web app on Vercel. Do the steps in this order: PowerSync can only connect once the migrations are in, and the app needs both addresses when it is built. Put Supabase and PowerSync in the same region, close to Iraq (ours are both in Frankfurt, `eu-central-1`).
+
+Settings live in three places. Never mix them:
+
+| Where | What | Used by |
+|---|---|---|
+| `supabase/.env.local` (git ignores it) | `SUPABASE_URL`, `SUPABASE_SECRET_KEY`, `SUPABASE_DB_URL` | Scripts on your PC: `db push`, `bootstrap:admin --remote`. Secret: never in Vercel or the app |
+| `apps/app/.env.local` (git ignores it) | `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `VITE_POWERSYNC_URL` (all public) | Local builds: `pnpm build`, `pnpm android:apk`, `pnpm desktop:exe` |
+| Vercel → Settings → Environment Variables | The same three `VITE_*` values, and `ENABLE_EXPERIMENTAL_COREPACK` | The web build |
+
+1. **Supabase project.** Create one on supabase.com. In **Authentication → Sign In / Providers**: turn off "Allow new users to sign up", set the minimum password length to 8, and keep the **Email** provider on. Staff log in through it with their username, so turning it off breaks every login. (`config.toml` sets the same, but only for the local setup.)
+2. **Server settings.** Copy `supabase/.env.example` to `supabase/.env.local` and fill it in:
+   - `SUPABASE_URL` and `SUPABASE_SECRET_KEY` (`sb_secret_…`): Project Settings → API Keys. The secret key bypasses every security rule; keep it in this file only.
+   - `SUPABASE_DB_URL`: the **Session pooler** URI from **Connect** (port 5432), with the database password in it. Encode special characters in the password: `@` → `%40`, `:` → `%3A`, `/` → `%2F`, `#` → `%23`, `?` → `%3F`, `%` → `%25`. Don't use the transaction pooler (port 6543), which can't run migrations, or the direct `db.<project-ref>.supabase.co` host, which needs IPv6.
+3. **Push the migrations.** The dry run only lists what it would apply; check the list, then push. In PowerShell, from the repository root:
+   ```powershell
+   $db = ((Get-Content supabase/.env.local | Where-Object { $_ -match '^SUPABASE_DB_URL=' }) -replace '^SUPABASE_DB_URL=', '').Trim('"')
+   pnpm --filter @gym/supabase exec supabase db push --db-url "$db" --dry-run --workdir ..
+   pnpm --filter @gym/supabase exec supabase db push --db-url "$db" --workdir ..
+   ```
+4. **A password for PowerSync.** The migrations create `powersync_role`, which can replicate and read only the synced tables, but can't log in. Give it a strong password in the SQL Editor and keep it for the next step:
+   ```sql
+   alter role powersync_role with login password '<strong password>';
+   ```
+   (Locally, `seed.sql` sets a development-only password.)
+5. **PowerSync Cloud.** On powersync.com, create a project and an instance in the same region:
+   - **Database connection:** host `db.<project-ref>.supabase.co`, port `5432`, database `postgres`, user `powersync_role` with the password from step 4, SSL mode `verify-full`. Use this direct host, not a pooler: replication doesn't work through the pooler. "Test connection" should pass.
+   - **Client auth:** turn on Supabase Auth. JWKS URI `https://<project-ref>.supabase.co/auth/v1/.well-known/jwks.json`, audience `authenticated`.
+   - **Sync config:** paste `supabase/powersync/sync-config.yaml` and deploy it. It should show as Active.
+   - Copy the instance URL (`https://<id>.powersync.journeyapps.com`).
+6. **First Super Admin:** `pnpm bootstrap:admin --remote`. Its first line shows which Supabase project it is talking to; check it. In a new project it also creates the first branch (`B1`; press Enter to keep the default name), so the admin can log in. Type the password yourself; it never goes into a file.
+7. **App settings.** Copy `apps/app/.env.example` to `apps/app/.env.local` and fill in:
+   - `VITE_SUPABASE_URL`: `https://<project-ref>.supabase.co`
+   - `VITE_SUPABASE_PUBLISHABLE_KEY`: the **publishable** key (`sb_publishable_…`), never the secret key
+   - `VITE_POWERSYNC_URL`: the instance URL from step 5
+8. **Vercel.**
+   1. Add New → Project → import `miraann/gym-spa`. The repository is private: if it isn't listed, give Vercel's GitHub app access to it.
+   2. **Root Directory** = `apps/app`. Leave "Include files outside the root directory" on, because the app uses the workspace packages. Leave the build settings alone: `apps/app/vercel.json` sets them.
+   3. **Environment Variables**, for Production and Preview: the three `VITE_*` values (you can import `apps/app/.env.local`, but **never** `supabase/.env.local`), and `ENABLE_EXPERIMENTAL_COREPACK` = `1`, so Vercel uses the pnpm version pinned in `package.json`.
+   4. **Settings → Build and Deployment → Node.js Version: 24.x.** The repository requires Node 24.
+   5. Deploy. A build only picks up changed variables when it runs again: after changing one, use Deployments → ⋯ → Redeploy.
+9. **Check it works.** Open the site and log in as the admin. The sync indicator should say Online; open it to see the last sync time and 0 pending changes. In DevTools → Network, switch to Offline: the indicator says Offline and the app still loads after a reload. If the login screen says the app isn't connected to a server, the build had no `VITE_*` values (the page's Content-Security-Policy then allows `connect-src 'self'` only). A tab that was already open may keep the old version until you accept the update prompt or reopen it.
+
+**Later changes:**
+
+- **New migrations:** the same `db push`, dry run first. Push them before the app or sync config that needs them.
+- **Changed `sync-config.yaml`:** paste and deploy it in the PowerSync dashboard again; it doesn't follow the repository by itself.
+- **Changed `VITE_*` values:** redeploy on Vercel and rebuild the APK and EXE. The addresses are part of each build's Content-Security-Policy.
 
 ## Android app
 
@@ -203,6 +244,6 @@ Every device works on its own SQLite database: the app reads and writes locally 
 
 ## Deploying the web app (Vercel)
 
-Import [miraann/gym-spa](https://github.com/miraann/gym-spa) in Vercel with **Root Directory = `apps/app`**. `apps/app/vercel.json` sets the install and build commands, the SPA rewrite and cache headers. Add the `VITE_*` environment variables from `apps/app/.env.example` in the Vercel project settings.
+Setting up the Vercel project: [A cloud project](#a-cloud-project), step 8. `apps/app/vercel.json` sets the install and build commands, the SPA rewrite and cache headers. Every push to `main` deploys to production and other branches get preview deploys; Vercel skips the build when a push changes nothing the app uses (for example only `supabase/`).
 
 **Content-Security-Policy:** every production build (web, Windows and Android) carries a CSP `<meta>` tag made by `vite.config.ts`. The app may only connect to itself and the Supabase and PowerSync addresses in the build's `VITE_*` variables, and only run its own scripts (the inline start-up script by its hash). Changing those addresses needs a new build. `pnpm dev` has no CSP, because Vite injects inline scripts there.
