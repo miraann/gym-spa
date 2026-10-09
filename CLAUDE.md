@@ -92,6 +92,27 @@ Inside the app, shared code goes in `components/ui` and `lib`.
 - Translatable config columns: `name_ckb` (required), `name_en`, `name_ar` (optional, fall back to Kurdish).
 - Search normalizes look-alike letters (ي/ی, ك/ک, ه/ە). Seed/demo data is in Kurdish.
 
+## Design: "Calm Bento" (2026 visual direction)
+
+Soft, tonal, rounded, touch-first. The app looks like a modern phone/tablet app, not an old admin panel. Calm surfaces for reception staff who use it all day; the check-in kiosk is the one loud screen. This extends spec §6 and doesn't replace it.
+
+- **Tokens only.** Colors, radii and shadows are CSS variables in `apps/app/src/styles.css` (OKLCH). Components use semantic classes (`bg-primary`, `text-muted-foreground`, `bg-success`), never raw palette classes like `bg-indigo-600` or hex values.
+- **Color:** one brand accent, **indigo-violet** (about `oklch(0.51 0.23 277)` light, `oklch(0.68 0.17 277)` dark), for primary buttons, the active nav item, focus rings and selected chips. **Green / amber / red are reserved for status** (allowed, warning, denied, paid/overdue) through `--success`, `--warning` and `--destructive`. Never use them as decoration or brand. Status is never shown by color alone: always add an icon and text too.
+- **Surfaces:** layer by tone, not by heavy borders or shadows. The page background is a slightly tinted off-white (dark: tinted near-black); cards are one step lighter. Dark mode gets the same care as light mode.
+- **Shape:** `--radius` about `1rem`. Cards `rounded-2xl`/`rounded-3xl`, buttons and inputs `rounded-xl`, chips, badges and the tab bar are pills.
+- **Type:** UniSalar has one weight, so in Kurdish the browser fakes bold. Build hierarchy with size, color and space, not font weight. KPIs and money totals use big numerals; money and count columns use `tabular-nums`.
+- **Layout by width** (the sidebar's mobile breakpoint is 768px):
+  - **Phone (< 768px):** a floating pill **bottom tab bar** (safe-area aware) with the staff member's 4 most-used destinations plus "More", which opens a bottom sheet with the full grouped menu. If they can check members in, the middle tab is a raised scan button. Dialogs become bottom sheets, tables become card lists, and primary actions sit in the thumb zone (sticky bottom bar).
+  - **Tablet (768–1279px):** the sidebar collapsed to an icon **rail** on the reading-start side. In landscape, list and detail sit side by side (e.g. members list + profile).
+  - **Desktop (≥ 1280px):** the full sidebar grouped by module, dense tables, keyboard shortcuts (Ctrl+K).
+  - Tab and rail order follows reading direction through flex/logical classes, never manual reversing.
+- **Bento dashboards:** KPI tiles of different sizes in a CSS grid (today's check-ins, live occupancy, today's revenue, expiring this week). Tiles use container queries (`@container`) so they adapt to the space they get, not the window width.
+- **Touch:** targets at least 44×44px (48px on phone primary actions and the kiosk). Use `pointer-coarse:` to give touch screens taller inputs and rows; mouse and keyboard keep the denser layout.
+- **Glass:** only on floating bars (top bar, bottom tab bar, sticky action bar), always with a solid fallback (`supports-backdrop-filter:`). Never behind body text or on cards: blur is slow on cheap Android tablets and older reception PCs, and it hurts Kurdish legibility.
+- **Motion:** short (150–250ms), spring-like for sheets and the kiosk result; wrap it in `motion-safe:` so reduced-motion users get none. Motion never delays work.
+- **Check-in kiosk (spec §6):** dark idle screen; the result fills the whole screen with the status color, a large member photo, the name in very large text, one line of reason, and a countdown ring for the 5-second auto-reset. Readable from 2 meters, in portrait and landscape.
+- **States:** skeletons shaped like the real content; empty states with an icon, one line of text and an action; contrast at least WCAG AA; visible focus rings.
+
 ## Database rules
 
 - `uuid` PKs. Every business table has `id`, `branch_id` (where relevant), `created_at`, `updated_at`, `created_by`, `deleted_at` (soft delete).
