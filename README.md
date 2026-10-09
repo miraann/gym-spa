@@ -186,7 +186,11 @@ Settings live in three places. Never mix them:
 
 - **New migrations:** the same `db push`, dry run first. Push them before the app that needs them.
 - **Changed `VITE_*` values:** redeploy on Vercel and rebuild the APK and EXE. The address is part of each build's Content-Security-Policy.
-- **Projects set up with PowerSync (before 1d-R):** push migration `20261009100000_online_only.sql`; it removes the `powersync` publication and `powersync_role`, and every staff member sets a new PIN at their next password login. Then delete the instance on powersync.com and the `VITE_POWERSYNC_URL` variable on Vercel.
+- **Projects set up with PowerSync (before 1d-R)**, in this order:
+  1. Delete the instance on powersync.com, then wait until its connection is gone: `select count(*) from pg_stat_activity where usename = 'powersync_role'` returns 0. The replication stream can take a few minutes to close.
+  2. Push migration `20261009100000_online_only.sql`. It removes the `powersync` publication and `powersync_role`, and every staff member sets a new PIN at their next password login.
+  3. Remove PowerSync's replication slot. Left alone, it makes Postgres keep its change log (WAL) forever and the disk fills up: `select pg_drop_replication_slot(slot_name) from pg_replication_slots where slot_name like 'powersync%' and not active;`
+  4. Push the code right away: Vercel deploys it, and the old app can't log in after step 2. Then remove `VITE_POWERSYNC_URL` on Vercel.
 
 ## Android app
 
