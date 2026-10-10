@@ -3,8 +3,12 @@ import {
   isValidGymCode,
   normalizePin,
   parseNavTabs,
+  parseTextSize,
+  parseThemePreference,
   resolvePermissions,
   type NavItemKey,
+  type TextSize,
+  type ThemePreference,
 } from '@gym/core';
 import { isLanguage, type Language } from '@gym/i18n';
 import { isAuthApiError, isAuthRetryableFetchError } from '@supabase/supabase-js';
@@ -111,6 +115,9 @@ export interface StaffProfile {
   readonly permissions: readonly string[];
   readonly preferredLanguage: Language | null;
   readonly navTabs: NavItemKey[] | null;
+  readonly allBranches: boolean;
+  readonly themePreference: ThemePreference | null;
+  readonly textSize: TextSize | null;
   readonly mustChangePassword: boolean;
   /** False: no PIN yet, or a manager removed it. */
   readonly hasPin: boolean;
@@ -126,7 +133,7 @@ export async function fetchProfile(
   const staff = await client
     .from('staff_users')
     .select(
-      'id, username, full_name, role_id, preferred_language, nav_tabs, is_active, must_change_password, deleted_at, roles(key, deleted_at)',
+      'id, username, full_name, role_id, all_branches, preferred_language, nav_tabs, theme_preference, text_size, is_active, must_change_password, deleted_at, roles(key, deleted_at)',
     )
     .eq('id', staffId)
     .maybeSingle();
@@ -157,6 +164,9 @@ export async function fetchProfile(
     ),
     preferredLanguage: isLanguage(row.preferred_language) ? row.preferred_language : null,
     navTabs: parseNavTabs(row.nav_tabs),
+    allBranches: row.all_branches,
+    themePreference: parseThemePreference(row.theme_preference),
+    textSize: parseTextSize(row.text_size),
     mustChangePassword: row.must_change_password,
     hasPin: pin.data !== null,
     pinLocked: pin.data?.locked_at != null,

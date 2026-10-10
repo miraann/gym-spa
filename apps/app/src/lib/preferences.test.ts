@@ -3,19 +3,27 @@ import { DEFAULT_PREFERENCES, parsePreferences, PREFERENCES_STORAGE_KEY } from '
 
 describe('parsePreferences', () => {
   it('defaults to Kurdish, Western digits and the device theme', () => {
-    expect(parsePreferences(null)).toEqual({ language: 'ckb', digits: 'latn', theme: 'system' });
+    expect(parsePreferences(null)).toEqual({
+      language: 'ckb',
+      digits: 'latn',
+      theme: 'system',
+      textSize: 'normal',
+    });
   });
 
   it('reads valid saved values', () => {
-    expect(parsePreferences('{"language":"ar","digits":"arab","theme":"dark"}')).toEqual({
+    expect(
+      parsePreferences('{"language":"ar","digits":"arab","theme":"dark","textSize":"large"}'),
+    ).toEqual({
       language: 'ar',
       digits: 'arab',
       theme: 'dark',
+      textSize: 'large',
     });
   });
 
   it('replaces invalid or unknown values with defaults', () => {
-    expect(parsePreferences('{"language":"fr","digits":7,"theme":"neon"}')).toEqual(
+    expect(parsePreferences('{"language":"fr","digits":7,"theme":"neon","textSize":9}')).toEqual(
       DEFAULT_PREFERENCES,
     );
     expect(parsePreferences('{"language":"en"}')).toEqual({
@@ -65,6 +73,11 @@ describe('preference store', () => {
     localStorage.setItem(PREFERENCES_STORAGE_KEY, '{"language":"ar","digits":"arab"}');
     const store = await import('./preferences');
 
-    expect(store.getPreferences()).toEqual({ language: 'ar', digits: 'arab', theme: 'system' });
+    expect(store.getPreferences()).toEqual({
+      language: 'ar',
+      digits: 'arab',
+      theme: 'system',
+      textSize: 'normal',
+    });
   });
 });

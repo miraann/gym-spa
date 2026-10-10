@@ -1,7 +1,7 @@
 import { localizedName } from '@gym/i18n';
-import { DumbbellIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import { GymMark } from '@/components/layout/gym-mark';
 import { LanguageMenu } from '@/components/layout/language-menu';
 import { ThemeMenu } from '@/components/layout/theme-menu';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,8 +9,8 @@ import { usePreferences } from '@/lib/preferences';
 import { useDeviceGym } from '../auth-context';
 
 /**
- * The frame of every login and unlock screen: app name and the device's gym (once it has one), a
- * card, and the language and theme menus.
+ * The frame of every login and unlock screen: the device's gym (logo and name, once it has one;
+ * the app's name before), a card, and the language and theme menus.
  */
 export function AuthLayout({
   title,
@@ -31,15 +31,17 @@ export function AuthLayout({
       data-auth-screen
       className="flex min-h-svh flex-col bg-muted/40 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]"
     >
-      <header className="flex h-14 items-center gap-2 px-4">
-        <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-          <DumbbellIcon className="size-4" />
-        </span>
-        <span className="shrink-0 font-semibold">{t('app.name')}</span>
-        {gym && (
-          <span data-testid="device-gym" className="min-w-0 truncate text-muted-foreground">
-            {localizedName(gym, language)}
+      <header className="flex min-h-16 items-center gap-3 px-4 py-2">
+        <GymMark className="size-11" />
+        {gym ? (
+          <span className="grid min-w-0 leading-tight">
+            <span data-testid="device-gym" className="truncate text-lg">
+              {localizedName(gym, language)}
+            </span>
+            <span className="truncate text-xs text-muted-foreground">{t('app.name')}</span>
           </span>
+        ) : (
+          <span className="shrink-0 text-lg">{t('app.name')}</span>
         )}
         <div className="ms-auto flex items-center gap-1">
           <LanguageMenu />

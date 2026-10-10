@@ -1,4 +1,11 @@
-import { parseNavTabs, type NavItemKey } from '@gym/core';
+import {
+  parseNavTabs,
+  parseTextSize,
+  parseThemePreference,
+  type NavItemKey,
+  type TextSize,
+  type ThemePreference,
+} from '@gym/core';
 import { isLanguage, type Language } from '@gym/i18n';
 import type { SecureStorage } from '@gym/platform';
 import { SECURE_KEY_PATTERN } from '@gym/platform/desktop-bridge';
@@ -28,9 +35,14 @@ export interface DeviceAccount {
   readonly permissions: readonly string[];
   /** The branches they could access at the last check; they work only in these. */
   readonly branchIds: readonly string[];
+  /** Access to every branch (gym-wide settings like the gym's look need it). */
+  readonly allBranches: boolean;
   readonly preferredLanguage: Language | null;
   /** Their own 4 phone tabs; null: their role's defaults. */
   readonly navTabs: readonly NavItemKey[] | null;
+  /** Their own look; null: not chosen, the device keeps what it has. */
+  readonly themePreference: ThemePreference | null;
+  readonly textSize: TextSize | null;
   readonly mustChangePassword: boolean;
   /** They have set a PIN (and a manager hasn't removed it). */
   readonly hasPin: boolean;
@@ -77,6 +89,9 @@ function parseAccount(value: unknown): DeviceAccount | null {
     roleKey: typeof record.roleKey === 'string' ? record.roleKey : null,
     preferredLanguage: isLanguage(record.preferredLanguage) ? record.preferredLanguage : null,
     navTabs: parseNavTabs(record.navTabs),
+    allBranches: record.allBranches === true,
+    themePreference: parseThemePreference(record.themePreference),
+    textSize: parseTextSize(record.textSize),
     mustChangePassword: record.mustChangePassword === true,
     // Saved by earlier versions, which kept the PIN hash itself on the device.
     hasPin: record.hasPin === true || (typeof record.pin === 'object' && record.pin !== null),

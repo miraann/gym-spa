@@ -1,4 +1,4 @@
-import { DumbbellIcon, SearchIcon } from 'lucide-react';
+import { SearchIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Kbd } from '@/components/ui/kbd';
@@ -7,6 +7,7 @@ import { SidebarTrigger } from '@/components/ui/sidebar';
 import { UserMenu } from '@/features/auth/user-menu';
 import type { Layout } from '@/hooks/use-layout';
 import { ConnectionStatus } from './connection-status';
+import { GymMark } from './gym-mark';
 import { LanguageMenu } from './language-menu';
 import { ThemeMenu } from './theme-menu';
 import { useGymName } from './use-gym-name';
@@ -38,9 +39,7 @@ export function TopBar({
       {phone && (
         // Phones have no sidebar: the gym's name tells staff where they are.
         <div className="flex min-w-0 items-center gap-2">
-          <span className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-            <DumbbellIcon aria-hidden className="size-4" />
-          </span>
+          <GymMark />
           <span className="truncate">{gymName ?? t('app.name')}</span>
         </div>
       )}

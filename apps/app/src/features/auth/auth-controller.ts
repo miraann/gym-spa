@@ -5,9 +5,12 @@ import {
   normalizeUsername,
   staffEmail,
   type NavItemKey,
+  type TextSize,
+  type ThemePreference,
 } from '@gym/core';
 import type { Language } from '@gym/i18n';
 import type { SecureStorage } from '@gym/platform';
+import { clearGymAppearance } from '@/lib/appearance';
 import { createAppClient, type AppSupabaseClient, type BackendConfig } from '@/lib/backend';
 import { logError } from '@/lib/logger';
 import { setPreference } from '@/lib/preferences';
@@ -377,7 +380,10 @@ export class AuthController {
       lastActiveAt: new Date().toISOString(),
     }));
     // Language order: the staff member's own choice, otherwise the device's current language.
+    // Their own look the same way; the lock screen then keeps it for whoever comes next.
     if (account?.preferredLanguage) setPreference('language', account.preferredLanguage);
+    if (account?.themePreference) setPreference('theme', account.themePreference);
+    if (account?.textSize) setPreference('textSize', account.textSize);
     this.setState({ activeId: staffId });
   }
 
@@ -481,6 +487,7 @@ export class AuthController {
     if (this.store.list().length > 0) return;
     await this.storage.delete(DEVICE_GYM_KEY);
     await this.storage.delete(BRANCH_KEY);
+    clearGymAppearance();
     this.setState({ gym: null, branchId: null });
   }
 
@@ -502,6 +509,24 @@ export class AuthController {
     const { error } = await this.clientFor(staffId)
       .from('staff_users')
       .update({ preferred_language: language })
+      .eq('id', staffId);
+    if (error) throw toAuthError(error);
+  }
+
+  /** Remembers the active staff member's own look on their profile, for their other devices. */
+  async saveLook(
+    look: { readonly theme: ThemePreference } | { readonly textSize: TextSize },
+  ): Promise<void> {
+    const staffId = this.state.activeId;
+    if (!staffId) return;
+    await this.store.update(staffId, (account) =>
+      'theme' in look
+        ? { ...account, themePreference: look.theme }
+        : { ...account, textSize: look.textSize },
+    );
+    const { error } = await this.clientFor(staffId)
+      .from('staff_users')
+      .update('theme' in look ? { theme_preference: look.theme } : { text_size: look.textSize })
       .eq('id', staffId);
     if (error) throw toAuthError(error);
   }
@@ -537,6 +562,9 @@ function accountFromProfile(
     branchIds: branches.map((branch) => branch.id),
     preferredLanguage: profile.preferredLanguage,
     navTabs: profile.navTabs,
+    allBranches: profile.allBranches,
+    themePreference: profile.themePreference,
+    textSize: profile.textSize,
     mustChangePassword: profile.mustChangePassword,
     hasPin: profile.hasPin,
     passwordRequired: existing?.passwordRequired ?? null,

@@ -10,7 +10,8 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { setPreference, usePreferences } from '@/lib/preferences';
+import { useChangeTheme } from '@/features/auth/use-change-look';
+import { usePreferences } from '@/lib/preferences';
 
 export function ThemeMenu() {
   const { t } = useTranslation();
@@ -35,13 +36,14 @@ export function ThemeMenu() {
 export function ThemeRadioItems() {
   const { t } = useTranslation();
   const { theme } = usePreferences();
+  const changeTheme = useChangeTheme();
 
   return (
     <DropdownMenuRadioGroup
       value={theme}
       onValueChange={(value) => {
         const choice = THEME_CHOICES.find((option) => option.value === value);
-        if (choice) setPreference('theme', choice.value);
+        if (choice) changeTheme(choice.value);
       }}
     >
       {THEME_CHOICES.map(({ value, icon: Icon }) => (

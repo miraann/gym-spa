@@ -1,16 +1,19 @@
+import { TEXT_SIZES, THEME_PREFERENCES, type TextSize, type ThemePreference } from '@gym/core';
 import { DEFAULT_LANGUAGE, isLanguage, type Digits, type Language } from '@gym/i18n';
 import { useSyncExternalStore } from 'react';
 
-export type ThemePreference = 'light' | 'dark' | 'system';
+export type { TextSize, ThemePreference };
 
 /**
- * Display preferences of this device. In 1d the language also syncs with the staff profile
- * (order: staff preference → device default → Kurdish).
+ * Display preferences of this device. Language, theme and text size also sync with the active
+ * staff member's profile (language order: staff preference → device default → Kurdish), so the
+ * login and lock screens keep the last staff member's look.
  */
 export interface Preferences {
   readonly language: Language;
   readonly digits: Digits;
   readonly theme: ThemePreference;
+  readonly textSize: TextSize;
 }
 
 /** The boot script in index.html reads this key too — keep both in sync. */
@@ -20,9 +23,9 @@ export const DEFAULT_PREFERENCES: Preferences = {
   language: DEFAULT_LANGUAGE,
   digits: 'latn',
   theme: 'system',
+  textSize: 'normal',
 };
 
-const THEMES: readonly ThemePreference[] = ['light', 'dark', 'system'];
 const DIGIT_STYLES: readonly Digits[] = ['latn', 'arab'];
 
 function pick<T extends string>(options: readonly T[], value: unknown, fallback: T): T {
@@ -43,7 +46,8 @@ export function parsePreferences(raw: string | null): Preferences {
   return {
     language: isLanguage(record.language) ? record.language : DEFAULT_PREFERENCES.language,
     digits: pick(DIGIT_STYLES, record.digits, DEFAULT_PREFERENCES.digits),
-    theme: pick(THEMES, record.theme, DEFAULT_PREFERENCES.theme),
+    theme: pick(THEME_PREFERENCES, record.theme, DEFAULT_PREFERENCES.theme),
+    textSize: pick(TEXT_SIZES, record.textSize, DEFAULT_PREFERENCES.textSize),
   };
 }
 

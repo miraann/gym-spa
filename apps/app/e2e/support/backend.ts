@@ -86,6 +86,8 @@ export interface TestStaff {
 export interface StaffOptions {
   readonly role?: string;
   readonly branchIds: readonly string[];
+  /** Access to every branch (gym-wide settings need it). */
+  readonly allBranches?: boolean;
   readonly mustChangePassword?: boolean;
   /** false: no PIN yet (first login asks for one) */
   readonly withPin?: boolean;
@@ -180,6 +182,7 @@ export class TestData {
           username,
           full_name: fullName,
           role_id: role.id,
+          all_branches: options.allBranches ?? false,
           must_change_password: options.mustChangePassword ?? false,
         }),
     );

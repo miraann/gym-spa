@@ -1,6 +1,5 @@
 import { getDirection } from '@gym/i18n';
 import { Link, useRouterState } from '@tanstack/react-router';
-import { DumbbellIcon } from 'lucide-react';
 import { Fragment } from 'react';
 import { useTranslation } from 'react-i18next';
 import { isNavItemActive, visibleNavGroups, type NavItem } from '@/app/navigation';
@@ -9,6 +8,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { usePermissions } from '@/features/auth/use-permissions';
 import { usePreferences } from '@/lib/preferences';
 import { cn } from '@/lib/utils';
+import { GymMark } from './gym-mark';
 import { useGymName } from './use-gym-name';
 
 /**
@@ -29,9 +29,9 @@ export function NavRail() {
       <Link
         to="/"
         aria-label={gymName ?? t('app.name')}
-        className="mx-auto mb-1 flex size-11 items-center justify-center rounded-2xl bg-primary text-primary-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+        className="mx-auto mb-1 rounded-2xl outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
       >
-        <DumbbellIcon aria-hidden className="size-5" />
+        <GymMark className="size-11 rounded-2xl" />
       </Link>
       {groups.map((group, index) => (
         <Fragment key={group.key}>

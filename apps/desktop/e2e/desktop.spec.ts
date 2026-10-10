@@ -145,7 +145,7 @@ test('reloading an inner page works', async () => {
   await page.goto('app://gym-spa/settings/display');
   // A reload locks the app; the PIN opens the same page.
   await unlock(page, staff);
-  await expect(page.getByRole('heading', { level: 1, name: 'ڕووکار و زمان' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: 'پیشاندان' })).toBeVisible();
 });
 
 test('keeps staff logged in across a restart, encrypted with Windows', async () => {
@@ -266,7 +266,7 @@ test('the title bar follows the app theme', async () => {
   const themeSource = () => running().evaluate(({ nativeTheme }) => nativeTheme.themeSource);
   await expect.poll(themeSource).toBe('system');
 
-  await page.getByRole('button', { name: 'گۆڕینی ڕووکار' }).click();
+  await page.getByRole('button', { name: 'گۆڕینی ڕووناک یان تاریک' }).click();
   await page.getByRole('menuitemradio', { name: 'تاریک' }).click();
   await expect.poll(themeSource).toBe('dark');
 

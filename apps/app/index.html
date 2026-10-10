@@ -10,8 +10,9 @@
     <link rel="apple-touch-icon" href="/apple-touch-icon-180x180.png" />
     <title>%APP_NAME%</title>
     <script>
-      // Applies the saved language and theme before the first paint (no flash of the wrong
-      // direction or colors). Keep in sync with src/lib/preferences.ts and src/lib/document.ts.
+      // Applies the saved language, theme, text size and gym look before the first paint (no flash
+      // of the wrong direction or colors). Keep in sync with src/lib/preferences.ts,
+      // src/lib/document.ts and src/lib/appearance.ts.
       (function () {
         try {
           var saved = JSON.parse(localStorage.getItem('gym.preferences') || '{}');
@@ -24,6 +25,15 @@
             saved.theme === 'dark' ||
             (saved.theme !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
           root.classList.toggle('dark', dark);
+          if (saved.textSize === 'large') root.style.fontSize = '112.5%';
+          // The gym's look (src/lib/appearance.ts caches its CSS variables).
+          var look = JSON.parse(localStorage.getItem('gym.look') || '{}');
+          var variables = look.variables || {};
+          for (var name in variables) {
+            if (/^--(brand-[a-z-]+|radius)$/.test(name) && typeof variables[name] === 'string') {
+              root.style.setProperty(name, variables[name]);
+            }
+          }
           var bar = dark ? '#0e0f15' : '#f5f5fa';
           var metas = document.querySelectorAll('meta[name="theme-color"]');
           for (var index = 0; index < metas.length; index += 1) {

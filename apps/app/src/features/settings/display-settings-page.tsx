@@ -2,7 +2,6 @@ import { LANGUAGE_CODES, LANGUAGES, localizeDigits, type Digits } from '@gym/i18
 import { useTranslation } from 'react-i18next';
 import { ChoiceGroup } from '@/components/choice-group';
 import { PageHeader } from '@/components/page-header';
-import { THEME_CHOICES } from '@/components/theme-choices';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useFormat } from '@/lib/format';
 import { useChangeLanguage } from '@/features/auth/use-change-language';
@@ -16,7 +15,7 @@ export function DisplaySettingsPage() {
   const changeLanguage = useChangeLanguage();
 
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-6">
+    <div className="flex flex-col gap-6">
       <PageHeader title={t('display.title')} description={t('display.description')} />
 
       <SettingCard title={t('common:language.label')} description={t('display.languageHint')}>
@@ -42,21 +41,6 @@ export function DisplaySettingsPage() {
           }))}
           onChange={(digits) => {
             setPreference('digits', digits);
-          }}
-        />
-      </SettingCard>
-
-      <SettingCard title={t('common:theme.label')} description={t('display.themeHint')}>
-        <ChoiceGroup
-          label={t('common:theme.label')}
-          value={preferences.theme}
-          choices={THEME_CHOICES.map(({ value, icon }) => ({
-            value,
-            icon,
-            label: t(`common:theme.${value}`),
-          }))}
-          onChange={(theme) => {
-            setPreference('theme', theme);
           }}
         />
       </SettingCard>

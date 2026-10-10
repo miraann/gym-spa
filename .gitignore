@@ -8,6 +8,8 @@ release/
 dev-dist/
 *.tsbuildinfo
 .vite/
+# TanStack Router's route generator scratch files
+.tanstack/
 
 # Env files (only the examples are committed)
 .env

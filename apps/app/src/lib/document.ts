@@ -1,5 +1,6 @@
 import { getDirection } from '@gym/i18n';
 import { applyNativeTheme } from '@gym/platform';
+import { applyTextSize } from './appearance';
 import { logError } from './logger';
 import type { Preferences, ThemePreference } from './preferences';
 
@@ -17,7 +18,7 @@ export function resolveTheme(theme: ThemePreference): 'light' | 'dark' {
 }
 
 /**
- * Applies language, direction and theme to <html>, and the theme to the system bars or title bar
+ * Applies language, direction, theme and text size to <html>, and the theme to the system bars or title bar
  * of the Android and Windows apps. The boot script in index.html mirrors the <html> part and the
  * title bar color.
  */
@@ -28,6 +29,7 @@ export function applyToDocument(preferences: Preferences, title: string): void {
   root.dir = getDirection(preferences.language);
   root.classList.toggle('dark', theme === 'dark');
   root.style.colorScheme = theme;
+  applyTextSize(preferences.textSize);
   // Both tags (one per device scheme) get the chosen theme, so a dark choice on a light device
   // gets a dark bar too.
   for (const meta of document.querySelectorAll('meta[name="theme-color"]')) {

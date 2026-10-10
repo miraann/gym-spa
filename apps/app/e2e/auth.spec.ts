@@ -157,19 +157,22 @@ test('locks itself when idle, and keeps the page that was open', async ({ page, 
   await page.clock.install();
   // The app reads the setting from the server once someone is using it.
   const settingRead = page.waitForResponse(
-    (response) => response.url().includes('/rest/v1/settings') && response.ok(),
+    (response) =>
+      response.url().includes('/rest/v1/settings') &&
+      response.url().includes('security.idle_lock_minutes') &&
+      response.ok(),
   );
   await signIn(page, staff, '/settings/display');
-  await expect(page.getByRole('heading', { level: 1, name: 'ڕووکار و زمان' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: 'پیشاندان' })).toBeVisible();
   await settingRead;
 
   await page.clock.fastForward('01:30');
-  await expect(page.getByRole('heading', { level: 1, name: 'ڕووکار و زمان' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: 'پیشاندان' })).toBeVisible();
   await page.clock.fastForward('01:00');
   await expect(page.getByRole('heading', { level: 1, name: 'کێ کار دەکات؟' })).toBeVisible();
 
   await unlock(page, staff);
-  await expect(page.getByRole('heading', { level: 1, name: 'ڕووکار و زمان' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: 'پیشاندان' })).toBeVisible();
 });
 
 test('without a connection neither the PIN nor the password works, and the app says so', async ({

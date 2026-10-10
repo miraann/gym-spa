@@ -1,10 +1,9 @@
 {
   "display": {
-    "title": "Appearance & language",
-    "description": "Choose the language, number style and theme for this device.",
+    "title": "Display",
+    "description": "Choose the language and number style for this device.",
     "languageHint": "The language of the app's screens.",
     "digitsHint": "Phone numbers, card codes and receipt numbers always use Western digits.",
-    "themeHint": "Light or dark appearance.",
     "previewTitle": "Preview",
     "previewHint": "Numbers and dates will look like this.",
     "previewNumber": "Number",
@@ -12,5 +11,95 @@
     "previewUsd": "Amount in dollars",
     "previewDate": "Date",
     "previewTime": "Time"
+  },
+  "tabs": {
+    "label": "Settings sections",
+    "display": "Display",
+    "appearance": "Appearance"
+  },
+  "appearance": {
+    "title": "Appearance",
+    "description": "The gym's color, corners and logo, and your own look.",
+    "gym": {
+      "title": "Gym look",
+      "description": "For every device of this gym. What you change here changes for all staff.",
+      "readOnly": "Only staff who can change settings and have access to all branches can change the gym's look."
+    },
+    "brand": {
+      "label": "Brand color",
+      "hint": "For buttons, the selected item and field borders. Green, amber and red are kept for status and never change.",
+      "presets": {
+        "indigo": "Indigo",
+        "blue": "Blue",
+        "purple": "Purple",
+        "gray": "Gray"
+      },
+      "custom": "Custom color",
+      "picker": "Pick a color",
+      "customLabel": "Color code",
+      "customHint": "Write it like this:"
+    },
+    "contrast": {
+      "title": "This color is hard to read",
+      "text_on_brand": "Text on buttons ({{mode}} theme).",
+      "brand_as_text": "Text in this color on the page ({{mode}} theme).",
+      "brand_as_icon": "Icons and lines in this color ({{mode}} theme).",
+      "modes": {
+        "light": "light",
+        "dark": "dark"
+      }
+    },
+    "statusLike": "This color looks like a status color (green: allowed, amber: warning, red: denied). Staff may mix them up.",
+    "corner": {
+      "label": "Corner style",
+      "hint": "The corners of cards, buttons and fields.",
+      "soft": "Soft",
+      "medium": "Medium",
+      "sharp": "Sharp"
+    },
+    "logo": {
+      "label": "Logo",
+      "hint": "PNG, JPEG or WebP. Resized to {{side}} pixels and at most {{size}} KB. Shown at the top of the app and on the login screen.",
+      "current": "The gym's current logo",
+      "preview": "The new logo",
+      "none": "No logo: the gym's name is shown instead.",
+      "upload": "Add logo",
+      "change": "Change logo",
+      "remove": "Remove logo",
+      "preparing": "Preparing the picture…",
+      "confirmTitle": "Use this logo?",
+      "confirmDescription": "It shows on every device of the gym. Size: {{size}} KB.",
+      "save": "Use this logo",
+      "removeTitle": "Remove the logo?",
+      "removeDescription": "The gym's name is shown instead of the logo.",
+      "removeConfirm": "Remove",
+      "saved": "The logo is saved",
+      "removed": "The logo is removed",
+      "errors": {
+        "logo_type": "Only PNG, JPEG or WebP pictures.",
+        "logo_unreadable": "This picture can't be read. Choose another one.",
+        "logo_too_large": "The picture is too large, even after resizing. Choose a simpler one."
+      }
+    },
+    "save": "Save",
+    "discard": "Cancel",
+    "reset": "Back to the default look",
+    "saved": "The gym's look is saved",
+    "needsConnection": "Saving needs a connection to the server.",
+    "confirm": {
+      "title": "Save this color?",
+      "description": "There are these problems. You can choose another color, or save it anyway.",
+      "saveAnyway": "Save anyway",
+      "back": "Go back"
+    },
+    "personal": {
+      "title": "My look",
+      "description": "Just for you, on every device. The lock screen keeps the look of the last staff member.",
+      "themeHint": "Light, dark, or the same as the device.",
+      "textSize": "Text size",
+      "textSizeHint": "Large: text, spacing and buttons grow together.",
+      "normal": "Normal",
+      "large": "Large"
+    }
   }
 }

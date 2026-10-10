@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import {
   CONTRAST_NON_TEXT,
   CONTRAST_TEXT,
+  brandVariables,
   contrastRatio,
   oklchToHex,
   oklchToRgb,
@@ -133,6 +134,16 @@ describe.each<Mode>(['light', 'dark'])('%s mode', (mode) => {
     for (const status of ['--success', '--warning', '--destructive']) {
       expect(resolve(mode, status)).not.toContain('--brand');
     }
+  });
+});
+
+describe('the default look', () => {
+  it("is core's indigo preset, which the gym can replace at runtime", () => {
+    for (const [name, value] of Object.entries(brandVariables('indigo'))) {
+      if (name.endsWith('foreground')) continue;
+      expect(resolve('light', name), name).toBe(value);
+    }
+    expect(resolve('light', '--radius')).toBe('1rem');
   });
 });
 

@@ -75,7 +75,7 @@ test('Arabic is right-to-left', async ({ page, staff }) => {
   const html = page.locator('html');
   await expect(html).toHaveAttribute('lang', 'ar');
   await expect(html).toHaveAttribute('dir', 'rtl');
-  await expect(page.getByRole('heading', { level: 1, name: 'المظهر واللغة' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: 'العرض' })).toBeVisible();
 });
 
 test('Eastern Arabic digits can be turned on', async ({ page, staff }) => {

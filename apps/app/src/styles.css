@@ -105,7 +105,8 @@ body {
     1.75rem + var(--tab-bar-height) + var(--tab-bar-gap) + var(--floating-bar-space)
   );
 }
-[data-slot='tab-bar'] {
+[data-slot='tab-bar'],
+[data-slot='sticky-action-bar'] {
   padding-left: calc(0.75rem + env(safe-area-inset-left));
   padding-right: calc(0.75rem + env(safe-area-inset-right));
 }

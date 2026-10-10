@@ -1,5 +1,4 @@
 import { Link, useRouterState } from '@tanstack/react-router';
-import { DumbbellIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { isNavItemActive, visibleNavGroups, type NavItem } from '@/app/navigation';
 import { usePermissions } from '@/features/auth/use-permissions';
@@ -16,6 +15,7 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from '@/components/ui/sidebar';
+import { GymMark } from './gym-mark';
 import { useGymName } from './use-gym-name';
 
 /** Desktops (≥ 1280px): the full menu, grouped by module. Collapses to icons on request. */
@@ -31,9 +31,7 @@ export function AppSidebar({ side }: { readonly side: 'left' | 'right' }) {
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
               <Link to="/">
-                <span className="flex aspect-square size-8 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-                  <DumbbellIcon className="size-4" />
-                </span>
+                <GymMark />
                 {/* The gym's name first: staff work for the gym, the app is secondary. */}
                 <span className="grid flex-1 text-start leading-tight">
                   <span className="truncate">{gymName ?? t('app.name')}</span>

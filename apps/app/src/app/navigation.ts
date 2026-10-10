@@ -91,7 +91,7 @@ export const NAV_GROUPS: readonly NavGroup[] = [
     key: 'system',
     items: [
       { key: 'devices', icon: MonitorSmartphoneIcon, permission: 'devices.manage' },
-      { key: 'settings', icon: SettingsIcon, to: '/settings/display' },
+      { key: 'settings', icon: SettingsIcon, to: '/settings' },
     ],
   },
 ];

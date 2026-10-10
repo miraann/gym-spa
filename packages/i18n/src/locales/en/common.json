@@ -18,8 +18,8 @@
     "change": "Change language"
   },
   "theme": {
-    "label": "Theme",
-    "change": "Change theme",
+    "label": "Light or dark",
+    "change": "Change light or dark",
     "light": "Light",
     "dark": "Dark",
     "system": "Same as device"
@@ -66,5 +66,12 @@
   "money": {
     "IQD": "{{amount}} IQD",
     "USD": "${{amount}}"
+  },
+  "saveErrors": {
+    "network": "Couldn't reach the server, so nothing was saved. Check your internet and try again.",
+    "gym_read_only": "This gym is view-only, so nothing can be changed.",
+    "forbidden": "You don't have permission to do this.",
+    "invalid": "This information isn't valid, so it wasn't saved.",
+    "unexpected": "It wasn't saved. Try again. If it keeps happening, tell a manager."
   }
 }

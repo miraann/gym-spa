@@ -3,6 +3,7 @@ import { Outlet } from '@tanstack/react-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
+import { useGymAppearanceSync } from '@/features/appearance/use-gym-appearance';
 import { useLayout } from '@/hooks/use-layout';
 import { usePreferences } from '@/lib/preferences';
 import { AppSidebar } from './app-sidebar';
@@ -40,6 +41,7 @@ export function AppShell() {
   const layout = useLayout();
   const [sidebarOpen, setSidebarOpen] = useState(readSidebarOpen);
   const [searchOpen, setSearchOpen] = useState(false);
+  useGymAppearanceSync();
 
   const handleSidebarOpenChange = (open: boolean): void => {
     setSidebarOpen(open);

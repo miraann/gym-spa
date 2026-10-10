@@ -559,6 +559,8 @@ export type Database = {
           phone: string | null;
           preferred_language: Database['public']['Enums']['language_code'] | null;
           role_id: string;
+          text_size: string | null;
+          theme_preference: string | null;
           updated_at: string;
           updated_by: string | null;
           username: string;
@@ -577,6 +579,8 @@ export type Database = {
           phone?: string | null;
           preferred_language?: Database['public']['Enums']['language_code'] | null;
           role_id: string;
+          text_size?: string | null;
+          theme_preference?: string | null;
           updated_at?: string;
           updated_by?: string | null;
           username: string;
@@ -595,6 +599,8 @@ export type Database = {
           phone?: string | null;
           preferred_language?: Database['public']['Enums']['language_code'] | null;
           role_id?: string;
+          text_size?: string | null;
+          theme_preference?: string | null;
           updated_at?: string;
           updated_by?: string | null;
           username?: string;
