@@ -323,6 +323,8 @@ The app must not have only one look. The default is indigo + light + soft corner
 9. **Notifications & scheduled jobs**
 10. **Dashboard, reports, exports, settings, backups**
 11. **Release:** production Vercel deploy, signed Android APK/AAB, signed Windows EXE installer with auto-update
+   - Release checklist:
+     - On the signed (release) APK, log in and unlock while watching `adb logcat`: no session tokens, refresh tokens or plugin call contents may appear. Debug builds print every Capacitor plugin call, including the staff member's session, to logcat; Capacitor's `loggingBehavior` default (`'debug'`) keeps release builds quiet, so check it was not changed.
 12. **Polish:** test on all 3 targets (web, Android, Windows), offline-edition tests (server PC + several PCs on a LAN, lost connection, concurrent bookings), performance, security review of every RLS policy, accessibility, final tests, README
 
 13. **Later (separate request):** iOS build — `npx cap add ios`, Core NFC, TestFlight/App Store

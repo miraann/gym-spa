@@ -18,6 +18,7 @@ import { useAuthController } from '@/features/auth/auth-context';
 import { setGymLogo, useGymLogo } from '@/lib/appearance';
 import { useConnection } from '@/lib/connection';
 import { useFormat } from '@/lib/format';
+import { logError } from '@/lib/logger';
 import { saveErrorKey, type SaveErrorKey } from '@/lib/save-error';
 import { prepareLogo, type LogoProblem } from './logo-image';
 import { removeLogo, saveLogo } from './save-appearance';
@@ -77,7 +78,8 @@ export function LogoField() {
     },
   });
 
-  const pick = async (file: File | undefined) => {
+  const pick = async (picker: HTMLInputElement) => {
+    const file = picker.files?.[0];
     if (!file) return;
     setProblem(null);
     setError(null);
@@ -86,8 +88,13 @@ export function LogoField() {
       const prepared = await prepareLogo(file);
       if (prepared.ok) setPending(prepared.logo);
       else setProblem(prepared.problem);
+    } catch (failure) {
+      logError(failure, { area: 'appearance-logo', action: 'prepare' });
+      setProblem('logo_unreadable');
     } finally {
       setPreparing(false);
+      // Cleared only after reading: the same file can be picked again after a problem.
+      picker.value = '';
     }
   };
 
@@ -150,9 +157,7 @@ export function LogoField() {
           accept="image/png,image/jpeg,image/webp"
           className="hidden"
           onChange={(event) => {
-            void pick(event.target.files?.[0]);
-            // The same file can be picked again after a problem.
-            event.target.value = '';
+            void pick(event.target);
           }}
         />
       </div>

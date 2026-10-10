@@ -79,6 +79,8 @@ function parseCachedLogo(value: unknown): CachedLogo | null {
 }
 
 let look = parseGymLook(read(GYM_LOOK_STORAGE_KEY));
+/** The look being previewed on the Appearance page, shown instead of the saved one. */
+let previewing: GymLook | null = null;
 let logo = parseCachedLogo(read(GYM_LOGO_STORAGE_KEY));
 /** The logo as a data: URL, made once per logo. */
 let logoUrl = logo ? logoDataUrl(logo) : null;
@@ -102,17 +104,22 @@ function applyVariables(variables: Record<string, string>): void {
 
 /** Shows a look without saving it (the Appearance page's live preview). */
 export function previewGymLook(preview: GymLook): void {
+  previewing = preview;
   applyVariables(lookVariables(preview));
 }
 
 /** Back to the gym's saved look, after a preview. */
 export function restoreGymLook(): void {
+  previewing = null;
   applyVariables(lookVariables(look));
 }
 
-/** The gym's look from the server: applied and cached for the next start. */
+/**
+ * The gym's look from the server: applied and cached for the next start. During a preview it is
+ * only remembered, so a refresh never repaints over what the editor is trying out.
+ */
 export function setGymLook(next: GymLook): void {
-  applyVariables(lookVariables(next));
+  if (!previewing) applyVariables(lookVariables(next));
   if (next.brandColor === look.brandColor && next.cornerStyle === look.cornerStyle) return;
   look = next;
   // The boot script can't do the color math, so the variables are cached too.

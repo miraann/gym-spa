@@ -40,12 +40,22 @@ function toBase64(bytes: Uint8Array): string {
  * checks the type and size again.
  */
 export async function prepareLogo(file: Blob): Promise<PreparedLogo> {
-  const head = new Uint8Array(await file.slice(0, 16).arrayBuffer());
-  if (!sniffImageType(head)) return { ok: false, problem: 'logo_type' };
+  // Read the whole file into memory at once. On Android the file comes from the photo picker
+  // through a temporary grant, and a read can fail (NotReadableError, seen on the first pick after
+  // a device starts): that is a picture we can't read, not a crash.
+  let bytes: ArrayBuffer;
+  try {
+    bytes = await file.arrayBuffer();
+  } catch {
+    return { ok: false, problem: 'logo_unreadable' };
+  }
+  if (!sniffImageType(new Uint8Array(bytes, 0, Math.min(16, bytes.byteLength)))) {
+    return { ok: false, problem: 'logo_type' };
+  }
 
   let bitmap: ImageBitmap;
   try {
-    bitmap = await createImageBitmap(file);
+    bitmap = await createImageBitmap(new Blob([bytes]));
   } catch {
     return { ok: false, problem: 'logo_unreadable' };
   }

@@ -18,6 +18,7 @@ const root = document.documentElement;
 const variable = (name: string) => root.style.getPropertyValue(name);
 
 afterEach(() => {
+  restoreGymLook();
   clearGymAppearance();
   root.removeAttribute('style');
 });
@@ -45,6 +46,17 @@ describe('the gym look', () => {
     restoreGymLook();
     expect(variable('--radius')).toBe('1rem');
     expect(variable('--brand-h')).toBe('303');
+  });
+
+  it('keeps the preview on screen when the saved look refreshes from the server', () => {
+    previewGymLook({ brandColor: 'blue', cornerStyle: 'soft' });
+    setGymLook({ brandColor: 'gray', cornerStyle: 'sharp' });
+    expect(variable('--brand-h')).toBe('256');
+    expect(getGymLook().brandColor).toBe('gray');
+
+    restoreGymLook();
+    expect(variable('--brand-h')).toBe('265');
+    expect(variable('--radius')).toBe('0.25rem');
   });
 
   it('reads a broken cache as the default look', () => {

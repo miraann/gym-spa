@@ -86,7 +86,8 @@ test('leaving without saving goes back to the saved look', async ({ page, data }
 
   await page.getByRole('link', { name: 'پیشاندان' }).first().click();
   await expect(page).toHaveURL(/\/settings\/display$/);
-  expect(await rootVariable(page, '--brand-h')).toBe('277');
+  // The old page unmounts (and restores the look) just after the address changes.
+  await expect.poll(() => rootVariable(page, '--brand-h')).toBe('277');
   expect(await settingValue(data, 'appearance.brand_color')).toBeNull();
 });
 
