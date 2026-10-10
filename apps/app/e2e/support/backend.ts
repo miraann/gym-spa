@@ -108,7 +108,7 @@ export class TestData {
   gym(): Promise<TestGym> {
     this.created ??= (async () => {
       const code = `e2e-${this.run}`;
-      const nameCkb = `یانەی تاقیکردنەوە ${this.run}`;
+      const nameCkb = `جیمی تاقیکردنەوە ${this.run}`;
       const gym = await check(
         admin().rpc('create_gym', {
           p_code: code,

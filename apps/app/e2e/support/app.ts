@@ -29,7 +29,7 @@ export { expect };
 export const HOME_HEADING = { level: 1, name: 'سەرەکی' } as const;
 
 export const LOGIN_HEADING = { level: 1, name: 'چوونەژوورەوە' } as const;
-export const GYM_CODE_LABEL = 'کۆدی یانە';
+export const GYM_CODE_LABEL = 'کۆدی جیم';
 
 /**
  * Fills in the password login (the screen must be showing). The gym code is asked only on a

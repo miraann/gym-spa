@@ -17,9 +17,9 @@ select results_eq('select code from public.gyms', $$ values ('pgtap-a'::text) $$
 select tests.authenticate_as(tests.staff('owner'));
 select throws_ok($$ update public.gyms set paid_until = null $$, '42501', 'permission denied for table gyms',
   'not even the Owner changes the gym''s own record (Click Group does)');
-select throws_ok($$ insert into public.gyms (code, name_ckb) values ('my-gym', 'یانە') $$, '42501',
+select throws_ok($$ insert into public.gyms (code, name_ckb) values ('my-gym', 'جیم') $$, '42501',
   'permission denied for table gyms', 'staff cannot add gyms');
-select throws_ok($$ select public.create_gym('my-gym', 'یانە', 'لقی یەکەم') $$, '42501',
+select throws_ok($$ select public.create_gym('my-gym', 'جیم', 'لقی یەکەم') $$, '42501',
   'permission denied for function create_gym', 'staff cannot create gyms');
 
 select tests.authenticate_as(tests.staff('former_a'));
@@ -31,22 +31,22 @@ select is_empty('select id from public.my_gym()', 'deactivated staff get no gym 
 select tests.clear_authentication();
 select is_empty(
   $$ select c from unnest(array['ab', 'Gym-a', '1gym', '-gym', 'gym-', 'gym--a', 'gym_a', 'gym a', 'abcdefghijklmnopqrstu']) as c
-      where tests.error_code(format('select public.create_gym(%L, %L, %L)', c, 'یانە', 'لقی یەکەم')) is distinct from '23514' $$,
+      where tests.error_code(format('select public.create_gym(%L, %L, %L)', c, 'جیم', 'لقی یەکەم')) is distinct from '23514' $$,
   'invalid gym codes are refused (3 to 20 of a-z 0-9, single hyphens, starting with a letter)'
 );
-select throws_ok($$ select public.create_gym('Gym-A', 'یانە', 'لقی یەکەم') $$, '23514', 'invalid_gym_code',
+select throws_ok($$ select public.create_gym('Gym-A', 'جیم', 'لقی یەکەم') $$, '23514', 'invalid_gym_code',
   'an invalid code gets a key the app can translate');
 select is_empty(
   $$ select c from unnest(array['admin', 'seller', 'support', 'api', 'www', 'app', 'login', 'clickgroup', 'gym-spa', 'test', 'root', 'system']) as c
-      where tests.error_code(format('select public.create_gym(%L, %L, %L)', c, 'یانە', 'لقی یەکەم')) is distinct from '23514' $$,
+      where tests.error_code(format('select public.create_gym(%L, %L, %L)', c, 'جیم', 'لقی یەکەم')) is distinct from '23514' $$,
   'every reserved gym code is refused'
 );
-select throws_ok($$ select public.create_gym('seller', 'یانە', 'لقی یەکەم') $$, '23514', 'reserved_gym_code',
+select throws_ok($$ select public.create_gym('seller', 'جیم', 'لقی یەکەم') $$, '23514', 'reserved_gym_code',
   'a reserved code gets its own key');
-select throws_ok($$ insert into public.gyms (code, name_ckb) values ('support', 'یانە') $$, '23514',
+select throws_ok($$ insert into public.gyms (code, name_ckb) values ('support', 'جیم') $$, '23514',
   'new row for relation "gyms" violates check constraint "gyms_code_not_reserved"',
   'the table itself refuses reserved codes, whoever writes');
-select throws_ok($$ select public.create_gym('pgtap-a', 'یانە', 'لقی یەکەم') $$, '23505', 'gym_code_taken',
+select throws_ok($$ select public.create_gym('pgtap-a', 'جیم', 'لقی یەکەم') $$, '23505', 'gym_code_taken',
   'two gyms never share a code');
 select throws_ok($$ update public.gyms set code = 'gym-z' where code = 'pgtap-a' $$, '42501', 'read_only_column',
   'a gym code never changes, not even for server code');
@@ -57,7 +57,7 @@ select throws_ok($$ update public.gyms set edition = 'offline' where code = 'pgt
 
 select tests.authenticate_as_service_role();
 select lives_ok(
-  $$ select public.create_gym('pgtap-new', 'یانەی هەولێر', 'لقی سەرەکی', 'Hawler Fit', null, 'offline', 'a0000000-0000-4000-8000-0000000000f1') $$,
+  $$ select public.create_gym('pgtap-new', 'جیمی هەولێر', 'لقی سەرەکی', 'Hawler Fit', null, 'offline', 'a0000000-0000-4000-8000-0000000000f1') $$,
   'server code creates a gym'
 );
 select tests.clear_authentication();

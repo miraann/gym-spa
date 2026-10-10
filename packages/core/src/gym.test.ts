@@ -42,7 +42,7 @@ describe('isValidGymCode', () => {
     ['an underscore', 'gym_a'],
     ['a space', 'gym a'],
     ['uppercase', 'Gym'],
-    ['Kurdish letters', 'یانە'],
+    ['Kurdish letters', 'جیم'],
     ['empty', ''],
     ['reserved', 'seller'],
   ])('rejects %s', (_reason, code) => {

@@ -301,10 +301,10 @@ test('the menu shows only what the role allows', async ({ page, staff, data }) =
 
 // The gym at login (spec §2.6) ------------------------------------------------------------------
 
-const WRONG_LOGIN = 'کۆدی یانە، ناوی بەکارهێنەر یان وشەی نهێنی هەڵەیە.';
-const GYM_LOCKED = 'ئەم یانەیە قفڵ کراوە و بەکارناهێنرێت. پەیوەندی بە کلیک گرووپ بکە.';
-const GYM_READ_ONLY = 'ئەم یانەیە تەنها بۆ بینینە';
-const USE_ANOTHER_GYM = { name: 'یانەیەکی تر' } as const;
+const WRONG_LOGIN = 'کۆدی جیم، ناوی بەکارهێنەر یان وشەی نهێنی هەڵەیە.';
+const GYM_LOCKED = 'ئەم جیمە قفڵ کراوە و بەکارناهێنرێت. پەیوەندی بە کلیک گرووپ بکە.';
+const GYM_READ_ONLY = 'ئەم جیمە تەنها بۆ بینینە';
+const USE_ANOTHER_GYM = { name: 'جیمێکی تر' } as const;
 
 test('the first login asks for the gym code, and the device remembers the gym', async ({
   page,
@@ -314,13 +314,13 @@ test('the first login asks for the gym code, and the device remembers the gym', 
   const gym = await data.gym();
   await page.goto('/');
   await expect(page.getByRole('heading', LOGIN_HEADING)).toBeVisible();
-  await expect(page.getByText('کۆدی یانە، ناوی بەکارهێنەر و وشەی نهێنیت بنووسە.')).toBeVisible();
+  await expect(page.getByText('کۆدی جیم، ناوی بەکارهێنەر و وشەی نهێنیت بنووسە.')).toBeVisible();
 
   // The code is required.
   await page.getByLabel('ناوی بەکارهێنەر').fill(staff.username);
   await page.getByLabel('وشەی نهێنی', { exact: true }).fill(staff.password);
   await page.getByRole('button', { name: 'چوونەژوورەوە' }).click();
-  await expect(page.getByText('کۆدی یانە بنووسە.')).toBeVisible();
+  await expect(page.getByText('کۆدی جیم بنووسە.')).toBeVisible();
 
   // Typed the way a Kurdish keyboard might: uppercase, spaces.
   await page.getByLabel(GYM_CODE_LABEL).fill(`  ${staff.gymCode.toUpperCase()} `);

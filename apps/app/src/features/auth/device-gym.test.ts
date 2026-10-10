@@ -4,7 +4,7 @@ import { parseDeviceGym, type DeviceGym } from './device-gym';
 const gym: DeviceGym = {
   id: 'a0000000-0000-4000-8000-000000000001',
   code: 'hawler-fit',
-  nameCkb: 'یانەی هەولێر',
+  nameCkb: 'جیمی هەولێر',
   nameEn: 'Hawler Fit',
   nameAr: null,
   access: 'read_only',

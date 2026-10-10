@@ -2,7 +2,7 @@
 -- Staff accounts are created with `pnpm bootstrap:admin`, not here.
 
 -- The demo gym (code demo), made like every gym: its roles and its first branch (B1) come with it.
-select public.create_gym('demo', 'یانەی وەرزشی نموونە', 'لقی سەرەکی', 'Demo Gym', 'النادي التجريبي');
+select public.create_gym('demo', 'جیمی نموونە', 'لقی سەرەکی', 'Demo Gym', 'النادي التجريبي');
 
 update public.branches
    set name_en = 'Main Branch', name_ar = 'الفرع الرئيسي', phone = '0770 000 0001', address = 'سلێمانی، شەقامی سالم'

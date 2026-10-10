@@ -28,7 +28,7 @@ describe('parseServerGym', () => {
   const row = {
     id: 'a0000000-0000-4000-8000-000000000001',
     code: 'demo',
-    name_ckb: 'یانەی وەرزشی نموونە',
+    name_ckb: 'جیمی نموونە',
     name_en: 'Demo Gym',
     name_ar: null,
     edition: 'online',
@@ -40,7 +40,7 @@ describe('parseServerGym', () => {
     expect(parseServerGym(row)).toEqual({
       id: row.id,
       code: 'demo',
-      nameCkb: 'یانەی وەرزشی نموونە',
+      nameCkb: 'جیمی نموونە',
       nameEn: 'Demo Gym',
       nameAr: null,
       access: 'grace',

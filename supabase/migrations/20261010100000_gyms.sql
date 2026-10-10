@@ -151,7 +151,7 @@ begin
   if exists (select 1 from public.branches) or exists (select 1 from public.staff_users) then
     -- A database in use: its data becomes the gym 'demo' (Click Group's sales demo later).
     insert into public.gyms (code, name_ckb, name_en, name_ar)
-    values ('demo', 'یانەی وەرزشی نموونە', 'Demo Gym', 'النادي التجريبي')
+    values ('demo', 'جیمی نموونە', 'Demo Gym', 'النادي التجريبي')
     returning id into default_gym_id;
 
     update public.branches set gym_id = default_gym_id;

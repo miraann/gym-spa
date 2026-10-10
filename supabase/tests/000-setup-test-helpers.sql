@@ -28,7 +28,7 @@ returns uuid
 language sql
 set search_path = ''
 as $$
-  select g.id from public.create_gym(create_gym.code, 'یانەی ' || create_gym.code, 'لقی یەکەم') as g
+  select g.id from public.create_gym(create_gym.code, 'جیمی ' || create_gym.code, 'لقی یەکەم') as g
 $$;
 
 create or replace function tests.create_branch(code text, gym_code text default 'pgtap-a')
