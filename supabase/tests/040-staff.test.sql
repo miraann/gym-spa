@@ -1,6 +1,6 @@
 -- staff_users and staff_branches: who sees whom, adding staff, and the escalation guards.
 begin;
-select plan(28);
+select plan(30);
 select tests.create_fixture();
 
 -- The staff service creates the Auth user first, then the staff row with the caller's session.
@@ -102,25 +102,43 @@ select is(
 select tests.authenticate_as(tests.staff('admin'));
 select throws_ok($$ update public.staff_users set username = 'boss' where username = 'reception_b' $$,
   '42501', 'read_only_column', 'usernames change only through the staff service');
-select throws_ok($$ update public.staff_users set role_id = tests.role('super_admin') where username = 'reception_b' $$,
-  '42501', 'cannot_grant_role', 'only Super Admin can give the Super Admin role');
+select throws_ok($$ update public.staff_users set role_id = tests.role('owner') where username = 'reception_b' $$,
+  '42501', 'cannot_grant_role', 'only the Owner can give the Owner role');
 select throws_ok($$ delete from public.staff_users where username = 'reception_b' $$,
   '42501', 'permission denied for table staff_users', 'staff accounts are deactivated, never deleted');
 
 select tests.authenticate_as(tests.staff('owner'));
-select lives_ok($$ update public.staff_users set role_id = tests.role('super_admin') where username = 'admin' $$,
-  'Super Admin can give the Super Admin role');
+select lives_ok($$ update public.staff_users set role_id = tests.role('owner') where username = 'admin' $$,
+  'the Owner can give the Owner role');
 
 -- Changing your own password (through Supabase Auth) clears must_change_password.
 select tests.clear_authentication();
-update public.staff_users set must_change_password = true where username = 'reception_b';
+update public.staff_users set must_change_password = true where id = tests.staff('reception_b');
 update auth.users set encrypted_password = 'new-hash' where id = tests.staff('reception_b');
-select is((select must_change_password from public.staff_users where username = 'reception_b'), false,
+select is((select must_change_password from public.staff_users where id = tests.staff('reception_b')), false,
   'changing your password clears must_change_password');
 
+-- The staff service changes the Auth email first, then the username; the two must always match.
 select tests.authenticate_as_service_role();
-select is(tests.row_count($$ update public.staff_users set username = 'reception_b2' where username = 'reception_b' $$), 1,
-  'the staff service (service role) can change a username');
+select throws_ok(
+  $$ update public.staff_users set username = 'reception_b2' where id = tests.staff('reception_b') $$,
+  '23514', 'staff_login_mismatch', 'a username never changes without its login'
+);
+-- (What Supabase Auth's admin API does for the staff service.)
+select tests.clear_authentication();
+update auth.users set email = 'reception_b2@gym-a.staff.gym-spa.invalid' where id = tests.staff('reception_b');
+select tests.authenticate_as_service_role();
+select is(tests.row_count($$ update public.staff_users set username = 'reception_b2' where id = tests.auth_user_id('reception_b2') $$), 1,
+  'the staff service (service role) can change a username together with its login');
+
+-- New staff need an Auth user whose email is their username at their gym, whoever adds them.
+select tests.clear_authentication();
+select tests.create_auth_user('new_c', 'gym-b');
+select throws_ok(
+  $$ insert into public.staff_users (id, gym_id, username, full_name, role_id)
+     values (tests.auth_user_id('new_c', 'gym-b'), tests.gym('gym-a'), 'new_c', 'کارمەندی نوێ', tests.role('receptionist')) $$,
+  '23514', 'staff_login_mismatch', 'a staff member''s login must name their own gym'
+);
 
 select * from finish();
 rollback;

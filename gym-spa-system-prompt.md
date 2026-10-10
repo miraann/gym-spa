@@ -112,7 +112,9 @@ Click Group sells the system to many gyms. The requirements were decided by the 
   - The `permissions` catalog stays global, because the platform defines it.
 - **Gym roles:** the gym's top role is **Owner** (خاوەن, key `owner`). It was called Super Admin before this step; the new name keeps it apart from the platform admins. The built-in roles are copied into each gym when the gym is created, and a gym's custom roles belong to that gym.
 - **Login:**
-  - Usernames are unique per gym, not globally. The login email is `<username>@<gym code>.staff.gym-spa.invalid`. The gym code is short, lowercase and permanent, because it is part of every login.
+  - Usernames are unique per gym, not globally. The login email is `<username>@<gym code>.staff.gym-spa.invalid`.
+  - **The gym code is permanent:** 3 to 20 lowercase Latin letters, digits and `-`, and it can never change, because it is part of every login. Before creating a gym, the seller panel shows a clear Kurdish warning that the code can't be changed later.
+  - **Reserved codes** are refused: `admin`, `seller`, `support`, `api`, `www`, `app`, `login`, `clickgroup`, `gym-spa`, `test`, `root`, `system`. The list is kept in one place per layer (the database and `packages/core`), and a test keeps the two identical.
   - The first login on a device asks for the **gym code**, username and password. The device then remembers the gym: the login screen shows the gym's name and logo and asks only for username and password. "Use another gym" appears only when no staff member is logged in on the device.
   - On the web, a link like `…/?gym=<code>` fills in the gym code, which also helps when installing the PWA.
   - The offline edition has exactly one gym and never asks for a code.
@@ -158,8 +160,11 @@ Click Group sells the system to many gyms. The requirements were decided by the 
   - **Seller panel:** it shows each gym's license type, dates and status, and issues renewal codes. Every license issued, activated or revoked is logged there.
   - **Clock tampering:** the offline server records the latest date it has ever seen, from the PC clock and from the newest timestamps in the database. If the PC clock goes back more than 48 hours, it shows a Kurdish warning and treats the license as expired until the clock is corrected. It never trusts the PC clock alone for yearly expiry.
   - **Limits we accept:** a signature stops forged codes, but someone who controls the server PC can patch the program, so the license is a deterrent. An offline PC can't be revoked from a distance: "deactivate" in the seller panel is a record only, and a yearly license still runs out.
-- **Order:** this step comes after the design step and before 1e. It has five sub-steps, and each one stops for review:
-  1. **MT-1 Isolation:** `gyms`, `gym_id` and composite keys on every table, the RLS rewrite, the Owner role, roles copied per gym, the read-only state and limits, per-gym usernames, PINs, settings and audit log, and the gym code at login.
+- **Order (decided by the user on 2026-10-10):** MT-1, then the **design step** (§8), then MT-2 to MT-5, then 1e. The design step comes after MT-1 so the gym's look (brand color, logo) is stored per gym from the start, and the seller app can reuse the new theme. Each sub-step stops for review:
+  1. **MT-1 Isolation:** `gyms`, `gym_id` and composite keys on every table, the RLS rewrite, the Owner role, roles copied per gym, the read-only state and limits, per-gym usernames, PINs, settings and audit log, and the gym code at login. Split in two, each stopping for review:
+     - **MT-1a:** the migrations, the seed and all pgTAP tests (local only);
+     - **MT-1b:** `packages/core`, the login screen, the scripts, translations, docs, unit and e2e tests (local only);
+     - the cloud rollout comes after MT-1b, with the user's OK at each step.
   2. **MT-2 Staff module** (design B, §2.5). Creating a gym's Owner needs it.
   3. **MT-3 Seller panel:** `apps/seller`, platform admins with TOTP and recovery codes, gyms (create, subscription dates, suspend, lock, reactivate), usage counts, the seller audit log, and the 30/7/1-day warnings in the gym app.
   4. **MT-4 Support access.**
@@ -306,7 +311,7 @@ The app must not have only one look. The default is indigo + light + soft corner
 - CI (GitHub Actions): build and deploy web on every push; produce the signed APK and Windows EXE as release artifacts
 
 ## 8. Build phases (do them in order, stop for my review after each)
-1. **Foundation:** monorepo + Vite PWA + Vercel deploy + Capacitor (Android) + Electron (Windows) projects — debug APK and EXE build from day one, Supabase connection, connection indicator, PIN switching (checked by the server), i18n + RTL, auth, branches, RBAC tables + RLS + permission matrix UI, staff management, audit log trigger, layout & navigation. Sub-step order after 1d-R: the auth spike, then the **design step** (Calm Bento theme, phone tab bar / tablet rail / desktop sidebar, the §6.1 Appearance settings and the §6 layout rules), then the **multi-tenant step** (§2.6, sub-steps MT-1 to MT-5: gyms and `gym_id` isolation, per-gym login, the staff module, the seller panel, support access, the license format and signing), then 1e (admin screens), then 1f (offline-edition server test)
+1. **Foundation:** monorepo + Vite PWA + Vercel deploy + Capacitor (Android) + Electron (Windows) projects — debug APK and EXE build from day one, Supabase connection, connection indicator, PIN switching (checked by the server), i18n + RTL, auth, branches, RBAC tables + RLS + permission matrix UI, staff management, audit log trigger, layout & navigation. Sub-step order after 1d-R (updated by the user on 2026-10-10): the auth spike, then **MT-1** (§2.6: gyms and `gym_id` isolation, per-gym login; split into MT-1a and MT-1b), then the **design step** (Calm Bento theme, phone tab bar / tablet rail / desktop sidebar, the §6.1 Appearance settings and the §6 layout rules), then **MT-2 to MT-5** (§2.6: the staff module, the seller panel, support access, the license format and signing), then 1e (admin screens), then 1f (offline-edition server test)
 2. **Members & NFC:** member CRUD, photo capture, NFC card assign/replace, NFC reader abstraction, global search
 3. **Plans, subscriptions & payments:** plans, subscribe/renew/freeze/upgrade, payments, invoices, receipts, debts, installments
 4. **Check-in engine:** `check_in` function + tests, check-in kiosk screen, attendance list, live occupancy

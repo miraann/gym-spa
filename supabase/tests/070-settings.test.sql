@@ -25,7 +25,7 @@ select throws_ok(
 );
 select throws_ok(
   $$ insert into public.settings (key, value) values ('security.idle_lock_minutes', '20') $$,
-  '23505', 'duplicate key value violates unique constraint "settings_branch_id_key_key"',
+  '23505', 'duplicate key value violates unique constraint "settings_gym_id_branch_id_key_key"',
   'a setting for every branch exists only once'
 );
 select lives_ok(

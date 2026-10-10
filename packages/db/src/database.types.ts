@@ -10,6 +10,7 @@ export type Database = {
           branch_id: string | null;
           changed_columns: string[] | null;
           device_id: string | null;
+          gym_id: string | null;
           id: string;
           ip: unknown;
           new_values: Json | null;
@@ -24,6 +25,7 @@ export type Database = {
           branch_id?: string | null;
           changed_columns?: string[] | null;
           device_id?: string | null;
+          gym_id?: string | null;
           id?: string;
           ip?: unknown;
           new_values?: Json | null;
@@ -38,6 +40,7 @@ export type Database = {
           branch_id?: string | null;
           changed_columns?: string[] | null;
           device_id?: string | null;
+          gym_id?: string | null;
           id?: string;
           ip?: unknown;
           new_values?: Json | null;
@@ -55,6 +58,7 @@ export type Database = {
           created_at: string;
           created_by: string | null;
           deleted_at: string | null;
+          gym_id: string;
           id: string;
           is_active: boolean;
           name_ar: string | null;
@@ -70,6 +74,7 @@ export type Database = {
           created_at?: string;
           created_by?: string | null;
           deleted_at?: string | null;
+          gym_id?: string;
           id?: string;
           is_active?: boolean;
           name_ar?: string | null;
@@ -85,6 +90,7 @@ export type Database = {
           created_at?: string;
           created_by?: string | null;
           deleted_at?: string | null;
+          gym_id?: string;
           id?: string;
           is_active?: boolean;
           name_ar?: string | null;
@@ -94,34 +100,45 @@ export type Database = {
           updated_at?: string;
           updated_by?: string | null;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: 'branches_gym_id_fkey';
+            columns: ['gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'gyms';
+            referencedColumns: ['id'];
+          },
+        ];
       };
       device_status: {
         Row: {
           app_version: string | null;
           device_id: string;
+          gym_id: string;
           last_seen_at: string;
           last_seen_by: string | null;
         };
         Insert: {
           app_version?: string | null;
           device_id: string;
+          gym_id?: string;
           last_seen_at: string;
           last_seen_by?: string | null;
         };
         Update: {
           app_version?: string | null;
           device_id?: string;
+          gym_id?: string;
           last_seen_at?: string;
           last_seen_by?: string | null;
         };
         Relationships: [
           {
-            foreignKeyName: 'device_status_device_id_fkey';
-            columns: ['device_id'];
-            isOneToOne: true;
+            foreignKeyName: 'device_status_device_id_gym_id_fkey';
+            columns: ['device_id', 'gym_id'];
+            isOneToOne: false;
             referencedRelation: 'devices';
-            referencedColumns: ['id'];
+            referencedColumns: ['id', 'gym_id'];
           },
         ];
       };
@@ -133,6 +150,7 @@ export type Database = {
           created_by: string | null;
           default_language: Database['public']['Enums']['language_code'] | null;
           deleted_at: string | null;
+          gym_id: string;
           id: string;
           is_active: boolean;
           name: string;
@@ -147,6 +165,7 @@ export type Database = {
           created_by?: string | null;
           default_language?: Database['public']['Enums']['language_code'] | null;
           deleted_at?: string | null;
+          gym_id?: string;
           id: string;
           is_active?: boolean;
           name: string;
@@ -161,6 +180,7 @@ export type Database = {
           created_by?: string | null;
           default_language?: Database['public']['Enums']['language_code'] | null;
           deleted_at?: string | null;
+          gym_id?: string;
           id?: string;
           is_active?: boolean;
           name?: string;
@@ -170,13 +190,70 @@ export type Database = {
         };
         Relationships: [
           {
-            foreignKeyName: 'devices_branch_id_fkey';
-            columns: ['branch_id'];
+            foreignKeyName: 'devices_branch_id_gym_id_fkey';
+            columns: ['branch_id', 'gym_id'];
             isOneToOne: false;
             referencedRelation: 'branches';
-            referencedColumns: ['id'];
+            referencedColumns: ['id', 'gym_id'];
           },
         ];
+      };
+      gyms: {
+        Row: {
+          code: string;
+          created_at: string;
+          created_by: string | null;
+          deleted_at: string | null;
+          edition: string;
+          id: string;
+          locked_at: string | null;
+          max_branches: number | null;
+          max_devices: number | null;
+          name_ar: string | null;
+          name_ckb: string;
+          name_en: string | null;
+          paid_until: string | null;
+          suspended_at: string | null;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          code: string;
+          created_at?: string;
+          created_by?: string | null;
+          deleted_at?: string | null;
+          edition?: string;
+          id?: string;
+          locked_at?: string | null;
+          max_branches?: number | null;
+          max_devices?: number | null;
+          name_ar?: string | null;
+          name_ckb: string;
+          name_en?: string | null;
+          paid_until?: string | null;
+          suspended_at?: string | null;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          code?: string;
+          created_at?: string;
+          created_by?: string | null;
+          deleted_at?: string | null;
+          edition?: string;
+          id?: string;
+          locked_at?: string | null;
+          max_branches?: number | null;
+          max_devices?: number | null;
+          name_ar?: string | null;
+          name_ckb?: string;
+          name_en?: string | null;
+          paid_until?: string | null;
+          suspended_at?: string | null;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [];
       };
       permissions: {
         Row: {
@@ -203,6 +280,7 @@ export type Database = {
         Row: {
           created_at: string;
           created_by: string | null;
+          gym_id: string;
           id: string;
           permission_key: string;
           role_id: string;
@@ -210,6 +288,7 @@ export type Database = {
         Insert: {
           created_at?: string;
           created_by?: string | null;
+          gym_id?: string;
           id?: string;
           permission_key: string;
           role_id: string;
@@ -217,6 +296,7 @@ export type Database = {
         Update: {
           created_at?: string;
           created_by?: string | null;
+          gym_id?: string;
           id?: string;
           permission_key?: string;
           role_id?: string;
@@ -230,11 +310,11 @@ export type Database = {
             referencedColumns: ['key'];
           },
           {
-            foreignKeyName: 'role_permissions_role_id_fkey';
-            columns: ['role_id'];
+            foreignKeyName: 'role_permissions_role_id_gym_id_fkey';
+            columns: ['role_id', 'gym_id'];
             isOneToOne: false;
             referencedRelation: 'roles';
-            referencedColumns: ['id'];
+            referencedColumns: ['id', 'gym_id'];
           },
         ];
       };
@@ -243,6 +323,7 @@ export type Database = {
           created_at: string;
           created_by: string | null;
           deleted_at: string | null;
+          gym_id: string;
           id: string;
           is_system: boolean;
           key: string | null;
@@ -256,6 +337,7 @@ export type Database = {
           created_at?: string;
           created_by?: string | null;
           deleted_at?: string | null;
+          gym_id?: string;
           id?: string;
           is_system?: boolean;
           key?: string | null;
@@ -269,6 +351,7 @@ export type Database = {
           created_at?: string;
           created_by?: string | null;
           deleted_at?: string | null;
+          gym_id?: string;
           id?: string;
           is_system?: boolean;
           key?: string | null;
@@ -278,13 +361,22 @@ export type Database = {
           updated_at?: string;
           updated_by?: string | null;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: 'roles_gym_id_fkey';
+            columns: ['gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'gyms';
+            referencedColumns: ['id'];
+          },
+        ];
       };
       settings: {
         Row: {
           branch_id: string | null;
           created_at: string;
           created_by: string | null;
+          gym_id: string;
           id: string;
           key: string;
           updated_at: string;
@@ -295,6 +387,7 @@ export type Database = {
           branch_id?: string | null;
           created_at?: string;
           created_by?: string | null;
+          gym_id?: string;
           id?: string;
           key: string;
           updated_at?: string;
@@ -305,6 +398,7 @@ export type Database = {
           branch_id?: string | null;
           created_at?: string;
           created_by?: string | null;
+          gym_id?: string;
           id?: string;
           key?: string;
           updated_at?: string;
@@ -313,10 +407,17 @@ export type Database = {
         };
         Relationships: [
           {
-            foreignKeyName: 'settings_branch_id_fkey';
-            columns: ['branch_id'];
+            foreignKeyName: 'settings_branch_id_gym_id_fkey';
+            columns: ['branch_id', 'gym_id'];
             isOneToOne: false;
             referencedRelation: 'branches';
+            referencedColumns: ['id', 'gym_id'];
+          },
+          {
+            foreignKeyName: 'settings_gym_id_fkey';
+            columns: ['gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'gyms';
             referencedColumns: ['id'];
           },
         ];
@@ -324,33 +425,36 @@ export type Database = {
       staff_branch_access: {
         Row: {
           branch_id: string;
+          gym_id: string;
           id: string;
           staff_id: string;
         };
         Insert: {
           branch_id: string;
+          gym_id: string;
           id?: string;
           staff_id: string;
         };
         Update: {
           branch_id?: string;
+          gym_id?: string;
           id?: string;
           staff_id?: string;
         };
         Relationships: [
           {
-            foreignKeyName: 'staff_branch_access_branch_id_fkey';
-            columns: ['branch_id'];
+            foreignKeyName: 'staff_branch_access_branch_id_gym_id_fkey';
+            columns: ['branch_id', 'gym_id'];
             isOneToOne: false;
             referencedRelation: 'branches';
-            referencedColumns: ['id'];
+            referencedColumns: ['id', 'gym_id'];
           },
           {
-            foreignKeyName: 'staff_branch_access_staff_id_fkey';
-            columns: ['staff_id'];
+            foreignKeyName: 'staff_branch_access_staff_id_gym_id_fkey';
+            columns: ['staff_id', 'gym_id'];
             isOneToOne: false;
             referencedRelation: 'staff_users';
-            referencedColumns: ['id'];
+            referencedColumns: ['id', 'gym_id'];
           },
         ];
       };
@@ -359,6 +463,7 @@ export type Database = {
           branch_id: string;
           created_at: string;
           created_by: string | null;
+          gym_id: string;
           id: string;
           staff_id: string;
         };
@@ -366,6 +471,7 @@ export type Database = {
           branch_id: string;
           created_at?: string;
           created_by?: string | null;
+          gym_id?: string;
           id?: string;
           staff_id: string;
         };
@@ -373,23 +479,24 @@ export type Database = {
           branch_id?: string;
           created_at?: string;
           created_by?: string | null;
+          gym_id?: string;
           id?: string;
           staff_id?: string;
         };
         Relationships: [
           {
-            foreignKeyName: 'staff_branches_branch_id_fkey';
-            columns: ['branch_id'];
+            foreignKeyName: 'staff_branches_branch_id_gym_id_fkey';
+            columns: ['branch_id', 'gym_id'];
             isOneToOne: false;
             referencedRelation: 'branches';
-            referencedColumns: ['id'];
+            referencedColumns: ['id', 'gym_id'];
           },
           {
-            foreignKeyName: 'staff_branches_staff_id_fkey';
-            columns: ['staff_id'];
+            foreignKeyName: 'staff_branches_staff_id_gym_id_fkey';
+            columns: ['staff_id', 'gym_id'];
             isOneToOne: false;
             referencedRelation: 'staff_users';
-            referencedColumns: ['id'];
+            referencedColumns: ['id', 'gym_id'];
           },
         ];
       };
@@ -398,6 +505,7 @@ export type Database = {
           created_at: string;
           created_by: string | null;
           failed_attempts: number;
+          gym_id: string;
           locked_at: string | null;
           pin_hash: string;
           staff_id: string;
@@ -408,6 +516,7 @@ export type Database = {
           created_at?: string;
           created_by?: string | null;
           failed_attempts?: number;
+          gym_id?: string;
           locked_at?: string | null;
           pin_hash: string;
           staff_id: string;
@@ -418,6 +527,7 @@ export type Database = {
           created_at?: string;
           created_by?: string | null;
           failed_attempts?: number;
+          gym_id?: string;
           locked_at?: string | null;
           pin_hash?: string;
           staff_id?: string;
@@ -426,11 +536,11 @@ export type Database = {
         };
         Relationships: [
           {
-            foreignKeyName: 'staff_pins_staff_id_fkey';
-            columns: ['staff_id'];
-            isOneToOne: true;
+            foreignKeyName: 'staff_pins_staff_id_gym_id_fkey';
+            columns: ['staff_id', 'gym_id'];
+            isOneToOne: false;
             referencedRelation: 'staff_users';
-            referencedColumns: ['id'];
+            referencedColumns: ['id', 'gym_id'];
           },
         ];
       };
@@ -441,6 +551,7 @@ export type Database = {
           created_by: string | null;
           deleted_at: string | null;
           full_name: string;
+          gym_id: string;
           id: string;
           is_active: boolean;
           must_change_password: boolean;
@@ -457,6 +568,7 @@ export type Database = {
           created_by?: string | null;
           deleted_at?: string | null;
           full_name: string;
+          gym_id?: string;
           id: string;
           is_active?: boolean;
           must_change_password?: boolean;
@@ -473,6 +585,7 @@ export type Database = {
           created_by?: string | null;
           deleted_at?: string | null;
           full_name?: string;
+          gym_id?: string;
           id?: string;
           is_active?: boolean;
           must_change_password?: boolean;
@@ -485,11 +598,18 @@ export type Database = {
         };
         Relationships: [
           {
-            foreignKeyName: 'staff_users_role_id_fkey';
-            columns: ['role_id'];
+            foreignKeyName: 'staff_users_gym_id_fkey';
+            columns: ['gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'gyms';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'staff_users_role_id_gym_id_fkey';
+            columns: ['role_id', 'gym_id'];
             isOneToOne: false;
             referencedRelation: 'roles';
-            referencedColumns: ['id'];
+            referencedColumns: ['id', 'gym_id'];
           },
         ];
       };
@@ -499,9 +619,57 @@ export type Database = {
     };
     Functions: {
       clear_my_pin_lockout: { Args: Record<PropertyKey, never>; Returns: undefined };
+      create_gym: {
+        Args: {
+          p_code: string;
+          p_edition?: string;
+          p_first_branch_name: string;
+          p_id?: string;
+          p_name_ar?: string;
+          p_name_ckb: string;
+          p_name_en?: string;
+        };
+        Returns: {
+          code: string;
+          created_at: string;
+          created_by: string | null;
+          deleted_at: string | null;
+          edition: string;
+          id: string;
+          locked_at: string | null;
+          max_branches: number | null;
+          max_devices: number | null;
+          name_ar: string | null;
+          name_ckb: string;
+          name_en: string | null;
+          paid_until: string | null;
+          suspended_at: string | null;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        SetofOptions: {
+          from: '*';
+          to: 'gyms';
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
       device_heartbeat: {
         Args: { p_app_version: string; p_device_id: string };
         Returns: undefined;
+      };
+      my_gym: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          access: string;
+          code: string;
+          edition: string;
+          id: string;
+          name_ar: string;
+          name_ckb: string;
+          name_en: string;
+          paid_until: string;
+        }[];
       };
       register_device: {
         Args: {
@@ -518,6 +686,7 @@ export type Database = {
           created_by: string | null;
           default_language: Database['public']['Enums']['language_code'] | null;
           deleted_at: string | null;
+          gym_id: string;
           id: string;
           is_active: boolean;
           name: string;

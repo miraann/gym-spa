@@ -33,7 +33,7 @@ select results_eq(
 
 -- Server code without a staff session (e.g. the bootstrap script) may say who it acts for.
 select tests.clear_authentication();
-insert into public.branches (code, name_ckb, created_by) values ('B912', 'لقی سێ', tests.staff('owner'));
+insert into public.branches (gym_id, code, name_ckb, created_by) values (tests.gym('gym-a'), 'B912', 'لقی سێ', tests.staff('owner'));
 select is((select created_by from public.branches where code = 'B912'), tests.staff('owner'),
   'system changes keep the given created_by');
 

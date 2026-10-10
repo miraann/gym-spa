@@ -5,14 +5,14 @@ select tests.create_fixture();
 
 -- Permissions
 select tests.authenticate_as(tests.staff('owner'));
-select ok(app.is_super_admin(), 'the owner is Super Admin');
+select ok(app.is_owner(), 'the owner has the Owner role');
 select is(
   cardinality(app.my_permissions()), tests.total_rows('public.permissions'),
-  'Super Admin has every permission'
+  'the Owner has every permission'
 );
 
 select tests.authenticate_as(tests.staff('admin'));
-select ok(not app.is_super_admin(), 'Admin is not Super Admin');
+select ok(not app.is_owner(), 'Admin is not the Owner');
 select is(
   cardinality(app.my_permissions()), tests.total_rows('public.permissions'),
   'Admin has every permission in the catalog'
@@ -32,7 +32,7 @@ select is(app.my_permissions(), '{}'::text[], 'without a session there are no pe
 
 -- A role being deleted takes its permissions away.
 update public.staff_users set role_id = tests.create_role('دەستیار', array['members.view'])
- where username = 'trainer_ab';
+ where id = tests.staff('trainer_ab');
 update public.roles set deleted_at = now() where name_ckb = 'دەستیار';
 select tests.authenticate_as(tests.staff('trainer_ab'));
 select is(app.my_permissions(), '{}'::text[], 'a staff member whose role is deleted has no permissions');
@@ -55,7 +55,7 @@ select set_eq(
 select tests.authenticate_as(tests.staff('admin'));
 select set_eq(
   'select * from app.accessible_branch_ids()', $$ select * from tests.all_ids('public.branches') $$,
-  'all_branches gives every branch'
+  'all_branches gives every branch of the gym'
 );
 
 select tests.authenticate_as(tests.staff('former_a'));
@@ -67,10 +67,10 @@ select ok(app.can_grant_role(tests.role('receptionist')), 'a branch manager can 
 select ok(not app.can_grant_role(tests.role('admin')), 'a branch manager cannot give the admin role');
 
 select tests.authenticate_as(tests.staff('admin'));
-select ok(not app.can_grant_role(tests.role('super_admin')), 'Admin cannot give the Super Admin role');
+select ok(not app.can_grant_role(tests.role('owner')), 'Admin cannot give the Owner role');
 
 select tests.authenticate_as(tests.staff('owner'));
-select ok(app.can_grant_role(tests.role('super_admin')), 'Super Admin can give the Super Admin role');
+select ok(app.can_grant_role(tests.role('owner')), 'the Owner can give the Owner role');
 
 -- Who can manage whom
 select tests.authenticate_as(tests.staff('manager_a'));

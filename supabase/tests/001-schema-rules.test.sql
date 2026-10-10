@@ -1,7 +1,7 @@
 -- Rules every table and function must follow (CLAUDE.md → Database rules). These also catch new
 -- tables in later phases that forget one of them.
 begin;
-select plan(11);
+select plan(16);
 
 select is_empty($$
   select c.relname from pg_class c
@@ -80,6 +80,58 @@ select is_empty($$
      )
      and c.relname <> 'permissions'
 $$, 'every primary key is a uuid (the permission catalog uses its key)');
+
+-- Many gyms (spec §2.6) ------------------------------------------------------------------------
+
+select is_empty($$
+  select c.relname from pg_class c
+   where c.relnamespace = 'public'::regnamespace and c.relkind = 'r'
+     and c.relname not in ('permissions', 'gyms')
+     and not exists (
+       select 1 from pg_attribute a
+        where a.attrelid = c.oid and a.attname = 'gym_id' and a.atttypid = 'uuid'::regtype
+          and (a.attnotnull or c.relname = 'audit_logs')
+     )
+$$, 'every table except the permission catalog belongs to a gym (gym_id, not null; the log keeps old entries without one)');
+
+select is_empty($$
+  select c.relname, p.polname from pg_policy p
+    join pg_class c on c.oid = p.polrelid
+   where c.relnamespace = 'public'::regnamespace and c.relname <> 'permissions'
+     and (coalesce(pg_get_expr(p.polqual, p.polrelid), 'current_gym_id') !~ 'current_gym_id'
+       or coalesce(pg_get_expr(p.polwithcheck, p.polrelid), 'current_gym_id') !~ 'current_gym_id')
+$$, 'every policy checks the gym (app.current_gym_id()) in each of its conditions');
+
+select is_empty($$
+  select c.conrelid::regclass, c.conname from pg_constraint c
+   where c.contype = 'f' and c.connamespace = 'public'::regnamespace
+     and exists (select 1 from pg_attribute a where a.attrelid = c.conrelid and a.attname = 'gym_id')
+     and exists (select 1 from pg_attribute a where a.attrelid = c.confrelid and a.attname = 'gym_id')
+     and not exists (
+       select 1 from pg_attribute a
+        where a.attrelid = c.conrelid and a.attname = 'gym_id' and a.attnum = any (c.conkey)
+     )
+$$, 'every link between two gym tables includes gym_id, so it can never cross gyms');
+
+select is_empty($$
+  select c.relname from pg_class c
+   where c.relnamespace = 'public'::regnamespace and c.relkind = 'r'
+     and c.relname <> 'audit_logs'
+     and exists (select 1 from pg_attribute a where a.attrelid = c.oid and a.attname = 'gym_id')
+     and not exists (
+       select 1 from pg_trigger t
+        where t.tgrelid = c.oid and t.tgname = 'read_only'
+          and 'gym_id' = any (string_to_array(encode(t.tgargs, 'escape'), '\000'))
+     )
+$$, 'a row''s gym never changes (read_only trigger; the log can''t change at all)');
+
+select is_empty($$
+  select c.relname from pg_class c
+   where c.relnamespace = 'public'::regnamespace and c.relkind = 'r'
+     and c.relname not in ('staff_pins', 'device_status', 'staff_branch_access', 'audit_logs')
+     and exists (select 1 from pg_attribute a where a.attrelid = c.oid and a.attname = 'gym_id')
+     and not exists (select 1 from pg_trigger t where t.tgrelid = c.oid and t.tgname = 'check_writable')
+$$, 'every gym table refuses changes while the gym is read-only, except PINs, device reports, derived access and the log');
 
 select * from finish();
 rollback;

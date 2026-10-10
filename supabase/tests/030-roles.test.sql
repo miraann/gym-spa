@@ -78,14 +78,14 @@ select throws_ok(
 
 select tests.authenticate_as(tests.staff('owner'));
 select lives_ok($$ update public.roles set name_en = 'Front desk' where key = 'receptionist' $$,
-  'Super Admin can rename built-in roles');
+  'the Owner can rename built-in roles');
 select throws_ok($$ update public.roles set key = 'front_desk' where key = 'receptionist' $$, '42501',
   'read_only_column', 'a built-in role key never changes');
 select throws_ok($$ update public.roles set deleted_at = now() where key = 'trainer' $$, '42501',
   'system_role_read_only', 'built-in roles cannot be deleted');
 select throws_ok(
-  $$ insert into public.role_permissions (role_id, permission_key) values (tests.role('super_admin'), 'members.view') $$,
-  '23514', 'super_admin_has_all_permissions', 'Super Admin''s permissions are never stored'
+  $$ insert into public.role_permissions (role_id, permission_key) values (tests.role('owner'), 'members.view') $$,
+  '23514', 'owner_has_all_permissions', 'the Owner''s permissions are never stored'
 );
 
 -- The role editor has roles.manage but only members.view.
