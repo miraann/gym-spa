@@ -21,7 +21,7 @@ import {
 } from '@gym/core';
 import type { Database } from '@gym/db';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { connect, fail, run, ScriptError } from './script-support';
+import { connect, fail, readHidden, run } from './script-support';
 
 const MIN_PASSWORD_LENGTH = 8;
 /** The first branch's code; it is printed in receipt numbers and never changes. */
@@ -39,36 +39,6 @@ const { values: args } = parseArgs({
     'full-name': { type: 'string' },
   },
 });
-
-/** Reads a line without showing what is typed. */
-function readHidden(question: string): Promise<string> {
-  const { stdin, stdout } = process;
-  if (!stdin.isTTY) {
-    fail('Run this in a terminal, or pass the password in BOOTSTRAP_ADMIN_PASSWORD.');
-  }
-  return new Promise((resolve, reject) => {
-    let value = '';
-    const onData = (chunk: string) => {
-      for (const char of chunk) {
-        if (char === '\r' || char === '\n' || char === '\u0003') {
-          stdin.setRawMode(false);
-          stdin.pause();
-          stdin.off('data', onData);
-          stdout.write('\n');
-          if (char === '\u0003') reject(new ScriptError('Cancelled.', 130));
-          else resolve(value);
-          return;
-        }
-        value = char === '\u007f' || char === '\b' ? value.slice(0, -1) : value + char;
-      }
-    };
-    stdout.write(question);
-    stdin.setRawMode(true);
-    stdin.setEncoding('utf8');
-    stdin.resume();
-    stdin.on('data', onData);
-  });
-}
 
 function checkName(name: string, what: string): string {
   const trimmed = name.trim();
@@ -115,8 +85,11 @@ async function askNewGym(prompt: Interface, code: string): Promise<NewGym | null
 async function askPassword(): Promise<string> {
   let password = process.env.BOOTSTRAP_ADMIN_PASSWORD;
   if (password === undefined) {
-    password = await readHidden(`Password (at least ${MIN_PASSWORD_LENGTH} characters): `);
-    if ((await readHidden('Password again: ')) !== password) {
+    password = await readHidden(
+      `Password (at least ${MIN_PASSWORD_LENGTH} characters): `,
+      'BOOTSTRAP_ADMIN_PASSWORD',
+    );
+    if ((await readHidden('Password again: ', 'BOOTSTRAP_ADMIN_PASSWORD')) !== password) {
       fail('The passwords do not match.');
     }
   }

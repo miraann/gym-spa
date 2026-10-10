@@ -92,3 +92,36 @@ export async function run(main: () => Promise<void>): Promise<void> {
     process.exitCode = error.exitCode;
   }
 }
+
+/**
+ * Reads a line without showing what is typed (a password). Outside a terminal it stops and points
+ * to the environment variable that can give the value instead.
+ */
+export function readHidden(question: string, environmentVariable: string): Promise<string> {
+  const { stdin, stdout } = process;
+  if (!stdin.isTTY) {
+    fail(`Run this in a terminal, or pass the password in ${environmentVariable}.`);
+  }
+  return new Promise((resolve, reject) => {
+    let value = '';
+    const onData = (chunk: string) => {
+      for (const char of chunk) {
+        if (char === '\r' || char === '\n' || char === '\u0003') {
+          stdin.setRawMode(false);
+          stdin.pause();
+          stdin.off('data', onData);
+          stdout.write('\n');
+          if (char === '\u0003') reject(new ScriptError('Cancelled.', 130));
+          else resolve(value);
+          return;
+        }
+        value = char === '\u007f' || char === '\b' ? value.slice(0, -1) : value + char;
+      }
+    };
+    stdout.write(question);
+    stdin.setRawMode(true);
+    stdin.setEncoding('utf8');
+    stdin.resume();
+    stdin.on('data', onData);
+  });
+}

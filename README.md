@@ -63,6 +63,7 @@ Run from the repository root:
 | `pnpm db:lint` | Check the SQL functions for errors (plpgsql_check) |
 | `pnpm db:types` | Regenerate the TypeScript types of the database (`packages/db`). Run after changing migrations |
 | `pnpm bootstrap:admin` | Create a gym's first Owner: `--gym <code>`, and the gym itself if it doesn't exist yet (its code can never change). Add `--remote` for a cloud project (see [A cloud project](#a-cloud-project)) |
+| `pnpm smoke:staff-admin` | Smoke test of the staff module as a gym's Owner: creates `smoke.test`, checks that its temporary password logs in and must be changed, deactivates it and checks that its login is refused. Prints only the staff id, never a password. `--remote` for the cloud project (needs the publishable key: `SUPABASE_PUBLISHABLE_KEY` in `supabase/.env.local`, or the app's `apps/app/.env.local` for the same project); local needs `pnpm db:functions` |
 | `pnpm staff-logins:move` | Once, after the MT-1 migrations, on a project that already had staff: moves their logins to their gym's address. Only shows what it would change; `--apply` changes it. `--remote` for a cloud project |
 
 First-time setup for the browser tests: `pnpm --filter @gym/app exec playwright install chromium`.
@@ -249,7 +250,7 @@ Other changes:
   ```powershell
   pnpm --filter @gym/supabase exec supabase functions deploy staff-admin --use-api --project-ref <project-ref> --workdir ..
   ```
-  `--use-api` bundles on Supabase's side, including the `packages/` files the function imports, so Docker isn't needed. The deploy takes `verify_jwt = false` from `config.toml`: the gateway's own token check only knows the legacy JWT secret, and the function checks every token itself against the project's published keys. Check it: a request without a token, `curl -s -X POST https://<project-ref>.supabase.co/functions/v1/staff-admin -d "{}"`, answers `{"error":"unauthorized"}`.
+  `--use-api` bundles on Supabase's side, including the `packages/` files the function imports, so Docker isn't needed. The deploy takes `verify_jwt = false` from `config.toml`: the gateway's own token check only knows the legacy JWT secret, and the function checks every token itself against the project's published keys. Check it: a request without a token, `curl -s -X POST https://<project-ref>.supabase.co/functions/v1/staff-admin -d "{}"`, answers `{"error":"unauthorized"}`. Then run `pnpm smoke:staff-admin --remote` and type the gym code and its Owner's username and password (hidden). `smoke.test` stays in the gym, deactivated; next time pass `--staff <another username>`. The deploy needs `supabase login` with the Supabase account that owns the project (`supabase projects list` must show it); another account gets 403.
 - **Changed `VITE_*` values:** redeploy on Vercel and rebuild the APK and EXE. The address is part of each build's Content-Security-Policy.
 - **Projects set up with PowerSync (before 1d-R)**, in this order:
   1. Delete the instance on powersync.com, then wait until its connection is gone: `select count(*) from pg_stat_activity where usename = 'powersync_role'` returns 0. The replication stream can take a few minutes to close.

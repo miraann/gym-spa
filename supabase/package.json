@@ -14,6 +14,7 @@
     "types": "supabase gen types typescript --local --workdir .. --schema public > ../packages/db/src/database.types.ts",
     "bootstrap:admin": "tsx scripts/bootstrap-admin.ts",
     "staff-logins:move": "tsx scripts/move-staff-logins.ts",
+    "smoke:staff-admin": "tsx scripts/smoke-staff-admin.ts",
     "functions": "supabase functions serve --workdir ..",
     "test:deno": "tsx scripts/test-deno.ts",
     "typecheck": "tsc -p tsconfig.json"
@@ -21,7 +22,9 @@
   "dependencies": {
     "@gym/core": "workspace:*",
     "@gym/db": "workspace:*",
-    "@supabase/supabase-js": "^2.117.2"
+    "@gym/staff-admin": "workspace:*",
+    "@supabase/supabase-js": "^2.117.2",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "@types/node": "^24.19.1",
