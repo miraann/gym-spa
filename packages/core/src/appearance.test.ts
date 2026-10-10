@@ -14,8 +14,8 @@ import {
   parseCornerStyle,
   parseLogo,
   sniffImageType,
-} from './appearance';
-import { latestFunctionBody, migrationsSql } from './sql-functions.test-helper';
+} from './appearance.ts';
+import { latestFunctionBody, migrationsSql } from './sql-functions.test-helper.ts';
 
 describe('brand presets', () => {
   it.each(BRAND_PRESETS)('%s passes every contrast check', (preset) => {

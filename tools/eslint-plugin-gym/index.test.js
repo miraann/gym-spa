@@ -117,3 +117,25 @@ tester.run('no-hardcoded-ui-text', plugin.rules['no-hardcoded-ui-text'], {
     { code: 'toast.success("Saved")', errors: [{ messageId: 'hardcoded' }] },
   ],
 });
+
+tester.run('explicit-ts-extensions', plugin.rules['explicit-ts-extensions'], {
+  valid: [
+    "import { staffEmail } from './staff.ts'",
+    "import { Database } from '../../db/src/index.ts'",
+    "export { isValidGymCode } from './gym.ts'",
+    "export * from './gym.ts'",
+    "import data from './data.json'",
+    "import { z } from 'zod'",
+    "import { staffEmail } from '@gym/core'",
+    "import { readFileSync } from 'node:fs'",
+    "const module = await import('./late.ts')",
+  ],
+  invalid: [
+    "import { staffEmail } from './staff'",
+    "import { Database } from '../db'",
+    "export { isValidGymCode } from './gym'",
+    "export * from './gym'",
+    "const module = await import('./late')",
+    "import { thing } from './thing.js'",
+  ].map((code) => ({ code, errors: [{ messageId: 'missing' }] })),
+});

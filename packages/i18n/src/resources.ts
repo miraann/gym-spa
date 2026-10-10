@@ -4,18 +4,21 @@ import arDates from './locales/ar/dates.json';
 import arHome from './locales/ar/home.json';
 import arNav from './locales/ar/nav.json';
 import arSettings from './locales/ar/settings.json';
+import arStaff from './locales/ar/staff.json';
 import ckbAuth from './locales/ckb/auth.json';
 import ckbCommon from './locales/ckb/common.json';
 import ckbDates from './locales/ckb/dates.json';
 import ckbHome from './locales/ckb/home.json';
 import ckbNav from './locales/ckb/nav.json';
 import ckbSettings from './locales/ckb/settings.json';
+import ckbStaff from './locales/ckb/staff.json';
 import enAuth from './locales/en/auth.json';
 import enCommon from './locales/en/common.json';
 import enDates from './locales/en/dates.json';
 import enHome from './locales/en/home.json';
 import enNav from './locales/en/nav.json';
 import enSettings from './locales/en/settings.json';
+import enStaff from './locales/en/staff.json';
 import type { Language } from './languages';
 
 // Kurdish is the source language: its files define the keys every other language must have.
@@ -26,6 +29,7 @@ const ckb = {
   settings: ckbSettings,
   dates: ckbDates,
   auth: ckbAuth,
+  staff: ckbStaff,
 };
 
 export type Resources = typeof ckb;
@@ -39,6 +43,7 @@ const en: Resources = {
   settings: enSettings,
   dates: enDates,
   auth: enAuth,
+  staff: enStaff,
 };
 
 const ar: Resources = {
@@ -48,6 +53,7 @@ const ar: Resources = {
   settings: arSettings,
   dates: arDates,
   auth: arAuth,
+  staff: arStaff,
 };
 
 export const resources: Record<Language, Resources> = { ckb, en, ar };
@@ -59,6 +65,7 @@ export const NAMESPACES = [
   'settings',
   'dates',
   'auth',
+  'staff',
 ] as const satisfies readonly Namespace[];
 
 export const DEFAULT_NAMESPACE = 'common' satisfies Namespace;

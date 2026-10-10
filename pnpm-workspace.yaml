@@ -3,6 +3,8 @@ packages:
   - packages/*
   - supabase
 allowBuilds:
+  # Its install script only copies the binary; its launcher does the same on first run.
+  deno: false
   electron-winstaller: false
   esbuild: true
   # Downloads the Supabase CLI binary.

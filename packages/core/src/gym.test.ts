@@ -10,8 +10,8 @@ import {
   isReservedGymCode,
   isValidGymCode,
   normalizeGymCode,
-} from './gym';
-import { latestFunctionBody } from './sql-functions.test-helper';
+} from './gym.ts';
+import { latestFunctionBody } from './sql-functions.test-helper.ts';
 
 describe('normalizeGymCode', () => {
   it('trims and lowercases', () => {

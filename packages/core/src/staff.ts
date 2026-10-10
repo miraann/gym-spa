@@ -1,5 +1,5 @@
-import { toLatinDigits } from './digits';
-import { isValidGymCode } from './gym';
+import { toLatinDigits } from './digits.ts';
+import { isValidGymCode } from './gym.ts';
 
 /**
  * Staff log in with their gym's code and a username. Supabase Auth needs an email address, so each

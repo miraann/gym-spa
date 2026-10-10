@@ -101,7 +101,7 @@ select is(
 
 select tests.authenticate_as(tests.staff('admin'));
 select throws_ok($$ update public.staff_users set username = 'boss' where username = 'reception_b' $$,
-  '42501', 'read_only_column', 'usernames change only through the staff service');
+  '23514', 'staff_login_mismatch', 'a manager changes a username only after its login (the staff module does both)');
 select throws_ok($$ update public.staff_users set role_id = tests.role('owner') where username = 'reception_b' $$,
   '42501', 'cannot_grant_role', 'only the Owner can give the Owner role');
 select throws_ok($$ delete from public.staff_users where username = 'reception_b' $$,

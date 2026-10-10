@@ -5,6 +5,8 @@
  * - no-import-meta-env-object: read build variables one at a time, so only those reach the bundle.
  * - no-raw-color-classes: colors come from the theme tokens, so the gym's brand color, dark mode
  *   and the fixed status colors work everywhere.
+ * - explicit-ts-extensions: relative imports name the `.ts` file, so the code also runs in Deno
+ *   (the staff-admin Edge Function imports these packages as they are).
  */
 
 /** Utilities that need a value: `ml-4`, `left-0`, `scroll-pr-2` (bare `left` is not a class). */
@@ -236,6 +238,35 @@ const noImportMetaEnvObject = {
   },
 };
 
+/** `./x` and `../x/y` are relative; `@gym/core`, `zod` and `node:fs` are not. */
+const RELATIVE = /^\.\.?\//;
+
+const explicitTsExtensions = {
+  meta: {
+    type: 'problem',
+    docs: { description: 'Require `.ts` on relative imports (Deno resolves no other way).' },
+    messages: {
+      missing:
+        '"{{source}}" must name the file with its extension (e.g. "./staff.ts"): Deno (Edge Functions) does not guess it.',
+    },
+    schema: [],
+  },
+  create(context) {
+    const check = (source) => {
+      if (!source || source.type !== 'Literal' || typeof source.value !== 'string') return;
+      if (RELATIVE.test(source.value) && !/\.(?:ts|json)$/.test(source.value)) {
+        context.report({ node: source, messageId: 'missing', data: { source: source.value } });
+      }
+    };
+    return {
+      ImportDeclaration: (node) => check(node.source),
+      ExportNamedDeclaration: (node) => check(node.source),
+      ExportAllDeclaration: (node) => check(node.source),
+      ImportExpression: (node) => check(node.source),
+    };
+  },
+};
+
 export default {
   meta: { name: 'eslint-plugin-gym', version: '0.1.0' },
   rules: {
@@ -243,5 +274,6 @@ export default {
     'no-hardcoded-ui-text': noHardcodedUiText,
     'no-import-meta-env-object': noImportMetaEnvObject,
     'no-raw-color-classes': noRawColorClasses,
+    'explicit-ts-extensions': explicitTsExtensions,
   },
 };

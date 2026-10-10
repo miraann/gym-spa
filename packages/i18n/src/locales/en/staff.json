@@ -1,0 +1,33 @@
+{
+  "temporaryPassword": {
+    "title": "Temporary password",
+    "description": "Give this password to {{name}}. At their first login they choose a new one that only they know.",
+    "label": "Temporary password",
+    "copy": "Copy",
+    "copied": "Copied",
+    "copyFailed": "Could not copy. Write the password down by hand.",
+    "shownOnce": "This password is shown only now and can't be seen again. If it gets lost, make a new one with a password reset.",
+    "done": "Done"
+  },
+  "errors": {
+    "unauthorized": "Your login has ended. Log in again.",
+    "method_not_allowed": "Something went wrong. Try again.",
+    "invalid_request": "These details are not valid. Check them and try again.",
+    "invalid_username": "A username has 3 to 32 lowercase English letters, digits or . _ - and starts with a letter.",
+    "branches_required": "Choose at least one branch, or all branches.",
+    "permission_denied": "You don't have permission to manage staff.",
+    "gym_read_only": "This gym is read-only. You can only deactivate staff or reset their passwords.",
+    "cannot_manage_staff": "This staff member has permissions or branches you don't have, so you can't manage them.",
+    "cannot_edit_own_account": "You can't change your own account. Another manager does that.",
+    "cannot_grant_role": "You can't give this role: it has permissions you don't have.",
+    "cannot_grant_all_branches": "Only someone with access to all branches can give all branches.",
+    "no_branch_access": "You can only give your own branches.",
+    "username_taken": "This gym already has this username. Choose another one.",
+    "staff_create_failed": "The account was not created. Try again.",
+    "staff_update_failed": "The change was not made. Try again.",
+    "auth_update_failed": "The change was not completed. Try again.",
+    "must_change_not_set": "The password was reset, but the change was not completed. Reset the password again.",
+    "unexpected": "Something went wrong. Try again. If it keeps happening, tell Click Group.",
+    "network": "Could not reach the server. Check your internet and try again."
+  }
+}

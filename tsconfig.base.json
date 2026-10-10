@@ -18,6 +18,8 @@
     "noUncheckedSideEffectImports": true,
     "skipLibCheck": true,
     "noEmit": true,
+    // Shared packages that run in Deno too (the staff-admin Edge Function) import with `.ts`.
+    "allowImportingTsExtensions": true,
     "types": []
   }
 }

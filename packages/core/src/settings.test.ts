@@ -1,6 +1,6 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { SETTINGS, isSettingKey, parseSettingValue, resolveSetting } from './settings';
+import { SETTINGS, isSettingKey, parseSettingValue, resolveSetting } from './settings.ts';
 
 describe('parseSettingValue', () => {
   it('reads whole numbers inside the allowed range', () => {

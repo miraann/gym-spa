@@ -39,6 +39,12 @@ function connection(remote: boolean): { url: string; secretKey: string } {
     return { url, secretKey };
   }
 
+  const { url, secretKey } = localSupabase();
+  return { url, secretKey };
+}
+
+/** The local Supabase's address and keys (`supabase status`). */
+export function localSupabase(): { url: string; publishableKey: string; secretKey: string } {
   let status: Record<string, string | undefined>;
   try {
     const output = execSync('supabase status --output json --workdir ..', {
@@ -50,11 +56,12 @@ function connection(remote: boolean): { url: string; secretKey: string } {
     fail('Local Supabase is not running. Start it with `pnpm db:start`.');
   }
   const url = status.API_URL;
+  const publishableKey = status.PUBLISHABLE_KEY ?? status.ANON_KEY;
   const secretKey = status.SECRET_KEY ?? status.SERVICE_ROLE_KEY;
-  if (!url || !secretKey) {
-    fail('`supabase status` did not show the API URL and secret key.');
+  if (!url || !publishableKey || !secretKey) {
+    fail('`supabase status` did not show the API URL and keys.');
   }
-  return { url, secretKey };
+  return { url, publishableKey, secretKey };
 }
 
 /**

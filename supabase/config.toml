@@ -389,6 +389,16 @@ deno_version = 2
 # [edge_runtime.secrets]
 # secret_key = "env(SECRET_VALUE)"
 
+# The staff module (packages/staff-admin, spec §2.5 design B). Deploy it with
+# `pnpm --filter @gym/supabase exec supabase functions deploy staff-admin --use-api --workdir ..`
+# (--use-api bundles on Supabase's side, including the packages/ files it imports).
+[functions.staff-admin]
+enabled = true
+# Off on purpose: the gateway's own check only knows the legacy JWT secret, not the newer signing
+# keys. The function needs no such check: each request starts with a database call under the
+# caller's token, which PostgREST verifies, and nothing uses the secret key before it has passed.
+verify_jwt = false
+
 [analytics]
 # Off: on Windows it needs the Docker daemon exposed over TCP, and the app logs elsewhere.
 enabled = false

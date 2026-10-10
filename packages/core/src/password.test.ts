@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { MIN_PASSWORD_LENGTH, newPasswordProblem } from './password';
+import { MIN_PASSWORD_LENGTH, newPasswordProblem } from './password.ts';
 
 describe('newPasswordProblem', () => {
   it('accepts 8 characters or more', () => {

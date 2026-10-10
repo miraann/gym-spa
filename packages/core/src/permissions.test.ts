@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { resolvePermissions } from './permissions';
+import { resolvePermissions } from './permissions.ts';
 
 const catalog = ['members.create', 'members.view', 'payments.refund'];
 

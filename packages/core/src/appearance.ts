@@ -9,7 +9,7 @@ import {
   parseHex,
   rgbToOklch,
   type Oklch,
-} from './color';
+} from './color.ts';
 
 // Gym look: settings rows for every branch ------------------------------------------------------
 

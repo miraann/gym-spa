@@ -1,4 +1,4 @@
-import { toLatinDigits } from './digits';
+import { toLatinDigits } from './digits.ts';
 
 // The PIN that switches staff on a shared device. The server hashes and checks it, and counts wrong
 // tries (set_my_pin, unlock_with_pin). These rules let the screen explain a bad PIN before sending

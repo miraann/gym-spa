@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isWeakPin, newPinProblem, normalizePin } from './pin';
+import { isWeakPin, newPinProblem, normalizePin } from './pin.ts';
 
 describe('normalizePin', () => {
   it('drops spaces and reads Kurdish and Arabic digits', () => {

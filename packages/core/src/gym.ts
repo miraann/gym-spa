@@ -1,4 +1,4 @@
-import { toLatinDigits } from './digits';
+import { toLatinDigits } from './digits.ts';
 
 /**
  * A gym's code is part of every staff login (`<username>@<gym code>.staff.gym-spa.invalid`), so it

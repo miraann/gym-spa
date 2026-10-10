@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { contrastRatio, isInSrgbGamut, oklchToHex, parseHex, rgbToHex, rgbToOklch } from './color';
+import {
+  contrastRatio,
+  isInSrgbGamut,
+  oklchToHex,
+  parseHex,
+  rgbToHex,
+  rgbToOklch,
+} from './color.ts';
 
 const WHITE = { r: 1, g: 1, b: 1 };
 const BLACK = { r: 0, g: 0, b: 0 };

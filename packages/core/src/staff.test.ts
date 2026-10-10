@@ -1,13 +1,13 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { latestFunctionBody } from './sql-functions.test-helper';
+import { latestFunctionBody } from './sql-functions.test-helper.ts';
 import {
   STAFF_EMAIL_DOMAIN,
   USERNAME_PATTERN,
   isValidUsername,
   normalizeUsername,
   staffEmail,
-} from './staff';
+} from './staff.ts';
 
 describe('normalizeUsername', () => {
   it('trims and lowercases', () => {
@@ -81,5 +81,11 @@ describe('USERNAME_PATTERN', () => {
     )?.[1];
 
     expect(databasePattern).toBe(USERNAME_PATTERN.source);
+  });
+
+  it('is the same pattern the staff module checks (app.is_valid_username)', () => {
+    const body = latestFunctionBody('app.is_valid_username');
+
+    expect(body).toContain(`username ~ '${USERNAME_PATTERN.source}'`);
   });
 });

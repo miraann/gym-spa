@@ -33,7 +33,7 @@ export {
   type StoredLogo,
   type TextSize,
   type ThemePreference,
-} from './appearance';
+} from './appearance.ts';
 export {
   CONTRAST_NON_TEXT,
   CONTRAST_TEXT,
@@ -47,8 +47,8 @@ export {
   rgbToOklch,
   type Oklch,
   type Rgb,
-} from './color';
-export { toLatinDigits } from './digits';
+} from './color.ts';
+export { toLatinDigits } from './digits.ts';
 export {
   GYM_ACCESS_STATES,
   GYM_CODE_MAX_LENGTH,
@@ -61,13 +61,13 @@ export {
   isValidGymCode,
   normalizeGymCode,
   type GymAccess,
-} from './gym';
+} from './gym.ts';
 export {
   MAX_PASSWORD_BYTES,
   MIN_PASSWORD_LENGTH,
   newPasswordProblem,
   type PasswordProblem,
-} from './password';
+} from './password.ts';
 export {
   CHECKIN_TAB,
   CHECKIN_TAB_INDEX,
@@ -81,8 +81,8 @@ export {
   parseNavTabs,
   resolveNavTabs,
   type NavItemKey,
-} from './nav-tabs';
-export { OWNER_ROLE, resolvePermissions } from './permissions';
+} from './nav-tabs.ts';
+export { OWNER_ROLE, resolvePermissions } from './permissions.ts';
 export {
   PIN_LENGTH,
   isWeakPin,
@@ -90,7 +90,7 @@ export {
   newPinProblem,
   normalizePin,
   type PinProblem,
-} from './pin';
+} from './pin.ts';
 export {
   SETTINGS,
   isSettingKey,
@@ -98,11 +98,11 @@ export {
   resolveSetting,
   type SettingKey,
   type SettingRow,
-} from './settings';
+} from './settings.ts';
 export {
   STAFF_EMAIL_DOMAIN,
   USERNAME_PATTERN,
   isValidUsername,
   normalizeUsername,
   staffEmail,
-} from './staff';
+} from './staff.ts';

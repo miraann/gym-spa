@@ -43,8 +43,8 @@ select throws_ok($$ insert into public.settings (key, value) values ('security.i
   '42501', 'gym_read_only', 'a read-only gym changes no settings');
 select throws_ok($$ insert into public.roles (name_ckb) values ('ڕۆڵی نوێ') $$,
   '42501', 'gym_read_only', 'a read-only gym adds no roles');
-select throws_ok($$ update public.staff_users set is_active = false where username = 'reception_a' $$,
-  '42501', 'gym_read_only', 'a read-only gym changes no staff accounts');
+select throws_ok($$ update public.staff_users set full_name = 'ناوی نوێ' where username = 'reception_a' $$,
+  '42501', 'gym_read_only', 'a read-only gym changes no staff accounts (deactivating is allowed: 170-staff-admin)');
 select throws_ok(
   $$ select public.register_device('d0000000-0000-4000-8000-0000000000a2', tests.branch('B901'), 'ئامێر', 'web') $$,
   '42501', 'gym_read_only', 'a read-only gym registers no new devices'

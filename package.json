@@ -16,6 +16,8 @@
     "format:check": "prettier --check .",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:int": "pnpm --filter @gym/staff-admin test:int",
+    "test:deno": "pnpm --filter @gym/supabase test:deno",
     "test:e2e": "pnpm --filter @gym/app test:e2e && pnpm --filter @gym/desktop test:e2e",
     "check": "pnpm typecheck && pnpm lint && pnpm format:check && pnpm test",
     "android:apk": "pnpm --filter @gym/app android:apk",
@@ -29,6 +31,7 @@
     "db:reset": "pnpm --filter @gym/supabase reset",
     "db:test": "pnpm --filter @gym/supabase test",
     "db:lint": "pnpm --filter @gym/supabase lint",
+    "db:functions": "pnpm --filter @gym/supabase functions",
     "db:types": "pnpm --filter @gym/supabase types && prettier --write --log-level warn packages/db/src/database.types.ts",
     "bootstrap:admin": "pnpm --filter @gym/supabase bootstrap:admin",
     "staff-logins:move": "pnpm --filter @gym/supabase staff-logins:move"

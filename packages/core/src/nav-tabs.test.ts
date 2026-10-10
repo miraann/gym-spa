@@ -11,8 +11,8 @@ import {
   parseNavTabs,
   resolveNavTabs,
   type NavItemKey,
-} from './nav-tabs';
-import { latestFunctionBody } from './sql-functions.test-helper';
+} from './nav-tabs.ts';
+import { latestFunctionBody } from './sql-functions.test-helper.ts';
 
 const everything = () => true;
 

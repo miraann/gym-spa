@@ -8,7 +8,7 @@ Multi-branch gym & spa system with NFC check-in. One codebase for Web/PWA, Andro
 
 > **Status:** Phase 1d done, then reworked for two editions (1d-R). The app always talks to its server: Supabase in the cloud for the **online edition** (web, Android, Windows), and later a server PC on the gym's local network for the **offline edition** (Windows only, see [CLAUDE.md](CLAUDE.md) → Two editions). Staff log in with their password once per device, then switch with a PIN that the server checks. The cloud setup (Supabase, Vercel) is live. The auth spike is done: Supabase Auth runs on the offline edition's Windows server PC ([spikes/windows-auth/README.md](spikes/windows-auth/README.md)). This README grows with each step.
 >
-> **Many gyms (spec §2.6).** Click Group sells the system to many gyms. **MT-1 is done locally:** every row belongs to a gym, staff log in with their gym's code, and the gym's top role is the **Owner** (خاوەن, formerly Super Admin); see [Gyms](#gyms). The cloud project gets it after review ([Moving a cloud project to many gyms](#moving-a-cloud-project-to-many-gyms-mt-1)). A separate **seller panel** (`apps/seller`, step MT-3) will create and manage gyms, subscriptions and offline licenses; until then `pnpm bootstrap:admin --gym <code>` creates gyms. Next steps, in order (spec §8): the design step, MT-2 to MT-5 (staff module, seller panel, support access, licenses), 1e (admin screens: staff, roles, branches, devices), 1f (offline-edition server test).
+> **Many gyms (spec §2.6).** Click Group sells the system to many gyms. **MT-1 is done:** every row belongs to a gym, staff log in with their gym's code, and the gym's top role is the **Owner** (خاوەن, formerly Super Admin); see [Gyms](#gyms). Older projects move with [Moving a cloud project to many gyms](#moving-a-cloud-project-to-many-gyms-mt-1). A separate **seller panel** (`apps/seller`, step MT-3) will create and manage gyms, subscriptions and offline licenses; until then `pnpm bootstrap:admin --gym <code>` creates gyms. MT-1 and the design step are live. **MT-2, the staff module, is built and waiting for review:** staff logins are created and changed through Supabase Auth's admin API by a server-side module (the Edge Function `staff-admin`, not deployed to the cloud yet); see [Staff accounts](#staff-accounts). Next, in order (spec §8): MT-3 to MT-5 (seller panel, support access, licenses), 1e (admin screens: staff, roles, branches, devices), 1f (offline-edition server test).
 
 ## Requirements
 
@@ -44,6 +44,9 @@ Run from the repository root:
 | `pnpm preview` | Serve the production build at http://localhost:4173 |
 | `pnpm test` | Unit tests (Vitest): formatting, translations, Sorani spelling, fonts, lint rules, connection state |
 | `pnpm test:e2e` | Build against the local backend (`--mode e2e`, `apps/app/.env.e2e`), then run Playwright tests for the web app (login, PIN, lock, lost connection, RTL) and the Windows app (encrypted sessions, storage and workers on `app://`, security rules). Needs `pnpm db:start` |
+| `pnpm test:int` | Integration tests of the staff module (`packages/staff-admin`) against the local Supabase: the real Auth admin API and database. Needs `pnpm db:start` |
+| `pnpm db:functions` | Serve the Edge Functions locally at http://127.0.0.1:54321/functions/v1/staff-admin (`supabase functions serve`). Leave it running in its own terminal |
+| `pnpm test:deno` | The staff module in Deno, the Edge Function's runtime: type-checks the function, runs the unit cases, then HTTP tests against the served function. Needs `pnpm db:start` and `pnpm db:functions` |
 | `pnpm lint` | ESLint, including the project rules below |
 | `pnpm typecheck` | TypeScript type checking for every package |
 | `pnpm format` | Format all files with Prettier |
@@ -64,7 +67,7 @@ Run from the repository root:
 
 First-time setup for the browser tests: `pnpm --filter @gym/app exec playwright install chromium`.
 
-The database and end-to-end commands need Docker running, so `pnpm check` includes neither `pnpm db:test` nor `pnpm test:e2e`. The end-to-end tests create their own branches and staff and remove them afterwards.
+The database, integration, Deno and end-to-end commands need Docker running, so `pnpm check` includes none of `pnpm db:test`, `pnpm test:int`, `pnpm test:deno` and `pnpm test:e2e`. The first `pnpm test:deno` downloads the function's npm packages into Deno's cache. The end-to-end tests create their own branches and staff and remove them afterwards.
 
 ## Project layout
 
@@ -86,11 +89,14 @@ packages/core        rules in plain TypeScript for the screens (validation, sett
 packages/db          generated Supabase types
 packages/platform    platform detection and native adapters; the only code that touches Capacitor or Electron
 packages/i18n        translations (ckb, en, ar), typed keys, number/money/date formatting
+packages/staff-admin the staff module: staff logins through Supabase Auth's admin API (server side;
+                     the app imports only its request types and error keys)
 supabase             the database
+  functions          Edge Functions (Deno): staff-admin
   migrations         schema changes, in order (tables, RLS policies, triggers, functions, built-in roles)
   tests              pgTAP tests, run with pnpm db:test
   seed.sql           demo data for local development (Kurdish)
-  scripts            bootstrap-admin.ts, move-staff-logins.ts
+  scripts            bootstrap-admin.ts, move-staff-logins.ts, test-deno.ts
 tools/eslint-plugin-gym  project lint rules
 ```
 
@@ -108,7 +114,7 @@ tools/eslint-plugin-gym  project lint rules
 
 Supabase runs locally in Docker for development (`supabase/config.toml` is the local setup). The app has no local copy of the data: every screen reads and saves through the server (supabase-js + TanStack Query), under the signed-in staff member's own session. For the cloud project, see [A cloud project](#a-cloud-project).
 
-Both editions use the same migrations, so server logic goes into Postgres (functions, triggers, RLS). Supabase-only features (Edge Functions, pg_cron, Realtime, Storage) need an offline-edition version too before a module may use them.
+Both editions use the same migrations, so server logic goes into Postgres (functions, triggers, RLS). Supabase-only features (Edge Functions, pg_cron, Realtime, Storage) need an offline-edition version too before a module may use them. The one Edge Function, `staff-admin`, is a plain `Request → Response` handler that the offline edition's `gym-server` will run as well ([Staff accounts](#staff-accounts)).
 
 ### Migrations
 
@@ -166,6 +172,27 @@ Code: `apps/app/src/features/auth`, rules in `packages/core` (`gym.ts`, `staff.t
 - **Server checks** (after each unlock, when the connection comes back, and every 5 minutes) refresh names, roles and permissions. A PIN removed by a manager (`reset_staff_pin`), a PIN lockout or a deactivated account takes effect there, or at once on the next PIN.
 - **Permissions in the UI** (`usePermissions()`) come from the last server check. They only hide things: the server checks every request again.
 
+## Staff accounts
+
+Spec §2.5 (design B), step MT-2. Code: `packages/staff-admin`, the Edge Function `supabase/functions/staff-admin`, migration `20261010100400_staff_admin.sql`, and the app's calls in `apps/app/src/features/staff/staff-admin-api.ts`. The screens come in 1e.
+
+Staff logins live in Supabase Auth, and only the secret key can create or change them. So five operations go through the staff module on the server: **create, reset password, deactivate, reactivate, rename**.
+
+- **One module for both editions.** `packages/staff-admin` is plain TypeScript with a web-standard `Request → Response` handler. Online it runs as the Edge Function `staff-admin` (Deno); offline, the `gym-server` route will run the same handler. The app always calls `<backend>/functions/v1/staff-admin` with the acting staff member's own session.
+- **The secret key stays on the server.** Supabase gives the Edge Function `SUPABASE_URL` and its keys itself (`SUPABASE_SECRET_KEYS`, ...): nothing to set by hand, nothing in the repo or the app.
+- **Each operation has three steps:**
+  1. `staff_admin_prepare_create()` / `staff_admin_prepare_change()` check the request under the manager's own session, before anything changes. The manager needs `staff.manage`. They can never give a role above their own (`cannot_grant_role`) or a branch they can't access. They never reach another gym: the gym code in the login comes from their session, never from the request, and another gym's staff are `cannot_manage_staff`. They never manage themselves (`cannot_edit_own_account`). Only an Owner manages an Owner, so the last Owner can't be removed.
+  2. The Auth admin API changes the login.
+  3. The staff rows change under the manager's session again, so RLS, the guards and the audit log apply as for any other change. A new account's rows are written by one call, `create_staff_profile()`, all or nothing.
+- **Auth and the database can't share a transaction,** so when step 3 fails, step 2 is undone: a new login is deleted, a reactivated login is banned again, a renamed login gets its old address back. Deactivating changes the account first, because that alone ends all data access at once. The ban then stops logins and token refreshes. If the ban fails, the account stays deactivated, and deactivating again finishes it. If an undo fails, the module logs `compensation_failed` (one JSON line on stderr, in the function's logs) and the request fails.
+- **Logins left behind.** If deleting a half-made login ever fails, its username stays blocked, because Auth's emails are unique. The next create or rename to that username asks `public.staff_admin_orphan()` (secret key only). It returns the login only if it has a staff login address of an existing gym, the module made it for that gym (`app_metadata.gym_id`), it is not a platform admin, it has no staff account, and it is more than 2 minutes old. The module deletes exactly that login and tries once more.
+- **Temporary passwords.** The manager never types a password. For a new account and for a reset, the server makes one: 14 characters, lowercase letters and digits, with no look-alikes such as 0/o or 1/l/i. It is returned once (`Cache-Control: no-store`), and the app shows it once with a copy button (`TemporaryPasswordDialog`). It is never stored or logged. `must_change_password` stays set, so the staff member chooses their own password at the first login. A reset also ends their sessions.
+- **A read-only gym** can still deactivate staff and reset passwords, which only take access away. Creating, reactivating and renaming are refused (`gym_read_only`).
+- **Renaming** keeps the password, the PIN and the sessions. The login's address changes first; the database refuses a username that doesn't match its login (`staff_login_mismatch`).
+- **Errors** are stable keys with an HTTP status (`packages/staff-admin/src/errors.ts`), translated by the app (`staff:errors`).
+- **Tests:** `pnpm test` runs the unit cases with fakes, including every undo path. `pnpm test:int` runs the module in Node against the real local Auth and database, including a real database failure after the login was made. `pnpm test:deno` runs the same unit cases in Deno, plus HTTP tests against the served function. `pnpm db:test` covers the database half (`170-staff-admin`).
+- **Deno imports.** The packages the function imports (`packages/core`, `packages/db`, `packages/staff-admin`) name every relative import with `.ts`, because Deno resolves no other way; the lint rule `gym/explicit-ts-extensions` checks it. Their bare imports (`@gym/core`, `zod`, `@supabase/supabase-js`) are mapped in `supabase/functions/staff-admin/deno.json` with the same versions as the workspace: change both together.
+
 ## Connection
 
 The app always needs its server. `apps/app/src/lib/connection.ts` checks `GET /auth/v1/health` every 30 seconds (every 10 while disconnected) and whenever the network changes. The top bar shows Connected / No connection / Server not responding, with the time of the last check and a "Check again" button. While the server can't be reached, TanStack Query pauses its requests and runs them again when it is back; the PIN and the password login say that the server is needed.
@@ -217,6 +244,11 @@ For a project set up before MT-1 (ours). Do the steps in this order, one right a
 Other changes:
 
 - **New migrations:** the same `db push`, dry run first. Push them before the app that needs them.
+- **The staff-admin Edge Function** (once, then after every change to it or to a package it imports). Push migration `20261010100400_staff_admin.sql` first, then deploy:
+  ```powershell
+  pnpm --filter @gym/supabase exec supabase functions deploy staff-admin --use-api --project-ref <project-ref> --workdir ..
+  ```
+  `--use-api` bundles on Supabase's side, including the `packages/` files the function imports, so Docker isn't needed. The deploy takes `verify_jwt = false` from `config.toml`: the gateway's own token check only knows the legacy JWT secret, and the function checks every request under the caller's token anyway. Check it: a request without a token, `curl -s -X POST https://<project-ref>.supabase.co/functions/v1/staff-admin -d "{}"`, answers `{"error":"unauthorized"}`.
 - **Changed `VITE_*` values:** redeploy on Vercel and rebuild the APK and EXE. The address is part of each build's Content-Security-Policy.
 - **Projects set up with PowerSync (before 1d-R)**, in this order:
   1. Delete the instance on powersync.com, then wait until its connection is gone: `select count(*) from pg_stat_activity where usename = 'powersync_role'` returns 0. The replication stream can take a few minutes to close.

@@ -19,6 +19,8 @@ export default defineConfig(
     // Generated native project (its build output contains copies of the web app).
     'apps/app/android/',
     'apps/desktop/release/',
+    // Deno code (the Edge Functions): `pnpm test:deno` type-checks it with Deno's own rules.
+    'supabase/functions/',
   ]),
 
   {
@@ -99,6 +101,21 @@ export default defineConfig(
       'gym/no-physical-direction-classes': 'error',
       // These packages are bundled into the app too.
       'gym/no-import-meta-env-object': 'error',
+    },
+  },
+
+  // Code that the staff-admin Edge Function runs in Deno, which resolves no import without its
+  // extension.
+  {
+    files: [
+      'packages/core/src/**/*.ts',
+      'packages/db/src/**/*.ts',
+      'packages/staff-admin/src/**/*.ts',
+      'packages/staff-admin/test/**/*.ts',
+    ],
+    plugins: { gym },
+    rules: {
+      'gym/explicit-ts-extensions': 'error',
     },
   },
 );

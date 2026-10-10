@@ -663,6 +663,18 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      create_staff_profile: {
+        Args: {
+          p_all_branches: boolean;
+          p_branch_ids: string[];
+          p_full_name: string;
+          p_id: string;
+          p_phone?: string;
+          p_role_id: string;
+          p_username: string;
+        };
+        Returns: undefined;
+      };
       device_heartbeat: {
         Args: { p_app_version: string; p_device_id: string };
         Returns: undefined;
@@ -712,6 +724,27 @@ export type Database = {
       };
       reset_staff_pin: { Args: { p_staff_id: string }; Returns: undefined };
       set_my_pin: { Args: { p_pin: string }; Returns: undefined };
+      staff_admin_orphan: { Args: { p_email: string }; Returns: string };
+      staff_admin_prepare_change: {
+        Args: { p_action: string; p_new_username?: string; p_staff_id: string };
+        Returns: {
+          gym_code: string;
+          is_active: boolean;
+          username: string;
+        }[];
+      };
+      staff_admin_prepare_create: {
+        Args: {
+          p_all_branches: boolean;
+          p_branch_ids: string[];
+          p_role_id: string;
+          p_username: string;
+        };
+        Returns: {
+          gym_code: string;
+          gym_id: string;
+        }[];
+      };
       unlock_with_pin: { Args: { p_branch_id: string; p_pin: string }; Returns: Json };
     };
     Enums: {

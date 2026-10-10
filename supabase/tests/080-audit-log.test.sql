@@ -46,6 +46,7 @@ select results_eq(
 select results_eq(
   $$ select action, old_values ->> 'key', new_values ->> 'key' from public.audit_logs
       where table_name = 'settings' and occurred_at = now() -- only this test's entries
+        and gym_id = tests.gym('pgtap-a')
       order by action desc $$,
   $$ values ('insert', null, 'security.pin_max_attempts'), ('delete', 'security.pin_max_attempts', null) $$,
   'a delete records the removed row'
