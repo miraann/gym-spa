@@ -16,6 +16,7 @@
     "@gym/core": "workspace:*",
     "@gym/db": "workspace:*",
     "@supabase/supabase-js": "^2.117.2",
+    "jose": "^6.2.12",
     "zod": "^4.6.5"
   },
   "devDependencies": {

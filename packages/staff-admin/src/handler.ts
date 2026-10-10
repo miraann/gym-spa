@@ -15,6 +15,7 @@ import {
   type StaffAdminLog,
 } from './ports.ts';
 import { staffAdminRequest, type StaffAdminRequest } from './requests.ts';
+import type { TokenVerifier } from './token.ts';
 
 // The staff-admin endpoint, with web-standard Request and Response: the Edge Function serves it
 // as it is (Deno.serve), and the offline edition's gym-server will wrap the same handler.
@@ -22,11 +23,16 @@ import { staffAdminRequest, type StaffAdminRequest } from './requests.ts';
 //   POST, Authorization: Bearer <the manager's access token>, a JSON body (requests.ts)
 //   200 with the result, or an error status with { "error": "<key>" } (errors.ts)
 //
-// The token is never checked here: every operation starts with a database call under it, which
-// PostgREST verifies, and nothing uses the secret key before that call has passed.
+// Two checks of the caller, so the gateway's own token check isn't needed (verify_jwt = false):
+//   1. First of all, the token itself (verifyToken: the project's keys, expiry, a logged-in user).
+//      A token that fails gets 401 before the body is read and before any other call.
+//   2. Every operation then starts with a database call under the same token, which makes the
+//      real permission checks. Nothing uses the secret key before that call has passed.
 
 export interface StaffAdminHandlerOptions {
   readonly admin: AdminPort;
+  /** Checks the bearer token before anything else (token.ts). */
+  readonly verifyToken: TokenVerifier;
   /** The manager's side for this request: a database client that sends their token. */
   readonly callerFor: (token: string, request: Request) => CallerPort;
   readonly log?: StaffAdminLog;
@@ -90,6 +96,22 @@ export function createStaffAdminHandler(
 
     const token = bearerToken(request);
     if (token === null) return failure('unauthorized');
+    let check;
+    try {
+      check = await options.verifyToken(token);
+    } catch (error) {
+      check = { ok: false, reason: 'unavailable', error } as const;
+    }
+    if (!check.ok) {
+      if (check.reason !== 'unavailable') return failure('unauthorized');
+      // The project's keys could not be read: nothing can be checked, so nothing goes ahead.
+      log({
+        event: 'unexpected_error',
+        action: 'verify_token',
+        ...('error' in check ? { error: summarizeError(check.error) } : {}),
+      });
+      return failure('unexpected');
+    }
 
     let body: unknown;
     try {

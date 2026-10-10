@@ -17,6 +17,9 @@ import {
 // database rules. `pnpm test:int`. The same module runs in the Edge Function; its HTTP path is
 // tested in Deno (pnpm test:deno).
 
+/** The legacy anon key: a valid, signed JWT with role anon (HS256). */
+let legacyAnonKey: string | null = null;
+
 function localBackend(): Backend {
   let output: string;
   try {
@@ -28,6 +31,7 @@ function localBackend(): Backend {
     throw new Error('Local Supabase is not running. Start it with pnpm db:start.');
   }
   const status = JSON.parse(output) as Record<string, string | undefined>;
+  legacyAnonKey = status.ANON_KEY ?? null;
   const url = status.API_URL;
   const publishableKey = status.PUBLISHABLE_KEY ?? status.ANON_KEY;
   const secretKey = status.SECRET_KEY ?? status.SERVICE_ROLE_KEY;
@@ -42,6 +46,7 @@ const ports = supabaseStaffAdminPorts(backend);
 /** The endpoint as the Edge Function serves it, with a way to swap the caller's side. */
 function handler(callerFor: (token: string, request: Request) => CallerPort = ports.callerFor) {
   return createStaffAdminHandler({
+    verifyToken: ports.verifyToken,
     admin: ports.admin,
     callerFor,
     log: (entry) => logs.push(entry),
@@ -342,5 +347,27 @@ describe('changes', () => {
       status: 401,
       body: { error: 'unauthorized' },
     });
+  });
+
+  it("the project's own anon key is not a staff session", async () => {
+    expect(legacyAnonKey).not.toBeNull();
+    expect(await send(legacyAnonKey, { action: 'deactivate', staffId: reception.id })).toEqual({
+      status: 401,
+      body: { error: 'unauthorized' },
+    });
+  });
+
+  it('a real session whose claims were changed is refused', async () => {
+    const [header, payload, signature] = ownerToken.split('.');
+    const claims = JSON.parse(Buffer.from(payload ?? '', 'base64url').toString()) as Record<
+      string,
+      unknown
+    >;
+    const changed = Buffer.from(JSON.stringify({ ...claims, sub: reception.id })).toString(
+      'base64url',
+    );
+    const forged = `${header ?? ''}.${changed}.${signature ?? ''}`;
+    expect((await send(forged, { action: 'deactivate', staffId: manager.id })).status).toBe(401);
+    expect(await loginResult(backend, manager.email, manager.password)).toBe('ok');
   });
 });

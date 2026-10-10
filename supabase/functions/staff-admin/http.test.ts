@@ -1,6 +1,7 @@
 // The staff-admin Edge Function over HTTP, as the local Supabase serves it (`pnpm db:functions`):
 // the real edge runtime, gateway, Auth and database. `pnpm test:deno` sets the STAFF_ADMIN_TEST_*
 // variables; without them these tests are skipped.
+import { SignJWT, generateKeyPair } from 'jose';
 import {
   TestGym,
   loginResult,
@@ -17,6 +18,8 @@ function readBackend(): Backend | null {
 }
 
 const backend = readBackend();
+/** The legacy anon key: a valid, signed JWT with role anon. */
+const anonKey = Deno.env.get('STAFF_ADMIN_TEST_ANON_KEY') ?? null;
 
 function check(condition: boolean, what: string): void {
   if (!condition) throw new Error(what);
@@ -78,6 +81,63 @@ Deno.test({
       await t.step('an invalid token is unauthorized', async () => {
         const { status } = await call('not-a-token', newReceptionist);
         check(status === 401, `got ${status}`);
+      });
+
+      await t.step(
+        'a forged token (another key, under the project key id) is refused',
+        async () => {
+          const jwks = (await (
+            await fetch(`${backend.url}/auth/v1/.well-known/jwks.json`)
+          ).json()) as { keys: { kid: string; alg: string }[] };
+          const projectKey = jwks.keys[0];
+          check(projectKey?.alg === 'ES256', 'the project signs with ES256');
+          const attacker = await generateKeyPair('ES256');
+          const now = Math.floor(Date.now() / 1000);
+          const forged = await new SignJWT({ role: 'authenticated', aud: 'authenticated' })
+            .setProtectedHeader({ alg: 'ES256', kid: projectKey?.kid ?? '', typ: 'JWT' })
+            .setSubject(owner.id)
+            .setIssuedAt(now)
+            .setExpirationTime(now + 3600)
+            .sign(attacker.privateKey);
+          const { status, answer } = await call(forged, {
+            ...newReceptionist,
+            username: 'forged.one',
+          });
+          check(
+            status === 401 && answer.error === 'unauthorized',
+            `got ${status} ${String(answer.error)}`,
+          );
+          check((await gym.login(gym.email('forged.one'))) === null, 'no login was made');
+        },
+      );
+
+      await t.step('a real session whose claims were changed is refused', async () => {
+        const [header, payload, signature] = ownerToken.split('.');
+        const claims = JSON.parse(
+          new TextDecoder().decode(
+            Uint8Array.from(atob((payload ?? '').replace(/-/g, '+').replace(/_/g, '/')), (c) =>
+              c.charCodeAt(0),
+            ),
+          ),
+        ) as Record<string, unknown>;
+        const changed = btoa(JSON.stringify({ ...claims, exp: Number(claims.exp) + 86400 }))
+          .replace(/\+/g, '-')
+          .replace(/\//g, '_')
+          .replace(/=+$/, '');
+        const { status } = await call(
+          `${header ?? ''}.${changed}.${signature ?? ''}`,
+          newReceptionist,
+        );
+        check(status === 401, `got ${status}`);
+      });
+
+      await t.step("the project's anon key is not a staff session", async () => {
+        check(anonKey !== null, 'STAFF_ADMIN_TEST_ANON_KEY is set');
+        const { status, answer } = await call(anonKey, newReceptionist);
+        check(
+          status === 401 && answer.error === 'unauthorized',
+          `got ${status} ${String(answer.error)}`,
+        );
       });
 
       await t.step(

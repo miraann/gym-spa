@@ -21,9 +21,14 @@ import {
   GYM_CODE,
   GYM_ID,
   ROLE_ID,
+  MANAGER_ID,
   TEMPORARY_PASSWORD,
+  acceptManagerToken,
   emailExists,
+  testTokens,
+  unexpectedAlgorithm,
 } from './testing.ts';
+import { projectTokenVerifier, type TokenVerifier } from './token.ts';
 
 // The staff module's unit tests, written once for both runtimes: Vitest runs them in Node
 // (cases.test.ts) and Deno.test in Deno (supabase/functions/staff-admin/cases.test.ts), so the
@@ -487,8 +492,13 @@ const renameCases: StaffAdminCase[] = [
 
 // The endpoint -------------------------------------------------------------------------------------
 
-function handlerFor(world: FakeWorld, seen: string[] = []) {
+function handlerFor(
+  world: FakeWorld,
+  seen: string[] = [],
+  verifyToken: TokenVerifier = acceptManagerToken,
+) {
   return createStaffAdminHandler({
+    verifyToken,
     admin: world.admin,
     callerFor: (token): CallerPort => {
       seen.push(token);
@@ -597,6 +607,7 @@ const handlerCases: StaffAdminCase[] = [
   test('endpoint: a crash is unexpected, logged, and leaks nothing', async () => {
     const world = new FakeWorld();
     const handler = createStaffAdminHandler({
+      verifyToken: acceptManagerToken,
       admin: world.admin,
       callerFor: () => {
         throw new Error('no database');
@@ -629,6 +640,110 @@ const handlerCases: StaffAdminCase[] = [
     }
     equal(world.staff.get(staffId)?.username, 'desk.one', 'renamed at the end');
     checkLogsClean(world);
+  }),
+];
+
+// The token check, before anything else ------------------------------------------------------------
+
+/** Sends a create with this token through the real verifier; nothing else may happen if refused. */
+async function refusedBeforeAnything(token: string, verifyToken: TokenVerifier): Promise<void> {
+  const seen: string[] = [];
+  const world = new FakeWorld();
+  const response = await handlerFor(world, seen, verifyToken)(post(newStaff(), token));
+  equal(response.status, 401, 'status');
+  equal(await answer(response), { error: 'unauthorized' }, 'body');
+  equal(seen, [], 'no database client was made');
+  equal(world.calls, [], 'no database or Auth call');
+}
+
+const tokenCases: StaffAdminCase[] = [
+  test('token: a staff session signed with the project key goes on to the operation', async () => {
+    const tokens = await testTokens();
+    const token = await tokens.sign();
+    const seen: string[] = [];
+    const world = new FakeWorld();
+    const response = await handlerFor(world, seen, tokens.verifier)(post(newStaff(), token));
+    equal(response.status, 200, 'status');
+    equal(seen, [token], 'the database calls go with the same token');
+    equal(await tokens.verifier(token), { ok: true, userId: MANAGER_ID }, 'the check itself');
+  }),
+
+  test('token: a forged token (another key, same key id) is refused before any call', async () => {
+    const tokens = await testTokens();
+    await refusedBeforeAnything(await tokens.forge(), tokens.verifier);
+  }),
+
+  test('token: an expired token is refused before any call', async () => {
+    const tokens = await testTokens();
+    const past = Math.floor(Date.now() / 1000) - 60;
+    const token = await tokens.sign({ iat: past - 3600, exp: past });
+    equal(await tokens.verifier(token), { ok: false, reason: 'expired' }, 'the check itself');
+    await refusedBeforeAnything(token, tokens.verifier);
+  }),
+
+  test('token: an anon token is refused before any call', async () => {
+    const tokens = await testTokens();
+    const token = await tokens.sign({ role: 'anon' });
+    equal(await tokens.verifier(token), { ok: false, reason: 'not_staff' }, 'the check itself');
+    await refusedBeforeAnything(token, tokens.verifier);
+  }),
+
+  test('token: a service_role token is refused (staff sessions only)', async () => {
+    const tokens = await testTokens();
+    await refusedBeforeAnything(await tokens.sign({ role: 'service_role' }), tokens.verifier);
+  }),
+
+  test('token: a symmetric (HS256) token is refused, whatever it claims', async () => {
+    const tokens = await testTokens();
+    await refusedBeforeAnything(await tokens.symmetric(), tokens.verifier);
+  }),
+
+  test('token: only the expected signature algorithms count', async () => {
+    const { verifier, token } = await unexpectedAlgorithm();
+    await refusedBeforeAnything(token, verifier);
+  }),
+
+  test('token: a token without an expiry is refused', async () => {
+    const tokens = await testTokens();
+    await refusedBeforeAnything(await tokens.sign({ exp: undefined }), tokens.verifier);
+  }),
+
+  test('token: an anonymous sign-in is refused', async () => {
+    const tokens = await testTokens();
+    await refusedBeforeAnything(await tokens.sign({ is_anonymous: true }), tokens.verifier);
+  }),
+
+  test('token: something that is not a token is refused', async () => {
+    const tokens = await testTokens();
+    await refusedBeforeAnything('not-a-token', tokens.verifier);
+    await refusedBeforeAnything('a.b.c', tokens.verifier);
+  }),
+
+  test('token: a refused token is answered before the body is even read', async () => {
+    const tokens = await testTokens();
+    const world = new FakeWorld();
+    const response = await handlerFor(
+      world,
+      [],
+      tokens.verifier,
+    )(post('{not json', await tokens.forge()));
+    equal(response.status, 401, 'unauthorized, not invalid_request');
+  }),
+
+  test('token: when the project keys cannot be read, nothing goes ahead', async () => {
+    const world = new FakeWorld();
+    // Nothing listens on port 9: fetching the keys fails.
+    const verifier = projectTokenVerifier('http://127.0.0.1:9');
+    const tokens = await testTokens();
+    const response = await handlerFor(world, [], verifier)(post(newStaff(), await tokens.sign()));
+    equal(response.status, 500, 'status');
+    equal(await answer(response), { error: 'unexpected' }, 'body');
+    equal(world.calls, [], 'no calls');
+    equal(
+      world.logs.map((entry) => entry.action),
+      ['verify_token'],
+      'logged',
+    );
   }),
 ];
 
@@ -717,5 +832,6 @@ export const STAFF_ADMIN_CASES: readonly StaffAdminCase[] = [
   ...reactivateCases,
   ...renameCases,
   ...handlerCases,
+  ...tokenCases,
   ...partCases,
 ];

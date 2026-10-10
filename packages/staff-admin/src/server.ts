@@ -35,6 +35,13 @@ export {
   type StaffAdminConfig,
 } from './supabase-ports.ts';
 export {
+  TOKEN_ALGORITHMS,
+  jwksTokenVerifier,
+  projectTokenVerifier,
+  type TokenCheck,
+  type TokenVerifier,
+} from './token.ts';
+export {
   TEMPORARY_PASSWORD_ALPHABET,
   TEMPORARY_PASSWORD_LENGTH,
   generateTemporaryPassword,

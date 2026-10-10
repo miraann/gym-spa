@@ -8,6 +8,7 @@ import {
   type ChangePermit,
   type CreatePermit,
 } from './ports.ts';
+import { projectTokenVerifier, type TokenVerifier } from './token.ts';
 
 // The ports on top of supabase-js: the same code in the Edge Function (Deno) and in gym-server and
 // the tests (Node).
@@ -147,8 +148,12 @@ export interface StaffAdminConfig {
 /** Headers of the app's request that the audit log reads (app.request_ip, app.request_device_id). */
 const FORWARDED_HEADERS = ['x-device-id', 'x-forwarded-for'] as const;
 
-/** The two ports of the handler, on a Supabase project (cloud, local, or the gym's server PC). */
+/**
+ * What the handler needs from a Supabase project (cloud, local, or the gym's server PC): its token
+ * check (the project's published keys), and the two ports.
+ */
 export function supabaseStaffAdminPorts(config: StaffAdminConfig): {
+  readonly verifyToken: TokenVerifier;
   readonly admin: AdminPort;
   readonly callerFor: (token: string, request: Request) => CallerPort;
 } {
@@ -156,6 +161,7 @@ export function supabaseStaffAdminPorts(config: StaffAdminConfig): {
   const adminClient = createClient<Database>(config.url, config.secretKey, { auth: noSession });
 
   return {
+    verifyToken: projectTokenVerifier(config.url),
     admin: supabaseAdminPort(adminClient),
     callerFor(token, request) {
       const headers: Record<string, string> = { Authorization: `Bearer ${token}` };

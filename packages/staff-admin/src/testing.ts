@@ -1,4 +1,5 @@
 import { staffEmail } from '@gym/core';
+import { SignJWT, createLocalJWKSet, exportJWK, generateKeyPair, type JWTPayload } from 'jose';
 import {
   AuthAdminError,
   DatabaseError,
@@ -6,6 +7,7 @@ import {
   type CallerPort,
   type StaffAdminLogEntry,
 } from './ports.ts';
+import { jwksTokenVerifier, type TokenVerifier } from './token.ts';
 
 // In-memory stand-ins for Supabase Auth and the database, for the unit tests (Node and Deno). They
 // keep just enough rules to show what the operations change, and can be told to fail.
@@ -222,4 +224,83 @@ export function emailExists(): AuthAdminError {
     422,
     'A user with this email address has already been registered',
   );
+}
+
+// Tokens ------------------------------------------------------------------------------------------
+
+export const MANAGER_ID = 'a0000000-0000-4000-8000-0000000000c1';
+
+/** For tests about what comes after the token check: only 'manager-token' passes. */
+export const acceptManagerToken: TokenVerifier = (token) =>
+  Promise.resolve(
+    token === 'manager-token' ? { ok: true, userId: MANAGER_ID } : { ok: false, reason: 'invalid' },
+  );
+
+const PROJECT_KID = 'project-key';
+/** Supabase's local legacy JWT secret: the kind of key the anon and service_role keys use. */
+const SYMMETRIC_SECRET = new TextEncoder().encode(
+  'super-secret-jwt-token-with-at-least-32-characters-long',
+);
+
+export interface TestTokens {
+  /** Checks tokens against the test project's published key, as the real verifier does. */
+  readonly verifier: TokenVerifier;
+  /** A token signed with the project's key; claims add to or replace a valid staff session. */
+  readonly sign: (claims?: JWTPayload) => Promise<string>;
+  /** The same token, signed with another key under the project's key id. */
+  readonly forge: (claims?: JWTPayload) => Promise<string>;
+  /** Signed with a shared secret (HS256), like the legacy anon and service_role keys. */
+  readonly symmetric: (claims?: JWTPayload) => Promise<string>;
+}
+
+/** A test project with its own ES256 key (like Supabase's), and an attacker's key. */
+export async function testTokens(): Promise<TestTokens> {
+  const project = await generateKeyPair('ES256', { extractable: true });
+  const attacker = await generateKeyPair('ES256');
+  const publicKey = {
+    ...(await exportJWK(project.publicKey)),
+    kid: PROJECT_KID,
+    alg: 'ES256',
+    use: 'sig',
+  };
+  const now = Math.floor(Date.now() / 1000);
+  const session = (claims: JWTPayload): JWTPayload => ({
+    sub: MANAGER_ID,
+    role: 'authenticated',
+    aud: 'authenticated',
+    iat: now,
+    exp: now + 3600,
+    ...claims,
+  });
+  const build = (claims: JWTPayload, alg: string) =>
+    new SignJWT(session(claims)).setProtectedHeader({ alg, kid: PROJECT_KID, typ: 'JWT' });
+
+  return {
+    verifier: jwksTokenVerifier(createLocalJWKSet({ keys: [publicKey] })),
+    sign: (claims = {}) => build(claims, 'ES256').sign(project.privateKey),
+    forge: (claims = {}) => build(claims, 'ES256').sign(attacker.privateKey),
+    symmetric: (claims = {}) => build(claims, 'HS256').sign(SYMMETRIC_SECRET),
+  };
+}
+
+/**
+ * A key set with a key for an algorithm the module doesn't expect (ES384), and a token signed with
+ * it: only the algorithm list keeps it out.
+ */
+export async function unexpectedAlgorithm(): Promise<{ verifier: TokenVerifier; token: string }> {
+  const pair = await generateKeyPair('ES384', { extractable: true });
+  const publicKey = {
+    ...(await exportJWK(pair.publicKey)),
+    kid: 'other-key',
+    alg: 'ES384',
+    use: 'sig',
+  };
+  const now = Math.floor(Date.now() / 1000);
+  const token = await new SignJWT({ role: 'authenticated', aud: 'authenticated' })
+    .setProtectedHeader({ alg: 'ES384', kid: 'other-key', typ: 'JWT' })
+    .setSubject(MANAGER_ID)
+    .setIssuedAt(now)
+    .setExpirationTime(now + 3600)
+    .sign(pair.privateKey);
+  return { verifier: jwksTokenVerifier(createLocalJWKSet({ keys: [publicKey] })), token };
 }

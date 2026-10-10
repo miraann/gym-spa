@@ -22,7 +22,7 @@ One app and one set of migrations, with two backends that expose the same API (P
 - The app only knows one backend address (cloud Supabase, or the server PC).
 - **Server-side logic goes in Postgres functions and triggers**, so it runs the same in both editions. Don't use Supabase-only features (Edge Functions, pg_cron, Realtime, Storage) unless the offline edition gets its own version too. Screens refresh with TanStack Query (on focus or on a timer), not Realtime.
 - There is no PowerSync and no powersync.com.
-- Offline edition extras (planned): one installer with two modes ("This PC is the server" / "Connect to the server"), pairing code per PC, encrypted LAN traffic (self-made certificate), daily automatic backups + restore, LAN discovery with manual address fallback. The offline server must set Auth's `GOTRUE_DB_MAX_IDLE_POOL_SIZE` and build Supabase Auth with the Windows patch (`spikes/windows-auth/README.md`).
+- Offline edition extras (planned): one installer with two modes ("This PC is the server" / "Connect to the server"), pairing code per PC, encrypted LAN traffic (self-made certificate), daily automatic backups + restore, LAN discovery with manual address fallback. The offline server must set Auth's `GOTRUE_DB_MAX_IDLE_POOL_SIZE`, build Supabase Auth with the Windows patch (`spikes/windows-auth/README.md`), and sign sessions with an asymmetric key (`GOTRUE_JWT_KEYS`, ES256) so it publishes a key set: the staff module checks tokens against it.
 
 ## Many gyms (multi-tenant, spec §2.6)
 

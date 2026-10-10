@@ -44,7 +44,13 @@ function connection(remote: boolean): { url: string; secretKey: string } {
 }
 
 /** The local Supabase's address and keys (`supabase status`). */
-export function localSupabase(): { url: string; publishableKey: string; secretKey: string } {
+export function localSupabase(): {
+  url: string;
+  publishableKey: string;
+  secretKey: string;
+  /** The legacy anon key (a signed JWT with role anon), when the project still has one. */
+  anonKey: string | undefined;
+} {
   let status: Record<string, string | undefined>;
   try {
     const output = execSync('supabase status --output json --workdir ..', {
@@ -61,7 +67,7 @@ export function localSupabase(): { url: string; publishableKey: string; secretKe
   if (!url || !publishableKey || !secretKey) {
     fail('`supabase status` did not show the API URL and keys.');
   }
-  return { url, publishableKey, secretKey };
+  return { url, publishableKey, secretKey, anonKey: status.ANON_KEY };
 }
 
 /**

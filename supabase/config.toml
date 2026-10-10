@@ -395,8 +395,9 @@ deno_version = 2
 [functions.staff-admin]
 enabled = true
 # Off on purpose: the gateway's own check only knows the legacy JWT secret, not the newer signing
-# keys. The function needs no such check: each request starts with a database call under the
-# caller's token, which PostgREST verifies, and nothing uses the secret key before it has passed.
+# keys. The function checks the token itself first (signature against the project's published keys,
+# expiry, role authenticated); then every operation starts with a database call under the same
+# token, and nothing uses the secret key before that has passed.
 verify_jwt = false
 
 [analytics]

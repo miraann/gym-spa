@@ -8,7 +8,7 @@ import { createRequire } from 'node:module';
 import { fail, localSupabase, run } from './script-support';
 
 async function main() {
-  const { url, publishableKey, secretKey } = localSupabase();
+  const { url, publishableKey, secretKey, anonKey } = localSupabase();
 
   const probe = await fetch(`${url}/functions/v1/staff-admin`, { method: 'OPTIONS' }).catch(
     () => null,
@@ -40,6 +40,7 @@ async function main() {
         STAFF_ADMIN_TEST_URL: url,
         STAFF_ADMIN_TEST_PUBLISHABLE_KEY: publishableKey,
         STAFF_ADMIN_TEST_SECRET_KEY: secretKey,
+        ...(anonKey ? { STAFF_ADMIN_TEST_ANON_KEY: anonKey } : {}),
       },
     },
   );
