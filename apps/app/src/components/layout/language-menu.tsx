@@ -16,7 +16,6 @@ import { usePreferences } from '@/lib/preferences';
 export function LanguageMenu() {
   const { t } = useTranslation();
   const { language } = usePreferences();
-  const changeLanguage = useChangeLanguage();
 
   return (
     <DropdownMenu>
@@ -28,20 +27,30 @@ export function LanguageMenu() {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="min-w-40">
         <DropdownMenuLabel>{t('language.label')}</DropdownMenuLabel>
-        <DropdownMenuRadioGroup
-          value={language}
-          onValueChange={(value) => {
-            if (isLanguage(value)) changeLanguage(value);
-          }}
-        >
-          {LANGUAGE_CODES.map((code) => (
-            // Each language name is written in its own language.
-            <DropdownMenuRadioItem key={code} value={code} lang={code}>
-              {LANGUAGES[code].nativeName}
-            </DropdownMenuRadioItem>
-          ))}
-        </DropdownMenuRadioGroup>
+        <LanguageRadioItems />
       </DropdownMenuContent>
     </DropdownMenu>
+  );
+}
+
+/** The language choices, for this menu and the staff member's menu on phones. */
+export function LanguageRadioItems() {
+  const { language } = usePreferences();
+  const changeLanguage = useChangeLanguage();
+
+  return (
+    <DropdownMenuRadioGroup
+      value={language}
+      onValueChange={(value) => {
+        if (isLanguage(value)) changeLanguage(value);
+      }}
+    >
+      {LANGUAGE_CODES.map((code) => (
+        // Each language name is written in its own language.
+        <DropdownMenuRadioItem key={code} value={code} lang={code}>
+          {LANGUAGES[code].nativeName}
+        </DropdownMenuRadioItem>
+      ))}
+    </DropdownMenuRadioGroup>
   );
 }

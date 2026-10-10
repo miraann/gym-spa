@@ -42,7 +42,7 @@ export function ChoiceGroup<T extends string>({
           <Label
             key={choice.value}
             htmlFor={itemId}
-            className="flex cursor-pointer items-center gap-3 rounded-lg border p-3 font-normal transition-colors hover:bg-muted/50 has-data-[state=checked]:border-primary has-data-[state=checked]:bg-muted"
+            className="flex cursor-pointer items-center gap-3 rounded-xl border p-3 font-normal transition-colors hover:bg-muted/50 has-data-[state=checked]:border-primary has-data-[state=checked]:bg-muted"
           >
             <RadioGroupItem id={itemId} value={choice.value} />
             {Icon && <Icon aria-hidden className="size-4 text-muted-foreground" />}

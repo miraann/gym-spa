@@ -3,7 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="theme-color" content="#0f766e" />
+    <meta name="theme-color" content="#f5f5fa" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0e0f15" media="(prefers-color-scheme: dark)" />
     <link rel="icon" href="/favicon.ico" sizes="48x48" />
     <link rel="icon" href="/logo.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/apple-touch-icon-180x180.png" />
@@ -23,6 +24,11 @@
             saved.theme === 'dark' ||
             (saved.theme !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
           root.classList.toggle('dark', dark);
+          var bar = dark ? '#0e0f15' : '#f5f5fa';
+          var metas = document.querySelectorAll('meta[name="theme-color"]');
+          for (var index = 0; index < metas.length; index += 1) {
+            metas[index].setAttribute('content', bar);
+          }
         } catch (error) {
           // Storage blocked: keep the Kurdish defaults from the <html> tag.
         }

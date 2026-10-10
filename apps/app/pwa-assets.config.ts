@@ -6,7 +6,7 @@ import {
 
 // Run `pnpm generate:icons` after changing public/logo.svg.
 // Maskable and Apple icons get padded by the OS mask, so pad them with the brand color, not white.
-const brandPadding = createResizeOptions(false, { background: '#0f766e' });
+const brandPadding = createResizeOptions(false, { background: '#4f46e5' });
 
 export default defineConfig({
   preset: {

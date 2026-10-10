@@ -1,3 +1,4 @@
+import { parseNavTabs, type NavItemKey } from '@gym/core';
 import { isLanguage, type Language } from '@gym/i18n';
 import type { SecureStorage } from '@gym/platform';
 import { SECURE_KEY_PATTERN } from '@gym/platform/desktop-bridge';
@@ -21,11 +22,15 @@ export interface DeviceAccount {
   readonly username: string;
   readonly fullName: string;
   readonly roleId: string;
+  /** The built-in role's key (receptionist, ...); null for a custom role. Picks the default tabs. */
+  readonly roleKey: string | null;
   /** From the last check with the server; only for showing and hiding things. */
   readonly permissions: readonly string[];
   /** The branches they could access at the last check; they work only in these. */
   readonly branchIds: readonly string[];
   readonly preferredLanguage: Language | null;
+  /** Their own 4 phone tabs; null: their role's defaults. */
+  readonly navTabs: readonly NavItemKey[] | null;
   readonly mustChangePassword: boolean;
   /** They have set a PIN (and a manager hasn't removed it). */
   readonly hasPin: boolean;
@@ -68,7 +73,10 @@ function parseAccount(value: unknown): DeviceAccount | null {
     branchIds: Array.isArray(record.branchIds)
       ? record.branchIds.filter((id): id is string => typeof id === 'string')
       : [],
+    // Saved by earlier versions without these: the defaults until the next online check.
+    roleKey: typeof record.roleKey === 'string' ? record.roleKey : null,
     preferredLanguage: isLanguage(record.preferredLanguage) ? record.preferredLanguage : null,
+    navTabs: parseNavTabs(record.navTabs),
     mustChangePassword: record.mustChangePassword === true,
     // Saved by earlier versions, which kept the PIN hash itself on the device.
     hasPin: record.hasPin === true || (typeof record.pin === 'object' && record.pin !== null),

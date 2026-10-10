@@ -57,6 +57,7 @@ export default defineConfig(
       'gym/no-physical-direction-classes': 'error',
       'gym/no-hardcoded-ui-text': 'error',
       'gym/no-import-meta-env-object': 'error',
+      'gym/no-raw-color-classes': 'error',
       'no-restricted-imports': [
         'error',
         {

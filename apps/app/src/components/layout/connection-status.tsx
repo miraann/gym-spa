@@ -20,11 +20,12 @@ const ICONS: Record<ConnectionState, LucideIcon> = {
   unreachable: CloudAlertIcon,
 };
 
+// Status tokens only (fixed, never the brand color); the icon and the text say it too.
 const STYLES: Record<ConnectionState, string> = {
   checking: 'text-muted-foreground',
   connected: 'text-muted-foreground',
-  offline: 'border-amber-500/50 bg-amber-500/10 text-amber-800 dark:text-amber-300',
-  unreachable: 'border-destructive/50 bg-destructive/10 text-destructive',
+  offline: 'border-warning/50 bg-warning/10 text-warning dark:bg-warning/20',
+  unreachable: 'border-destructive/50 bg-destructive/10 text-destructive dark:bg-destructive/20',
 };
 
 /** Always-visible connection state (top bar), with details and "Check again" in a popover. */
@@ -62,7 +63,7 @@ export function ConnectionStatus() {
             aria-hidden
             className={cn(
               'size-3.5',
-              state === 'connected' && 'text-emerald-600 dark:text-emerald-400',
+              state === 'connected' && 'text-success',
               state === 'checking' && 'animate-spin motion-reduce:animate-none',
             )}
           />

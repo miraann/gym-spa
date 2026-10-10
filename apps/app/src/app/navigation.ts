@@ -1,3 +1,4 @@
+import { resolveNavTabs, type NavItemKey } from '@gym/core';
 import type { Resources } from '@gym/i18n';
 import {
   BanknoteIcon,
@@ -25,8 +26,8 @@ import {
 import type { FileRouteTypes } from '@/routeTree.gen';
 
 export type AppPath = FileRouteTypes['to'];
-export type NavItemKey = keyof Resources['nav']['items'];
 export type NavGroupKey = keyof Resources['nav']['groups'];
+export type { NavItemKey };
 
 export interface NavItem {
   readonly key: NavItemKey;
@@ -95,12 +96,48 @@ export const NAV_GROUPS: readonly NavGroup[] = [
   },
 ];
 
+const NAV_ITEMS = new Map(
+  NAV_GROUPS.flatMap((group) => group.items).map((item) => [item.key, item]),
+);
+
+/** The menu item of a page. Every key of NAV_ITEM_KEYS is in the menu (navigation.test.ts). */
+export function navItem(key: NavItemKey): NavItem {
+  const item = NAV_ITEMS.get(key);
+  if (!item) throw new Error(`No menu item ${key}`);
+  return item;
+}
+
+/** Whether the staff member may see the item (pages not built yet are shown as "soon"). */
+export function canSeeNavItem(item: NavItem, permissions: ReadonlySet<string>): boolean {
+  return !item.permission || permissions.has(item.permission);
+}
+
+/** Whether the item is the page being shown (or one of its sub-pages). */
+export function isNavItemActive(item: NavItem, pathname: string): boolean {
+  if (item.to === undefined) return false;
+  return item.to === '/' ? pathname === '/' : pathname.startsWith(item.to);
+}
+
 /** The menu as one staff member sees it: items they lack the permission for are left out. */
 export function visibleNavGroups(permissions: ReadonlySet<string>): NavGroup[] {
   return NAV_GROUPS.map((group) => ({
     ...group,
-    items: group.items.filter((item) => !item.permission || permissions.has(item.permission)),
+    items: group.items.filter((item) => canSeeNavItem(item, permissions)),
   })).filter((group) => group.items.length > 0);
+}
+
+/**
+ * The phone's bottom tabs of a staff member: their own choice, otherwise their role's defaults
+ * (packages/core/src/nav-tabs.ts), without pages they may not see.
+ */
+export function navTabItems(
+  saved: readonly NavItemKey[] | null,
+  roleKey: string | null,
+  permissions: ReadonlySet<string>,
+): NavItem[] {
+  return resolveNavTabs(saved, roleKey, (key) => canSeeNavItem(navItem(key), permissions)).map(
+    navItem,
+  );
 }
 
 /** Pages that exist already, and that the staff member may open: offered in the search palette. */

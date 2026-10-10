@@ -555,6 +555,7 @@ export type Database = {
           id: string;
           is_active: boolean;
           must_change_password: boolean;
+          nav_tabs: string[] | null;
           phone: string | null;
           preferred_language: Database['public']['Enums']['language_code'] | null;
           role_id: string;
@@ -572,6 +573,7 @@ export type Database = {
           id: string;
           is_active?: boolean;
           must_change_password?: boolean;
+          nav_tabs?: string[] | null;
           phone?: string | null;
           preferred_language?: Database['public']['Enums']['language_code'] | null;
           role_id: string;
@@ -589,6 +591,7 @@ export type Database = {
           id?: string;
           is_active?: boolean;
           must_change_password?: boolean;
+          nav_tabs?: string[] | null;
           phone?: string | null;
           preferred_language?: Database['public']['Enums']['language_code'] | null;
           role_id?: string;

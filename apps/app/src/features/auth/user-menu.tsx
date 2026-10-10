@@ -1,4 +1,4 @@
-import { LockIcon, LogOutIcon } from 'lucide-react';
+import { LanguagesIcon, LockIcon, LogOutIcon, SunMoonIcon } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
@@ -12,6 +12,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { LanguageRadioItems } from '@/components/layout/language-menu';
+import { ThemeRadioItems } from '@/components/layout/theme-menu';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -19,14 +21,20 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { logError } from '@/lib/logger';
 import { useActiveAccount, useAuthController } from './auth-context';
 
-/** The active staff member, with Lock (let someone else in) and Log out of this device. */
-export function UserMenu() {
-  const { t } = useTranslation('auth');
+/**
+ * The active staff member, with Lock (let someone else in) and Log out of this device. Compact (on
+ * phones): only their initial, and the language and theme choices the top bar has no room for.
+ */
+export function UserMenu({ compact = false }: { readonly compact?: boolean }) {
+  const { t } = useTranslation(['auth', 'common']);
   const controller = useAuthController();
   const account = useActiveAccount();
   const [confirmLogout, setConfirmLogout] = useState(false);
@@ -50,7 +58,7 @@ export function UserMenu() {
             >
               {account.fullName.charAt(0)}
             </span>
-            <span className="hidden truncate md:inline">{account.fullName}</span>
+            {!compact && <span className="hidden truncate md:inline">{account.fullName}</span>}
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="min-w-56">
@@ -64,6 +72,29 @@ export function UserMenu() {
             </span>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
+          {compact && (
+            <>
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger>
+                  <LanguagesIcon />
+                  {t('common:language.label')}
+                </DropdownMenuSubTrigger>
+                <DropdownMenuSubContent>
+                  <LanguageRadioItems />
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger>
+                  <SunMoonIcon />
+                  {t('common:theme.label')}
+                </DropdownMenuSubTrigger>
+                <DropdownMenuSubContent>
+                  <ThemeRadioItems />
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
+              <DropdownMenuSeparator />
+            </>
+          )}
           <DropdownMenuItem
             onSelect={() => {
               controller.lock();

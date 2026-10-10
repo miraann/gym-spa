@@ -28,5 +28,47 @@
     "auditLog": "سجل النشاطات",
     "devices": "الأجهزة",
     "settings": "الإعدادات"
+  },
+  "short": {
+    "home": "الرئيسية",
+    "checkin": "الحضور",
+    "members": "الأعضاء",
+    "plans": "الباقات",
+    "subscriptions": "الاشتراكات",
+    "payments": "المدفوعات",
+    "shop": "المتجر",
+    "cashRegister": "الصندوق",
+    "lockers": "الخزائن",
+    "spa": "السبا",
+    "classes": "الحصص",
+    "trainers": "المدربون",
+    "staff": "الموظفون",
+    "roles": "الأدوار",
+    "branches": "الفروع",
+    "reports": "التقارير",
+    "notifications": "الإشعارات",
+    "auditLog": "السجل",
+    "devices": "الأجهزة",
+    "settings": "الإعدادات"
+  },
+  "tabBar": {
+    "label": "الأشرطة السفلية",
+    "more": "المزيد",
+    "moreTitle": "كل الأقسام",
+    "moreDescription": "اختر قسمًا لفتحه."
+  },
+  "tabEditor": {
+    "open": "تغيير أشرطتي",
+    "title": "أشرطتي",
+    "description": "اختر 4 أقسام لأسفل الشاشة بالترتيب الذي تريده. أنت وحدك تغيّرها، وتبقى كما هي على كل جهاز.",
+    "checkinMiddle": "تسجيل الحضور دائمًا في المنتصف.",
+    "preview": "ستظهر أشرطتك هكذا",
+    "chosen": "تم اختيار {{count}} من {{total}}.",
+    "emptySlot": "فارغ",
+    "save": "حفظ",
+    "reset": "العودة إلى الأشرطة الافتراضية",
+    "cancel": "إلغاء",
+    "saved": "تم حفظ أشرطتك",
+    "needsConnection": "الحفظ يحتاج إلى اتصال بالخادم."
   }
 }

@@ -160,7 +160,7 @@ function createMainWindow(): void {
     minHeight: 560,
     show: false,
     // Matches the app's background, so there's no white flash in dark mode.
-    backgroundColor: nativeTheme.shouldUseDarkColors ? '#0a0a0a' : '#ffffff',
+    backgroundColor: nativeTheme.shouldUseDarkColors ? '#0e0f15' : '#f5f5fa',
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
       sandbox: true,

@@ -8,7 +8,8 @@ import { VitePWA } from 'vite-plugin-pwa';
 import ckb from '../../packages/i18n/src/locales/ckb/common.json' with { type: 'json' };
 import pkg from './package.json' with { type: 'json' };
 
-const THEME_COLOR = '#0f766e';
+// The default brand color (--primary in styles.css, indigo-violet); test/theme.test.ts checks it.
+const THEME_COLOR = '#4f46e5';
 
 /** Fills `%APP_NAME%` in index.html from the Kurdish translations, so no text is hardcoded there. */
 function appNameInHtml(): Plugin {
@@ -98,7 +99,7 @@ export default defineConfig(({ mode }) => ({
         start_url: '/',
         scope: '/',
         display: 'standalone',
-        background_color: '#ffffff',
+        background_color: '#f5f5fa',
         theme_color: THEME_COLOR,
         icons: [
           { src: 'pwa-64x64.png', sizes: '64x64', type: 'image/png' },

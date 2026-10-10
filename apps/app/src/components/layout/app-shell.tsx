@@ -3,9 +3,12 @@ import { Outlet } from '@tanstack/react-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
+import { useLayout } from '@/hooks/use-layout';
 import { usePreferences } from '@/lib/preferences';
 import { AppSidebar } from './app-sidebar';
+import { BottomTabBar } from './bottom-tab-bar';
 import { CommandPalette } from './command-palette';
+import { NavRail } from './nav-rail';
 import { TopBar } from './top-bar';
 
 const SIDEBAR_STORAGE_KEY = 'gym.sidebar';
@@ -26,9 +29,15 @@ function saveSidebarOpen(open: boolean): void {
   }
 }
 
+/**
+ * The frame of every page. Navigation fits the width (CLAUDE.md → Design): the full sidebar on
+ * desktops, an icon rail on tablets, a bottom tab bar on phones. Both side menus sit on the
+ * reading-start side: right for Kurdish and Arabic.
+ */
 export function AppShell() {
   const { t } = useTranslation();
   const { language } = usePreferences();
+  const layout = useLayout();
   const [sidebarOpen, setSidebarOpen] = useState(readSidebarOpen);
   const [searchOpen, setSearchOpen] = useState(false);
 
@@ -45,10 +54,13 @@ export function AppShell() {
       >
         {t('skipToContent')}
       </a>
-      {/* The sidebar sits on the reading-start side: right for Kurdish and Arabic. */}
-      <AppSidebar side={getDirection(language) === 'rtl' ? 'right' : 'left'} />
-      <SidebarInset>
+      {layout === 'desktop' && (
+        <AppSidebar side={getDirection(language) === 'rtl' ? 'right' : 'left'} />
+      )}
+      {layout === 'tablet' && <NavRail />}
+      <SidebarInset data-layout={layout}>
         <TopBar
+          layout={layout}
           onOpenSearch={() => {
             setSearchOpen(true);
           }}
@@ -57,6 +69,7 @@ export function AppShell() {
           <Outlet />
         </main>
       </SidebarInset>
+      {layout === 'phone' && <BottomTabBar />}
       <CommandPalette open={searchOpen} onOpenChange={setSearchOpen} />
     </SidebarProvider>
   );

@@ -35,9 +35,11 @@ function account(overrides: Partial<DeviceAccount> = {}): DeviceAccount {
     username: 'reception1',
     fullName: 'ئاراس کەریم',
     roleId: 'role-1',
+    roleKey: 'receptionist',
     permissions: ['members.view'],
     branchIds: ['branch-1'],
     preferredLanguage: null,
+    navTabs: null,
     mustChangePassword: false,
     hasPin: true,
     passwordRequired: null,
@@ -130,6 +132,22 @@ describe('parseAccounts', () => {
     );
     expect(parsed?.preferredLanguage).toBeNull();
     expect(parsed?.passwordRequired).toBeNull();
+  });
+
+  it('keeps chosen tabs, and drops invalid ones (back to the role defaults)', () => {
+    const tabs = ['home', 'settings', 'checkin', 'lockers'] as const;
+    expect(parseAccounts(JSON.stringify([account({ navTabs: tabs })]))[0]?.navTabs).toEqual(tabs);
+    const [broken] = parseAccounts(
+      JSON.stringify([{ ...account(), navTabs: ['home', 'home', 'nowhere'] }]),
+    );
+    expect(broken?.navTabs).toBeNull();
+  });
+
+  it('reads accounts saved before the role key and tabs were kept', () => {
+    const saved = { ...account(), roleKey: undefined, navTabs: undefined };
+    const [parsed] = parseAccounts(JSON.stringify([saved]));
+    expect(parsed?.roleKey).toBeNull();
+    expect(parsed?.navTabs).toBeNull();
   });
 
   it('reads accounts saved when the device kept the PIN hash', () => {

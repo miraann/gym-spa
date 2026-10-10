@@ -28,5 +28,47 @@
     "auditLog": "Activity log",
     "devices": "Devices",
     "settings": "Settings"
+  },
+  "short": {
+    "home": "Home",
+    "checkin": "Check-in",
+    "members": "Members",
+    "plans": "Plans",
+    "subscriptions": "Subscriptions",
+    "payments": "Payments",
+    "shop": "Shop",
+    "cashRegister": "Cash",
+    "lockers": "Lockers",
+    "spa": "Spa",
+    "classes": "Classes",
+    "trainers": "Trainers",
+    "staff": "Staff",
+    "roles": "Roles",
+    "branches": "Branches",
+    "reports": "Reports",
+    "notifications": "Alerts",
+    "auditLog": "Activity",
+    "devices": "Devices",
+    "settings": "Settings"
+  },
+  "tabBar": {
+    "label": "Bottom tabs",
+    "more": "More",
+    "moreTitle": "All sections",
+    "moreDescription": "Pick a section to open it."
+  },
+  "tabEditor": {
+    "open": "Change my tabs",
+    "title": "My tabs",
+    "description": "Pick 4 sections for the bottom of the screen, in the order you want. Only you change them, and they stay the same on every device.",
+    "checkinMiddle": "Check-in is always in the middle.",
+    "preview": "Your tabs will look like this",
+    "chosen": "{{count}} of {{total}} chosen.",
+    "emptySlot": "Empty",
+    "save": "Save",
+    "reset": "Back to the default tabs",
+    "cancel": "Cancel",
+    "saved": "Your tabs are saved",
+    "needsConnection": "Saving needs a connection to the server."
   }
 }

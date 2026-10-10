@@ -1,3 +1,17 @@
+export {
+  CONTRAST_NON_TEXT,
+  CONTRAST_TEXT,
+  contrastRatio,
+  isInSrgbGamut,
+  oklchToHex,
+  oklchToRgb,
+  parseHex,
+  relativeLuminance,
+  rgbToHex,
+  rgbToOklch,
+  type Oklch,
+  type Rgb,
+} from './color';
 export { toLatinDigits } from './digits';
 export {
   GYM_ACCESS_STATES,
@@ -18,6 +32,20 @@ export {
   newPasswordProblem,
   type PasswordProblem,
 } from './password';
+export {
+  CHECKIN_TAB,
+  CHECKIN_TAB_INDEX,
+  FALLBACK_NAV_TABS,
+  NAV_ITEM_KEYS,
+  NAV_TAB_COUNT,
+  ROLE_NAV_TABS,
+  arrangeNavTabs,
+  defaultNavTabs,
+  isNavItemKey,
+  parseNavTabs,
+  resolveNavTabs,
+  type NavItemKey,
+} from './nav-tabs';
 export { OWNER_ROLE, resolvePermissions } from './permissions';
 export {
   PIN_LENGTH,

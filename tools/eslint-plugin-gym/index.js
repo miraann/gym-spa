@@ -3,6 +3,8 @@
  * - no-physical-direction-classes: only logical Tailwind classes, so layouts mirror in RTL.
  * - no-hardcoded-ui-text: user-facing text must come from translations.
  * - no-import-meta-env-object: read build variables one at a time, so only those reach the bundle.
+ * - no-raw-color-classes: colors come from the theme tokens, so the gym's brand color, dark mode
+ *   and the fixed status colors work everywhere.
  */
 
 /** Utilities that need a value: `ml-4`, `left-0`, `scroll-pr-2` (bare `left` is not a class). */
@@ -62,6 +64,52 @@ const noPhysicalDirectionClasses = {
     const check = (node, text) => {
       for (const token of findPhysicalClasses(text)) {
         context.report({ node, messageId: 'physical', data: { token, hint: LOGICAL_HINT } });
+      }
+    };
+    return {
+      Literal(node) {
+        if (typeof node.value === 'string') check(node, node.value);
+      },
+      TemplateElement(node) {
+        check(node, node.value.cooked ?? node.value.raw);
+      },
+    };
+  },
+};
+
+const PALETTE =
+  'slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose';
+const COLOR_UTILITY =
+  'bg|text|border(?:-[xytrblse])?|ring(?:-offset)?|outline|fill|stroke|from|via|to|decoration|divide|accent|caret|placeholder|shadow|inset-shadow|inset-ring|drop-shadow';
+/** Palette colors: `bg-amber-500`, `text-emerald-600/80`. */
+const PALETTE_COLOR = new RegExp(`^(?:${COLOR_UTILITY})-(?:${PALETTE})-\\d{2,3}(?:/\\S+)?$`);
+/** Hardcoded colors in arbitrary values: `bg-[#0f766e]`, `text-[rgb(0_0_0)]`, `[color:#fff]`. */
+const ARBITRARY_COLOR =
+  /\[(?:[\w-]+:)?(?:#[0-9a-f]{3,8}\b|(?:rgba?|hsla?|oklch|oklab|lab|lch|hwb|color)\()/i;
+
+export function findRawColorClasses(text) {
+  return text
+    .split(/\s+/)
+    .filter(Boolean)
+    .filter((token) => {
+      const utility = utilityOf(token);
+      return PALETTE_COLOR.test(utility) || ARBITRARY_COLOR.test(utility);
+    });
+}
+
+const noRawColorClasses = {
+  meta: {
+    type: 'problem',
+    docs: { description: 'Disallow palette and hardcoded colors; use the theme tokens.' },
+    messages: {
+      raw: '"{{token}}" is a fixed color. Use a theme token (bg-primary, text-muted-foreground, bg-success, text-warning, text-destructive, ...), so the brand color, dark mode and status colors work.',
+    },
+    schema: [],
+  },
+  create(context) {
+    const check = (node, text) => {
+      for (const token of findRawColorClasses(text)) {
+        context.report({ node, messageId: 'raw', data: { token } });
       }
     };
     return {
@@ -194,5 +242,6 @@ export default {
     'no-physical-direction-classes': noPhysicalDirectionClasses,
     'no-hardcoded-ui-text': noHardcodedUiText,
     'no-import-meta-env-object': noImportMetaEnvObject,
+    'no-raw-color-classes': noRawColorClasses,
   },
 };

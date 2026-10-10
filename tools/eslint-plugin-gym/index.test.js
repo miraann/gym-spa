@@ -1,6 +1,6 @@
 import { RuleTester } from 'eslint';
 import { describe, expect, it } from 'vitest';
-import plugin, { findPhysicalClasses } from './index.js';
+import plugin, { findPhysicalClasses, findRawColorClasses } from './index.js';
 
 describe('findPhysicalClasses', () => {
   it('finds physical utilities, including with variants', () => {
@@ -27,6 +27,33 @@ describe('findPhysicalClasses', () => {
   });
 });
 
+describe('findRawColorClasses', () => {
+  it('finds palette and hardcoded colors, including with variants and opacity', () => {
+    expect(
+      findRawColorClasses(
+        'bg-amber-500/10 dark:text-amber-300 border-emerald-600 hover:ring-indigo-50 bg-[#0f766e] text-[rgb(0_0_0)] [color:#fff] fill-[oklch(0.5_0.2_270)]',
+      ),
+    ).toEqual([
+      'bg-amber-500/10',
+      'dark:text-amber-300',
+      'border-emerald-600',
+      'hover:ring-indigo-50',
+      'bg-[#0f766e]',
+      'text-[rgb(0_0_0)]',
+      '[color:#fff]',
+      'fill-[oklch(0.5_0.2_270)]',
+    ]);
+  });
+
+  it('allows theme tokens and token mixes', () => {
+    expect(
+      findRawColorClasses(
+        'bg-primary text-muted-foreground bg-success/10 text-warning border-destructive/50 bg-black/10 text-white bg-[color-mix(in_oklch,var(--secondary),var(--foreground)_5%)] text-red bg-[--sidebar]',
+      ),
+    ).toEqual([]);
+  });
+});
+
 RuleTester.describe = describe;
 RuleTester.it = it;
 
@@ -43,6 +70,14 @@ tester.run('no-physical-direction-classes', plugin.rules['no-physical-direction-
   invalid: [
     { code: '<div className="ml-2 text-start" />', errors: [{ messageId: 'physical' }] },
     { code: 'cn(`pr-2 ${x}`)', errors: [{ messageId: 'physical' }] },
+  ],
+});
+
+tester.run('no-raw-color-classes', plugin.rules['no-raw-color-classes'], {
+  valid: ['<div className="bg-warning/10 text-warning" />'],
+  invalid: [
+    { code: '<div className="bg-amber-500/10 text-start" />', errors: [{ messageId: 'raw' }] },
+    { code: 'cn(`text-[#fff] ${x}`)', errors: [{ messageId: 'raw' }] },
   ],
 });
 

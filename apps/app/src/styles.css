@@ -83,6 +83,38 @@ body {
   padding-right: env(safe-area-inset-right);
 }
 
+/* Phones: the floating bottom tab bar (bottom-tab-bar.tsx). Every page ends with room for the bar,
+   its raised check-in button and any floating action bar, so the last item is never hidden behind
+   them (CLAUDE.md → Layout guards); sidebar-inset already pads the safe area. The bar is fixed, so
+   it keeps out of side cutouts itself. */
+:root {
+  --tab-bar-height: 4rem;
+  --tab-bar-gap: 0.75rem;
+  /* Set by a floating action bar while it is on screen. */
+  --floating-bar-space: 0rem;
+  --toast-offset-bottom: 1.5rem;
+}
+/* Toasts appear above the tab bar, never on it. */
+:root:has([data-slot='tab-bar']) {
+  --toast-offset-bottom: calc(
+    var(--tab-bar-height) + var(--tab-bar-gap) + env(safe-area-inset-bottom) + 0.75rem
+  );
+}
+[data-layout='phone'] #main {
+  padding-bottom: calc(
+    1.75rem + var(--tab-bar-height) + var(--tab-bar-gap) + var(--floating-bar-space)
+  );
+}
+[data-slot='tab-bar'] {
+  padding-left: calc(0.75rem + env(safe-area-inset-left));
+  padding-right: calc(0.75rem + env(safe-area-inset-right));
+}
+[data-slot='sheet-content'][data-side='bottom'] {
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
 @theme inline {
   --font-heading: var(--font-sans);
   --color-sidebar-ring: var(--sidebar-ring);
@@ -102,6 +134,11 @@ body {
   --color-input: var(--input);
   --color-border: var(--border);
   --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
   --color-muted-foreground: var(--muted-foreground);
@@ -116,82 +153,104 @@ body {
   --color-card: var(--card);
   --color-foreground: var(--foreground);
   --color-background: var(--background);
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
+  /* With the soft corners (--radius: 1rem) these are Tailwind's usual sizes: controls rounded-xl
+     (12px), cards rounded-2xl (16px), sheets and dialogs rounded-3xl (24px). The medium and
+     sharp corner styles shrink them all together. */
+  --radius-sm: calc(var(--radius) * 0.25);
+  --radius-md: calc(var(--radius) * 0.375);
+  --radius-lg: calc(var(--radius) * 0.5);
+  --radius-xl: calc(var(--radius) * 0.75);
+  --radius-2xl: var(--radius);
+  --radius-3xl: calc(var(--radius) * 1.5);
+  --radius-4xl: calc(var(--radius) * 2);
 }
 
+/* Calm Bento tokens (CLAUDE.md → Design). Components use the semantic names (bg-primary,
+   text-muted-foreground, bg-success), never palette classes or hex values; the
+   gym/no-raw-color-classes lint rule enforces it.
+   - The brand color is set by the --brand-* variables: the default is indigo-violet. The gym's
+     own color (Appearance settings) replaces them at runtime, so nothing else changes.
+   - Surfaces are layered by tone, lightly tinted with the brand hue: page < sidebar < card.
+   - Status colors (success, warning, destructive) are fixed: they never follow the brand.
+   test/theme.test.ts checks the contrast of every pair below, in light and dark. */
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --brand-h: 277;
+  --brand-l: 0.51;
+  --brand-c: 0.23;
+  --brand-foreground: oklch(0.985 0.006 var(--brand-h));
+  --brand-dark-l: 0.68;
+  --brand-dark-c: 0.17;
+  --brand-dark-foreground: oklch(0.17 0.03 var(--brand-h));
+
+  --background: oklch(0.972 0.006 var(--brand-h));
+  --foreground: oklch(0.2 0.02 var(--brand-h));
+  --card: oklch(0.995 0.002 var(--brand-h));
+  --card-foreground: var(--foreground);
+  --popover: var(--card);
+  --popover-foreground: var(--foreground);
+  --primary: oklch(var(--brand-l) var(--brand-c) var(--brand-h));
+  --primary-foreground: var(--brand-foreground);
+  --secondary: oklch(0.94 0.012 var(--brand-h));
+  --secondary-foreground: oklch(0.28 0.04 var(--brand-h));
+  --muted: oklch(0.945 0.008 var(--brand-h));
+  --muted-foreground: oklch(0.49 0.02 var(--brand-h));
+  --accent: oklch(0.93 0.035 var(--brand-h));
+  --accent-foreground: oklch(0.38 0.14 var(--brand-h));
+  --border: oklch(0.905 0.012 var(--brand-h));
+  --input: oklch(0.88 0.014 var(--brand-h));
+  --ring: var(--primary);
+
+  --success: oklch(0.49 0.13 150);
+  --success-foreground: oklch(0.985 0 0);
+  --warning: oklch(0.52 0.12 55);
+  --warning-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.5 0.2 27);
+  --destructive-foreground: oklch(0.985 0 0);
+
+  --chart-1: var(--primary);
+  --chart-2: oklch(0.62 0.17 var(--brand-h));
+  --chart-3: oklch(0.72 0.12 var(--brand-h));
+  --chart-4: oklch(0.42 0.18 var(--brand-h));
+  --chart-5: oklch(0.82 0.07 var(--brand-h));
+
+  /* Corner style: soft. Every radius derives from it (see @theme inline). */
+  --radius: 1rem;
+
+  --sidebar: oklch(0.985 0.004 var(--brand-h));
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: oklch(0.945 0.01 var(--brand-h));
+  --sidebar-accent-foreground: var(--foreground);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--ring);
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --background: oklch(0.17 0.012 var(--brand-h));
+  --foreground: oklch(0.955 0.006 var(--brand-h));
+  --card: oklch(0.215 0.014 var(--brand-h));
+  --popover: oklch(0.235 0.016 var(--brand-h));
+  --primary: oklch(var(--brand-dark-l) var(--brand-dark-c) var(--brand-h));
+  --primary-foreground: var(--brand-dark-foreground);
+  --secondary: oklch(0.27 0.02 var(--brand-h));
+  --secondary-foreground: oklch(0.93 0.01 var(--brand-h));
+  --muted: oklch(0.25 0.016 var(--brand-h));
+  --muted-foreground: oklch(0.72 0.02 var(--brand-h));
+  --accent: oklch(0.3 0.06 var(--brand-h));
+  --accent-foreground: oklch(0.9 0.05 var(--brand-h));
+  --border: oklch(1 0 0 / 9%);
+  --input: oklch(1 0 0 / 14%);
+
+  --success: oklch(0.72 0.15 150);
+  --success-foreground: oklch(0.2 0.03 150);
+  --warning: oklch(0.79 0.14 75);
+  --warning-foreground: oklch(0.22 0.04 60);
+  --destructive: oklch(0.74 0.16 25);
+  --destructive-foreground: oklch(0.2 0.04 25);
+
+  --sidebar: oklch(0.195 0.013 var(--brand-h));
+  --sidebar-accent: oklch(0.26 0.016 var(--brand-h));
 }
 
 @layer base {

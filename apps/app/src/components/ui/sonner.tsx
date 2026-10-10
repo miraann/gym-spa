@@ -27,6 +27,9 @@ const Toaster = ({ ...props }: ToasterProps) => {
           '--border-radius': 'var(--radius)',
         } as React.CSSProperties
       }
+      // Above the phone's bottom tab bar while it is shown (styles.css).
+      offset={{ bottom: 'var(--toast-offset-bottom)' }}
+      mobileOffset={{ bottom: 'var(--toast-offset-bottom)' }}
       toastOptions={{
         classNames: {
           toast: 'cn-toast',

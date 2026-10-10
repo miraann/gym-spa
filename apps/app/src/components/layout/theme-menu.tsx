@@ -14,7 +14,6 @@ import { setPreference, usePreferences } from '@/lib/preferences';
 
 export function ThemeMenu() {
   const { t } = useTranslation();
-  const { theme } = usePreferences();
 
   return (
     <DropdownMenu>
@@ -26,21 +25,31 @@ export function ThemeMenu() {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="min-w-40">
         <DropdownMenuLabel>{t('theme.label')}</DropdownMenuLabel>
-        <DropdownMenuRadioGroup
-          value={theme}
-          onValueChange={(value) => {
-            const choice = THEME_CHOICES.find((option) => option.value === value);
-            if (choice) setPreference('theme', choice.value);
-          }}
-        >
-          {THEME_CHOICES.map(({ value, icon: Icon }) => (
-            <DropdownMenuRadioItem key={value} value={value}>
-              <Icon />
-              {t(`theme.${value}`)}
-            </DropdownMenuRadioItem>
-          ))}
-        </DropdownMenuRadioGroup>
+        <ThemeRadioItems />
       </DropdownMenuContent>
     </DropdownMenu>
+  );
+}
+
+/** Light / dark / device, for this menu and the staff member's menu on phones. */
+export function ThemeRadioItems() {
+  const { t } = useTranslation();
+  const { theme } = usePreferences();
+
+  return (
+    <DropdownMenuRadioGroup
+      value={theme}
+      onValueChange={(value) => {
+        const choice = THEME_CHOICES.find((option) => option.value === value);
+        if (choice) setPreference('theme', choice.value);
+      }}
+    >
+      {THEME_CHOICES.map(({ value, icon: Icon }) => (
+        <DropdownMenuRadioItem key={value} value={value}>
+          <Icon />
+          {t(`theme.${value}`)}
+        </DropdownMenuRadioItem>
+      ))}
+    </DropdownMenuRadioGroup>
   );
 }

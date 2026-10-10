@@ -110,7 +110,7 @@ test('keeps content clear of the system bars on edge-to-edge screens', async ({ 
     insets: { top: 24, bottom: 16, left: 0, right: 32 },
   });
 
-  // Tablet: the sidebar is always shown.
+  // Desktop: the sidebar is always shown.
   await page.setViewportSize({ width: 1280, height: 800 });
   await signIn(page, staff);
   await expect(page.getByRole('heading', HOME_HEADING)).toBeVisible();
@@ -126,12 +126,23 @@ test('keeps content clear of the system bars on edge-to-edge screens', async ({ 
   await expect(sidebar).toHaveCSS('padding-right', '32px');
   await expect(page.locator('[data-slot="sidebar-inset"]')).toHaveCSS('padding-bottom', '16px');
 
-  // Phone: the sidebar slides in as a sheet.
+  // Tablet: the rail runs from the status bar to the navigation bar; the body keeps it out of
+  // the cutout.
+  await page.setViewportSize({ width: 1024, height: 768 });
+  const rail = page.locator('[data-slot="nav-rail"]');
+  await expect(rail).toHaveCSS('padding-top', '32px');
+  await expect(rail).toHaveCSS('padding-bottom', '24px');
+  expect(await rail.evaluate((element) => element.getBoundingClientRect().right)).toBe(1024 - 32);
+
+  // Phone: the tab bar floats above the navigation bar and keeps out of the cutout.
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.getByRole('button', { name: 'پیشاندان یان شاردنەوەی لیستە' }).click();
-  const sheet = page.locator('[data-slot="sidebar"][data-mobile="true"]');
+  const tabBar = page.locator('[data-slot="tab-bar"]');
+  await expect(tabBar).toHaveCSS('padding-bottom', '28px');
+  await expect(tabBar).toHaveCSS('padding-right', '44px');
+  // "More" opens as a bottom sheet, clear of the navigation bar.
+  await page.getByRole('button', { name: 'زیاتر' }).click();
+  const sheet = page.locator('[data-slot="sheet-content"][data-side="bottom"]');
   await expect(sheet).toBeVisible();
-  await expect(sheet).toHaveCSS('padding-top', '24px');
   await expect(sheet).toHaveCSS('padding-bottom', '16px');
   await expect(sheet).toHaveCSS('padding-right', '32px');
 });

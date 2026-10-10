@@ -1,4 +1,11 @@
-import { isGymAccess, isValidGymCode, normalizePin, resolvePermissions } from '@gym/core';
+import {
+  isGymAccess,
+  isValidGymCode,
+  normalizePin,
+  parseNavTabs,
+  resolvePermissions,
+  type NavItemKey,
+} from '@gym/core';
 import { isLanguage, type Language } from '@gym/i18n';
 import { isAuthApiError, isAuthRetryableFetchError } from '@supabase/supabase-js';
 import type { AppSupabaseClient } from '@/lib/backend';
@@ -100,8 +107,10 @@ export interface StaffProfile {
   readonly username: string;
   readonly fullName: string;
   readonly roleId: string;
+  readonly roleKey: string | null;
   readonly permissions: readonly string[];
   readonly preferredLanguage: Language | null;
+  readonly navTabs: NavItemKey[] | null;
   readonly mustChangePassword: boolean;
   /** False: no PIN yet, or a manager removed it. */
   readonly hasPin: boolean;
@@ -117,7 +126,7 @@ export async function fetchProfile(
   const staff = await client
     .from('staff_users')
     .select(
-      'id, username, full_name, role_id, preferred_language, is_active, must_change_password, deleted_at, roles(key, deleted_at)',
+      'id, username, full_name, role_id, preferred_language, nav_tabs, is_active, must_change_password, deleted_at, roles(key, deleted_at)',
     )
     .eq('id', staffId)
     .maybeSingle();
@@ -140,12 +149,14 @@ export async function fetchProfile(
     username: row.username,
     fullName: row.full_name,
     roleId: row.role_id,
+    roleKey: role?.key ?? null,
     permissions: resolvePermissions(
       role?.key ?? null,
       (rolePermissions.data ?? []).map((each) => each.permission_key),
       (catalog.data ?? []).map((each) => each.key),
     ),
     preferredLanguage: isLanguage(row.preferred_language) ? row.preferred_language : null,
+    navTabs: parseNavTabs(row.nav_tabs),
     mustChangePassword: row.must_change_password,
     hasPin: pin.data !== null,
     pinLocked: pin.data?.locked_at != null,

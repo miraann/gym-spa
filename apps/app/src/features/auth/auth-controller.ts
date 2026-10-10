@@ -4,6 +4,7 @@ import {
   normalizeGymCode,
   normalizeUsername,
   staffEmail,
+  type NavItemKey,
 } from '@gym/core';
 import type { Language } from '@gym/i18n';
 import type { SecureStorage } from '@gym/platform';
@@ -504,6 +505,21 @@ export class AuthController {
       .eq('id', staffId);
     if (error) throw toAuthError(error);
   }
+
+  /**
+   * Saves the active staff member's own phone tabs on their profile (null: back to their role's),
+   * so they follow them to every device. The server first: tabs change only once it agrees.
+   */
+  async saveNavTabs(tabs: readonly NavItemKey[] | null): Promise<void> {
+    const staffId = this.state.activeId;
+    if (!staffId) return;
+    const { error } = await this.clientFor(staffId)
+      .from('staff_users')
+      .update({ nav_tabs: tabs ? [...tabs] : null })
+      .eq('id', staffId);
+    if (error) throw toAuthError(error);
+    await this.store.update(staffId, (account) => ({ ...account, navTabs: tabs }));
+  }
 }
 
 function accountFromProfile(
@@ -516,9 +532,11 @@ function accountFromProfile(
     username: profile.username,
     fullName: profile.fullName,
     roleId: profile.roleId,
+    roleKey: profile.roleKey,
     permissions: profile.permissions,
     branchIds: branches.map((branch) => branch.id),
     preferredLanguage: profile.preferredLanguage,
+    navTabs: profile.navTabs,
     mustChangePassword: profile.mustChangePassword,
     hasPin: profile.hasPin,
     passwordRequired: existing?.passwordRequired ?? null,

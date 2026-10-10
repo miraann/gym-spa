@@ -1,7 +1,7 @@
 import { Link, useRouterState } from '@tanstack/react-router';
 import { DumbbellIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { visibleNavGroups, type NavItem } from '@/app/navigation';
+import { isNavItemActive, visibleNavGroups, type NavItem } from '@/app/navigation';
 import { usePermissions } from '@/features/auth/use-permissions';
 import {
   Sidebar,
@@ -15,12 +15,14 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
-  useSidebar,
 } from '@/components/ui/sidebar';
+import { useGymName } from './use-gym-name';
 
+/** Desktops (≥ 1280px): the full menu, grouped by module. Collapses to icons on request. */
 export function AppSidebar({ side }: { readonly side: 'left' | 'right' }) {
   const { t } = useTranslation(['common', 'nav']);
   const groups = visibleNavGroups(usePermissions());
+  const gymName = useGymName();
 
   return (
     <Sidebar side={side} collapsible="icon">
@@ -29,13 +31,14 @@ export function AppSidebar({ side }: { readonly side: 'left' | 'right' }) {
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
               <Link to="/">
-                <span className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                <span className="flex aspect-square size-8 items-center justify-center rounded-xl bg-primary text-primary-foreground">
                   <DumbbellIcon className="size-4" />
                 </span>
+                {/* The gym's name first: staff work for the gym, the app is secondary. */}
                 <span className="grid flex-1 text-start leading-tight">
-                  <span className="truncate font-semibold">{t('app.name')}</span>
+                  <span className="truncate">{gymName ?? t('app.name')}</span>
                   <span className="truncate text-xs text-muted-foreground">
-                    {t('app.fullName')}
+                    {gymName ? t('app.name') : t('app.fullName')}
                   </span>
                 </span>
               </Link>
@@ -74,7 +77,6 @@ export function AppSidebar({ side }: { readonly side: 'left' | 'right' }) {
 function NavMenuItem({ item }: { readonly item: NavItem }) {
   const { t } = useTranslation(['common', 'nav']);
   const pathname = useRouterState({ select: (state) => state.location.pathname });
-  const { isMobile, setOpenMobile } = useSidebar();
   const label = t(`nav:items.${item.key}`);
   const Icon = item.icon;
 
@@ -92,17 +94,15 @@ function NavMenuItem({ item }: { readonly item: NavItem }) {
     );
   }
 
-  const isActive = item.to === '/' ? pathname === '/' : pathname.startsWith(item.to);
-
   return (
     <SidebarMenuItem>
-      <SidebarMenuButton asChild isActive={isActive} tooltip={label}>
-        <Link
-          to={item.to}
-          onClick={() => {
-            if (isMobile) setOpenMobile(false);
-          }}
-        >
+      <SidebarMenuButton
+        asChild
+        isActive={isNavItemActive(item, pathname)}
+        tooltip={label}
+        className="data-active:bg-accent data-active:text-accent-foreground"
+      >
+        <Link to={item.to}>
           <Icon />
           <span>{label}</span>
         </Link>

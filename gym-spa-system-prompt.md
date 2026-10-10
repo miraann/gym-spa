@@ -274,6 +274,7 @@ Core tables (expand as needed):
 ## 6. UI/UX requirements
 - Clean, modern, touch-first look ("Calm Bento", see CLAUDE.md → Design); dark/light mode; the look is adjustable (§6.1)
 - Navigation fits the screen: sidebar grouped by module on desktop, an icon rail on tablets, a bottom tab bar with a "More" sheet on phones
+- Phone tabs never move by themselves (decided by the user on 2026-10-10): staff learn tab positions, and moving tabs causes mistakes at a busy reception. Each role has 4 fixed default tabs, kept in one place in code (e.g. receptionist: home, members, check-in, cash register; manager: home, members, reports, staff). Each staff member can change their own 4 tabs from the "More" sheet; the choice is saved on their profile, so it follows them to other devices, and only they can change it. When check-in is one of the tabs, it is the raised scan button in the middle
 - **Check-in screen**: full-screen, large text, member photo, big colored status, sound feedback (success/fail beep), auto-reset after 5 seconds, works on a tablet in kiosk mode
 - Fast reception workflow: global search (Ctrl+K) by name, phone, code, or card scan from anywhere
 - Every table: search, filters, sorting, pagination (server-side, through PostgREST), column visibility, export
