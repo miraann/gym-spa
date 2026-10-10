@@ -1,0 +1,81 @@
+diff --git a/cmd/listen_unix.go b/cmd/listen_unix.go
+new file mode 100644
+index 0000000..1fc36be
+--- /dev/null
++++ b/cmd/listen_unix.go
+@@ -0,0 +1,25 @@
++//go:build !windows
++
++package cmd
++
++import (
++	"net"
++	"syscall"
++
++	"golang.org/x/sys/unix"
++)
++
++// listenConfig sets SO_REUSEPORT so a new process can take over the port during a restart.
++func listenConfig() net.ListenConfig {
++	return net.ListenConfig{
++		Control: func(network, address string, c syscall.RawConn) error {
++			var serr error
++			if err := c.Control(func(fd uintptr) {
++				serr = unix.SetsockoptInt(int(fd), unix.SOL_SOCKET, unix.SO_REUSEPORT, 1) // #nosec G115
++			}); err != nil {
++				return err
++			}
++			return serr
++		},
++	}
++}
+diff --git a/cmd/listen_windows.go b/cmd/listen_windows.go
+new file mode 100644
+index 0000000..06c97fd
+--- /dev/null
++++ b/cmd/listen_windows.go
+@@ -0,0 +1,10 @@
++//go:build windows
++
++package cmd
++
++import "net"
++
++// listenConfig: Windows has no SO_REUSEPORT. One process per port needs nothing special.
++func listenConfig() net.ListenConfig {
++	return net.ListenConfig{}
++}
+diff --git a/cmd/serve_cmd.go b/cmd/serve_cmd.go
+index bad35b7..4b1a513 100644
+--- a/cmd/serve_cmd.go
++++ b/cmd/serve_cmd.go
+@@ -5,10 +5,8 @@ import (
+ 	"net"
+ 	"net/http"
+ 	"sync"
+-	"syscall"
+ 	"time"
+ 
+-	"golang.org/x/sys/unix"
+ 
+ 	"github.com/pkg/errors"
+ 	"github.com/sirupsen/logrus"
+@@ -183,17 +181,7 @@ func serve(ctx context.Context) {
+ 		}
+ 	}()
+ 
+-	lc := net.ListenConfig{
+-		Control: func(network, address string, c syscall.RawConn) error {
+-			var serr error
+-			if err := c.Control(func(fd uintptr) {
+-				serr = unix.SetsockoptInt(int(fd), unix.SOL_SOCKET, unix.SO_REUSEPORT, 1) // #nosec G115
+-			}); err != nil {
+-				return err
+-			}
+-			return serr
+-		},
+-	}
++	lc := listenConfig()
+ 	listener, err := lc.Listen(ctx, "tcp", addr)
+ 	if err != nil {
+ 		log.WithError(err).Fatal("http server listen failed")
