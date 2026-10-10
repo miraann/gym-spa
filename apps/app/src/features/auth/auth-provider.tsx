@@ -1,3 +1,4 @@
+import { gymCodeFromSearch } from '@gym/core';
 import { secureStorage } from '@gym/platform';
 import { useEffect, useState, useSyncExternalStore, type ReactNode } from 'react';
 import { readBackendConfig } from '@/lib/backend';
@@ -15,7 +16,8 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
   const connected = useConnection().state === 'connected';
 
   useEffect(() => {
-    controller.init().catch((error: unknown) => {
+    // A web link like https://…/?gym=hawler-fit fills in the gym code at the first login.
+    controller.init(gymCodeFromSearch(window.location.search)).catch((error: unknown) => {
       logError(error, { area: 'auth', action: 'init' });
     });
   }, [controller]);

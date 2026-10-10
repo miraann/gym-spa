@@ -4,8 +4,10 @@ export {
   LANGUAGES,
   getDirection,
   isLanguage,
+  localizedName,
   type Direction,
   type Language,
+  type LocalizedNames,
 } from './languages';
 export {
   DEFAULT_NAMESPACE,

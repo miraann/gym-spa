@@ -1,11 +1,24 @@
 export { toLatinDigits } from './digits';
 export {
+  GYM_ACCESS_STATES,
+  GYM_CODE_MAX_LENGTH,
+  GYM_CODE_MIN_LENGTH,
+  GYM_CODE_PATTERN,
+  RESERVED_GYM_CODES,
+  gymCodeFromSearch,
+  isGymAccess,
+  isReservedGymCode,
+  isValidGymCode,
+  normalizeGymCode,
+  type GymAccess,
+} from './gym';
+export {
   MAX_PASSWORD_BYTES,
   MIN_PASSWORD_LENGTH,
   newPasswordProblem,
   type PasswordProblem,
 } from './password';
-export { SUPER_ADMIN_ROLE, resolvePermissions } from './permissions';
+export { OWNER_ROLE, resolvePermissions } from './permissions';
 export {
   PIN_LENGTH,
   isWeakPin,

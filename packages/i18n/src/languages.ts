@@ -19,3 +19,16 @@ export function isLanguage(value: unknown): value is Language {
 export function getDirection(language: Language): Direction {
   return LANGUAGES[language].dir;
 }
+
+/** A name kept in the three languages (name_ckb, name_en, name_ar columns); only Kurdish is required. */
+export interface LocalizedNames {
+  readonly nameCkb: string;
+  readonly nameEn: string | null;
+  readonly nameAr: string | null;
+}
+
+/** The name in the given language, or the Kurdish one when there is no translation. */
+export function localizedName(names: LocalizedNames, language: Language): string {
+  const translated = language === 'en' ? names.nameEn : language === 'ar' ? names.nameAr : null;
+  return translated ?? names.nameCkb;
+}

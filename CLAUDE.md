@@ -80,7 +80,7 @@ Inside the app, shared code goes in `components/ui` and `lib`.
 
 - Supabase runs locally with Docker: `pnpm db:start`, `pnpm db:reset` (migrations + seed), `pnpm db:test`, `pnpm db:lint`. The CLI is a devDependency of `@gym/supabase` (the `supabase/` folder): `pnpm --filter @gym/supabase exec supabase <command> --workdir ..`.
 - RLS tests are pgTAP files in `supabase/tests`. Every table's policies and guards get tests. `000-setup-test-helpers.sql` installs shared helpers (`tests.create_fixture()`, `tests.authenticate_as()`, ...), so always run the whole folder. `001-schema-rules.test.sql` fails on any table without RLS, policies or the audit trigger, any anon access, unindexed foreign keys, or functions without a fixed `search_path`.
-- `pnpm bootstrap:admin` creates the first Super Admin (`--remote` for a cloud project, with `supabase/.env.local`).
+- `pnpm bootstrap:admin --gym <code>` creates a gym's first Owner, and the gym itself if it doesn't exist (`--remote` for a cloud project, with `supabase/.env.local`). The seed makes the gym `demo`. `pnpm staff-logins:move` moves logins made before MT-1 to the per-gym address, once per project (dry run unless `--apply`).
 
 ## Data rules (every module)
 
@@ -165,7 +165,7 @@ Soft, tonal, rounded, touch-first. The app looks like a modern phone/tablet app,
 ## Approved architecture decisions (Phase 1 plan)
 
 - **Electron:** a minimal hand-written shell (not the Capacitor Electron platform), packaged with electron-builder. The build is served over a privileged custom `app://` protocol so storage has a stable origin.
-- **Staff login:** username + password, mapped to an internal email behind the scenes (`<username>@staff.gym-spa.invalid`, `packages/core/src/staff.ts`).
+- **Staff login:** gym code (first login on a device only) + username + password, mapped to an internal email behind the scenes (`<username>@<gym code>.staff.gym-spa.invalid`, `packages/core/src/staff.ts`; the database checks it matches).
 - **PIN switching:** a staff member logs in with their password once per device; the device keeps their session so others can switch to them with a 6-digit PIN. **The server checks the PIN and the lockout** (5 wrong tries); PIN hashes never leave the server. Auto-lock when idle. Every request runs under the acting staff member's own session, so the server checks permissions with `auth.uid()`.
 - **Devices:** a `devices` table gives each device a code, its branch, a default language and a last-seen time.
 - **Staff accounts (design B, decided 2026-10-10):** create, password reset, deactivation and username changes go through Supabase Auth's official admin API. The code is one shared TypeScript module, run as an Edge Function online and as a `gym-server` route offline. The secret key lives only there. It checks the caller in Postgres under their own session, calls Auth, then writes the staff rows under the caller's session, so the guards run. If that fails, it deletes the new Auth user again.

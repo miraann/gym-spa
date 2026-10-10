@@ -1,3 +1,4 @@
+import { localizedName } from '@gym/i18n';
 import { Building2Icon } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -25,11 +26,6 @@ export function ChooseBranchScreen({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<AuthErrorKey | null>(null);
 
-  // Branch names fall back to Kurdish when there is no translation.
-  const name = (branch: BranchChoice) =>
-    (language === 'en' ? branch.nameEn : language === 'ar' ? branch.nameAr : null) ??
-    branch.nameCkb;
-
   return (
     <AuthLayout title={t('branch.title')} description={t('branch.description')}>
       <ul className="flex flex-col gap-2">
@@ -54,7 +50,7 @@ export function ChooseBranchScreen({
               }}
             >
               <Building2Icon />
-              <span className="flex-1 text-start">{name(branch)}</span>
+              <span className="flex-1 text-start">{localizedName(branch, language)}</span>
               <span dir="ltr" className="text-xs text-muted-foreground">
                 {branch.code}
               </span>

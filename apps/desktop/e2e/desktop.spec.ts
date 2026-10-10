@@ -53,9 +53,10 @@ async function newStaff(): Promise<TestStaff> {
   return data.staff({ branchIds: [await data.branch()] });
 }
 
-/** Password login on a fresh install; ends on the home page. */
+/** Password login on a fresh install (so it asks for the gym code); ends on the home page. */
 async function signIn(page: Page, staff: TestStaff): Promise<void> {
   await expect(page.getByRole('heading', LOGIN_HEADING)).toBeVisible();
+  await page.getByLabel('کۆدی یانە').fill(staff.gymCode);
   await page.getByLabel('ناوی بەکارهێنەر').fill(staff.username);
   await page.getByLabel('وشەی نهێنی', { exact: true }).fill(staff.password);
   await page.getByRole('button', { name: 'چوونەژوورەوە' }).click();

@@ -14,8 +14,12 @@ describe('resolvePermissions', () => {
     ).toEqual(['members.create', 'members.view']);
   });
 
-  it('gives Super Admin the whole catalog, whatever its rows say', () => {
-    expect(resolvePermissions('super_admin', [], catalog)).toEqual(catalog);
+  it('gives the Owner the whole catalog, whatever its rows say', () => {
+    expect(resolvePermissions('owner', [], catalog)).toEqual(catalog);
+  });
+
+  it('gives the old Super Admin key nothing special (it was renamed Owner)', () => {
+    expect(resolvePermissions('super_admin', [], catalog)).toEqual([]);
   });
 
   it('gives nothing without a role', () => {

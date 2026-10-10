@@ -1,5 +1,6 @@
 import { createContext, useContext, useSyncExternalStore } from 'react';
 import type { DeviceAccount } from './accounts';
+import type { DeviceGym } from './device-gym';
 import type { AuthController, AuthState } from './auth-controller';
 
 export const AuthControllerContext = createContext<AuthController | null>(null);
@@ -19,4 +20,9 @@ export function useAuthState(): AuthState {
 export function useActiveAccount(): DeviceAccount | undefined {
   const { activeId, accounts } = useAuthState();
   return accounts.find((account) => account.staffId === activeId);
+}
+
+/** The gym this device works for (null before the first login). */
+export function useDeviceGym(): DeviceGym | null {
+  return useAuthState().gym;
 }

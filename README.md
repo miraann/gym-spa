@@ -8,7 +8,7 @@ Multi-branch gym & spa system with NFC check-in. One codebase for Web/PWA, Andro
 
 > **Status:** Phase 1d done, then reworked for two editions (1d-R). The app always talks to its server: Supabase in the cloud for the **online edition** (web, Android, Windows), and later a server PC on the gym's local network for the **offline edition** (Windows only, see [CLAUDE.md](CLAUDE.md) → Two editions). Staff log in with their password once per device, then switch with a PIN that the server checks. The cloud setup (Supabase, Vercel) is live. The auth spike is done: Supabase Auth runs on the offline edition's Windows server PC ([spikes/windows-auth/README.md](spikes/windows-auth/README.md)). This README grows with each step.
 >
-> **Many gyms (spec §2.6).** Click Group sells the system to many gyms. The online edition becomes multi-tenant: each gym's data (branches, staff, roles, settings, devices, members) is kept apart from every other gym's, staff log in with a gym code, and a separate **seller panel** (`apps/seller`) creates and manages the gyms, their subscriptions and the offline licenses. Today the database holds a single gym, and the "Super Admin" in this README is that gym's top role; MT-1 renames it **Owner** (خاوەن). Next steps, in order (spec §8): MT-1 (gyms and isolation), the design step, MT-2 to MT-5 (staff module, seller panel, support access, licenses), 1e (admin screens: staff, roles, branches, devices), 1f (offline-edition server test).
+> **Many gyms (spec §2.6).** Click Group sells the system to many gyms. **MT-1 is done locally:** every row belongs to a gym, staff log in with their gym's code, and the gym's top role is the **Owner** (خاوەن, formerly Super Admin); see [Gyms](#gyms). The cloud project gets it after review ([Moving a cloud project to many gyms](#moving-a-cloud-project-to-many-gyms-mt-1)). A separate **seller panel** (`apps/seller`, step MT-3) will create and manage gyms, subscriptions and offline licenses; until then `pnpm bootstrap:admin --gym <code>` creates gyms. Next steps, in order (spec §8): the design step, MT-2 to MT-5 (staff module, seller panel, support access, licenses), 1e (admin screens: staff, roles, branches, devices), 1f (offline-edition server test).
 
 ## Requirements
 
@@ -28,9 +28,9 @@ Multi-branch gym & spa system with NFC check-in. One codebase for Web/PWA, Andro
 pnpm install
 pnpm db:start          # local Supabase in Docker (the first start downloads its images)
 pnpm db:reset          # build the database: migrations, then demo data
-pnpm bootstrap:admin   # create your Super Admin login
+pnpm bootstrap:admin --gym demo   # the Owner of the demo gym (the seed made the gym)
 cp apps/app/.env.e2e apps/app/.env.development.local   # pnpm dev talks to the local Supabase
-pnpm dev               # http://localhost:5173, log in with the Super Admin you just created
+pnpm dev               # http://localhost:5173, log in with gym code demo and the Owner you just created
 ```
 
 ## Commands
@@ -59,7 +59,8 @@ Run from the repository root:
 | `pnpm db:test` | Database tests (pgTAP in `supabase/tests`): row level security, the access rules and the PIN functions |
 | `pnpm db:lint` | Check the SQL functions for errors (plpgsql_check) |
 | `pnpm db:types` | Regenerate the TypeScript types of the database (`packages/db`). Run after changing migrations |
-| `pnpm bootstrap:admin` | Create the first Super Admin. Add `--remote` for a cloud project (see [A cloud project](#a-cloud-project)) |
+| `pnpm bootstrap:admin` | Create a gym's first Owner: `--gym <code>`, and the gym itself if it doesn't exist yet (its code can never change). Add `--remote` for a cloud project (see [A cloud project](#a-cloud-project)) |
+| `pnpm staff-logins:move` | Once, after the MT-1 migrations, on a project that already had staff: moves their logins to their gym's address. Only shows what it would change; `--apply` changes it. `--remote` for a cloud project |
 
 First-time setup for the browser tests: `pnpm --filter @gym/app exec playwright install chromium`.
 
@@ -89,7 +90,7 @@ supabase             the database
   migrations         schema changes, in order (tables, RLS policies, triggers, functions, built-in roles)
   tests              pgTAP tests, run with pnpm db:test
   seed.sql           demo data for local development (Kurdish)
-  scripts            bootstrap-admin.ts
+  scripts            bootstrap-admin.ts, move-staff-logins.ts
 tools/eslint-plugin-gym  project lint rules
 ```
 
@@ -116,30 +117,49 @@ Both editions use the same migrations, so server logic goes into Postgres (funct
 - Nothing is reachable through the API by default (`auto_expose_new_tables = false`, like new cloud projects): each migration grants exactly what it needs.
 - Operations that change several rows together (a payment with its invoice and subscription, a locker assignment, a spa booking) are one Postgres function called with `rpc()`, so they succeed or fail as a whole.
 
+### Gyms
+
+Spec §2.6. Migrations `20261010100000_gyms.sql` and `20261010100100_gym_rules.sql`.
+
+- The online edition keeps many gyms in one database; the offline edition has exactly one. Every table except the permission catalog has `gym_id`, and every rule checks it, so staff only ever reach their own gym's rows. `supabase/tests/120-gym-isolation.test.sql` proves it for every table (the list comes from the catalog).
+- `gym_id` fills itself in from the signed-in staff member, so the app never sends it; server code using the secret key must give it. It never changes, and every link between rows includes it (composite foreign keys), so no row can point at another gym's, whoever writes it.
+- **Gym codes are permanent.** The code is part of every staff login, so it can never change and is never reused: 3 to 20 lowercase Latin letters and digits, single hyphens between them, starting with a letter. These codes are reserved: `admin`, `seller`, `support`, `api`, `www`, `app`, `login`, `clickgroup`, `gym-spa`, `test`, `root`, `system`. The rules are in `app.is_valid_gym_code()` and `app.is_reserved_gym_code()`, and again in `packages/core/src/gym.ts`; a unit test keeps the two identical. Choose a code carefully before creating a gym.
+- A new gym (`public.create_gym()`) gets its own copy of the 8 built-in roles and its first branch, B1. Usernames, branch codes, roles, settings, the PIN lockout and the audit log are per gym.
+- **Access state** (`app.gym_access()`; the app asks with `public.my_gym()`):
+  - active, then 30 days of **grace** after `paid_until`, then **read-only**;
+  - **suspended** (`suspended_at`): read-only at once. Staff can log in, look and use their PINs, but nothing can be added or changed (`gym_read_only`);
+  - **locked** (`locked_at`): all access ends at once; staff see nothing (`gym_locked`).
+  - Until the seller panel exists (MT-3), these columns are set in SQL.
+- **Limits:** `max_branches` and `max_devices` (empty: no limit) are checked whenever a branch or device is added or made active again (`gym_branch_limit`, `gym_device_limit`).
+
 ### How access works
 
-- Staff log in with a username. Supabase Auth gets `<username>@staff.gym-spa.invalid` behind the scenes (`packages/core/src/staff.ts`); `.invalid` is a reserved domain, so no mail can go there.
+- Staff log in with their gym's code and a username. Supabase Auth gets `<username>@<gym code>.staff.gym-spa.invalid` behind the scenes (`packages/core/src/staff.ts`); `.invalid` is a reserved domain, so no mail can go there. The database refuses a staff account whose Auth email doesn't match (`staff_login_mismatch`).
 - Every table has row level security. Policies use helpers in the private `app` schema, which the API doesn't expose:
-  - `app.has_permission('members.create')`: the signed-in staff member's role has that permission. Super Admin has all of them.
-  - `app.accessible_branch_ids()` and `app.has_branch_access(id)`: every branch for staff with `all_branches`, otherwise their rows in `staff_branches`. The rule is written once, in `app.refresh_branch_access()`, which keeps it as rows in `staff_branch_access`.
-- Guard triggers stop privilege escalation. Nobody can give a permission (or a role with a permission) they don't have, change their own role or access, or manage someone with access they lack. Only Super Admin can give the Super Admin role or edit the built-in roles.
+  - `app.current_gym_id()`: the signed-in staff member's gym, only while they are active and the gym isn't locked. Every policy checks `gym_id = (select app.current_gym_id())`.
+  - `app.has_permission('members.create')`: the signed-in staff member's role has that permission. The Owner has all of them.
+  - `app.accessible_branch_ids()` and `app.has_branch_access(id)`: every branch of the gym for staff with `all_branches`, otherwise their rows in `staff_branches`. The rule is written once, in `app.refresh_branch_access()`, which keeps it as rows in `staff_branch_access`.
+- Guard triggers stop privilege escalation. Nobody can give a permission (or a role with a permission) they don't have, change their own role or access, or manage someone with access they lack. Only the Owner can give the Owner role or edit the built-in roles.
 - Changes made without a staff session (migrations, server code using the secret key) skip the per-user checks. The secret key never goes into the app.
 - These rules reject a change with a stable key as the error message (`cannot_grant_role`, `read_only_column`, ...) for the app to translate, and an English detail for the logs.
 - Every change to the important tables goes into `audit_logs`: who, when, the old and new values, IP and device. Nobody can change or delete it, and secrets such as PIN hashes are logged as `redacted`.
-- The permission catalog and the 8 built-in roles are in `supabase/migrations/20261005100300_permission_catalog.sql`.
+- The permission catalog is in `supabase/migrations/20261005100300_permission_catalog.sql`. The 8 built-in roles are templates (`app.role_templates`, migration `20261010100000_gyms.sql`) that every new gym copies.
 
 ### Adding a table
 
-1. Columns: `id uuid primary key` (generated by the app), `branch_id` if it belongs to a branch, `created_at`, `created_by`, `updated_at`, `updated_by`, and `deleted_at` (rows are soft-deleted). Money is `numeric(14,2)`, times are `timestamptz`.
-2. Triggers: `stamp` (`app.stamp_row()`), `read_only` for columns that never change, and `audit` (`app.audit_row()`).
-3. `enable row level security`, `revoke all ... from anon, authenticated`, grant only what is needed, then the policies. Write checks as `(select app.has_permission('...'))` and `branch_id in (select app.accessible_branch_ids())` so Postgres runs them once per query, not once per row.
-4. pgTAP tests in `supabase/tests` for every policy and guard. `001-schema-rules.test.sql` fails when a table has no RLS, no policies, no audit trigger, an unindexed foreign key, or any access for anonymous visitors.
+1. Columns: `id uuid primary key` (generated by the app), `gym_id uuid not null default app.current_gym_id()`, `branch_id` if it belongs to a branch, `created_at`, `created_by`, `updated_at`, `updated_by`, and `deleted_at` (rows are soft-deleted). Money is `numeric(14,2)`, times are `timestamptz`.
+2. Links to another gym table name `gym_id` too: `foreign key (branch_id, gym_id) references public.branches (id, gym_id)`, with an index on `(branch_id, gym_id)`. A table that others link to gets `unique (id, gym_id)`.
+3. Triggers: `check_writable` (`app.check_gym_writable()`: nothing changes while the gym is read-only), `stamp` (`app.stamp_row()`), `read_only` for columns that never change (always including `gym_id`), and `audit` (`app.audit_row()`).
+4. `enable row level security`, `revoke all ... from anon, authenticated`, grant only what is needed, then the policies. Every policy checks `gym_id = (select app.current_gym_id())`. Write the other checks as `(select app.has_permission('...'))` and `branch_id in (select app.accessible_branch_ids())`, so Postgres runs them once per query, not once per row.
+5. pgTAP tests in `supabase/tests` for every policy and guard. `001-schema-rules.test.sql` fails when a table has no RLS, no policies, no audit trigger, an unindexed foreign key, any access for anonymous visitors, no `gym_id`, a policy without the gym check, a link without `gym_id`, or no `check_writable` / read-only `gym_id`. Add a case to `120-gym-isolation.test.sql` that tries to add a row to another gym; it fails while a table has none.
 
 ## Login, PIN and lock
 
-Code: `apps/app/src/features/auth`, rules in `packages/core` (`pin.ts`, `settings.ts`, `permissions.ts`), PIN functions in `supabase/migrations/20261009100000_online_only.sql`.
+Code: `apps/app/src/features/auth`, rules in `packages/core` (`gym.ts`, `staff.ts`, `pin.ts`, `settings.ts`, `permissions.ts`), PIN functions in `supabase/migrations/20261009100000_online_only.sql` and `20261010100100_gym_rules.sql`.
 
-- **First login on a device:** username and password, then a new password if a manager set it (`must_change_password`), then a 6-digit PIN if the staff member has none yet, then the device's branch if they have more than one. The branch is kept on the device (secure storage); changing it comes with the devices screen in 1e.
+- **First login on a device:** the gym code (a web link like `https://…/?gym=demo` fills it in), username and password. Then a new password if a manager set it (`must_change_password`), a 6-digit PIN if the staff member has none yet, and the device's branch if they have more than one. The branch is kept on the device (secure storage); changing it comes with the devices screen in 1e.
+- **The device remembers its gym** (secure storage). From then on, the login and lock screens show the gym's name and ask only for username and password. Everyone logged in on a device belongs to its gym, so "Use another gym" appears only while nobody is logged in. A wrong gym code, username or password gives the same message, so nobody learns which gyms or usernames exist.
+- **A gym that isn't active:** the lock screen says when the gym is read-only or locked (from the last server check). In a locked gym, the PIN and the password both refuse with that reason, and the app locks at the next server check.
 - **The PIN is checked by the server.** `set_my_pin()` hashes it (bcrypt) and works only within 15 minutes of a password login, so a session left on a device can't replace someone's PIN. `unlock_with_pin()` checks it, refuses a branch the staff member can't access, and counts wrong tries for every device. After `security.pin_max_attempts` wrong PINs (default 5) the PIN is locked; only a password login after that moment unlocks it (`clear_my_pin_lockout()` compares the login time in the token). Nobody can read a PIN hash, not even its owner. Easy guesses (`111111`, `123456`, `121212`) are refused on the screen and again by the server.
 - **What the device keeps per staff member**, encrypted: their Supabase session, name, role, permissions and whether they have a PIN (`packages/platform/src/secure-storage.ts`). Windows: DPAPI through Electron `safeStorage` (files in `%APPDATA%\gym-spa\secure`). Android: the Keystore. Browser: AES-GCM with a key the browser won't export, which is weaker: someone with the browser profile can still use the key.
 - **The lock screen** ("who's working") lists the staff who logged in on this device. The app locks after `security.idle_lock_minutes` without activity (default 10), from the account menu ("Lock"), and on every reload or restart. Locking covers the app instead of closing it, so a half-filled form survives.
@@ -158,7 +178,7 @@ Settings live in three places. Never mix them:
 
 | Where | What | Used by |
 |---|---|---|
-| `supabase/.env.local` (git ignores it) | `SUPABASE_URL`, `SUPABASE_SECRET_KEY`, `SUPABASE_DB_URL` | Scripts on your PC: `db push`, `bootstrap:admin --remote`. Secret: never in Vercel or the app |
+| `supabase/.env.local` (git ignores it) | `SUPABASE_URL`, `SUPABASE_SECRET_KEY`, `SUPABASE_DB_URL` | Scripts on your PC: `db push`, `bootstrap:admin --remote`, `staff-logins:move --remote`. Secret: never in Vercel or the app |
 | `apps/app/.env.local` (git ignores it) | `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY` (both public) | Local builds: `pnpm build`, `pnpm android:apk`, `pnpm desktop:exe` |
 | Vercel → Settings → Environment Variables | The same two `VITE_*` values, and `ENABLE_EXPERIMENTAL_COREPACK` | The web build |
 
@@ -172,7 +192,7 @@ Settings live in three places. Never mix them:
    pnpm --filter @gym/supabase exec supabase db push --db-url "$db" --dry-run --workdir ..
    pnpm --filter @gym/supabase exec supabase db push --db-url "$db" --workdir ..
    ```
-4. **First Super Admin:** `pnpm bootstrap:admin --remote`. Its first line shows which Supabase project it is talking to; check it. In a new project it also creates the first branch (`B1`; press Enter to keep the default name), so the admin can log in. Type the password yourself; it never goes into a file.
+4. **First gym and its Owner:** `pnpm bootstrap:admin --gym <code> --remote`. Its first line shows which Supabase project it is talking to; check it. For a gym that doesn't exist yet it asks you to confirm, then for the gym's Kurdish name and its first branch's name (`B1`; press Enter to keep the default name). The gym code can never change later. Type the password yourself; it never goes into a file.
 5. **App settings.** Copy `apps/app/.env.example` to `apps/app/.env.local` and fill in:
    - `VITE_SUPABASE_URL`: `https://<project-ref>.supabase.co`
    - `VITE_SUPABASE_PUBLISHABLE_KEY`: the **publishable** key (`sb_publishable_…`), never the secret key
@@ -185,6 +205,16 @@ Settings live in three places. Never mix them:
 7. **Check it works.** Open the site and log in as the admin. The connection indicator should say Connected. In DevTools → Network, switch to Offline: the indicator says No connection. If the login screen says the app isn't connected to a server, the build had no `VITE_*` values (the page's Content-Security-Policy then allows `connect-src 'self'` only). A tab that was already open may keep the old version until you accept the update prompt or reopen it.
 
 **Later changes:**
+
+#### Moving a cloud project to many gyms (MT-1)
+
+For a project set up before MT-1 (ours). Do the steps in this order, one right after the other:
+
+1. Push the migrations `20261010100000_gyms.sql` and `20261010100100_gym_rules.sql` (dry run first). The existing data becomes the gym `demo`, and Super Admin becomes Owner. Until step 3 the deployed app still logs in, but shows the Owner without permissions (it looks for the old role key).
+2. `pnpm staff-logins:move --remote` lists the logins it would move; `pnpm staff-logins:move --remote --apply` moves them. From here the old app's password login stops working; PIN unlock keeps working.
+3. Push the code: Vercel deploys it. Rebuild the APK and EXE. Devices where staff are logged in keep their sessions and learn their gym at the next server check; a new login on a device asks for the gym code `demo` once.
+
+Other changes:
 
 - **New migrations:** the same `db push`, dry run first. Push them before the app that needs them.
 - **Changed `VITE_*` values:** redeploy on Vercel and rebuild the APK and EXE. The address is part of each build's Content-Security-Policy.

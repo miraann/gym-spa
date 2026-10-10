@@ -10,7 +10,7 @@ drop schema if exists tests cascade;
 create schema tests;
 grant usage on schema tests to anon, authenticated, service_role;
 
--- Most helpers take a gym code; without one they work in gym A of the fixture ('gym-a').
+-- Most helpers take a gym code; without one they work in gym A of the fixture ('pgtap-a').
 
 create or replace function tests.gym(code text)
 returns uuid
@@ -31,7 +31,7 @@ as $$
   select g.id from public.create_gym(create_gym.code, 'یانەی ' || create_gym.code, 'لقی یەکەم') as g
 $$;
 
-create or replace function tests.create_branch(code text, gym_code text default 'gym-a')
+create or replace function tests.create_branch(code text, gym_code text default 'pgtap-a')
 returns uuid
 language sql
 set search_path = ''
@@ -42,7 +42,7 @@ as $$
 $$;
 
 -- A custom (not built-in) role with the given permissions.
-create or replace function tests.create_role(name text, permission_keys text[], gym_code text default 'gym-a')
+create or replace function tests.create_role(name text, permission_keys text[], gym_code text default 'pgtap-a')
 returns uuid
 language plpgsql
 set search_path = ''
@@ -59,7 +59,7 @@ end
 $$;
 
 -- The Auth user of a staff member: <username>@<gym code>.staff.gym-spa.invalid.
-create or replace function tests.create_auth_user(username text, gym_code text default 'gym-a')
+create or replace function tests.create_auth_user(username text, gym_code text default 'pgtap-a')
 returns uuid
 language sql
 set search_path = ''
@@ -80,7 +80,7 @@ create or replace function tests.create_staff(
   role text,
   branch_codes text[] default '{}',
   all_branches boolean default false,
-  gym_code text default 'gym-a'
+  gym_code text default 'pgtap-a'
 )
 returns uuid
 language plpgsql
@@ -106,7 +106,7 @@ begin
 end
 $$;
 
--- The standard cast used by most test files. Two gyms, gym-a and gym-b, each with its own branch
+-- The standard cast used by most test files. Two gyms, pgtap-a and pgtap-b, each with its own branch
 -- B1 (from create_gym), branches B901 (A) and B902 (B), and the same staff usernames:
 --   owner        owner           all branches
 --   admin        admin           all branches
@@ -133,7 +133,7 @@ begin
   delete from public.staff_users;
   delete from auth.users;
 
-  foreach gym_code in array array['gym-a', 'gym-b'] loop
+  foreach gym_code in array array['pgtap-a', 'pgtap-b'] loop
     perform tests.create_gym(gym_code);
     perform tests.create_branch('B901', gym_code);
     perform tests.create_branch('B902', gym_code);
@@ -151,7 +151,7 @@ end
 $$;
 
 -- Lookups that ignore RLS, so they also work while signed in as someone.
-create or replace function tests.staff(username text, gym_code text default 'gym-a')
+create or replace function tests.staff(username text, gym_code text default 'pgtap-a')
 returns uuid
 language sql
 stable
@@ -162,7 +162,7 @@ as $$
    where s.username = staff.username and s.gym_id = tests.gym(staff.gym_code)
 $$;
 
-create or replace function tests.branch(code text, gym_code text default 'gym-a')
+create or replace function tests.branch(code text, gym_code text default 'pgtap-a')
 returns uuid
 language sql
 stable
@@ -173,7 +173,7 @@ as $$
    where b.code = branch.code and b.gym_id = tests.gym(branch.gym_code)
 $$;
 
-create or replace function tests.auth_user_id(username text, gym_code text default 'gym-a')
+create or replace function tests.auth_user_id(username text, gym_code text default 'pgtap-a')
 returns uuid
 language sql
 stable
@@ -184,7 +184,7 @@ as $$
    where u.email = auth_user_id.username || '@' || auth_user_id.gym_code || '.staff.gym-spa.invalid'
 $$;
 
-create or replace function tests.role(key text, gym_code text default 'gym-a')
+create or replace function tests.role(key text, gym_code text default 'pgtap-a')
 returns uuid
 language sql
 stable
@@ -210,7 +210,7 @@ $$;
 
 -- Every row of a table in one gym (every row, for tables without gym_id), ignoring RLS: what
 -- "sees everything" is compared against.
-create or replace function tests.all_ids(table_name regclass, gym_code text default 'gym-a')
+create or replace function tests.all_ids(table_name regclass, gym_code text default 'pgtap-a')
 returns setof uuid
 language plpgsql
 stable
@@ -226,7 +226,7 @@ begin
 end
 $$;
 
-create or replace function tests.total_rows(table_name regclass, gym_code text default 'gym-a')
+create or replace function tests.total_rows(table_name regclass, gym_code text default 'pgtap-a')
 returns integer
 language plpgsql
 stable

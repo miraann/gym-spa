@@ -1,9 +1,12 @@
-/** The role that always has every permission, including ones added later (see app.role_permission_keys). */
-export const SUPER_ADMIN_ROLE = 'super_admin';
+/**
+ * The gym's top role (خاوەن), which always has every permission, including ones added later (see
+ * app.role_permission_keys). It was called Super Admin before the multi-tenant step.
+ */
+export const OWNER_ROLE = 'owner';
 
 /**
  * The permissions a role gives, worked out the same way as app.role_permission_keys() on the
- * server: Super Admin gets the whole catalog, every other role its role_permissions rows.
+ * server: the Owner gets the whole catalog, every other role its role_permissions rows.
  */
 export function resolvePermissions(
   roleKey: string | null,
@@ -11,6 +14,6 @@ export function resolvePermissions(
   catalog: readonly string[],
 ): string[] {
   if (roleKey === null) return [];
-  const keys = roleKey === SUPER_ADMIN_ROLE ? catalog : rolePermissionKeys;
+  const keys = roleKey === OWNER_ROLE ? catalog : rolePermissionKeys;
   return [...new Set(keys)].sort();
 }

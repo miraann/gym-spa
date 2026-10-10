@@ -1,11 +1,17 @@
+import { localizedName } from '@gym/i18n';
 import { DumbbellIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { LanguageMenu } from '@/components/layout/language-menu';
 import { ThemeMenu } from '@/components/layout/theme-menu';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { usePreferences } from '@/lib/preferences';
+import { useDeviceGym } from '../auth-context';
 
-/** The frame of every login and unlock screen: app name, a card, and the language and theme menus. */
+/**
+ * The frame of every login and unlock screen: app name and the device's gym (once it has one), a
+ * card, and the language and theme menus.
+ */
 export function AuthLayout({
   title,
   description,
@@ -16,6 +22,8 @@ export function AuthLayout({
   readonly children: ReactNode;
 }) {
   const { t } = useTranslation();
+  const gym = useDeviceGym();
+  const { language } = usePreferences();
 
   return (
     // data-auth-screen: Android's Back leaves the app here (see app/back-button.ts).
@@ -27,7 +35,12 @@ export function AuthLayout({
         <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
           <DumbbellIcon className="size-4" />
         </span>
-        <span className="font-semibold">{t('app.name')}</span>
+        <span className="shrink-0 font-semibold">{t('app.name')}</span>
+        {gym && (
+          <span data-testid="device-gym" className="min-w-0 truncate text-muted-foreground">
+            {localizedName(gym, language)}
+          </span>
+        )}
         <div className="ms-auto flex items-center gap-1">
           <LanguageMenu />
           <ThemeMenu />

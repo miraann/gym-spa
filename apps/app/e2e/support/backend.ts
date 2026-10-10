@@ -1,8 +1,9 @@
 // Test data in the local Supabase (`pnpm db:start`) for the end-to-end tests of
-// the web and Windows apps. Each test creates its own branch and staff and removes them after, so
-// tests don't depend on the demo data, on your local accounts, or on each other.
+// the web and Windows apps. Each test creates its own gym (with branches and staff) and removes it
+// after, so tests don't depend on the demo data, on your local accounts, or on each other.
 import { execSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
+import { staffEmail } from '@gym/core';
 import type { Database } from '@gym/db';
 import { createClient } from '@supabase/supabase-js';
 
@@ -65,8 +66,16 @@ export async function write(promise: PromiseLike<{ error: { message: string } | 
   if (error) throw new Error(error.message);
 }
 
+export interface TestGym {
+  readonly id: string;
+  readonly code: string;
+  readonly nameCkb: string;
+}
+
 export interface TestStaff {
   readonly id: string;
+  /** The code of their gym, which the first login on a device asks for. */
+  readonly gymCode: string;
   readonly username: string;
   readonly fullName: string;
   readonly password: string;
@@ -83,40 +92,67 @@ export interface StaffOptions {
   readonly fullName?: string;
 }
 
-/** Creates branches and staff, and removes everything it made in cleanup(). */
+/**
+ * A test's own gym (code e2e-<random>), made on first use with its roles and branch B1, plus the
+ * branches and staff the test adds. cleanup() removes all of it.
+ */
 export class TestData {
   private readonly run = randomUUID().slice(0, 8);
-  private readonly branchIds: string[] = [];
+  private created: Promise<TestGym> | undefined;
   private readonly staffIds: string[] = [];
+  /** B1 comes with the gym; the test's own branches are B2, B3, ... */
+  private branches = 1;
   private count = 0;
 
+  /** The gym, created the first time a test needs it. */
+  gym(): Promise<TestGym> {
+    this.created ??= (async () => {
+      const code = `e2e-${this.run}`;
+      const nameCkb = `یانەی تاقیکردنەوە ${this.run}`;
+      const gym = await check(
+        admin().rpc('create_gym', {
+          p_code: code,
+          p_name_ckb: nameCkb,
+          p_first_branch_name: 'لقی یەکەم',
+        }),
+      );
+      return { id: gym.id, code, nameCkb };
+    })();
+    return this.created;
+  }
+
+  /** Changes the gym's subscription state, as Click Group's seller panel will (step MT-3). */
+  async setGym(
+    change: Pick<
+      Database['public']['Tables']['gyms']['Update'],
+      'paid_until' | 'suspended_at' | 'locked_at'
+    >,
+  ): Promise<void> {
+    const gym = await this.gym();
+    await write(admin().from('gyms').update(change).eq('id', gym.id));
+  }
+
   async branch(): Promise<string> {
-    const codes = await check(admin().from('branches').select('code'));
-    const used = new Set(codes.map((row) => row.code));
-    // Random, so parallel tests don't pick the same free code.
-    for (;;) {
-      const code = `B${String(100 + Math.floor(Math.random() * 900))}`;
-      if (used.has(code)) continue;
-      const { data, error } = await admin()
+    const gym = await this.gym();
+    this.branches += 1;
+    const code = `B${String(this.branches)}`;
+    const branch = await check(
+      admin()
         .from('branches')
-        .insert({ code, name_ckb: `لقی تاقیکردنەوە ${code}` })
+        .insert({ gym_id: gym.id, code, name_ckb: `لقی تاقیکردنەوە ${code}` })
         .select('id')
-        .single();
-      // 23505: another test took the code. 23503: another test deleted its branch while this
-      // insert gave the all-branches staff access to every branch (a hard delete, tests only).
-      if (error?.code === '23505' || error?.code === '23503') continue;
-      if (error) throw new Error(error.message);
-      this.branchIds.push(data.id);
-      return data.id;
-    }
+        .single(),
+    );
+    return branch.id;
   }
 
   async staff(options: StaffOptions): Promise<TestStaff> {
+    const gym = await this.gym();
     this.count += 1;
     const username = `e2e_${this.run}_${String(this.count)}`;
     const password = `E2e-pass-${this.run}`;
     const fullName = options.fullName ?? `کارمەندی تاقیکردنەوە ${String(this.count)}`;
-    const email = `${username}@staff.gym-spa.invalid`;
+    const email = staffEmail(username, gym.code);
     const created = await admin().auth.admin.createUser({
       email,
       password,
@@ -130,6 +166,7 @@ export class TestData {
       admin()
         .from('roles')
         .select('id')
+        .eq('gym_id', gym.id)
         .eq('key', options.role ?? 'receptionist')
         .single(),
     );
@@ -139,6 +176,7 @@ export class TestData {
         .from('staff_users')
         .insert({
           id,
+          gym_id: gym.id,
           username,
           full_name: fullName,
           role_id: role.id,
@@ -146,25 +184,38 @@ export class TestData {
         }),
     );
     for (const branchId of options.branchIds) {
-      await write(admin().from('staff_branches').insert({ staff_id: id, branch_id: branchId }));
+      await write(
+        admin()
+          .from('staff_branches')
+          .insert({ gym_id: gym.id, staff_id: id, branch_id: branchId }),
+      );
     }
     let pin: string | null = null;
     if (options.withPin ?? true) {
       pin = '482917';
       await setPinAs(email, password, pin);
     }
-    return { id, username, fullName, password, pin };
+    return { id, gymCode: gym.code, username, fullName, password, pin };
   }
 
+  /** Removes the test's gym and everything in it. Test data only: real data is never deleted. */
   async cleanup(): Promise<void> {
+    if (!this.created) return;
+    const { id: gymId } = await this.created;
     const db = admin();
-    // Test data only. Real staff and branches are never deleted.
-    await db.from('staff_pins').delete().in('staff_id', this.staffIds);
-    await db.from('settings').delete().in('branch_id', this.branchIds);
-    await db.from('staff_branches').delete().in('staff_id', this.staffIds);
-    await db.from('staff_users').delete().in('id', this.staffIds);
+    for (const table of ['staff_pins', 'settings', 'staff_branches', 'staff_users'] as const) {
+      await write(db.from(table).delete().eq('gym_id', gymId));
+    }
     for (const id of this.staffIds) await db.auth.admin.deleteUser(id);
-    await db.from('devices').delete().in('branch_id', this.branchIds);
-    await db.from('branches').delete().in('id', this.branchIds);
+    for (const table of [
+      'device_status',
+      'devices',
+      'branches',
+      'role_permissions',
+      'roles',
+    ] as const) {
+      await write(db.from(table).delete().eq('gym_id', gymId));
+    }
+    await write(db.from('gyms').delete().eq('id', gymId));
   }
 }

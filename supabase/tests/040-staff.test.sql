@@ -126,17 +126,17 @@ select throws_ok(
 );
 -- (What Supabase Auth's admin API does for the staff service.)
 select tests.clear_authentication();
-update auth.users set email = 'reception_b2@gym-a.staff.gym-spa.invalid' where id = tests.staff('reception_b');
+update auth.users set email = 'reception_b2@pgtap-a.staff.gym-spa.invalid' where id = tests.staff('reception_b');
 select tests.authenticate_as_service_role();
 select is(tests.row_count($$ update public.staff_users set username = 'reception_b2' where id = tests.auth_user_id('reception_b2') $$), 1,
   'the staff service (service role) can change a username together with its login');
 
 -- New staff need an Auth user whose email is their username at their gym, whoever adds them.
 select tests.clear_authentication();
-select tests.create_auth_user('new_c', 'gym-b');
+select tests.create_auth_user('new_c', 'pgtap-b');
 select throws_ok(
   $$ insert into public.staff_users (id, gym_id, username, full_name, role_id)
-     values (tests.auth_user_id('new_c', 'gym-b'), tests.gym('gym-a'), 'new_c', 'کارمەندی نوێ', tests.role('receptionist')) $$,
+     values (tests.auth_user_id('new_c', 'pgtap-b'), tests.gym('pgtap-a'), 'new_c', 'کارمەندی نوێ', tests.role('receptionist')) $$,
   '23514', 'staff_login_mismatch', 'a staff member''s login must name their own gym'
 );
 

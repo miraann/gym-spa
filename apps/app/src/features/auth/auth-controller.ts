@@ -1,4 +1,10 @@
-import { isValidUsername, normalizeUsername, staffEmail } from '@gym/core';
+import {
+  isValidGymCode,
+  isValidUsername,
+  normalizeGymCode,
+  normalizeUsername,
+  staffEmail,
+} from '@gym/core';
 import type { Language } from '@gym/i18n';
 import type { SecureStorage } from '@gym/platform';
 import { createAppClient, type AppSupabaseClient, type BackendConfig } from '@/lib/backend';
@@ -13,12 +19,14 @@ import {
   type DeviceAccount,
   type PasswordReason,
 } from './accounts';
+import { DEVICE_GYM_KEY, parseDeviceGym, type DeviceGym } from './device-gym';
 import {
   AuthFlowError,
   changePassword,
   checkPin,
   clearPinLockout,
   fetchBranches,
+  fetchGym,
   fetchProfile,
   setPin,
   toAuthError,
@@ -44,6 +52,8 @@ export type UnlockResult =
   | { readonly kind: 'wrong_pin'; readonly triesLeft: number }
   | { readonly kind: 'no_branch_access' }
   | { readonly kind: 'password_required'; readonly reason: PasswordReason }
+  /** Click Group locked the gym; no password helps. */
+  | { readonly kind: 'gym_locked' }
   /** The server couldn't be reached, so the PIN can't be checked. */
   | { readonly kind: 'network' };
 
@@ -57,6 +67,8 @@ export interface AuthState {
   readonly activeId: string | null;
   /** The branch this device works in, null until chosen. */
   readonly branchId: string | null;
+  /** The gym this device works for, null until the first login. */
+  readonly gym: DeviceGym | null;
 }
 
 /** Secure storage keys of this install. */
@@ -78,8 +90,11 @@ export class AuthController {
     accounts: [],
     activeId: null,
     branchId: null,
+    gym: null,
   };
   private readonly listeners = new Set<() => void>();
+  /** The gym code from a `?gym=` link the app was opened with (web only). */
+  private gymLink: string | null = null;
 
   constructor(
     private readonly config: BackendConfig | null,
@@ -120,18 +135,33 @@ export class AuthController {
     return this.state.activeId && this.config ? this.clientFor(this.state.activeId) : undefined;
   }
 
-  async init(): Promise<void> {
+  /** The gym code of the `?gym=` link the app was opened with, to fill in on the login screen. */
+  get linkedGymCode(): string | null {
+    return this.gymLink;
+  }
+
+  /**
+   * Reads the device's staff accounts and gym. A `?gym=` link for another gym takes over only while
+   * nobody is logged in on the device; otherwise the device stays with its gym.
+   */
+  async init(gymLink: string | null = null): Promise<void> {
     let branchId: string | null;
+    let gym: DeviceGym | null;
     try {
       this.deviceId = await this.ensureDeviceId();
       branchId = await this.storage.get(BRANCH_KEY);
+      gym = parseDeviceGym(await this.storage.get(DEVICE_GYM_KEY));
       await this.store.load();
     } catch (error) {
       this.setState({ failed: true });
       throw error;
     }
+    this.gymLink = gymLink;
     // Always starts locked: a reload or restart asks for a PIN again.
-    this.setState({ ready: true, branchId });
+    this.setState({ ready: true, branchId, gym });
+    if (gymLink && gym && gym.code !== gymLink && this.store.list().length === 0) {
+      await this.forgetGym();
+    }
   }
 
   /** This install's id, made on first launch. It goes with every request (X-Device-Id). */
@@ -158,11 +188,23 @@ export class AuthController {
 
   // Password login --------------------------------------------------------------------------------
 
-  /** Logs in with username and password; returns what the staff member must do next. */
-  async passwordLogin(usernameInput: string, password: string): Promise<AuthStep> {
+  /**
+   * Logs in with username and password; returns what the staff member must do next. The gym code
+   * is the device's gym once it has one; before that (the first login) it is what was typed. A
+   * wrong gym code, username or password are the same error, so nobody learns which gyms or
+   * usernames exist.
+   */
+  async passwordLogin(
+    gymCodeInput: string | null,
+    usernameInput: string,
+    password: string,
+  ): Promise<AuthStep> {
     if (!this.config) throw new AuthFlowError('not_configured');
+    const gymCode = this.state.gym?.code ?? normalizeGymCode(gymCodeInput ?? '');
     const username = normalizeUsername(usernameInput);
-    if (!isValidUsername(username)) throw new AuthFlowError('invalid_credentials');
+    if (!isValidGymCode(gymCode) || !isValidUsername(username)) {
+      throw new AuthFlowError('invalid_credentials');
+    }
 
     // Sign in on a throwaway client first: the staff id (and so their own client) is known after.
     const login = createAppClient(this.config, {
@@ -170,7 +212,7 @@ export class AuthController {
       deviceId: this.deviceId,
     });
     const signIn = await login.auth
-      .signInWithPassword({ email: staffEmail(username), password })
+      .signInWithPassword({ email: staffEmail(username, gymCode), password })
       .catch((error: unknown) => {
         throw toAuthError(error);
       });
@@ -186,10 +228,12 @@ export class AuthController {
     if (stored.error) throw toAuthError(stored.error);
 
     try {
+      const gym = await fetchGym(client);
+      if (gym?.access === 'locked') throw new AuthFlowError('gym_locked');
       // A password login ends a PIN lockout.
       await clearPinLockout(client);
       const profile = await fetchProfile(client, staffId);
-      if (!profile) throw new AuthFlowError('account_inactive');
+      if (!profile || !gym) throw new AuthFlowError('account_inactive');
       const branches = await fetchBranches(client);
       const { branchId } = this.state;
       const canUseBranch = branchId
@@ -202,6 +246,8 @@ export class AuthController {
         ...accountFromProfile(profile, branches, existing),
         passwordRequired: null,
       });
+      // From now on the login screen asks only for username and password.
+      await this.rememberGym(gym);
       return await this.nextStep(staffId, branches);
     } catch (error) {
       if (!this.store.get(staffId)) await this.forgetClient(staffId);
@@ -310,6 +356,9 @@ export class AuthController {
       case 'inactive':
         await this.markPasswordRequired(staffId, 'inactive');
         return { kind: 'password_required', reason: 'inactive' };
+      case 'gym_locked':
+        await this.updateGymAccess('locked');
+        return { kind: 'gym_locked' };
       case 'no_branch_access':
         // Their access changed since the last check: this device's copy forgets the branch.
         await this.store.update(staffId, (current) => ({
@@ -371,6 +420,13 @@ export class AuthController {
         return;
       }
       if (session === 'unavailable') return;
+      const gym = await fetchGym(client);
+      if (gym) await this.rememberGym(gym);
+      if (gym?.access === 'locked') {
+        // Nobody of a locked gym uses the app: it locks at once, and the PIN says why.
+        if (this.state.activeId === staffId) this.lock();
+        return;
+      }
       const profile = await fetchProfile(client, staffId);
       if (!profile) {
         await this.markPasswordRequired(staffId, 'inactive');
@@ -399,6 +455,32 @@ export class AuthController {
 
   async refreshAll(): Promise<void> {
     for (const account of this.store.list()) await this.refreshFromServer(account.staffId);
+  }
+
+  // The device's gym -----------------------------------------------------------------------------
+
+  /** Keeps the gym (and its latest state) on the device. */
+  private async rememberGym(gym: DeviceGym): Promise<void> {
+    const current = this.state.gym;
+    if (current && JSON.stringify(current) === JSON.stringify(gym)) return;
+    await this.storage.set(DEVICE_GYM_KEY, JSON.stringify(gym));
+    this.setState({ gym });
+  }
+
+  private async updateGymAccess(access: DeviceGym['access']): Promise<void> {
+    const { gym } = this.state;
+    if (gym) await this.rememberGym({ ...gym, access });
+  }
+
+  /**
+   * "Use another gym": forgets the device's gym and its branch, so the next login asks for a gym
+   * code again. Only while nobody is logged in on the device: they all belong to its gym.
+   */
+  async forgetGym(): Promise<void> {
+    if (this.store.list().length > 0) return;
+    await this.storage.delete(DEVICE_GYM_KEY);
+    await this.storage.delete(BRANCH_KEY);
+    this.setState({ gym: null, branchId: null });
   }
 
   private async markPasswordRequired(staffId: string, reason: PasswordReason): Promise<void> {

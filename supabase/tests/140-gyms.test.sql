@@ -12,7 +12,7 @@ select throws_ok($$ select public.my_gym() $$, '42501', 'permission denied for f
   'anonymous visitors cannot ask for a gym');
 
 select tests.authenticate_as(tests.staff('reception_a'));
-select results_eq('select code from public.gyms', $$ values ('gym-a'::text) $$, 'staff read only their own gym');
+select results_eq('select code from public.gyms', $$ values ('pgtap-a'::text) $$, 'staff read only their own gym');
 
 select tests.authenticate_as(tests.staff('owner'));
 select throws_ok($$ update public.gyms set paid_until = null $$, '42501', 'permission denied for table gyms',
@@ -46,44 +46,44 @@ select throws_ok($$ select public.create_gym('seller', 'یانە', 'لقی یە�
 select throws_ok($$ insert into public.gyms (code, name_ckb) values ('support', 'یانە') $$, '23514',
   'new row for relation "gyms" violates check constraint "gyms_code_not_reserved"',
   'the table itself refuses reserved codes, whoever writes');
-select throws_ok($$ select public.create_gym('gym-a', 'یانە', 'لقی یەکەم') $$, '23505', 'gym_code_taken',
+select throws_ok($$ select public.create_gym('pgtap-a', 'یانە', 'لقی یەکەم') $$, '23505', 'gym_code_taken',
   'two gyms never share a code');
-select throws_ok($$ update public.gyms set code = 'gym-z' where code = 'gym-a' $$, '42501', 'read_only_column',
+select throws_ok($$ update public.gyms set code = 'gym-z' where code = 'pgtap-a' $$, '42501', 'read_only_column',
   'a gym code never changes, not even for server code');
-select throws_ok($$ update public.gyms set edition = 'offline' where code = 'gym-a' $$, '42501', 'read_only_column',
+select throws_ok($$ update public.gyms set edition = 'offline' where code = 'pgtap-a' $$, '42501', 'read_only_column',
   'a gym never changes edition');
 
 -- create_gym() --------------------------------------------------------------------------------
 
 select tests.authenticate_as_service_role();
 select lives_ok(
-  $$ select public.create_gym('hawler-fit', 'یانەی هەولێر', 'لقی سەرەکی', 'Hawler Fit', null, 'offline', 'a0000000-0000-4000-8000-0000000000f1') $$,
+  $$ select public.create_gym('pgtap-new', 'یانەی هەولێر', 'لقی سەرەکی', 'Hawler Fit', null, 'offline', 'a0000000-0000-4000-8000-0000000000f1') $$,
   'server code creates a gym'
 );
 select tests.clear_authentication();
 select results_eq(
-  $$ select id, edition from public.gyms where code = 'hawler-fit' $$,
+  $$ select id, edition from public.gyms where code = 'pgtap-new' $$,
   $$ values ('a0000000-0000-4000-8000-0000000000f1'::uuid, 'offline'::text) $$,
   'a gym can be created with a given id (the offline server uses its license''s)'
 );
 select set_eq(
-  $$ select key, name_ckb, name_en, name_ar from public.roles where gym_id = tests.gym('hawler-fit') $$,
+  $$ select key, name_ckb, name_en, name_ar from public.roles where gym_id = tests.gym('pgtap-new') $$,
   $$ select key, name_ckb, name_en, name_ar from app.role_templates $$,
   'a new gym gets the built-in roles'
 );
 select set_eq(
   $$ select r.key, rp.permission_key from public.role_permissions rp join public.roles r on r.id = rp.role_id
-      where rp.gym_id = tests.gym('hawler-fit') $$,
+      where rp.gym_id = tests.gym('pgtap-new') $$,
   $$ select role_key, permission_key from app.role_template_permissions $$,
   'a new gym''s built-in roles get their permissions'
 );
 select results_eq(
-  $$ select code, name_ckb from public.branches where gym_id = tests.gym('hawler-fit') $$,
+  $$ select code, name_ckb from public.branches where gym_id = tests.gym('pgtap-new') $$,
   $$ values ('B1'::text, 'لقی سەرەکی'::text) $$,
   'a new gym gets its first branch, B1'
 );
 select ok(
-  (select bool_and(is_system) from public.roles where gym_id = tests.gym('hawler-fit')),
+  (select bool_and(is_system) from public.roles where gym_id = tests.gym('pgtap-new')),
   'the copied roles are built-in roles'
 );
 
@@ -99,11 +99,11 @@ select ok(not app.has_permission('test.new_permission'), 'other roles get new pe
 
 select tests.clear_authentication();
 select is(
-  (select count(*)::integer from public.branches where code = 'B901' and gym_id in (tests.gym('gym-a'), tests.gym('gym-b'))), 2,
+  (select count(*)::integer from public.branches where code = 'B901' and gym_id in (tests.gym('pgtap-a'), tests.gym('pgtap-b'))), 2,
   'two gyms can each have a branch B901 (the fixture made them)'
 );
 select throws_ok(
-  $$ insert into public.branches (gym_id, code, name_ckb) values (tests.gym('gym-a'), 'B901', 'لقی دووەم') $$,
+  $$ insert into public.branches (gym_id, code, name_ckb) values (tests.gym('pgtap-a'), 'B901', 'لقی دووەم') $$,
   '23505', 'duplicate key value violates unique constraint "branches_gym_id_code_key"',
   'branch codes are unique within a gym'
 );
@@ -119,12 +119,12 @@ insert into public.settings (key, value) values ('security.idle_lock_minutes', '
 select tests.clear_authentication();
 select is(
   (select gym_id from public.settings where key = 'security.idle_lock_minutes' and value = '12'),
-  tests.gym('gym-a'),
+  tests.gym('pgtap-a'),
   'a row added by staff belongs to their gym without the app sending it'
 );
 select is(
-  (select gym_id from public.audit_logs where table_name = 'gyms' and row_id = tests.gym('gym-b')::text and action = 'insert'),
-  tests.gym('gym-b'),
+  (select gym_id from public.audit_logs where table_name = 'gyms' and row_id = tests.gym('pgtap-b')::text and action = 'insert'),
+  tests.gym('pgtap-b'),
   'the audit log records which gym a change belongs to'
 );
 

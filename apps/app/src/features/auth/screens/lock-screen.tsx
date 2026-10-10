@@ -1,11 +1,12 @@
-import { KeyRoundIcon, UserPlusIcon } from 'lucide-react';
+import { EyeIcon, KeyRoundIcon, LockIcon, UserPlusIcon } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { useFormat } from '@/lib/format';
 import { logError } from '@/lib/logger';
 import { canUseBranch, pinBlocker, type DeviceAccount, type PasswordReason } from '../accounts';
-import { useAuthController, useAuthState } from '../auth-context';
+import { useAuthController, useAuthState, useDeviceGym } from '../auth-context';
 import { AuthLayout } from './auth-layout';
 import { FormError } from './form-error';
 import { PinPad } from './pin-pad';
@@ -18,6 +19,32 @@ function initials(fullName: string): string {
     .slice(0, 2)
     .map((part) => part.charAt(0))
     .join('');
+}
+
+/**
+ * The gym's state, when it isn't the usual one: locked (nobody can use it) or read-only (look, but
+ * add or change nothing). From the last check with the server.
+ */
+function GymStateNotice() {
+  const { t } = useTranslation('auth');
+  const gym = useDeviceGym();
+  if (gym?.access === 'locked') {
+    return (
+      <Alert variant="destructive">
+        <LockIcon />
+        <AlertDescription>{t('errors.gym_locked')}</AlertDescription>
+      </Alert>
+    );
+  }
+  if (gym?.access === 'read_only') {
+    return (
+      <Alert>
+        <EyeIcon />
+        <AlertDescription>{t('errors.gym_read_only')}</AlertDescription>
+      </Alert>
+    );
+  }
+  return null;
 }
 
 /** "Who's working?": the staff members who have logged in on this device. */
@@ -33,6 +60,7 @@ export function LockScreen({
 
   return (
     <AuthLayout title={t('lock.title')} description={t('lock.description')}>
+      <GymStateNotice />
       <ul className="flex flex-col gap-2">
         {accounts.map((account) => (
           <li key={account.staffId}>
@@ -96,7 +124,7 @@ export function PinScreen({
   const format = useFormat();
   const [busy, setBusy] = useState(false);
   const [wrong, setWrong] = useState<number | null>(null);
-  const [failure, setFailure] = useState<'network' | 'unexpected' | null>(null);
+  const [failure, setFailure] = useState<'network' | 'gym_locked' | 'unexpected' | null>(null);
   const blocker: PasswordReason | null = pinBlocker(account);
 
   const submit = (pin: string) => {
@@ -106,7 +134,7 @@ export function PinScreen({
       .unlock(account.staffId, pin)
       .then((result) => {
         setWrong(result.kind === 'wrong_pin' ? result.triesLeft : null);
-        if (result.kind === 'network') setFailure('network');
+        if (result.kind === 'network' || result.kind === 'gym_locked') setFailure(result.kind);
       })
       .catch((error: unknown) => {
         logError(error, { area: 'auth', action: 'unlock' });

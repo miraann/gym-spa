@@ -1,8 +1,9 @@
-import { normalizePin, resolvePermissions } from '@gym/core';
+import { isGymAccess, isValidGymCode, normalizePin, resolvePermissions } from '@gym/core';
 import { isLanguage, type Language } from '@gym/i18n';
 import { isAuthApiError, isAuthRetryableFetchError } from '@supabase/supabase-js';
 import type { AppSupabaseClient } from '@/lib/backend';
 import { logError } from '@/lib/logger';
+import type { DeviceGym } from './device-gym';
 
 // The server calls of login and the PIN, made with the staff member's own session. RLS and the
 // server functions decide what each one may read or change.
@@ -10,6 +11,8 @@ import { logError } from '@/lib/logger';
 /** A stable key the login screens translate. */
 export type AuthErrorKey =
   | 'invalid_credentials'
+  /** The same, on the first login of a device, where the gym code was typed too. */
+  | 'invalid_gym_credentials'
   | 'account_inactive'
   | 'no_branch_access'
   | 'too_many_requests'
@@ -18,6 +21,10 @@ export type AuthErrorKey =
   | 'weak_password'
   /** Setting a PIN needs a recent password login. */
   | 'password_login_required'
+  /** Click Group locked the gym: nobody of it can use the app. */
+  | 'gym_locked'
+  /** The gym is read-only (suspended, or its subscription ended): nothing can be added or changed. */
+  | 'gym_read_only'
   | 'not_configured'
   | 'unexpected';
 
@@ -55,16 +62,16 @@ export function authErrorKey(error: unknown, action: string): AuthErrorKey {
   return key;
 }
 
+/** Server errors (a stable key as the message) that the login screens explain themselves. */
+const SERVER_ERROR_KEYS = ['password_login_required', 'gym_read_only'] as const;
+
 function failIfError(result: { error: unknown }): void {
   if (!result.error) return;
   const { error } = result;
-  if (
-    typeof error === 'object' &&
-    'message' in error &&
-    error.message === 'password_login_required'
-  ) {
-    throw new AuthFlowError('password_login_required', { cause: error });
-  }
+  const serverKey = SERVER_ERROR_KEYS.find(
+    (key) => typeof error === 'object' && 'message' in error && error.message === key,
+  );
+  if (serverKey) throw new AuthFlowError(serverKey, { cause: error });
   // PostgREST returns network failures as an error object, not a thrown TypeError.
   if (
     typeof error === 'object' &&
@@ -145,6 +152,39 @@ export async function fetchProfile(
   };
 }
 
+/** The signed-in staff member's gym and its access state (also when it is locked). */
+export async function fetchGym(client: AppSupabaseClient): Promise<DeviceGym | null> {
+  const result = await client.rpc('my_gym').maybeSingle();
+  failIfError(result);
+  return parseServerGym(result.data);
+}
+
+/** Reads a my_gym() row; null when there is none (the staff member isn't active). */
+export function parseServerGym(data: unknown): DeviceGym | null {
+  if (typeof data !== 'object' || data === null) return null;
+  const row: Partial<
+    Record<'id' | 'code' | 'name_ckb' | 'name_en' | 'name_ar' | 'access', unknown>
+  > = data;
+  const { id, code, access } = row;
+  if (
+    typeof id !== 'string' ||
+    typeof code !== 'string' ||
+    !isValidGymCode(code) ||
+    typeof row.name_ckb !== 'string' ||
+    !isGymAccess(access)
+  ) {
+    throw new AuthFlowError('unexpected', { cause: data });
+  }
+  return {
+    id,
+    code,
+    nameCkb: row.name_ckb,
+    nameEn: typeof row.name_en === 'string' ? row.name_en : null,
+    nameAr: typeof row.name_ar === 'string' ? row.name_ar : null,
+    access,
+  };
+}
+
 export interface BranchChoice {
   readonly id: string;
   readonly code: string;
@@ -193,7 +233,10 @@ export async function clearPinLockout(client: AppSupabaseClient): Promise<void> 
 }
 
 export type PinCheck =
-  | { readonly result: 'ok' | 'locked_out' | 'no_pin' | 'no_branch_access' | 'inactive' }
+  | {
+      readonly result:
+        'ok' | 'locked_out' | 'no_pin' | 'no_branch_access' | 'inactive' | 'gym_locked';
+    }
   | { readonly result: 'wrong_pin'; readonly triesLeft: number };
 
 /** Asks the server whether the PIN is right; it counts wrong tries on every device. */
@@ -224,7 +267,8 @@ export function parsePinCheck(data: unknown): PinCheck {
     result === 'locked_out' ||
     result === 'no_pin' ||
     result === 'no_branch_access' ||
-    result === 'inactive'
+    result === 'inactive' ||
+    result === 'gym_locked'
   ) {
     return { result };
   }

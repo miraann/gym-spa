@@ -1,5 +1,6 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { latestFunctionBody } from './sql-functions.test-helper';
 import {
   STAFF_EMAIL_DOMAIN,
   USERNAME_PATTERN,
@@ -42,16 +43,30 @@ describe('isValidUsername', () => {
 });
 
 describe('staffEmail', () => {
-  it('maps a username to its internal Auth email', () => {
-    expect(staffEmail('ali.karim')).toBe('ali.karim@staff.gym-spa.invalid');
+  it('maps a username in a gym to its internal Auth email', () => {
+    expect(staffEmail('ali.karim', 'hawler-fit')).toBe(
+      'ali.karim@hawler-fit.staff.gym-spa.invalid',
+    );
+  });
+
+  it('gives the same username in two gyms two different logins', () => {
+    expect(staffEmail('owner', 'gym-a')).not.toBe(staffEmail('owner', 'gym-b'));
   });
 
   it('uses a reserved domain that can never receive mail', () => {
     expect(STAFF_EMAIL_DOMAIN.endsWith('.invalid')).toBe(true);
   });
 
-  it('refuses an invalid username', () => {
-    expect(() => staffEmail('Ali Karim')).toThrow();
+  it('refuses an invalid username or gym code', () => {
+    expect(() => staffEmail('Ali Karim', 'demo')).toThrow();
+    expect(() => staffEmail('ali', 'Demo Gym')).toThrow();
+    expect(() => staffEmail('ali', 'admin')).toThrow();
+  });
+
+  it('is the email the database expects (app.check_staff_login)', () => {
+    const body = latestFunctionBody('app.check_staff_login');
+
+    expect(body).toContain(`new.username || '@' || g.code || '.${STAFF_EMAIL_DOMAIN}'`);
   });
 });
 

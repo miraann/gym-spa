@@ -1,8 +1,10 @@
-// Login, PIN and lock against local Supabase (`pnpm db:start`).
+// Login, PIN and lock, and the gym at login, against local Supabase (`pnpm db:start`).
 import type { Page } from '@playwright/test';
 import { admin, write, type TestStaff } from './support/backend';
 import {
+  GYM_CODE_LABEL,
   HOME_HEADING,
+  LOGIN_HEADING,
   expect,
   signIn,
   submitPasswordLogin,
@@ -39,7 +41,7 @@ test('first login: new password, then a PIN, then the app', async ({ page, data 
 
   // Wrong password first.
   await submitPasswordLogin(page, { ...staff, password: 'wrong-password' });
-  await expect(page.getByRole('alert')).toHaveText('ناوی بەکارهێنەر یان وشەی نهێنی هەڵەیە.');
+  await expect(page.getByRole('alert')).toHaveText(WRONG_LOGIN);
 
   await submitPasswordLogin(page, staff);
   await expect(
@@ -139,12 +141,17 @@ test('five wrong PINs lock the staff member out until they use their password', 
   await expect(page.getByRole('heading', HOME_HEADING)).toBeVisible();
 });
 
-test('locks itself when idle, and keeps the page that was open', async ({ page, staff }) => {
+test('locks itself when idle, and keeps the page that was open', async ({ page, staff, data }) => {
   // A branch setting of 2 minutes (the default is 10).
   await write(
     admin()
       .from('settings')
-      .insert({ branch_id: await branchOf(staff), key: 'security.idle_lock_minutes', value: 2 }),
+      .insert({
+        gym_id: (await data.gym()).id,
+        branch_id: await branchOf(staff),
+        key: 'security.idle_lock_minutes',
+        value: 2,
+      }),
   );
 
   await page.clock.install();
@@ -290,4 +297,132 @@ test('the menu shows only what the role allows', async ({ page, staff, data }) =
   await page.getByRole('button', { name: 'کارمەندێکی تر' }).click();
   await submitPasswordLogin(page, manager);
   await expect(sidebar.getByText('ڕۆڵ و دەسەڵاتەکان')).toBeVisible();
+});
+
+// The gym at login (spec §2.6) ------------------------------------------------------------------
+
+const WRONG_LOGIN = 'کۆدی یانە، ناوی بەکارهێنەر یان وشەی نهێنی هەڵەیە.';
+const GYM_LOCKED = 'ئەم یانەیە قفڵ کراوە و بەکارناهێنرێت. پەیوەندی بە کلیک گرووپ بکە.';
+const GYM_READ_ONLY = 'ئەم یانەیە تەنها بۆ بینینە';
+const USE_ANOTHER_GYM = { name: 'یانەیەکی تر' } as const;
+
+test('the first login asks for the gym code, and the device remembers the gym', async ({
+  page,
+  staff,
+  data,
+}) => {
+  const gym = await data.gym();
+  await page.goto('/');
+  await expect(page.getByRole('heading', LOGIN_HEADING)).toBeVisible();
+  await expect(page.getByText('کۆدی یانە، ناوی بەکارهێنەر و وشەی نهێنیت بنووسە.')).toBeVisible();
+
+  // The code is required.
+  await page.getByLabel('ناوی بەکارهێنەر').fill(staff.username);
+  await page.getByLabel('وشەی نهێنی', { exact: true }).fill(staff.password);
+  await page.getByRole('button', { name: 'چوونەژوورەوە' }).click();
+  await expect(page.getByText('کۆدی یانە بنووسە.')).toBeVisible();
+
+  // Typed the way a Kurdish keyboard might: uppercase, spaces.
+  await page.getByLabel(GYM_CODE_LABEL).fill(`  ${staff.gymCode.toUpperCase()} `);
+  await page.getByLabel('وشەی نهێنی', { exact: true }).fill(staff.password);
+  await page.getByRole('button', { name: 'چوونەژوورەوە' }).click();
+  await expect(page.getByRole('heading', HOME_HEADING)).toBeVisible();
+
+  // From now on the device shows its gym and asks only for username and password.
+  await lockFromMenu(page);
+  await expect(page.getByTestId('device-gym')).toHaveText(gym.nameCkb);
+  await page.getByRole('button', { name: 'کارمەندێکی تر' }).click();
+  await expect(page.getByRole('heading', LOGIN_HEADING)).toBeVisible();
+  await expect(page.getByLabel(GYM_CODE_LABEL)).toHaveCount(0);
+  // Someone is logged in on the device, so it stays with its gym.
+  await expect(page.getByRole('button', USE_ANOTHER_GYM)).toHaveCount(0);
+
+  await page.reload();
+  await expect(page.getByTestId('device-gym')).toHaveText(gym.nameCkb);
+});
+
+test('a ?gym= link fills in the gym code', async ({ page, staff }) => {
+  await page.goto(`/?gym=${staff.gymCode}`);
+  await expect(page.getByLabel(GYM_CODE_LABEL)).toHaveValue(staff.gymCode);
+  await page.getByLabel('ناوی بەکارهێنەر').fill(staff.username);
+  await page.getByLabel('وشەی نهێنی', { exact: true }).fill(staff.password);
+  await page.getByRole('button', { name: 'چوونەژوورەوە' }).click();
+  await expect(page.getByRole('heading', HOME_HEADING)).toBeVisible();
+});
+
+test('a wrong gym code, username or password all get the same message', async ({
+  page,
+  staff,
+  otherGym,
+}) => {
+  const other = await otherGym.staff({ branchIds: [await otherGym.branch()] });
+  await page.goto('/');
+  await expect(page.getByRole('heading', LOGIN_HEADING)).toBeVisible();
+
+  const attempts = [
+    // A gym that doesn't exist.
+    { ...staff, gymCode: 'no-such-gym' },
+    // The right gym, a wrong password.
+    { ...staff, password: 'wrong-password' },
+    // Someone of another gym, with this gym's code.
+    { ...other, gymCode: staff.gymCode },
+    // This gym's staff member, with the other gym's code.
+    { ...staff, gymCode: other.gymCode },
+  ];
+  for (const attempt of attempts) {
+    await submitPasswordLogin(page, attempt);
+    await expect(page.getByRole('alert')).toHaveText(WRONG_LOGIN);
+  }
+  // Nothing was remembered: the next login still asks for the code.
+  await expect(page.getByLabel(GYM_CODE_LABEL)).toBeVisible();
+});
+
+test('"use another gym" is offered only when nobody is logged in on the device', async ({
+  page,
+  staff,
+}) => {
+  await signIn(page, staff);
+  await page.getByRole('button', { name: 'هەژمارەکەم' }).click();
+  await page.getByRole('menuitem', { name: 'چوونەدەرەوە لەم ئامێرە' }).click();
+  await page.getByRole('alertdialog').getByRole('button', { name: 'چوونەدەرەوە' }).click();
+
+  // Nobody is left on the device: it still knows its gym, and can be given another.
+  await expect(page.getByRole('heading', LOGIN_HEADING)).toBeVisible();
+  await expect(page.getByLabel(GYM_CODE_LABEL)).toHaveCount(0);
+  await page.getByRole('button', USE_ANOTHER_GYM).click();
+  await expect(page.getByLabel(GYM_CODE_LABEL)).toHaveValue('');
+  await expect(page.getByTestId('device-gym')).toHaveCount(0);
+});
+
+test("a locked gym can't be used, and the app says why", async ({ page, staff, data }) => {
+  await signIn(page, staff);
+  await data.setGym({ locked_at: new Date().toISOString() });
+  // The device checks when the network comes back (and every few minutes): it locks at once.
+  await page.evaluate(() => window.dispatchEvent(new Event('online')));
+
+  await expect(page.getByRole('heading', { level: 1, name: 'کێ کار دەکات؟' })).toBeVisible();
+  await expect(page.getByRole('alert')).toHaveText(GYM_LOCKED);
+  await unlock(page, staff);
+  await expect(page.getByRole('alert')).toHaveText(GYM_LOCKED);
+
+  // The password doesn't open it either.
+  await page.getByRole('button', { name: 'گەڕانەوە' }).click();
+  await page.getByRole('button', { name: 'کارمەندێکی تر' }).click();
+  await submitPasswordLogin(page, staff);
+  await expect(page.getByRole('alert')).toHaveText(GYM_LOCKED);
+});
+
+test('staff of a read-only gym can still log in and look, and see that it is view-only', async ({
+  page,
+  staff,
+  data,
+}) => {
+  await data.setGym({ suspended_at: new Date().toISOString() });
+  await signIn(page, staff);
+  await expect(page.getByRole('heading', HOME_HEADING)).toBeVisible();
+
+  await lockFromMenu(page);
+  await expect(page.getByRole('alert')).toContainText(GYM_READ_ONLY);
+  await unlock(page, staff);
+  await expect(page.getByRole('heading', HOME_HEADING)).toBeVisible();
 });

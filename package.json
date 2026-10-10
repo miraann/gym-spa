@@ -30,7 +30,8 @@
     "db:test": "pnpm --filter @gym/supabase test",
     "db:lint": "pnpm --filter @gym/supabase lint",
     "db:types": "pnpm --filter @gym/supabase types && prettier --write --log-level warn packages/db/src/database.types.ts",
-    "bootstrap:admin": "pnpm --filter @gym/supabase bootstrap:admin"
+    "bootstrap:admin": "pnpm --filter @gym/supabase bootstrap:admin",
+    "staff-logins:move": "pnpm --filter @gym/supabase staff-logins:move"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
