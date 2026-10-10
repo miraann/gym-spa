@@ -6,7 +6,9 @@ Multi-branch gym & spa system with NFC check-in. One codebase for Web/PWA, Andro
 - Full spec: [gym-spa-system-prompt.md](gym-spa-system-prompt.md)
 - Working rules for contributors and Claude: [CLAUDE.md](CLAUDE.md)
 
-> **Status:** Phase 1d done, then reworked for two editions (1d-R). The app always talks to its server: Supabase in the cloud for the **online edition** (web, Android, Windows), and later a server PC on the gym's local network for the **offline edition** (Windows only, see [CLAUDE.md](CLAUDE.md) → Two editions). Staff log in with their password once per device, then switch with a PIN that the server checks. The cloud setup (Supabase, Vercel) is live. The admin screens (staff, roles, branches, devices) come in 1e. This README grows with each step.
+> **Status:** Phase 1d done, then reworked for two editions (1d-R). The app always talks to its server: Supabase in the cloud for the **online edition** (web, Android, Windows), and later a server PC on the gym's local network for the **offline edition** (Windows only, see [CLAUDE.md](CLAUDE.md) → Two editions). Staff log in with their password once per device, then switch with a PIN that the server checks. The cloud setup (Supabase, Vercel) is live. The auth spike is done: Supabase Auth runs on the offline edition's Windows server PC ([spikes/windows-auth/README.md](spikes/windows-auth/README.md)). This README grows with each step.
+>
+> **Many gyms (spec §2.6).** Click Group sells the system to many gyms. The online edition becomes multi-tenant: each gym's data (branches, staff, roles, settings, devices, members) is kept apart from every other gym's, staff log in with a gym code, and a separate **seller panel** (`apps/seller`) creates and manages the gyms, their subscriptions and the offline licenses. Today the database holds a single gym, and the "Super Admin" in this README is that gym's top role; MT-1 renames it **Owner** (خاوەن). Next steps, in order (spec §8): the design step, the multi-tenant step (MT-1 to MT-5), 1e (admin screens: staff, roles, branches, devices), 1f (offline-edition server test).
 
 ## Requirements
 

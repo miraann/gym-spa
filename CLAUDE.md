@@ -22,12 +22,24 @@ One app and one set of migrations, with two backends that expose the same API (P
 - The app only knows one backend address (cloud Supabase, or the server PC).
 - **Server-side logic goes in Postgres functions and triggers**, so it runs the same in both editions. Don't use Supabase-only features (Edge Functions, pg_cron, Realtime, Storage) unless the offline edition gets its own version too. Screens refresh with TanStack Query (on focus or on a timer), not Realtime.
 - There is no PowerSync and no powersync.com.
-- Offline edition extras (planned): one installer with two modes ("This PC is the server" / "Connect to the server"), pairing code per PC, encrypted LAN traffic (self-made certificate), daily automatic backups + restore, LAN discovery with manual address fallback.
+- Offline edition extras (planned): one installer with two modes ("This PC is the server" / "Connect to the server"), pairing code per PC, encrypted LAN traffic (self-made certificate), daily automatic backups + restore, LAN discovery with manual address fallback. The offline server must set Auth's `GOTRUE_DB_MAX_IDLE_POOL_SIZE` and build Supabase Auth with the Windows patch (`spikes/windows-auth/README.md`).
+
+## Many gyms (multi-tenant, spec §2.6)
+
+Decided by the user on 2026-10-10; the plan was approved the same day. Spec §2.6 has the details and wins over this summary. Built in sub-steps MT-1 to MT-5 (each stops for review).
+
+- **The online edition is multi-tenant:** many gyms share one cloud project. **The offline edition** uses the same schema with exactly one gym row.
+- **Isolation:** every business table has `gym_id`, with composite foreign keys so rows of two gyms can never be linked. RLS checks it everywhere, and a staff member belongs to exactly one gym. pgTAP tests prove that no gym can read or write another gym's data. Usernames, the PIN lockout, settings and the audit log are per gym. The `permissions` catalog stays global.
+- **Login:** the first login on a device asks for the gym code; the device remembers it (web: `?gym=<code>` fills it in). The Auth email is `<username>@<gym code>.staff.gym-spa.invalid`. The offline edition never asks.
+- **Roles:** the gym's top role is **Owner** (خاوەن, key `owner`), formerly Super Admin. Built-in roles are copied into each gym.
+- **Seller panel** (Click Group) is a separate web-only app, `apps/seller`. `platform_admins` are a separate account type that gym roles can never reach, with TOTP required (`aal2`), one-time recovery codes stored as hashes, and at least two admins. Every seller action goes into `platform_audit_logs`. The seller cannot read member data unless the gym grants time-limited support access, and then only through audited read-only functions.
+- **Access state:** active → 30-day grace → read-only (view only, nothing new added, data never deleted). Online gyms follow their subscription in the seller panel; offline gyms follow their license. **Suspend** = read-only; **Lock** (fraud, stolen account; needs a reason) blocks login completely.
+- **Offline licenses:** signed with Ed25519 by an Edge Function. The private key is never in the app, the repo or the database; the offline server holds only the public keys, labelled by `kid`. They are yearly or perpetual-with-"updates until", activated per machine, with Kurdish warnings at 30, 7 and 1 days, and protected against clock tampering.
 
 ## How to work
 
 - Build in the phases from spec §8, in order. **Stop for the user's review after each phase.**
-- **When a phase is split into sub-steps (Phase 1: 1a–1d, then 1d-R (PowerSync removed), the auth spike (Supabase Auth on the offline edition's Windows server PC), the design step (Calm Bento theme, adaptive navigation and Appearance settings, see Design below), 1e, 1f (offline-edition server test)), stop for review after each sub-step** and say how to test it and what to commit. The user makes the commits.
+- **When a phase is split into sub-steps (Phase 1: 1a–1d, then 1d-R (PowerSync removed), the auth spike (Supabase Auth on the offline edition's Windows server PC), the design step (Calm Bento theme, adaptive navigation and Appearance settings, see Design below), the multi-tenant step (MT-1 to MT-5: gyms, staff module, seller panel, support access, license format and signing, see Many gyms below), 1e, 1f (offline-edition server test)), stop for review after each sub-step** and say how to test it and what to commit. The user makes the commits.
 - Before writing code for a phase, present the plan (tables, files, assumptions) and **wait for approval**.
 - At the end of each phase (and sub-step), report: what was built, migrations added, how to test manually, and known limitations.
 - §4.7 Staff & HR is built in Phase 7 (together with classes and personal training).
@@ -120,7 +132,7 @@ Soft, tonal, rounded, touch-first. The app looks like a modern phone/tablet app,
 
 ## Database rules
 
-- `uuid` PKs. Every business table has `id`, `branch_id` (where relevant), `created_at`, `updated_at`, `created_by`, `deleted_at` (soft delete).
+- `uuid` PKs. Every business table has `id`, `gym_id` (from the multi-tenant step on), `branch_id` (where relevant), `created_at`, `updated_at`, `created_by`, `deleted_at` (soft delete).
 - Money is `numeric(14,2)`, never float. Use enums or check constraints for statuses.
 - **RLS is enabled on every table; no table is left open.** Permission checks go through `has_permission(perm text)`.
 - SQL helpers live in the private `app` schema (not exposed to the API). In policies write `(select app.has_permission('x'))` and `branch_id in (select app.accessible_branch_ids())` so they run once per query, not per row.
@@ -155,6 +167,7 @@ Soft, tonal, rounded, touch-first. The app looks like a modern phone/tablet app,
 - **Staff login:** username + password, mapped to an internal email behind the scenes (`<username>@staff.gym-spa.invalid`, `packages/core/src/staff.ts`).
 - **PIN switching:** a staff member logs in with their password once per device; the device keeps their session so others can switch to them with a 6-digit PIN. **The server checks the PIN and the lockout** (5 wrong tries); PIN hashes never leave the server. Auto-lock when idle. Every request runs under the acting staff member's own session, so the server checks permissions with `auth.uid()`.
 - **Devices:** a `devices` table gives each device a code, its branch, a default language and a last-seen time.
+- **Staff accounts (design B, decided 2026-10-10):** create, password reset, deactivation and username changes go through Supabase Auth's official admin API. The code is one shared TypeScript module, run as an Edge Function online and as a `gym-server` route offline. The secret key lives only there. It checks the caller in Postgres under their own session, calls Auth, then writes the staff rows under the caller's session, so the guards run. If that fails, it deletes the new Auth user again.
 - **Language order:** staff preference → device default → `ckb`. Sorani month names come from our own translation files, not the browser's `ckb` locale data (support varies between Chromium and Android WebView).
 - **Tooling:** pnpm workspaces only (no Turborepo). Shared packages are plain TypeScript source without a build step, except Electron's main process. TypeScript stays on 6.0.x until typescript-eslint supports TS 7. Run `pnpm check` (typecheck, lint, format, unit tests) and `pnpm test:e2e` before handing over a step.
 - **Language rules are enforced by tooling:** the `gym/no-hardcoded-ui-text` and `gym/no-physical-direction-classes` lint rules (`tools/eslint-plugin-gym`), plus tests for translation parity, Sorani/Arabic spelling and font glyph coverage. After `shadcn add`, run `pnpm format` and fix any hardcoded English the lint rule reports.

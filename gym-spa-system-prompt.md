@@ -99,11 +99,76 @@ Also implement `check_out(...)` (optional, for occupancy tracking and locker rel
 - **PIN switching on shared PCs:** a staff member logs in with their password once per device; others switch to them with a PIN. The server checks the PIN, counts wrong tries and locks it (a password login unlocks it); PIN hashes never leave the server.
 - **Internet-only features** (online edition only; hidden in the offline edition): SMS/WhatsApp, online payment gateways, cross-branch cloud reports.
 - **Photos:** Supabase Storage in the online edition, files on the server PC in the offline edition, behind one storage adapter.
+- **Staff accounts** (create, reset password, deactivate/reactivate, change username) use Supabase Auth's official admin API, from **one shared TypeScript module** that runs as an Edge Function in the online edition and as a `gym-server` route in the offline edition. The secret key exists only there. The module first checks the caller's rights in Postgres under the caller's own session, then calls Auth, then writes the staff rows under the caller's session (so the usual guards run). If that last step fails, it removes the new Auth user again (compensation). Decided by the user on 2026-10-10 after the auth spike (`spikes/windows-auth/README.md`).
+
+## 2.6 Many gyms: tenants, seller panel and licenses
+Click Group sells the system to many gyms. The requirements were decided by the user on 2026-10-10, and the multi-tenant plan was approved the same day, with the user's additions (Lock, recovery codes, two platform admins, key safety).
+
+- **Online edition: multi-tenant.** Many gyms share one cloud project. **Offline edition:** the same schema with exactly one gym row, so the code stays identical.
+- **Isolation:**
+  - A `gyms` table. Every business table has `gym_id`, and RLS checks it on every table. A staff member belongs to exactly one gym, and a row's `gym_id` never changes.
+  - Composite foreign keys (for example `(branch_id, gym_id)` → `branches (id, gym_id)`) make a link between two gyms' rows impossible in the database itself, even for server code with the secret key.
+  - pgTAP tests prove that gym A can never read or write gym B's data, on every table. The table list comes from the database catalog, so new tables are covered automatically.
+  - The `permissions` catalog stays global, because the platform defines it.
+- **Gym roles:** the gym's top role is **Owner** (خاوەن, key `owner`). It was called Super Admin before this step; the new name keeps it apart from the platform admins. The built-in roles are copied into each gym when the gym is created, and a gym's custom roles belong to that gym.
+- **Login:**
+  - Usernames are unique per gym, not globally. The login email is `<username>@<gym code>.staff.gym-spa.invalid`. The gym code is short, lowercase and permanent, because it is part of every login.
+  - The first login on a device asks for the **gym code**, username and password. The device then remembers the gym: the login screen shows the gym's name and logo and asks only for username and password. "Use another gym" appears only when no staff member is logged in on the device.
+  - On the web, a link like `…/?gym=<code>` fills in the gym code, which also helps when installing the PWA.
+  - The offline edition has exactly one gym and never asks for a code.
+  - A wrong gym code, username or password gives the same message, so nobody can find out which gyms or usernames exist.
+  - The PIN lockout, the settings and the audit log are per gym.
+- **Seller panel** for the platform owner (Click Group):
+  - **A separate app, `apps/seller`:** web only, with its own Vercel project, domain and Content-Security-Policy. It is never part of the APK, the EXE or the offline edition, and the gym app's bundle contains no seller code. Shared code comes from `packages/`.
+  - **Platform admins:** `platform_admins` accounts are completely separate from gym roles. One login can never be both a staff member and a platform admin, and a gym's Owner can never reach the panel. Platform admins log in with a real email address.
+  - **Two-step login (TOTP) is required.** Every seller function checks that the session passed the second step (`aal2`).
+  - **Recovery codes:** setting up TOTP creates one-time recovery codes. They are shown once and stored only as hashes. Using one removes the lost TOTP device, so the admin sets up a new one right away. Every use is logged.
+  - **At least two platform admins,** so losing one phone never locks Click Group out. The panel warns while there is only one, and the last active platform admin can't be deactivated. A platform admin can reset another platform admin's two-step login.
+  - **Recovery procedure, documented in the README:** another platform admin resets the lost two-step login; otherwise the admin uses a recovery code; as a last resort, a script run on Click Group's PC with the project's secret key resets it.
+  - **What the panel does:** creates a gym with its first Owner account, sets an online gym's subscription dates, suspends, locks or reactivates a gym, and shows usage numbers per gym (counts only, never member data).
+  - **Seller audit log:** `platform_audit_logs` records every seller action: who, when, which gym, what, and the reason where one is required.
+  - **Support access:** by default the seller cannot read a gym's member data. The only exception is support access that the gym grants itself (permission `support.grant`):
+    - for 1 hour to 7 days, with a reason, and the gym can revoke it at any time;
+    - the gym sees a notice "Click Group can see your data until …";
+    - the seller reads only through specific read-only functions, and every call writes an audit row in the same transaction. Postgres can't record plain reads, so this is the only way to audit every read. Business tables have no seller policies at all;
+    - online gyms only: an offline gym's data never reaches the cloud.
+- **Gym access state:** active → grace period (30 days, with warnings) → read-only. Read-only means members, history and reports can still be viewed, but nothing new can be added (no check-ins, payments or new members). Data is never deleted.
+  - Online gyms have no license key. Their subscription dates are set in the seller panel, and they follow the same rule when the subscription lapses.
+  - **Suspend** is the normal action (for example an unpaid subscription): the gym becomes read-only at once. Its staff can still log in and view their data.
+  - **Lock** is only for exceptional cases (fraud, a stolen account). It blocks login completely: no new sessions, and sessions already open stop working at once. Locking needs a reason, which is stored in `platform_audit_logs`.
+  - **Reactivate** ends a suspension or a lock, and is logged too.
+  - Offline gyms follow their license (below).
+  - Each gym's limits (max branches, max devices) are enforced in Postgres in both editions.
+- **Offline licenses (serial keys):**
+  - **The license:** each offline gym gets a unique license, created in the seller panel. It is signed with Ed25519 and contains:
+    - the gym id and gym name;
+    - the license type (yearly or perpetual), max branches, max devices and edition features;
+    - the issue date, plus either an expiry date (yearly) or an "updates until" date (perpetual);
+    - the license id, and the id of the key that signed it (`kid`).
+  - **Format:** `GSL1.<payload>.<signature>`. The code is about 150 characters, so it is pasted or loaded from a file, not typed.
+  - **The signing key:** the private key never goes into the app, the repo or the database. Signing happens only on the server, in an Edge Function that has the key in its secret environment, and only for a platform admin with two-step login. The offline server contains only the public keys, labelled by `kid`, so the key can be replaced.
+  - **Key safety, documented in the README:**
+    - **Backup:** the private key is kept in Click Group's password manager and on an encrypted USB copy. Apart from the Edge Function's secrets, it exists nowhere else.
+    - **Lost key:** make a new key pair with a new `kid`, and ship its public key in the next release. Licenses signed with the old key keep working, because the old public key stays in the app.
+    - **Leaked key:** make a new key pair with a new `kid`, issue every license and activation again with it, and reject the old `kid` in the next release. A server that never installs that release still accepts the old key; that is a limit we accept.
+  - **Machine activation:** the offline server shows a machine code, and the seller panel turns license + machine code into an activation code (`GSA1.<payload>.<signature>`) that works only on that PC. The machine code comes from the Windows machine id and the motherboard serial, so reinstalling Windows needs a new activation. Moving to a new PC goes through the seller panel (deactivate the old PC, activate the new one).
+  - **Yearly license:** it has an expiry date. After expiry there is a 30-day grace period with a warning, then the gym goes read-only. Renewal is a new signed license code.
+  - **Perpetual license with paid updates:** it never expires, but has an "updates until" date. Every release has its build date embedded. The offline server refuses to install a version built after "updates until" and explains why in Kurdish; the installed version keeps working forever. Buying more updates means a new license code with a later "updates until" date.
+  - **Warnings:** both license types, and online subscriptions, show in-app warnings in Kurdish to the gym admin 30 days, 7 days and 1 day before expiry or the end of updates.
+  - **Seller panel:** it shows each gym's license type, dates and status, and issues renewal codes. Every license issued, activated or revoked is logged there.
+  - **Clock tampering:** the offline server records the latest date it has ever seen, from the PC clock and from the newest timestamps in the database. If the PC clock goes back more than 48 hours, it shows a Kurdish warning and treats the license as expired until the clock is corrected. It never trusts the PC clock alone for yearly expiry.
+  - **Limits we accept:** a signature stops forged codes, but someone who controls the server PC can patch the program, so the license is a deterrent. An offline PC can't be revoked from a distance: "deactivate" in the seller panel is a record only, and a yearly license still runs out.
+- **Order:** this step comes after the design step and before 1e. It has five sub-steps, and each one stops for review:
+  1. **MT-1 Isolation:** `gyms`, `gym_id` and composite keys on every table, the RLS rewrite, the Owner role, roles copied per gym, the read-only state and limits, per-gym usernames, PINs, settings and audit log, and the gym code at login.
+  2. **MT-2 Staff module** (design B, §2.5). Creating a gym's Owner needs it.
+  3. **MT-3 Seller panel:** `apps/seller`, platform admins with TOTP and recovery codes, gyms (create, subscription dates, suspend, lock, reactivate), usage counts, the seller audit log, and the 30/7/1-day warnings in the gym app.
+  4. **MT-4 Support access.**
+  5. **MT-5 Licenses:** the format, signing and keys, and the seller's license and activation screens. Activation and enforcement on the offline server come with the offline packaging phase.
 
 ## 3. Roles & permissions (RBAC)
 Do not hardcode role checks in the UI only. Use a permission-based model:
-- Tables: `roles`, `permissions`, `role_permissions`, `staff_users` (links to `auth.users`; **one role per staff member**; `all_branches` flag), `staff_branches` (join table — a staff member can be given access to several branches)
-- Default roles: **Super Admin** (owner, all branches), **Admin**, **Branch Manager**, **Receptionist**, **Trainer**, **Spa Therapist**, **Accountant**, **Cashier**
+- Tables: `roles`, `permissions`, `role_permissions`, `staff_users` (links to `auth.users`; **one role per staff member**; `all_branches` flag), `staff_branches` (join table — a staff member can be given access to several branches). Everything except the `permissions` catalog belongs to one gym (§2.6)
+- Default roles, copied into every gym: **Owner** (خاوەن, every permission, all branches; called Super Admin before the multi-tenant step), **Admin**, **Branch Manager**, **Receptionist**, **Trainer**, **Spa Therapist**, **Accountant**, **Cashier**
 - Permissions are granular strings, e.g. `members.create`, `members.delete`, `payments.refund`, `reports.financial.view`, `settings.edit`, `staff.manage`, `lockers.assign`, `discount.apply.max_10`
 - Admin can create custom roles and toggle permissions from a matrix UI
 - Enforce permissions in **three layers**: RLS policies (via a `has_permission(perm text)` SQL function), server-side validation (guards, Postgres functions), and UI (hide/disable, using the permissions from the last server check)
@@ -241,7 +306,7 @@ The app must not have only one look. The default is indigo + light + soft corner
 - CI (GitHub Actions): build and deploy web on every push; produce the signed APK and Windows EXE as release artifacts
 
 ## 8. Build phases (do them in order, stop for my review after each)
-1. **Foundation:** monorepo + Vite PWA + Vercel deploy + Capacitor (Android) + Electron (Windows) projects — debug APK and EXE build from day one, Supabase connection, connection indicator, PIN switching (checked by the server), i18n + RTL, auth, branches, RBAC tables + RLS + permission matrix UI, staff management, audit log trigger, layout & navigation. Sub-step order after 1d-R: the auth spike, then the **design step** (Calm Bento theme, phone tab bar / tablet rail / desktop sidebar, the §6.1 Appearance settings and the §6 layout rules), then 1e (admin screens), then 1f (offline-edition server test)
+1. **Foundation:** monorepo + Vite PWA + Vercel deploy + Capacitor (Android) + Electron (Windows) projects — debug APK and EXE build from day one, Supabase connection, connection indicator, PIN switching (checked by the server), i18n + RTL, auth, branches, RBAC tables + RLS + permission matrix UI, staff management, audit log trigger, layout & navigation. Sub-step order after 1d-R: the auth spike, then the **design step** (Calm Bento theme, phone tab bar / tablet rail / desktop sidebar, the §6.1 Appearance settings and the §6 layout rules), then the **multi-tenant step** (§2.6, sub-steps MT-1 to MT-5: gyms and `gym_id` isolation, per-gym login, the staff module, the seller panel, support access, the license format and signing), then 1e (admin screens), then 1f (offline-edition server test)
 2. **Members & NFC:** member CRUD, photo capture, NFC card assign/replace, NFC reader abstraction, global search
 3. **Plans, subscriptions & payments:** plans, subscribe/renew/freeze/upgrade, payments, invoices, receipts, debts, installments
 4. **Check-in engine:** `check_in` function + tests, check-in kiosk screen, attendance list, live occupancy
