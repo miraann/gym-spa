@@ -1,0 +1,25 @@
+{
+  "name": "@gym/seller-admin",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "The seller panel's server module: gyms with their first Owner, and platform admin logins, through the Supabase Auth admin API (Edge Function seller-admin)",
+  "exports": {
+    ".": "./src/index.ts",
+    "./server": "./src/server.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "test:int": "vitest run --config vitest.int.config.ts"
+  },
+  "dependencies": {
+    "@gym/core": "workspace:*",
+    "@gym/db": "workspace:*",
+    "@gym/staff-admin": "workspace:*",
+    "@supabase/supabase-js": "^2.117.2",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.1"
+  }
+}

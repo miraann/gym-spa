@@ -665,7 +665,25 @@ const tokenCases: StaffAdminCase[] = [
     const response = await handlerFor(world, seen, tokens.verifier)(post(newStaff(), token));
     equal(response.status, 200, 'status');
     equal(seen, [token], 'the database calls go with the same token');
-    equal(await tokens.verifier(token), { ok: true, userId: MANAGER_ID }, 'the check itself');
+    equal(
+      await tokens.verifier(token),
+      { ok: true, userId: MANAGER_ID, aal: null },
+      'the check itself',
+    );
+  }),
+
+  test("token: the check reports the session's assurance level (aal1, aal2)", async () => {
+    const tokens = await testTokens();
+    equal(
+      await tokens.verifier(await tokens.sign({ aal: 'aal2' })),
+      { ok: true, userId: MANAGER_ID, aal: 'aal2' },
+      'after two-step login',
+    );
+    equal(
+      await tokens.verifier(await tokens.sign({ aal: 'aal1' })),
+      { ok: true, userId: MANAGER_ID, aal: 'aal1' },
+      'after the password',
+    );
   }),
 
   test('token: a forged token (another key, same key id) is refused before any call', async () => {

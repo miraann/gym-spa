@@ -1,7 +1,7 @@
 import { staffEmail } from '@gym/core';
+import { AddressTaken, RowsNotWritten, withAddressFreed, writeRowsOrUndo } from './accounts.ts';
 import { StaffAdminError, type StaffAdminErrorKey } from './errors.ts';
 import {
-  AuthAdminError,
   DatabaseError,
   summarizeError,
   type AdminPort,
@@ -85,38 +85,16 @@ function refusal(
   return new StaffAdminError(fallback, { cause: error });
 }
 
-function isEmailTaken(error: unknown): boolean {
-  return error instanceof AuthAdminError && error.code === 'email_exists';
-}
-
-/**
- * Runs an Auth change that gives a login this address. When the address is taken by a login left
- * behind (public.staff_admin_orphan decides), that login is deleted and the change tried once
- * more. Only the id the database returned is ever deleted.
- */
-async function withAddressFreed<T>(
-  deps: StaffAdminDeps,
-  action: string,
-  email: string,
-  change: () => Promise<T>,
-): Promise<T> {
-  try {
-    return await change();
-  } catch (error) {
-    if (!isEmailTaken(error)) throw error;
-  }
-
-  const orphan = await deps.admin.findOrphanLogin(email);
-  if (orphan === null) throw new StaffAdminError('username_taken');
-  await deps.admin.deleteLogin(orphan);
-  deps.log({ event: 'orphan_login_deleted', action, staffId: orphan, email });
-
-  try {
-    return await change();
-  } catch (error) {
-    if (isEmailTaken(error)) throw new StaffAdminError('username_taken', { cause: error });
-    throw error;
-  }
+/** Frees a login address taken by a login left behind (staff_admin_orphan decides), for one action. */
+function freeing(deps: StaffAdminDeps, action: string, email: string) {
+  return {
+    email,
+    findOrphan: (address: string) => deps.admin.findOrphanLogin(address),
+    deleteLogin: (id: string) => deps.admin.deleteLogin(id),
+    onOrphanDeleted: (id: string) => {
+      deps.log({ event: 'orphan_login_deleted', action, staffId: id, email });
+    },
+  };
 }
 
 export async function createStaff(
@@ -141,39 +119,45 @@ export async function createStaff(
   const temporaryPassword = (deps.temporaryPassword ?? generateTemporaryPassword)();
   let staffId: string;
   try {
-    staffId = await withAddressFreed(deps, action, email, () =>
+    staffId = await withAddressFreed(freeing(deps, action, email), () =>
       deps.admin.createLogin({ email, password: temporaryPassword, gymId: permit.gymId }),
     );
   } catch (error) {
+    if (error instanceof AddressTaken)
+      throw new StaffAdminError('username_taken', { cause: error });
     throw refusal(deps, action, error, 'staff_create_failed');
   }
 
   try {
-    await deps.caller.createProfile({
-      id: staffId,
-      username: request.username,
-      fullName: request.fullName,
-      phone: request.phone ?? null,
-      roleId: request.roleId,
-      allBranches: request.allBranches,
-      branchIds,
-    });
+    // Undone when it fails: a login without a staff account would keep the username blocked.
+    await writeRowsOrUndo(
+      staffId,
+      () =>
+        deps.caller.createProfile({
+          id: staffId,
+          username: request.username,
+          fullName: request.fullName,
+          phone: request.phone ?? null,
+          roleId: request.roleId,
+          allBranches: request.allBranches,
+          branchIds,
+        }),
+      (id) => deps.admin.deleteLogin(id),
+      (undoError, cause) => {
+        deps.log({
+          event: 'compensation_failed',
+          action,
+          staffId,
+          email,
+          error: summarizeError(undoError),
+          cause: summarizeError(cause),
+        });
+      },
+    );
   } catch (error) {
-    // Undo: a login without a staff account would keep the username blocked.
-    try {
-      await deps.admin.deleteLogin(staffId);
-    } catch (undoError) {
-      deps.log({
-        event: 'compensation_failed',
-        action,
-        staffId,
-        email,
-        error: summarizeError(undoError),
-        cause: summarizeError(error),
-      });
-      throw new StaffAdminError('staff_create_failed', { cause: error });
-    }
-    throw refusal(deps, action, error, 'staff_create_failed', staffId);
+    if (!(error instanceof RowsNotWritten)) throw error;
+    if (!error.undone) throw new StaffAdminError('staff_create_failed', { cause: error.cause });
+    throw refusal(deps, action, error.cause, 'staff_create_failed', staffId);
   }
 
   return { staffId, username: request.username, temporaryPassword };
@@ -287,9 +271,12 @@ export async function renameStaff(
   const oldEmail = staffEmail(permit.username, permit.gymCode);
   const newEmail = staffEmail(username, permit.gymCode);
   try {
-    await withAddressFreed(deps, action, newEmail, () => deps.admin.setEmail(staffId, newEmail));
+    await withAddressFreed(freeing(deps, action, newEmail), () =>
+      deps.admin.setEmail(staffId, newEmail),
+    );
   } catch (error) {
-    if (error instanceof StaffAdminError) throw error;
+    if (error instanceof AddressTaken)
+      throw new StaffAdminError('username_taken', { cause: error });
     deps.log({ event: 'auth_update_failed', action, staffId, error: summarizeError(error) });
     throw new StaffAdminError('auth_update_failed', { cause: error });
   }

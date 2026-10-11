@@ -386,6 +386,28 @@ importers:
         specifier: ^8.5.2
         version: 8.5.2
 
+  packages/seller-admin:
+    dependencies:
+      '@gym/core':
+        specifier: workspace:*
+        version: link:../core
+      '@gym/db':
+        specifier: workspace:*
+        version: link:../db
+      '@gym/staff-admin':
+        specifier: workspace:*
+        version: link:../staff-admin
+      '@supabase/supabase-js':
+        specifier: ^2.117.2
+        version: 2.117.2
+      zod:
+        specifier: ^4.6.5
+        version: 4.6.5
+    devDependencies:
+      '@types/node':
+        specifier: ^24.19.1
+        version: 24.19.1
+
   packages/staff-admin:
     dependencies:
       '@gym/core':

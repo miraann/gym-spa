@@ -74,6 +74,11 @@ export class TestGym {
     return new TestGym(backend, gym.id, code);
   }
 
+  /** A gym made some other way (e.g. by the seller panel), so the tests can use and remove it. */
+  static existing(backend: Backend, id: string, code: string): TestGym {
+    return new TestGym(backend, id, code);
+  }
+
   get admin(): Client {
     return adminClient(this.backend);
   }

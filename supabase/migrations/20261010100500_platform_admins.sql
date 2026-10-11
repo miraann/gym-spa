@@ -62,7 +62,9 @@ create table platform.audit_logs (
     'admin_two_step_reset', 'admin_password_reset',
     'recovery_codes_created', 'recovery_code_used', 'recovery_code_rejected'
   )),
-  gym_id uuid references public.gyms (id),
+  -- No foreign keys, like public.audit_logs: the log keeps its entries whatever happens to the
+  -- rows they describe.
+  gym_id uuid,
   target_admin_id uuid,
   reason text check (app.is_clean_text(reason, 500)),
   details jsonb not null default '{}' check (jsonb_typeof(details) = 'object'),

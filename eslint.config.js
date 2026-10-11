@@ -104,14 +104,16 @@ export default defineConfig(
     },
   },
 
-  // Code that the staff-admin Edge Function runs in Deno, which resolves no import without its
-  // extension.
+  // Code that the staff-admin and seller-admin Edge Functions run in Deno, which resolves no import
+  // without its extension.
   {
     files: [
       'packages/core/src/**/*.ts',
       'packages/db/src/**/*.ts',
       'packages/staff-admin/src/**/*.ts',
       'packages/staff-admin/test/**/*.ts',
+      'packages/seller-admin/src/**/*.ts',
+      'packages/seller-admin/test/**/*.ts',
     ],
     plugins: { gym },
     rules: {

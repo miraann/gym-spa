@@ -120,7 +120,7 @@ select results_eq(
 );
 select results_eq(
   $$ select actor_id, actor_email, target_admin_id, details ->> 'email' from platform.audit_logs
-      where action = 'admin_created' $$,
+      where action = 'admin_created' and target_admin_id = 'a0000000-0000-4000-8000-000000000001' $$,
   $$ values (tests.platform_admin('ali@clickgroup.example'), 'ali@clickgroup.example'::text,
              'a0000000-0000-4000-8000-000000000001'::uuid, 'newcomer@clickgroup.example'::text) $$,
   'adding a platform admin is logged with who did it'

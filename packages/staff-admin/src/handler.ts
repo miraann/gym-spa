@@ -47,23 +47,24 @@ export const CORS_HEADERS = {
   'Access-Control-Max-Age': '86400',
 } as const;
 
-function json(status: number, body: unknown): Response {
+/** A JSON answer with the CORS headers; never cached (answers can hold a temporary password). */
+export function jsonResponse(status: number, body: unknown): Response {
   return new Response(JSON.stringify(body), {
     status,
     headers: {
       ...CORS_HEADERS,
       'Content-Type': 'application/json; charset=utf-8',
-      // Answers can hold a temporary password: nothing may keep a copy.
       'Cache-Control': 'no-store',
     },
   });
 }
 
 function failure(key: StaffAdminErrorKey): Response {
-  return json(new StaffAdminError(key).status, { error: key });
+  return jsonResponse(new StaffAdminError(key).status, { error: key });
 }
 
-function bearerToken(request: Request): string | null {
+/** The token of an `Authorization: Bearer <token>` header, or null. */
+export function bearerToken(request: Request): string | null {
   const match = /^Bearer\s+(\S+)\s*$/i.exec(request.headers.get('Authorization') ?? '');
   return match?.[1] ?? null;
 }
@@ -129,7 +130,7 @@ export function createStaffAdminHandler(
         log,
         ...(options.temporaryPassword ? { temporaryPassword: options.temporaryPassword } : {}),
       };
-      return json(200, await run(deps, parsed.data));
+      return jsonResponse(200, await run(deps, parsed.data));
     } catch (error) {
       if (error instanceof StaffAdminError) return failure(error.key);
       log({ event: 'unexpected_error', action: parsed.data.action, error: summarizeError(error) });

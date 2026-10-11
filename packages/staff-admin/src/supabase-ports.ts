@@ -24,7 +24,8 @@ interface AuthFailure {
   readonly status?: number | undefined;
 }
 
-function authFailed(error: AuthFailure): AuthAdminError {
+/** An Auth admin API error as an AuthAdminError. */
+export function authFailed(error: AuthFailure): AuthAdminError {
   return new AuthAdminError(error.code ?? null, error.status ?? null, error.message);
 }
 
@@ -33,7 +34,8 @@ interface PostgrestFailure {
   readonly status: number;
 }
 
-function databaseFailed({ error, status }: PostgrestFailure): DatabaseError {
+/** A failed PostgREST call as a DatabaseError (the guard's key is its message). */
+export function databaseFailed({ error, status }: PostgrestFailure): DatabaseError {
   return new DatabaseError(error?.message ?? 'no_result', error?.code ?? null, status);
 }
 
@@ -146,7 +148,7 @@ export interface StaffAdminConfig {
 }
 
 /** Headers of the app's request that the audit log reads (app.request_ip, app.request_device_id). */
-const FORWARDED_HEADERS = ['x-device-id', 'x-forwarded-for'] as const;
+export const FORWARDED_HEADERS = ['x-device-id', 'x-forwarded-for'] as const;
 
 /**
  * What the handler needs from a Supabase project (cloud, local, or the gym's server PC): its token

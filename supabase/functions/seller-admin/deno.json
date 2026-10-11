@@ -1,0 +1,12 @@
+{
+  "lock": false,
+  "imports": {
+    "@gym/core": "../../../packages/core/src/index.ts",
+    "@gym/db": "../../../packages/db/src/index.ts",
+    "@gym/staff-admin/server": "../../../packages/staff-admin/src/server.ts",
+    "@gym/seller-admin/server": "../../../packages/seller-admin/src/server.ts",
+    "@supabase/supabase-js": "npm:@supabase/supabase-js@2.117.2",
+    "jose": "npm:jose@6.2.12",
+    "zod": "npm:zod@4.6.5"
+  }
+}

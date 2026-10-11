@@ -404,6 +404,14 @@ enabled = true
 # token, and nothing uses the secret key before that has passed.
 verify_jwt = false
 
+# The seller panel's module (packages/seller-admin, spec §2.6 step MT-3). Deploy it with
+# `pnpm --filter @gym/supabase exec supabase functions deploy seller-admin --use-api --workdir ..`
+[functions.seller-admin]
+enabled = true
+# Off for the same reason as staff-admin. The function checks the token itself first (and requires
+# two-step login, aal2, except for using a recovery code); the database checks again.
+verify_jwt = false
+
 [analytics]
 # Off: on Windows it needs the Docker daemon exposed over TCP, and the app logs elsewhere.
 enabled = false

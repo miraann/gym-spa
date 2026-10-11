@@ -233,7 +233,9 @@ export const MANAGER_ID = 'a0000000-0000-4000-8000-0000000000c1';
 /** For tests about what comes after the token check: only 'manager-token' passes. */
 export const acceptManagerToken: TokenVerifier = (token) =>
   Promise.resolve(
-    token === 'manager-token' ? { ok: true, userId: MANAGER_ID } : { ok: false, reason: 'invalid' },
+    token === 'manager-token'
+      ? { ok: true, userId: MANAGER_ID, aal: 'aal1' }
+      : { ok: false, reason: 'invalid' },
   );
 
 const PROJECT_KID = 'project-key';

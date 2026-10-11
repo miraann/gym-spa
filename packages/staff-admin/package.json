@@ -6,7 +6,8 @@
   "description": "The staff module: staff logins through the Supabase Auth admin API (Edge Function online, gym-server offline)",
   "exports": {
     ".": "./src/index.ts",
-    "./server": "./src/server.ts"
+    "./server": "./src/server.ts",
+    "./testing": "./src/testing.ts"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json",

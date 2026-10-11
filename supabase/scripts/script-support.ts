@@ -2,6 +2,7 @@
 // stopping with a message. The secret key is used only here, on this computer: it never goes into
 // the app or into git.
 import { execSync } from 'node:child_process';
+import type { Interface } from 'node:readline/promises';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@gym/db';
 
@@ -124,4 +125,13 @@ export function readHidden(question: string, environmentVariable: string): Promi
     stdin.resume();
     stdin.on('data', onData);
   });
+}
+
+/** A question in the terminal; stops cleanly when the input has ended (e.g. piped). */
+export async function ask(prompt: Interface, question: string): Promise<string> {
+  try {
+    return await prompt.question(question);
+  } catch {
+    fail('No answer (the input ended). Nothing was changed.');
+  }
 }

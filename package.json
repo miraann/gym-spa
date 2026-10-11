@@ -16,7 +16,7 @@
     "format:check": "prettier --check .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:int": "pnpm --filter @gym/staff-admin test:int",
+    "test:int": "pnpm --filter @gym/staff-admin test:int && pnpm --filter @gym/seller-admin test:int",
     "test:deno": "pnpm --filter @gym/supabase test:deno",
     "test:e2e": "pnpm --filter @gym/app test:e2e && pnpm --filter @gym/desktop test:e2e",
     "check": "pnpm typecheck && pnpm lint && pnpm format:check && pnpm test",
@@ -34,6 +34,8 @@
     "db:functions": "pnpm --filter @gym/supabase functions",
     "db:types": "pnpm --filter @gym/supabase types && prettier --write --log-level warn packages/db/src/database.types.ts",
     "bootstrap:admin": "pnpm --filter @gym/supabase bootstrap:admin",
+    "bootstrap:platform-admin": "pnpm --filter @gym/supabase bootstrap:platform-admin",
+    "platform-admin:reset-2fa": "pnpm --filter @gym/supabase platform-admin:reset-2fa",
     "staff-logins:move": "pnpm --filter @gym/supabase staff-logins:move",
     "smoke:staff-admin": "pnpm --filter @gym/supabase smoke:staff-admin"
   },

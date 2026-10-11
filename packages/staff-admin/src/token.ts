@@ -7,7 +7,12 @@ import { createRemoteJWKSet, errors, jwtVerify, type JWTPayload, type JWTVerifyG
 
 /** What a token check found. unavailable: the project's keys could not be read. */
 export type TokenCheck =
-  | { readonly ok: true; readonly userId: string }
+  | {
+      readonly ok: true;
+      readonly userId: string;
+      /** The session's assurance level: aal1 after the password, aal2 after two-step login. */
+      readonly aal: string | null;
+    }
   | { readonly ok: false; readonly reason: 'invalid' | 'expired' | 'not_staff' | 'unavailable' };
 
 export type TokenVerifier = (token: string) => Promise<TokenCheck>;
@@ -53,7 +58,11 @@ export function jwksTokenVerifier(keys: JWTVerifyGetKey): TokenVerifier {
     ) {
       return { ok: false, reason: 'not_staff' };
     }
-    return { ok: true, userId: payload.sub };
+    return {
+      ok: true,
+      userId: payload.sub,
+      aal: typeof payload.aal === 'string' ? payload.aal : null,
+    };
   };
 }
 

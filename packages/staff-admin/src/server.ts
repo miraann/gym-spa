@@ -1,8 +1,22 @@
 // The server part of the staff module: the Edge Function (online) and gym-server (offline) use it.
 // Never import it into the app: it works with the secret key.
 export * from './index.ts';
+export {
+  AddressTaken,
+  RowsNotWritten,
+  isEmailTaken,
+  withAddressFreed,
+  writeRowsOrUndo,
+  type AddressFreeing,
+} from './accounts.ts';
 export { readStaffAdminConfig } from './env.ts';
-export { CORS_HEADERS, createStaffAdminHandler, type StaffAdminHandlerOptions } from './handler.ts';
+export {
+  CORS_HEADERS,
+  bearerToken,
+  createStaffAdminHandler,
+  jsonResponse,
+  type StaffAdminHandlerOptions,
+} from './handler.ts';
 export {
   createStaff,
   deactivateStaff,
@@ -29,6 +43,9 @@ export {
   type StaffAdminLogEntry,
 } from './ports.ts';
 export {
+  FORWARDED_HEADERS,
+  authFailed,
+  databaseFailed,
   supabaseAdminPort,
   supabaseCallerPort,
   supabaseStaffAdminPorts,

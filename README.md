@@ -44,9 +44,9 @@ Run from the repository root:
 | `pnpm preview` | Serve the production build at http://localhost:4173 |
 | `pnpm test` | Unit tests (Vitest): formatting, translations, Sorani spelling, fonts, lint rules, connection state |
 | `pnpm test:e2e` | Build against the local backend (`--mode e2e`, `apps/app/.env.e2e`), then run Playwright tests for the web app (login, PIN, lock, lost connection, RTL) and the Windows app (encrypted sessions, storage and workers on `app://`, security rules). Needs `pnpm db:start` |
-| `pnpm test:int` | Integration tests of the staff module (`packages/staff-admin`) against the local Supabase: the real Auth admin API and database. Needs `pnpm db:start` |
-| `pnpm db:functions` | Serve the Edge Functions locally at http://127.0.0.1:54321/functions/v1/staff-admin (`supabase functions serve`). Leave it running in its own terminal |
-| `pnpm test:deno` | The staff module in Deno, the Edge Function's runtime: type-checks the function, runs the unit cases, then HTTP tests against the served function. Needs `pnpm db:start` and `pnpm db:functions` |
+| `pnpm test:int` | Integration tests of the staff module (`packages/staff-admin`) and the seller module (`packages/seller-admin`) against the local Supabase: the real Auth admin API (with TOTP and the access token hook) and database. Needs `pnpm db:start` |
+| `pnpm db:functions` | Serve the Edge Functions locally at http://127.0.0.1:54321/functions/v1/staff-admin and `.../seller-admin` (`supabase functions serve`). Leave it running in its own terminal |
+| `pnpm test:deno` | The staff and seller modules in Deno, the Edge Functions' runtime: type-checks each function, runs the unit cases, then HTTP tests against the served functions. Needs `pnpm db:start` and `pnpm db:functions` |
 | `pnpm lint` | ESLint, including the project rules below |
 | `pnpm typecheck` | TypeScript type checking for every package |
 | `pnpm format` | Format all files with Prettier |
@@ -63,6 +63,8 @@ Run from the repository root:
 | `pnpm db:lint` | Check the SQL functions for errors (plpgsql_check) in the `public`, `app` and `auth_hooks` schemas |
 | `pnpm db:types` | Regenerate the TypeScript types of the database (`packages/db`). Run after changing migrations |
 | `pnpm bootstrap:admin` | Create a gym's first Owner: `--gym <code>`, and the gym itself if it doesn't exist yet (its code can never change). Add `--remote` for a cloud project (see [A cloud project](#a-cloud-project)) |
+| `pnpm bootstrap:platform-admin` | Create a Click Group platform admin for the seller panel: `--email`, `--full-name`; prints a temporary password once. `--remote` for the cloud project ([Seller panel](#seller-panel-click-group)) |
+| `pnpm platform-admin:reset-2fa` | Last resort of the [recovery procedure](#recovery-procedure): removes a platform admin's two-step devices (`--email`), and with `--password` gives a new temporary password. `--remote` for the cloud project |
 | `pnpm smoke:staff-admin` | Smoke test of the staff module as a gym's Owner: creates `smoke.test`, checks that its temporary password logs in and must be changed, deactivates it and checks that its login is refused. Prints only the staff id, never a password. `--remote` for the cloud project (needs the publishable key: `SUPABASE_PUBLISHABLE_KEY` in `supabase/.env.local`, or the app's `apps/app/.env.local` for the same project); local needs `pnpm db:functions` |
 | `pnpm staff-logins:move` | Once, after the MT-1 migrations, on a project that already had staff: moves their logins to their gym's address. Only shows what it would change; `--apply` changes it. `--remote` for a cloud project |
 
@@ -92,12 +94,15 @@ packages/platform    platform detection and native adapters; the only code that 
 packages/i18n        translations (ckb, en, ar), typed keys, number/money/date formatting
 packages/staff-admin the staff module: staff logins through Supabase Auth's admin API (server side;
                      the app imports only its request types and error keys)
+packages/seller-admin the seller panel's server module (Edge Function seller-admin): gyms with their
+                     first Owner, platform admin logins; never imported by the gym app
 supabase             the database
-  functions          Edge Functions (Deno): staff-admin
+  functions          Edge Functions (Deno): staff-admin, seller-admin
   migrations         schema changes, in order (tables, RLS policies, triggers, functions, built-in roles)
   tests              pgTAP tests, run with pnpm db:test
   seed.sql           demo data for local development (Kurdish)
-  scripts            bootstrap-admin.ts, move-staff-logins.ts, test-deno.ts
+  scripts            bootstrap-admin.ts, bootstrap-platform-admin.ts, reset-platform-admin.ts,
+                     move-staff-logins.ts, test-deno.ts
 tools/eslint-plugin-gym  project lint rules
 ```
 
@@ -197,7 +202,7 @@ Staff logins live in Supabase Auth, and only the secret key can create or change
 
 ## Seller panel (Click Group)
 
-Spec §2.6, step MT-3. The database half is built (MT-3a: migrations `20261010100500_platform_admins.sql`, `20261010100600_seller_gyms.sql`, `20261010100700_auth_hook.sql`). The `seller-admin` function, the scripts and the `apps/seller` app follow in MT-3b to MT-3e.
+Spec §2.6, step MT-3. Built so far: the database (MT-3a: migrations `20261010100500_platform_admins.sql`, `20261010100600_seller_gyms.sql`, `20261010100700_auth_hook.sql`), and the `seller-admin` function with the platform admin scripts (MT-3b). The gym app's warnings and the `apps/seller` app (served at `/seller/` of the gym app's domain) follow in MT-3c to MT-3e.
 
 ### Platform admins
 
@@ -208,6 +213,28 @@ Spec §2.6, step MT-3. The database half is built (MT-3a: migrations `2026101010
 - **Recovery codes:** `seller_new_recovery_codes()` makes 10 one-time codes (`xxxx-xxxx-xxxx-xxxx`, about 80 random bits each), shown once and stored only as SHA-256. A new set replaces the old one. `seller_use_recovery_code()` accepts one after the password alone (the device is lost); 5 wrong codes in 15 minutes block further tries for 15 minutes. Every try is logged.
 - **At least one active platform admin, always:** nobody deactivates or resets themself through the panel, and the last active one can't be deactivated even by server code (`last_platform_admin`). The panel will warn while there is only one.
 - Deactivating a platform admin ends their access to every seller function at once.
+- **The first platform admin** comes from a script, run on Click Group's own PC: `pnpm bootstrap:platform-admin --email <address> --full-name "<name>"` (`--remote` for the cloud project in `supabase/.env.local`). It prints a temporary password once and stores it nowhere. At the first login in the panel the admin chooses their own password, sets up two-step login with an authenticator app and keeps their recovery codes. Add the second platform admin from the panel. Running it for an address that is already a platform admin changes nothing.
+
+### The seller-admin function
+
+What needs Supabase Auth's admin API goes through the Edge Function `seller-admin` (`packages/seller-admin`, built on the staff module). Everything else the panel does (subscription dates, suspend, lock, usage, the log, new recovery codes) is a `seller_*` database function it calls directly. Online only: the offline edition has no seller panel.
+
+- **Actions:** `create_gym` (the gym with its first Owner, whose temporary password is returned once), `add_admin` (a temporary password once), `deactivate_admin` and `reactivate_admin` (the account, and a ban on the login), `reset_admin_two_step` (removes another admin's lost device and voids their recovery codes), `reset_admin_password` (a temporary password once), and `use_recovery_code` (for the signed-in admin).
+- **Checks before anything changes:** the bearer token against the project's published keys (like `staff-admin`, `verify_jwt = false`), then the request (Zod), then **two-step login: the token must be `aal2`** (`mfa_required`), except for `use_recovery_code`, which works after the password alone. Every action then starts with a `seller_*` database call under the same token, which checks for an active platform admin with two-step login again. Nobody changes their own account here (`cannot_change_own_admin`).
+- **Undo, like the staff module:** a login whose rows can't be written is deleted again (`writeRowsOrUndo` and `withAddressFreed` in `packages/staff-admin/src/accounts.ts`, shared by both modules). A login left behind when the undo fails too is freed by the next attempt, but only when the database says so (`staff_admin_orphan()` for a gym's Owner, `platform_admin_orphan()` for a platform admin). When a change in Auth worked but its record didn't, the answer is `record_failed`, and doing it again finishes it.
+- **Using a recovery code** uses it up and logs it in the database first, then removes the signed-in admin's two-step device; the panel then sets up a new one. If Auth fails after that, the code stays used (logged) and they use another.
+- Errors are stable keys with an HTTP status (`packages/seller-admin/src/errors.ts`). Logs (one JSON line on stderr, source `seller-admin`) never hold a password or a recovery code.
+- Deploy: `pnpm --filter @gym/supabase exec supabase functions deploy seller-admin --use-api --workdir ..`.
+
+### Recovery procedure
+
+When a platform admin loses their two-step device (or their password), in this order:
+
+1. **Another platform admin resets it** in the panel (reset two-step login; reset the password if needed). At their next login, the admin sets up a new authenticator app. This is why Click Group keeps at least two platform admins.
+2. **Otherwise the admin uses a recovery code:** log in with the password, choose "use a recovery code", and type one of the codes saved at setup. The lost device is removed and the panel goes straight to setting up a new one. Then make a new set of codes.
+3. **As a last resort,** on Click Group's PC with the project's secret key (`supabase/.env.local`): `pnpm platform-admin:reset-2fa --email <address> --remote`. It removes the admin's two-step devices and voids their recovery codes; add `--password` for a new temporary password too (printed once). It asks to type the address again (`--yes` skips that). Both are recorded in the seller log with no actor.
+
+A lost or stolen laptop with an open panel session: another admin **deactivates** that platform admin at once (all seller access ends, and Auth refuses their logins and refreshes), then resets their password and two-step login, then reactivates them.
 
 ### Gyms in the seller panel
 
@@ -223,7 +250,7 @@ Supabase Auth calls `auth_hooks.custom_access_token` (its "Customize Access Toke
 
 - **Locally** it is turned on in `supabase/config.toml` (`[auth.hook.custom_access_token]`). Changing that file needs `pnpm db:stop` and `pnpm db:start`.
 - **In the cloud project** it is turned on in the dashboard: Authentication → Hooks → "Customize Access Token (JWT) Claims" → Postgres, schema `auth_hooks`, function `custom_access_token`. Never use `supabase config push` for it: that would also push the local auth settings.
-- **Tests:** `supabase/tests/210-auth-hook.test.sql` (who is refused, malformed input). A test with the real local Auth server (a login and a refresh against a locked gym) comes with MT-3b; the e2e test "a locked gym can't be used" already logs in through it.
+- **Tests:** `supabase/tests/210-auth-hook.test.sql` (who is refused, malformed input), and `pnpm test:int` with the real local Auth server: a locked gym's Owner gets `403 gym_locked` at login and at a token refresh, an older token sees nothing, and after reactivating the same refresh token works again.
 
 #### Emergency: nobody can log in
 
@@ -236,7 +263,8 @@ The hook runs for every login of every gym and of Click Group. If logins fail ev
 
 ### Tests
 
-`supabase/tests/180-platform-admins.test.sql` (accounts, both-ways rule, recovery codes, scripts' functions, the log), `190-seller-gyms.test.sql` (creating a gym with its Owner all or nothing, subscription end, suspend, lock, reactivate, limits, usage), `200-platform-isolation.test.sql` (built from the catalog: every seller function refuses gym staff, even an Owner with two-step login, and refuses platform admins before the second step; platform admins see and change no row of any gym table) and `210-auth-hook.test.sql`.
+- **Database:** `supabase/tests/180-platform-admins.test.sql` (accounts, both-ways rule, recovery codes, scripts' functions, the log), `190-seller-gyms.test.sql` (creating a gym with its Owner all or nothing, subscription end, suspend, lock, reactivate, limits, usage), `200-platform-isolation.test.sql` (built from the catalog: every seller function refuses gym staff, even an Owner with two-step login, and refuses platform admins before the second step; platform admins see and change no row of any gym table) and `210-auth-hook.test.sql`.
+- **The module:** `pnpm test` runs its unit cases with fakes (every undo path, the `aal2` gate); `pnpm test:deno` runs the same cases in Deno plus HTTP tests against the served function; `pnpm test:int` runs it in Node against the real local Auth (with TOTP and the hook) and database: a gym and its Owner, the undo after a real database refusal, a left-behind login freed, suspend and lock, new admins, deactivate, both resets, recovery codes. The tests set up real two-step login with a small TOTP helper (`packages/seller-admin/test/platform.ts`) and remove their platform admins with SQL in the local database (no API may delete one).
 
 ## Connection
 

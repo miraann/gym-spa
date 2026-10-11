@@ -92,6 +92,16 @@ export {
   type PinProblem,
 } from './pin.ts';
 export {
+  ADMIN_EMAIL_MAX_LENGTH,
+  ADMIN_EMAIL_PATTERN,
+  RECOVERY_CODE_ALPHABET,
+  RECOVERY_CODE_LENGTH,
+  isValidAdminEmail,
+  looksLikeRecoveryCode,
+  normalizeAdminEmail,
+  normalizeRecoveryCode,
+} from './platform.ts';
+export {
   SETTINGS,
   isSettingKey,
   parseSettingValue,

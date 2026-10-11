@@ -1,0 +1,43 @@
+// What the seller panel shares with the server: the requests, their answers and the error keys.
+// The server part (operations, handler, Supabase ports) is '@gym/seller-admin/server'. Neither ever
+// goes into the gym app: it has no seller code at all.
+export {
+  SELLER_ADMIN_ERROR_KEYS,
+  SELLER_ADMIN_ERROR_STATUS,
+  SellerAdminError,
+  isSellerAdminErrorKey,
+  type SellerAdminErrorKey,
+} from './errors.ts';
+export {
+  BEFORE_TWO_STEP_ACTIONS,
+  SELLER_ADMIN_RESULTS,
+  addAdminRequest,
+  addAdminResult,
+  adminChangeResult,
+  createGymRequest,
+  createGymResult,
+  deactivateAdminRequest,
+  reactivateAdminRequest,
+  resetAdminPasswordRequest,
+  resetAdminPasswordResult,
+  resetAdminTwoStepRequest,
+  sellerAdminFailure,
+  sellerAdminRequest,
+  useRecoveryCodeRequest,
+  useRecoveryCodeResult,
+  type AddAdminRequest,
+  type AddAdminResult,
+  type AdminChangeResult,
+  type CreateGymRequest,
+  type CreateGymResult,
+  type DeactivateAdminRequest,
+  type ReactivateAdminRequest,
+  type ResetAdminPasswordRequest,
+  type ResetAdminPasswordResult,
+  type ResetAdminTwoStepRequest,
+  type SellerAdminAction,
+  type SellerAdminRequest,
+  type SellerAdminResults,
+  type UseRecoveryCodeRequest,
+  type UseRecoveryCodeResult,
+} from './requests.ts';

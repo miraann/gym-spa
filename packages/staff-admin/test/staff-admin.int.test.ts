@@ -1,4 +1,3 @@
-import { execSync } from 'node:child_process';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createStaffAdminHandler } from '../src/handler.ts';
 import type { CallerPort, StaffAdminLogEntry } from '../src/ports.ts';
@@ -9,37 +8,16 @@ import {
   publicClient,
   signIn,
   staffAdminRequest,
-  type Backend,
   type TestStaff,
 } from './fixture.ts';
+import { localBackend } from './local.ts';
 
 // The staff module in Node against the local Supabase (`pnpm db:start`): real Auth admin API, real
 // database rules. `pnpm test:int`. The same module runs in the Edge Function; its HTTP path is
 // tested in Deno (pnpm test:deno).
 
-/** The legacy anon key: a valid, signed JWT with role anon (HS256). */
-let legacyAnonKey: string | null = null;
-
-function localBackend(): Backend {
-  let output: string;
-  try {
-    output = execSync(
-      'pnpm --silent --filter @gym/supabase exec supabase status --output json --workdir ..',
-      { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] },
-    );
-  } catch {
-    throw new Error('Local Supabase is not running. Start it with pnpm db:start.');
-  }
-  const status = JSON.parse(output) as Record<string, string | undefined>;
-  legacyAnonKey = status.ANON_KEY ?? null;
-  const url = status.API_URL;
-  const publishableKey = status.PUBLISHABLE_KEY ?? status.ANON_KEY;
-  const secretKey = status.SECRET_KEY ?? status.SERVICE_ROLE_KEY;
-  if (!url || !publishableKey || !secretKey) throw new Error('`supabase status` misses keys');
-  return { url, publishableKey, secretKey };
-}
-
 const backend = localBackend();
+const { legacyAnonKey } = backend;
 const logs: StaffAdminLogEntry[] = [];
 const ports = supabaseStaffAdminPorts(backend);
 
