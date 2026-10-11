@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { useGymAppearanceSync } from '@/features/appearance/use-gym-appearance';
+import { BillingBanner } from '@/features/billing/billing-banner';
 import { useLayout } from '@/hooks/use-layout';
 import { usePreferences } from '@/lib/preferences';
 import { AppSidebar } from './app-sidebar';
@@ -68,6 +69,7 @@ export function AppShell() {
           }}
         />
         <main id="main" tabIndex={-1} className="flex-1 p-4 outline-none md:p-6">
+          <BillingBanner />
           <Outlet />
         </main>
       </SidebarInset>

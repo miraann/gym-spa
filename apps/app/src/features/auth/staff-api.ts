@@ -188,7 +188,10 @@ export async function fetchGym(client: AppSupabaseClient): Promise<DeviceGym | n
 export function parseServerGym(data: unknown): DeviceGym | null {
   if (typeof data !== 'object' || data === null) return null;
   const row: Partial<
-    Record<'id' | 'code' | 'name_ckb' | 'name_en' | 'name_ar' | 'access', unknown>
+    Record<
+      'id' | 'code' | 'name_ckb' | 'name_en' | 'name_ar' | 'access' | 'paid_until' | 'suspended',
+      unknown
+    >
   > = data;
   const { id, code, access } = row;
   if (
@@ -207,6 +210,8 @@ export function parseServerGym(data: unknown): DeviceGym | null {
     nameEn: typeof row.name_en === 'string' ? row.name_en : null,
     nameAr: typeof row.name_ar === 'string' ? row.name_ar : null,
     access,
+    paidUntil: typeof row.paid_until === 'string' ? row.paid_until : null,
+    suspended: row.suspended === true,
   };
 }
 

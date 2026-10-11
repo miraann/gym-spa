@@ -11,6 +11,10 @@ export interface DeviceGym extends LocalizedNames {
   readonly code: string;
   /** From the last check with the server; the server decides again on every request. */
   readonly access: GymAccess;
+  /** When the subscription (or license) ends; null: no end. For the billing notices. */
+  readonly paidUntil: string | null;
+  /** Click Group suspended it (read-only), as opposed to a subscription that ran out. */
+  readonly suspended: boolean;
 }
 
 /** Secure storage key of the device's gym. */
@@ -47,5 +51,8 @@ export function parseDeviceGym(json: string | null): DeviceGym | null {
     nameEn: optionalText(record.nameEn),
     nameAr: optionalText(record.nameAr),
     access: isGymAccess(access) ? access : 'active',
+    // Stored before step MT-3 without these: the next server check fills them in.
+    paidUntil: optionalText(record.paidUntil),
+    suspended: record.suspended === true,
   };
 }

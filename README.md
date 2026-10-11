@@ -142,6 +142,10 @@ Spec §2.6. Migrations `20261010100000_gyms.sql` and `20261010100100_gym_rules.s
   - **suspended** (`suspended_at`): read-only at once. Staff can log in, look and use their PINs, but nothing can be added or changed (`gym_read_only`);
   - **locked** (`locked_at`): all access ends at once; staff see nothing (`gym_locked`), and Supabase Auth gives them no new token ([The Auth hook](#the-auth-hook)).
   - Click Group sets these with the seller functions ([Seller panel](#seller-panel-click-group)). `my_gym()` also says whether a read-only gym is suspended (`suspended`) or its subscription ran out.
+- **What the gym app shows** (a banner at the top of every page, `apps/app/src/features/billing`; the rule is `billingNotice()` in `packages/core/src/billing.ts`, counted in Baghdad calendar days):
+  - to staff with `billing.view` (the Owner, and Admin in every gym): a warning when the subscription ends in 30 days or less, again at 7 days and on the last day, then the grace period with the date the gym becomes read-only. The 30- and 7-day warnings can be closed until the next stage (per staff member, on that device); the last day's warning and the grace notice can't;
+  - to everyone: that the gym is read-only, and whether Click Group suspended it or the subscription ran out. It can't be closed;
+  - nothing for a locked gym: the app locks itself. It uses the gym state of the device's last server check (at start, at unlock, every 5 minutes, and when the network returns), and counts the days again every hour.
 - **Limits:** `max_branches` and `max_devices` (empty: no limit) are checked whenever a branch or device is added or made active again (`gym_branch_limit`, `gym_device_limit`).
 
 ### How access works

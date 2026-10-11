@@ -8,6 +8,8 @@ const gym: DeviceGym = {
   nameEn: 'Hawler Fit',
   nameAr: null,
   access: 'read_only',
+  paidUntil: '2026-12-31T21:00:00.000Z',
+  suspended: true,
 };
 
 describe('parseDeviceGym', () => {
@@ -24,6 +26,16 @@ describe('parseDeviceGym', () => {
     expect(parseDeviceGym('[]')).toBeNull();
     expect(parseDeviceGym(JSON.stringify({ ...gym, code: 'Not A Code' }))).toBeNull();
     expect(parseDeviceGym(JSON.stringify({ ...gym, nameCkb: undefined }))).toBeNull();
+  });
+
+  it('reads a gym stored before the subscription dates were kept', () => {
+    const { paidUntil, suspended, ...older } = gym;
+    expect([paidUntil, suspended]).toEqual(['2026-12-31T21:00:00.000Z', true]);
+    expect(parseDeviceGym(JSON.stringify(older))).toEqual({
+      ...older,
+      paidUntil: null,
+      suspended: false,
+    });
   });
 
   it('assumes an active gym when the stored state is unknown (the server decides anyway)', () => {

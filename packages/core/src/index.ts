@@ -35,6 +35,17 @@ export {
   type ThemePreference,
 } from './appearance.ts';
 export {
+  BILLING_STAGES,
+  GRACE_DAYS,
+  billingNotice,
+  billingNoticeAudience,
+  isBillingNoticeDismissible,
+  paidUntilFromDate,
+  type BillingNotice,
+  type BillingStage,
+  type GymBilling,
+} from './billing.ts';
+export {
   CONTRAST_NON_TEXT,
   CONTRAST_TEXT,
   contrastRatio,

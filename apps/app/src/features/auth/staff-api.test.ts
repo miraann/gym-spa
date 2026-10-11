@@ -46,6 +46,7 @@ describe('parseServerGym', () => {
     edition: 'online',
     access: 'grace',
     paid_until: '2026-10-01T00:00:00+00:00',
+    suspended: false,
   };
 
   it('reads the gym and its state', () => {
@@ -56,7 +57,15 @@ describe('parseServerGym', () => {
       nameEn: 'Demo Gym',
       nameAr: null,
       access: 'grace',
+      paidUntil: '2026-10-01T00:00:00+00:00',
+      suspended: false,
     });
+  });
+
+  it('reads a suspended gym without an end date', () => {
+    expect(
+      parseServerGym({ ...row, access: 'read_only', paid_until: null, suspended: true }),
+    ).toMatchObject({ access: 'read_only', paidUntil: null, suspended: true });
   });
 
   it('is empty for staff without a gym (not active)', () => {
