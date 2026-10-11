@@ -5,10 +5,16 @@ import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { z } from 'zod';
-import { Button } from '@/components/ui/button';
-import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
-import { Input } from '@/components/ui/input';
-import { Spinner } from '@/components/ui/spinner';
+import { Button } from '@gym/ui/components/button';
+import {
+  Field,
+  FieldDescription,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from '@gym/ui/components/field';
+import { Input } from '@gym/ui/components/input';
+import { Spinner } from '@gym/ui/components/spinner';
 import { useFormat } from '@/lib/format';
 import { useAuthController } from '../auth-context';
 import type { AuthStep } from '../auth-controller';

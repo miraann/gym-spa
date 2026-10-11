@@ -11,10 +11,10 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+} from '@gym/ui/components/alert-dialog';
 import { LanguageRadioItems } from '@/components/layout/language-menu';
 import { ThemeRadioItems } from '@/components/layout/theme-menu';
-import { Button } from '@/components/ui/button';
+import { Button } from '@gym/ui/components/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,7 +25,7 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from '@gym/ui/components/dropdown-menu';
 import { logError } from '@/lib/logger';
 import { useActiveAccount, useAuthController } from './auth-context';
 

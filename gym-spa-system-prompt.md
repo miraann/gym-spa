@@ -328,7 +328,7 @@ The app must not have only one look. The default is indigo + light + soft corner
 
 ## 7. Code quality rules
 - Strict TypeScript, no `any`
-- Monorepo (pnpm workspaces): `/apps/app` (React + Vite app, with `android/` from Capacitor), `/apps/desktop` (Electron shell for the Windows EXE), `/packages/platform` (NFC, printer, camera, updater adapters per platform), `/packages/core` (validation and screen rules, pure TS, fully tested), `/packages/db` (generated types), `/supabase` (migrations, functions). Inside the app use feature folders (`/features/members`, `/features/checkin`, ...) with shared `/components/ui`, `/lib`
+- Monorepo (pnpm workspaces): `/apps/app` (React + Vite app, with `android/` from Capacitor), `/apps/desktop` (Electron shell for the Windows EXE), `/packages/platform` (NFC, printer, camera, updater adapters per platform), `/packages/core` (validation and screen rules, pure TS, fully tested), `/packages/db` (generated types), `/supabase` (migrations, functions). Inside the app use feature folders (`/features/members`, `/features/checkin`, ...) with app-only `/components`, `/lib`; the UI shared with the seller panel (theme, shadcn/ui components, blocks) is `/packages/ui` (step MT-3d)
 - Server-only Supabase service key never reaches the client
 - All inputs validated with Zod in the app, and re-validated on the server (never trust client data)
 - Reusable hooks and components; no duplicated logic

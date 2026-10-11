@@ -1,7 +1,7 @@
 import { MoonIcon, SunIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { THEME_CHOICES } from '@/components/theme-choices';
-import { Button } from '@/components/ui/button';
+import { Button } from '@gym/ui/components/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,7 +9,7 @@ import {
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from '@gym/ui/components/dropdown-menu';
 import { useChangeTheme } from '@/features/auth/use-change-look';
 import { usePreferences } from '@/lib/preferences';
 

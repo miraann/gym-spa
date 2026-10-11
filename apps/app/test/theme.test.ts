@@ -13,7 +13,7 @@ import {
 import { describe, expect, it } from 'vitest';
 
 /**
- * The Calm Bento tokens in styles.css must meet WCAG AA in light and dark mode, and the colors
+ * The Calm Bento tokens in packages/ui's theme.css must meet WCAG AA in light and dark mode, and the colors
  * the browser, the installed PWA, Android and Windows show before the app has loaded must be the
  * same as the tokens.
  */
@@ -22,12 +22,12 @@ function read(path: string): string {
   return readFileSync(fileURLToPath(new URL(path, import.meta.url)), 'utf8');
 }
 
-const STYLES = read('../src/styles.css');
+const STYLES = read('../../../packages/ui/src/styles/theme.css');
 
 /** The custom properties of the rule with this selector that starts with this property. */
 function block(selector: string, firstProperty: string): Map<string, string> {
   const start = STYLES.indexOf(`\n${selector} {\n  ${firstProperty}:`);
-  if (start < 0) throw new Error(`No ${selector} block with tokens in styles.css`);
+  if (start < 0) throw new Error(`No ${selector} block with tokens in theme.css`);
   const body = STYLES.slice(start, STYLES.indexOf('\n}', start));
   return new Map(
     [...body.matchAll(/^\s*(--[\w-]+):\s*([^;]+);/gm)].map((match) => [

@@ -1,9 +1,9 @@
 import { getDirection } from '@gym/i18n';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState, type ReactNode } from 'react';
-import { DirectionProvider } from '@/components/ui/direction';
-import { Toaster } from '@/components/ui/sonner';
-import { TooltipProvider } from '@/components/ui/tooltip';
+import { DirectionProvider } from '@gym/ui/components/direction';
+import { Toaster } from '@gym/ui/components/sonner';
+import { TooltipProvider } from '@gym/ui/components/tooltip';
 import { usePreferences } from '@/lib/preferences';
 
 /** Data from the server, through TanStack Query. The connection monitor pauses it while offline. */

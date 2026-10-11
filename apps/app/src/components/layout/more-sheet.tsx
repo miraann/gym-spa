@@ -3,7 +3,7 @@ import { PencilIcon } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { isNavItemActive, visibleNavGroups, type NavItem } from '@/app/navigation';
-import { Button } from '@/components/ui/button';
+import { Button } from '@gym/ui/components/button';
 import {
   Sheet,
   SheetContent,
@@ -11,9 +11,9 @@ import {
   SheetFooter,
   SheetHeader,
   SheetTitle,
-} from '@/components/ui/sheet';
+} from '@gym/ui/components/sheet';
 import { usePermissions } from '@/features/auth/use-permissions';
-import { cn } from '@/lib/utils';
+import { cn } from '@gym/ui/lib/utils';
 import { TabEditor } from './tab-editor';
 
 /** Phones: "More" opens the whole menu as a bottom sheet, and the staff member's tab choice. */

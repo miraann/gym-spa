@@ -5,7 +5,7 @@
   "tsx": true,
   "tailwind": {
     "config": "",
-    "css": "src/styles.css",
+    "css": "src/styles/theme.css",
     "baseColor": "neutral",
     "cssVariables": true,
     "prefix": ""
@@ -13,11 +13,11 @@
   "iconLibrary": "lucide",
   "rtl": true,
   "aliases": {
-    "components": "@/components",
-    "utils": "@/lib/utils",
-    "ui": "@/components/ui",
-    "lib": "@/lib",
-    "hooks": "@/hooks"
+    "components": "@gym/ui/blocks",
+    "utils": "@gym/ui/lib/utils",
+    "ui": "@gym/ui/components",
+    "lib": "@gym/ui/lib",
+    "hooks": "@gym/ui/hooks"
   },
   "menuColor": "default",
   "menuAccent": "subtle",

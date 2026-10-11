@@ -3,11 +3,11 @@ import { Link, useRouterState } from '@tanstack/react-router';
 import { Fragment } from 'react';
 import { useTranslation } from 'react-i18next';
 import { isNavItemActive, visibleNavGroups, type NavItem } from '@/app/navigation';
-import { Separator } from '@/components/ui/separator';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Separator } from '@gym/ui/components/separator';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@gym/ui/components/tooltip';
 import { usePermissions } from '@/features/auth/use-permissions';
 import { usePreferences } from '@/lib/preferences';
-import { cn } from '@/lib/utils';
+import { cn } from '@gym/ui/lib/utils';
 import { GymMark } from './gym-mark';
 import { useGymName } from './use-gym-name';
 

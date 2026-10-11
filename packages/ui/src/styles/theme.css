@@ -1,0 +1,267 @@
+/* The Calm Bento theme (CLAUDE.md → Design), shared by the gym app and the seller panel: tokens,
+   fonts and base rules. Each app's own CSS entry imports Tailwind first, then this file, and
+   scans packages/ui for classes (@source). */
+
+@custom-variant dark (&:is(.dark *));
+
+/* Kurdish UI font: UniSalar_F_007 by Salar Shwani (one weight). Its unicode-range covers only
+   Arabic-script characters and spaces, because the font draws ASCII digits as Eastern Arabic
+   (٠١٢) and the comma as "،". That would break the Western-digit default and the rule that phone
+   numbers, card UIDs and invoice numbers stay Latin. Digits, Latin text and ASCII punctuation
+   come from Vazirmatn instead. packages/ui/test/fonts.test.ts guards this range. */
+@font-face {
+  font-family: 'UniSalar';
+  src: url('../assets/fonts/unisalar-f-007.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  unicode-range:
+    U+0020, U+00A0, U+0600-06FF, U+0750-077F, U+08A0-08FF, U+200C-200F, U+FB50-FDFF, U+FE70-FEFF;
+}
+
+/* One font stack per language. Vazirmatn and Inter are bundled by @gym/ui/fonts (src/fonts.ts). */
+:root {
+  --font-ckb:
+    'UniSalar', 'Vazirmatn Variable', 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-ar: 'Vazirmatn Variable', 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-en: 'Inter Variable', 'Vazirmatn Variable', ui-sans-serif, system-ui, sans-serif;
+}
+
+@theme {
+  --font-sans: var(--font-ckb);
+}
+
+:root:lang(ar) {
+  --font-sans: var(--font-ar);
+}
+
+:root:lang(en) {
+  --font-sans: var(--font-en);
+}
+
+/* Text marked with its own language (e.g. the language names in the language menu) uses that
+   language's font. In the base layer so utility classes can still override it. */
+@layer base {
+  [lang='ckb'] {
+    font-family: var(--font-ckb);
+  }
+  [lang='ar'] {
+    font-family: var(--font-ar);
+  }
+  [lang='en'] {
+    font-family: var(--font-en);
+  }
+}
+
+/* Letter-spacing breaks the joined letters of Arabic script, so tracking utilities are ignored
+   in Kurdish and Arabic. Unlayered on purpose: it must win over utility classes. */
+:root:is(:lang(ckb), :lang(ar)) * {
+  letter-spacing: normal;
+}
+
+/* Edge-to-edge screens (the Android app, phones in landscape): the page is drawn behind the
+   status bar, the navigation bar and camera cutouts, so content keeps out of those areas.
+   env(safe-area-inset-*) is 0 everywhere else. The top bar pads itself (top-bar.tsx), so its
+   background also fills the area behind the status bar. The sidebar rules cover the desktop
+   sidebar and the mobile one (a sheet); they are unlayered to win over the sheet's p-0. A new
+   side sheet must handle the insets itself. Insets are physical (left/right), not start/end. */
+body {
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+[data-slot='sidebar-inset'] {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+:is([data-slot='sidebar-container'], [data-slot='sidebar'][data-mobile='true']) {
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+:is([data-slot='sidebar-container'], [data-slot='sidebar'][data-mobile='true'])[data-side='left'] {
+  padding-left: env(safe-area-inset-left);
+}
+:is([data-slot='sidebar-container'], [data-slot='sidebar'][data-mobile='true'])[data-side='right'] {
+  padding-right: env(safe-area-inset-right);
+}
+
+/* Phones: the floating bottom tab bar (bottom-tab-bar.tsx). Every page ends with room for the bar,
+   its raised check-in button and any floating action bar, so the last item is never hidden behind
+   them (CLAUDE.md → Layout guards); sidebar-inset already pads the safe area. The bar is fixed, so
+   it keeps out of side cutouts itself. */
+:root {
+  --tab-bar-height: 4rem;
+  --tab-bar-gap: 0.75rem;
+  /* Set by a floating action bar while it is on screen. */
+  --floating-bar-space: 0rem;
+  --toast-offset-bottom: 1.5rem;
+}
+/* Toasts appear above the tab bar, never on it. */
+:root:has([data-slot='tab-bar']) {
+  --toast-offset-bottom: calc(
+    var(--tab-bar-height) + var(--tab-bar-gap) + env(safe-area-inset-bottom) + 0.75rem
+  );
+}
+[data-layout='phone'] #main {
+  padding-bottom: calc(
+    1.75rem + var(--tab-bar-height) + var(--tab-bar-gap) + var(--floating-bar-space)
+  );
+}
+[data-slot='tab-bar'],
+[data-slot='sticky-action-bar'] {
+  padding-left: calc(0.75rem + env(safe-area-inset-left));
+  padding-right: calc(0.75rem + env(safe-area-inset-right));
+}
+[data-slot='sheet-content'][data-side='bottom'] {
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+@theme inline {
+  --font-heading: var(--font-sans);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+  /* With the soft corners (--radius: 1rem) these are Tailwind's usual sizes: controls rounded-xl
+     (12px), cards rounded-2xl (16px), sheets and dialogs rounded-3xl (24px). The medium and
+     sharp corner styles shrink them all together. */
+  --radius-sm: calc(var(--radius) * 0.25);
+  --radius-md: calc(var(--radius) * 0.375);
+  --radius-lg: calc(var(--radius) * 0.5);
+  --radius-xl: calc(var(--radius) * 0.75);
+  --radius-2xl: var(--radius);
+  --radius-3xl: calc(var(--radius) * 1.5);
+  --radius-4xl: calc(var(--radius) * 2);
+}
+
+/* Calm Bento tokens (CLAUDE.md → Design). Components use the semantic names (bg-primary,
+   text-muted-foreground, bg-success), never palette classes or hex values; the
+   gym/no-raw-color-classes lint rule enforces it.
+   - The brand color is set by the --brand-* variables: the default is indigo-violet. The gym's
+     own color (Appearance settings) replaces them at runtime, so nothing else changes.
+   - Surfaces are layered by tone, lightly tinted with the brand hue: page < sidebar < card.
+   - Status colors (success, warning, destructive) are fixed: they never follow the brand.
+   test/theme.test.ts checks the contrast of every pair below, in light and dark. */
+:root {
+  --brand-h: 277;
+  --brand-l: 0.51;
+  --brand-c: 0.23;
+  --brand-foreground: oklch(0.985 0.006 var(--brand-h));
+  --brand-dark-l: 0.68;
+  --brand-dark-c: 0.17;
+  --brand-dark-foreground: oklch(0.17 0.03 var(--brand-h));
+
+  --background: oklch(0.972 0.006 var(--brand-h));
+  --foreground: oklch(0.2 0.02 var(--brand-h));
+  --card: oklch(0.995 0.002 var(--brand-h));
+  --card-foreground: var(--foreground);
+  --popover: var(--card);
+  --popover-foreground: var(--foreground);
+  --primary: oklch(var(--brand-l) var(--brand-c) var(--brand-h));
+  --primary-foreground: var(--brand-foreground);
+  --secondary: oklch(0.94 0.012 var(--brand-h));
+  --secondary-foreground: oklch(0.28 0.04 var(--brand-h));
+  --muted: oklch(0.945 0.008 var(--brand-h));
+  --muted-foreground: oklch(0.49 0.02 var(--brand-h));
+  --accent: oklch(0.93 0.035 var(--brand-h));
+  --accent-foreground: oklch(0.38 0.14 var(--brand-h));
+  --border: oklch(0.905 0.012 var(--brand-h));
+  --input: oklch(0.88 0.014 var(--brand-h));
+  --ring: var(--primary);
+
+  --success: oklch(0.49 0.13 150);
+  --success-foreground: oklch(0.985 0 0);
+  --warning: oklch(0.52 0.12 55);
+  --warning-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.5 0.2 27);
+  --destructive-foreground: oklch(0.985 0 0);
+
+  --chart-1: var(--primary);
+  --chart-2: oklch(0.62 0.17 var(--brand-h));
+  --chart-3: oklch(0.72 0.12 var(--brand-h));
+  --chart-4: oklch(0.42 0.18 var(--brand-h));
+  --chart-5: oklch(0.82 0.07 var(--brand-h));
+
+  /* Corner style: soft. Every radius derives from it (see @theme inline). */
+  --radius: 1rem;
+
+  --sidebar: oklch(0.985 0.004 var(--brand-h));
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: oklch(0.945 0.01 var(--brand-h));
+  --sidebar-accent-foreground: var(--foreground);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--ring);
+}
+
+.dark {
+  --background: oklch(0.17 0.012 var(--brand-h));
+  --foreground: oklch(0.955 0.006 var(--brand-h));
+  --card: oklch(0.215 0.014 var(--brand-h));
+  --popover: oklch(0.235 0.016 var(--brand-h));
+  --primary: oklch(var(--brand-dark-l) var(--brand-dark-c) var(--brand-h));
+  --primary-foreground: var(--brand-dark-foreground);
+  --secondary: oklch(0.27 0.02 var(--brand-h));
+  --secondary-foreground: oklch(0.93 0.01 var(--brand-h));
+  --muted: oklch(0.25 0.016 var(--brand-h));
+  --muted-foreground: oklch(0.72 0.02 var(--brand-h));
+  --accent: oklch(0.3 0.06 var(--brand-h));
+  --accent-foreground: oklch(0.9 0.05 var(--brand-h));
+  --border: oklch(1 0 0 / 9%);
+  --input: oklch(1 0 0 / 14%);
+
+  --success: oklch(0.72 0.15 150);
+  --success-foreground: oklch(0.2 0.03 150);
+  --warning: oklch(0.79 0.14 75);
+  --warning-foreground: oklch(0.22 0.04 60);
+  --destructive: oklch(0.74 0.16 25);
+  --destructive-foreground: oklch(0.2 0.04 25);
+
+  --sidebar: oklch(0.195 0.013 var(--brand-h));
+  --sidebar-accent: oklch(0.26 0.016 var(--brand-h));
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+}

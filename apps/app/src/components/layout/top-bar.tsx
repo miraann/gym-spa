@@ -1,11 +1,11 @@
 import { SearchIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/ui/button';
-import { Kbd } from '@/components/ui/kbd';
-import { Separator } from '@/components/ui/separator';
-import { SidebarTrigger } from '@/components/ui/sidebar';
+import { Button } from '@gym/ui/components/button';
+import { Kbd } from '@gym/ui/components/kbd';
+import { Separator } from '@gym/ui/components/separator';
+import { SidebarTrigger } from '@gym/ui/components/sidebar';
 import { UserMenu } from '@/features/auth/user-menu';
-import type { Layout } from '@/hooks/use-layout';
+import type { Layout } from '@gym/ui/hooks/use-layout';
 import { ConnectionStatus } from './connection-status';
 import { GymMark } from './gym-mark';
 import { LanguageMenu } from './language-menu';

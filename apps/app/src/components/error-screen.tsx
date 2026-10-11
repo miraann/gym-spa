@@ -2,7 +2,7 @@ import { Link, type ErrorComponentProps } from '@tanstack/react-router';
 import { FileQuestionMarkIcon, TriangleAlertIcon } from 'lucide-react';
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/ui/button';
+import { Button } from '@gym/ui/components/button';
 import {
   Empty,
   EmptyContent,
@@ -10,7 +10,7 @@ import {
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
-} from '@/components/ui/empty';
+} from '@gym/ui/components/empty';
 import { logError } from '@/lib/logger';
 
 /** Friendly message for the user; the technical details go to the log. */

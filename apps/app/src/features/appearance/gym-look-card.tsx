@@ -15,15 +15,15 @@ import { CheckIcon, TriangleAlertIcon, WifiOffIcon } from 'lucide-react';
 import { useEffect, useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { ChoiceGroup } from '@/components/choice-group';
-import { Chip, ChipRow } from '@/components/chip-row';
-import { ResponsiveDialog } from '@/components/responsive-dialog';
-import { StickyActionBar } from '@/components/sticky-action-bar';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { ChoiceGroup } from '@gym/ui/blocks/choice-group';
+import { Chip, ChipRow } from '@gym/ui/blocks/chip-row';
+import { ResponsiveDialog } from '@gym/ui/blocks/responsive-dialog';
+import { StickyActionBar } from '@gym/ui/blocks/sticky-action-bar';
+import { Alert, AlertDescription, AlertTitle } from '@gym/ui/components/alert';
+import { Button } from '@gym/ui/components/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@gym/ui/components/card';
+import { Input } from '@gym/ui/components/input';
+import { Label } from '@gym/ui/components/label';
 import { useAuthController } from '@/features/auth/auth-context';
 import {
   DEFAULT_GYM_LOOK,
@@ -35,7 +35,7 @@ import {
 } from '@/lib/appearance';
 import { useConnection } from '@/lib/connection';
 import { saveErrorKey, type SaveErrorKey } from '@/lib/save-error';
-import { cn } from '@/lib/utils';
+import { cn } from '@gym/ui/lib/utils';
 import { LogoField } from './logo-field';
 import { saveGymLook } from './save-appearance';
 import { GYM_LOOK_QUERY } from './use-gym-appearance';

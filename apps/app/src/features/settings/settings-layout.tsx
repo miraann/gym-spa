@@ -1,7 +1,7 @@
 import { Link, Outlet, useRouterState } from '@tanstack/react-router';
 import { MonitorSmartphoneIcon, PaletteIcon, type LucideIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Chip, ChipRow } from '@/components/chip-row';
+import { Chip, ChipRow } from '@gym/ui/blocks/chip-row';
 import type { AppPath } from '@/app/navigation';
 
 const TABS: readonly { to: AppPath; key: 'display' | 'appearance'; icon: LucideIcon }[] = [

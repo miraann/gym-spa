@@ -3,10 +3,10 @@ import { localizeDigits } from '@gym/i18n';
 import { DeleteIcon } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/ui/button';
-import { Spinner } from '@/components/ui/spinner';
+import { Button } from '@gym/ui/components/button';
+import { Spinner } from '@gym/ui/components/spinner';
 import { usePreferences } from '@/lib/preferences';
-import { cn } from '@/lib/utils';
+import { cn } from '@gym/ui/lib/utils';
 
 const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9'] as const;
 

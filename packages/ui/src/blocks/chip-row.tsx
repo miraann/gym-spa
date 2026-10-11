@@ -1,6 +1,6 @@
 import { Slot } from 'radix-ui';
 import type { ComponentProps, ReactNode } from 'react';
-import { cn } from '@/lib/utils';
+import { cn } from '../lib/utils';
 
 /**
  * A row of chips that is never clipped (CLAUDE.md → Layout guards): on phones it scrolls sideways
@@ -23,7 +23,7 @@ export function ChipRow({
       aria-label={label}
       className={cn(
         // Phones: bleed into the page padding (main is p-4) and scroll, keeping that padding.
-        '-mx-4 [scrollbar-width:none] overflow-x-auto px-4 md:mx-0 md:overflow-visible md:px-0',
+        '-mx-4 overflow-x-auto px-4 [scrollbar-width:none] md:mx-0 md:overflow-visible md:px-0',
         className,
       )}
     >

@@ -1,8 +1,8 @@
 import { LANGUAGE_CODES, LANGUAGES, localizeDigits, type Digits } from '@gym/i18n';
 import { useTranslation } from 'react-i18next';
-import { ChoiceGroup } from '@/components/choice-group';
-import { PageHeader } from '@/components/page-header';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { ChoiceGroup } from '@gym/ui/blocks/choice-group';
+import { PageHeader } from '@gym/ui/blocks/page-header';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@gym/ui/components/card';
 import { useFormat } from '@/lib/format';
 import { useChangeLanguage } from '@/features/auth/use-change-language';
 import { setPreference, usePreferences } from '@/lib/preferences';

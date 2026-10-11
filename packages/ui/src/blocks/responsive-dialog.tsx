@@ -6,7 +6,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
+} from '../components/dialog';
 import {
   Sheet,
   SheetContent,
@@ -14,8 +14,8 @@ import {
   SheetFooter,
   SheetHeader,
   SheetTitle,
-} from '@/components/ui/sheet';
-import { useLayout } from '@/hooks/use-layout';
+} from '../components/sheet';
+import { useLayout } from '../hooks/use-layout';
 
 /**
  * A dialog that becomes a bottom sheet on phones (CLAUDE.md → Design), so its buttons are in reach

@@ -49,9 +49,9 @@ export default defineConfig(
     languageOptions: { globals: globals.node },
   },
 
-  // The React app
+  // The React app, and the shared UI it is built from (packages/ui)
   {
-    files: ['apps/app/src/**/*.{ts,tsx}'],
+    files: ['apps/app/src/**/*.{ts,tsx}', 'packages/ui/src/**/*.{ts,tsx}'],
     extends: [reactHooks.configs.flat['recommended-latest'], reactRefresh.configs.vite],
     languageOptions: { globals: globals.browser },
     plugins: { gym },
@@ -85,7 +85,7 @@ export default defineConfig(
   // shadcn/ui components are vendored code: keep them close to upstream so updates stay easy.
   // Only purely stylistic rules are relaxed; type safety and the language rules still apply.
   {
-    files: ['apps/app/src/components/ui/**/*.tsx'],
+    files: ['packages/ui/src/components/**/*.tsx'],
     rules: {
       'react-refresh/only-export-components': 'off',
       '@typescript-eslint/consistent-type-definitions': 'off',

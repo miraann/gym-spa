@@ -1,9 +1,9 @@
 import { CheckIcon, CopyIcon, TriangleAlertIcon } from 'lucide-react';
 import { useEffect, useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ResponsiveDialog } from '@/components/responsive-dialog';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
+import { ResponsiveDialog } from '@gym/ui/blocks/responsive-dialog';
+import { Alert, AlertDescription } from '@gym/ui/components/alert';
+import { Button } from '@gym/ui/components/button';
 
 type CopyState = 'idle' | 'copied' | 'failed';
 

@@ -1,11 +1,11 @@
 import { TEXT_SIZES } from '@gym/core';
 import { CaseSensitiveIcon, LockIcon, TypeIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { ChoiceGroup } from '@/components/choice-group';
-import { PageHeader } from '@/components/page-header';
+import { ChoiceGroup } from '@gym/ui/blocks/choice-group';
+import { PageHeader } from '@gym/ui/blocks/page-header';
 import { THEME_CHOICES } from '@/components/theme-choices';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Alert, AlertDescription } from '@gym/ui/components/alert';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@gym/ui/components/card';
 import { useActiveAccount } from '@/features/auth/auth-context';
 import { useChangeTextSize, useChangeTheme } from '@/features/auth/use-change-look';
 import { usePermission } from '@/features/auth/use-permissions';

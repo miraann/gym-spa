@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { isNavItemActive, navTabItems, type NavItem } from '@/app/navigation';
 import { useActiveAccount } from '@/features/auth/auth-context';
 import { usePermissions } from '@/features/auth/use-permissions';
-import { cn } from '@/lib/utils';
+import { cn } from '@gym/ui/lib/utils';
 import { MoreSheet } from './more-sheet';
 
 /**

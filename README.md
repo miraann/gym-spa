@@ -77,7 +77,7 @@ The database, integration, Deno and end-to-end commands need Docker running, so 
 ```
 apps/app             React + Vite app (PWA)
   src/app            app-level wiring: providers, navigation, service worker
-  src/components     shared components; ui/ holds the shadcn/ui components
+  src/components     the app's own components (the layout: sidebar, rail, tab bar, top bar)
   src/features       one folder per module (auth, home, settings, members, ...)
   src/lib            preferences, formatting, logging, Supabase clients, the connection monitor
   src/routes         TanStack Router file routes (thin; pages live in features/)
@@ -92,6 +92,9 @@ packages/core        rules in plain TypeScript for the screens (validation, sett
 packages/db          generated Supabase types
 packages/platform    platform detection and native adapters; the only code that touches Capacitor or Electron
 packages/i18n        translations (ckb, en, ar), typed keys, number/money/date formatting
+packages/ui          the shared UI (gym app and seller panel): src/styles/theme.css (tokens, fonts),
+                     components/ (shadcn/ui; add more with `shadcn add` here), blocks/, hooks/
+packages/vite-plugins build-time Vite plugins of both apps (the Content-Security-Policy)
 packages/staff-admin the staff module: staff logins through Supabase Auth's admin API (server side;
                      the app imports only its request types and error keys)
 packages/seller-admin the seller panel's server module (Edge Function seller-admin): gyms with their
@@ -113,7 +116,7 @@ tools/eslint-plugin-gym  project lint rules
 - Lint rules:
   - `gym/no-hardcoded-ui-text`: text in JSX, labels, placeholders and toasts must come from `t('...')`.
   - `gym/no-physical-direction-classes`: use `ms-`/`me-`/`ps-`/`pe-`/`start-`/`end-`/`text-start`, never `ml-`/`mr-`/`left-`/`text-left`, so layouts mirror in RTL.
-- Fonts (all bundled, never loaded from the internet): **UniSalar_F_007** for Kurdish (`apps/app/src/assets/fonts`), Vazirmatn for Arabic, Inter for English. UniSalar is limited to Arabic-script characters with `unicode-range`, because it draws ASCII digits as Eastern Arabic. Digits and Latin text in Kurdish screens use Vazirmatn.
+- Fonts (all bundled, never loaded from the internet): **UniSalar_F_007** for Kurdish (`packages/ui/src/assets/fonts`), Vazirmatn for Arabic, Inter for English. UniSalar is limited to Arabic-script characters with `unicode-range`, because it draws ASCII digits as Eastern Arabic. Digits and Latin text in Kurdish screens use Vazirmatn.
 - Dates are shown in Baghdad time. Kurdish uses Sorani month names (`4ی تشرینی یەکەمی 2026`). Digits are Western by default, with Eastern Arabic (`٢٥٬٠٠٠ د.ع`) as a setting.
 
 ## Database (Supabase)

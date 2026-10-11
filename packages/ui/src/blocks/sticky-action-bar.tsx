@@ -1,5 +1,5 @@
 import { useEffect, useRef, type ReactNode } from 'react';
-import { useLayout } from '@/hooks/use-layout';
+import { useLayout } from '../hooks/use-layout';
 
 /**
  * A page's main actions. On phones they float in the thumb zone just above the tab bar, and the

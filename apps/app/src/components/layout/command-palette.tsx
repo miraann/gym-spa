@@ -11,7 +11,7 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from '@/components/ui/command';
+} from '@gym/ui/components/command';
 
 /** Ctrl+K search. Pages for now; members and card scans join it in Phase 2. */
 export function CommandPalette({

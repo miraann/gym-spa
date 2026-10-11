@@ -4,11 +4,17 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { z } from 'zod';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
-import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
-import { Input } from '@/components/ui/input';
-import { Spinner } from '@/components/ui/spinner';
+import { Alert, AlertDescription } from '@gym/ui/components/alert';
+import { Button } from '@gym/ui/components/button';
+import {
+  Field,
+  FieldDescription,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from '@gym/ui/components/field';
+import { Input } from '@gym/ui/components/input';
+import { Spinner } from '@gym/ui/components/spinner';
 import { useConnection } from '@/lib/connection';
 import { useAuthController, useAuthState } from '../auth-context';
 import type { AuthStep } from '../auth-controller';

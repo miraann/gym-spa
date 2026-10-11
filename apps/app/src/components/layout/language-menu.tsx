@@ -1,7 +1,7 @@
 import { isLanguage, LANGUAGE_CODES, LANGUAGES } from '@gym/i18n';
 import { LanguagesIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/ui/button';
+import { Button } from '@gym/ui/components/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,7 +9,7 @@ import {
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from '@gym/ui/components/dropdown-menu';
 import { useChangeLanguage } from '@/features/auth/use-change-language';
 import { usePreferences } from '@/lib/preferences';
 

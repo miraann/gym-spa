@@ -1,7 +1,7 @@
 import { CalendarClockIcon, CalendarXIcon, CirclePauseIcon, EyeIcon, XIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Alert, AlertAction, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
+import { Alert, AlertAction, AlertDescription, AlertTitle } from '@gym/ui/components/alert';
+import { Button } from '@gym/ui/components/button';
 import { useFormat } from '@/lib/format';
 import { useBillingNotice } from './use-billing-notice';
 

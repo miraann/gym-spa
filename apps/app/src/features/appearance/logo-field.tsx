@@ -10,10 +10,10 @@ import { ImageIcon, ImageUpIcon, TrashIcon, TriangleAlertIcon } from 'lucide-rea
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { ResponsiveDialog } from '@/components/responsive-dialog';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
-import { Spinner } from '@/components/ui/spinner';
+import { ResponsiveDialog } from '@gym/ui/blocks/responsive-dialog';
+import { Alert, AlertDescription } from '@gym/ui/components/alert';
+import { Button } from '@gym/ui/components/button';
+import { Spinner } from '@gym/ui/components/spinner';
 import { useAuthController } from '@/features/auth/auth-context';
 import { setGymLogo, useGymLogo } from '@/lib/appearance';
 import { useConnection } from '@/lib/connection';

@@ -6,19 +6,13 @@ import { cn } from 'cn';
 import { Slot } from 'radix-ui';
 import { useTranslation } from 'react-i18next';
 
-import { useIsMobile } from '@/hooks/use-mobile';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Separator } from '@/components/ui/separator';
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { useIsMobile } from '../hooks/use-mobile';
+import { Button } from './button';
+import { Input } from './input';
+import { Separator } from './separator';
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from './sheet';
+import { Skeleton } from './skeleton';
+import { Tooltip, TooltipContent, TooltipTrigger } from './tooltip';
 import { PanelLeftIcon } from 'lucide-react';
 
 const SIDEBAR_WIDTH = '16rem';

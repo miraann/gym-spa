@@ -14,7 +14,7 @@ const VAZIRMATN_FILES = fileURLToPath(
 const UNISALAR_FILE = fileURLToPath(
   new URL('../src/assets/fonts/unisalar-f-007.ttf', import.meta.url),
 );
-const STYLES_FILE = fileURLToPath(new URL('../src/styles.css', import.meta.url));
+const STYLES_FILE = fileURLToPath(new URL('../src/styles/theme.css', import.meta.url));
 
 function openFont(path: string): Font {
   const font = create(readFileSync(path));
@@ -82,7 +82,7 @@ function unicodeRangeOf(css: string, family: string): (codePoint: number) => boo
     .map((match) => match[1] ?? '')
     .find((body) => body.includes(`'${family}'`));
   const range = face?.match(/unicode-range:\s*([^;]+);/)?.[1];
-  if (!range) throw new Error(`No unicode-range for ${family} in styles.css`);
+  if (!range) throw new Error(`No unicode-range for ${family} in theme.css`);
   const spans = range.split(',').map((part) => {
     const [start = '', end] = part.trim().replace(/^U\+/i, '').split('-');
     return [Number.parseInt(start, 16), Number.parseInt(end ?? start, 16)] as const;
@@ -90,7 +90,7 @@ function unicodeRangeOf(css: string, family: string): (codePoint: number) => boo
   return (codePoint) => spans.some(([start, end]) => codePoint >= start && codePoint <= end);
 }
 
-describe('UniSalar unicode-range in styles.css', () => {
+describe('UniSalar unicode-range in theme.css', () => {
   const covers = unicodeRangeOf(readFileSync(STYLES_FILE, 'utf8'), 'UniSalar');
 
   it('covers the Kurdish letters, so Kurdish text uses UniSalar', () => {

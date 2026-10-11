@@ -1,6 +1,5 @@
 // Fonts are bundled (never loaded from the internet) so Kurdish text renders offline.
-import '@fontsource-variable/vazirmatn';
-import '@fontsource-variable/inter';
+import '@gym/ui/fonts';
 import './styles.css';
 import { platform } from '@gym/platform';
 import { RouterProvider } from '@tanstack/react-router';

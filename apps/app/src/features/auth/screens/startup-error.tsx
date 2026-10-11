@@ -1,6 +1,6 @@
 import { TriangleAlertIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/ui/button';
+import { Button } from '@gym/ui/components/button';
 import {
   Empty,
   EmptyContent,
@@ -8,7 +8,7 @@ import {
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
-} from '@/components/ui/empty';
+} from '@gym/ui/components/empty';
 
 /** Shown when the logins saved on this device can't be read (the details are in the log). */
 export function StartupError() {

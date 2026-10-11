@@ -14,7 +14,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
-} from '@/components/ui/sidebar';
+} from '@gym/ui/components/sidebar';
 import { GymMark } from './gym-mark';
 import { useGymName } from './use-gym-name';
 

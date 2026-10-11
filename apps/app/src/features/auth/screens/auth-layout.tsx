@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { GymMark } from '@/components/layout/gym-mark';
 import { LanguageMenu } from '@/components/layout/language-menu';
 import { ThemeMenu } from '@/components/layout/theme-menu';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@gym/ui/components/card';
 import { usePreferences } from '@/lib/preferences';
 import { useDeviceGym } from '../auth-context';
 

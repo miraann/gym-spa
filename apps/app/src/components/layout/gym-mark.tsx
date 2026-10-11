@@ -1,6 +1,6 @@
 import { DumbbellIcon } from 'lucide-react';
 import { useGymLogo } from '@/lib/appearance';
-import { cn } from '@/lib/utils';
+import { cn } from '@gym/ui/lib/utils';
 
 /**
  * The gym's logo, or the app's mark in the brand color when the gym has none (its name is shown

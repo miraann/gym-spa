@@ -2,7 +2,7 @@ import { localizedName } from '@gym/i18n';
 import { Building2Icon } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/ui/button';
+import { Button } from '@gym/ui/components/button';
 import { usePreferences } from '@/lib/preferences';
 import { useAuthController } from '../auth-context';
 import type { AuthStep } from '../auth-controller';

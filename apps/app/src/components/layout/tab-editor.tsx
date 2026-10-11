@@ -5,16 +5,16 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { navItem, navTabItems, visibleNavGroups } from '@/app/navigation';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
-import { SheetFooter } from '@/components/ui/sheet';
+import { Alert, AlertDescription } from '@gym/ui/components/alert';
+import { Button } from '@gym/ui/components/button';
+import { SheetFooter } from '@gym/ui/components/sheet';
 import { useActiveAccount, useAuthController } from '@/features/auth/auth-context';
 import { AuthErrorMessage } from '@/features/auth/screens/form-error';
 import { authErrorKey, type AuthErrorKey } from '@/features/auth/staff-api';
 import { usePermissions } from '@/features/auth/use-permissions';
 import { useConnection } from '@/lib/connection';
 import { useFormat } from '@/lib/format';
-import { cn } from '@/lib/utils';
+import { cn } from '@gym/ui/lib/utils';
 
 /**
  * The staff member picks their own 4 phone tabs, in the order they tap them (check-in always

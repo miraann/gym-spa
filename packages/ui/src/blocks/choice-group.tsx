@@ -1,7 +1,7 @@
 import type { LucideIcon } from 'lucide-react';
 import { useId } from 'react';
-import { Label } from '@/components/ui/label';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '../components/label';
+import { RadioGroup, RadioGroupItem } from '../components/radio-group';
 
 export interface Choice<T extends string> {
   readonly value: T;

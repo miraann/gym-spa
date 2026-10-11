@@ -1,6 +1,6 @@
 import { CircleAlertIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Alert, AlertDescription } from '@gym/ui/components/alert';
 import type { AuthErrorKey } from '../staff-api';
 
 export function FormError({ message }: { readonly message: string | null }) {

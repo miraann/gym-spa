@@ -1,13 +1,13 @@
 import { ChartColumnIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { PageHeader } from '@/components/page-header';
+import { PageHeader } from '@gym/ui/blocks/page-header';
 import {
   Empty,
   EmptyDescription,
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
-} from '@/components/ui/empty';
+} from '@gym/ui/components/empty';
 import { useFormat } from '@/lib/format';
 
 export function HomePage() {
