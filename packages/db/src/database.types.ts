@@ -690,8 +690,23 @@ export type Database = {
           name_ckb: string;
           name_en: string;
           paid_until: string;
+          suspended: boolean;
         }[];
       };
+      platform_admin_orphan: { Args: { p_email: string }; Returns: string };
+      platform_script_add_admin: {
+        Args: { p_full_name: string; p_user_id: string };
+        Returns: undefined;
+      };
+      platform_script_find_admin: {
+        Args: { p_email: string };
+        Returns: {
+          full_name: string;
+          is_active: boolean;
+          user_id: string;
+        }[];
+      };
+      platform_script_record: { Args: { p_action: string; p_user_id: string }; Returns: undefined };
       register_device: {
         Args: {
           p_branch_id: string;
@@ -723,6 +738,127 @@ export type Database = {
         };
       };
       reset_staff_pin: { Args: { p_staff_id: string }; Returns: undefined };
+      seller_add_admin: { Args: { p_full_name: string; p_user_id: string }; Returns: undefined };
+      seller_admins: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          created_at: string;
+          email: string;
+          full_name: string;
+          has_two_step: boolean;
+          is_active: boolean;
+          last_sign_in_at: string;
+          must_change_password: boolean;
+          recovery_codes_left: number;
+          user_id: string;
+        }[];
+      };
+      seller_audit_log: {
+        Args: { p_before?: string; p_gym_id?: string; p_limit?: number };
+        Returns: {
+          action: string;
+          actor_email: string;
+          actor_id: string;
+          details: Json;
+          gym_code: string;
+          gym_id: string;
+          id: string;
+          occurred_at: string;
+          reason: string;
+          target_admin_id: string;
+          target_email: string;
+        }[];
+      };
+      seller_create_gym: {
+        Args: {
+          p_code: string;
+          p_first_branch_name: string;
+          p_gym_id: string;
+          p_name_ar?: string;
+          p_name_ckb: string;
+          p_name_en?: string;
+          p_owner_full_name: string;
+          p_owner_id: string;
+          p_owner_phone?: string;
+          p_owner_username: string;
+          p_paid_until?: string;
+        };
+        Returns: undefined;
+      };
+      seller_gyms: {
+        Args: { p_gym_id?: string };
+        Returns: {
+          access: string;
+          active_branches: number;
+          active_devices: number;
+          active_staff: number;
+          code: string;
+          created_at: string;
+          edition: string;
+          id: string;
+          last_device_seen_at: string;
+          last_login_at: string;
+          locked_at: string;
+          max_branches: number;
+          max_devices: number;
+          name_ar: string;
+          name_ckb: string;
+          name_en: string;
+          paid_until: string;
+          state_reason: string;
+          suspended_at: string;
+        }[];
+      };
+      seller_lock_gym: { Args: { p_gym_id: string; p_reason: string }; Returns: undefined };
+      seller_me: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          aal2: boolean;
+          active_admins: number;
+          email: string;
+          full_name: string;
+          has_two_step: boolean;
+          must_change_password: boolean;
+          recovery_codes_left: number;
+          user_id: string;
+        }[];
+      };
+      seller_new_recovery_codes: { Args: Record<PropertyKey, never>; Returns: string[] };
+      seller_prepare_add_admin: { Args: { p_email: string }; Returns: undefined };
+      seller_prepare_admin_change: {
+        Args: { p_action: string; p_user_id: string };
+        Returns: {
+          email: string;
+          is_active: boolean;
+        }[];
+      };
+      seller_prepare_create_gym: {
+        Args: { p_code: string; p_owner_username: string };
+        Returns: undefined;
+      };
+      seller_reactivate_gym: { Args: { p_gym_id: string; p_reason?: string }; Returns: undefined };
+      seller_record_admin_change: {
+        Args: { p_action: string; p_user_id: string };
+        Returns: undefined;
+      };
+      seller_rename_gym: {
+        Args: { p_gym_id: string; p_name_ar: string; p_name_ckb: string; p_name_en: string };
+        Returns: undefined;
+      };
+      seller_set_admin_active: {
+        Args: { p_active: boolean; p_user_id: string };
+        Returns: undefined;
+      };
+      seller_set_limits: {
+        Args: { p_gym_id: string; p_max_branches: number; p_max_devices: number };
+        Returns: undefined;
+      };
+      seller_set_paid_until: {
+        Args: { p_gym_id: string; p_paid_until: string };
+        Returns: undefined;
+      };
+      seller_suspend_gym: { Args: { p_gym_id: string; p_reason?: string }; Returns: undefined };
+      seller_use_recovery_code: { Args: { p_code: string }; Returns: Json };
       set_my_pin: { Args: { p_pin: string }; Returns: undefined };
       staff_admin_orphan: { Args: { p_email: string }; Returns: string };
       staff_admin_prepare_change: {

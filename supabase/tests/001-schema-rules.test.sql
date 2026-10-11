@@ -1,7 +1,7 @@
 -- Rules every table and function must follow (CLAUDE.md → Database rules). These also catch new
 -- tables in later phases that forget one of them.
 begin;
-select plan(16);
+select plan(20);
 
 select is_empty($$
   select c.relname from pg_class c
@@ -22,18 +22,19 @@ $$, 'anonymous visitors have no access to any table');
 
 select is_empty($$
   select p.oid::regprocedure from pg_proc p
-   where p.pronamespace = 'public'::regnamespace and has_function_privilege('anon', p.oid, 'EXECUTE')
+   where p.pronamespace in ('public'::regnamespace, 'auth_hooks'::regnamespace)
+     and has_function_privilege('anon', p.oid, 'EXECUTE')
 $$, 'anonymous visitors cannot call any function');
 
 select is_empty($$
   select p.oid::regprocedure from pg_proc p
-   where p.pronamespace in ('app'::regnamespace, 'public'::regnamespace)
+   where p.pronamespace in ('app'::regnamespace, 'public'::regnamespace, 'auth_hooks'::regnamespace)
      and not exists (select 1 from unnest(p.proconfig) as c where c like 'search_path=%')
 $$, 'every function has a fixed search_path');
 
 select is_empty($$
   select c.conrelid::regclass, c.conname from pg_constraint c
-   where c.contype = 'f' and c.connamespace = 'public'::regnamespace
+   where c.contype = 'f' and c.connamespace in ('public'::regnamespace, 'platform'::regnamespace)
      and not exists (
        select 1 from pg_index i
         where i.indrelid = c.conrelid
@@ -132,6 +133,35 @@ select is_empty($$
      and exists (select 1 from pg_attribute a where a.attrelid = c.oid and a.attname = 'gym_id')
      and not exists (select 1 from pg_trigger t where t.tgrelid = c.oid and t.tgname = 'check_writable')
 $$, 'every gym table refuses changes while the gym is read-only, except PINs, device reports, derived access and the log');
+
+-- Click Group's platform tables (spec §2.6, step MT-3) ------------------------------------------
+-- They live in the private schema `platform`, reached only through the seller_* functions.
+
+select ok(
+  not has_schema_privilege('anon', 'platform', 'usage')
+    and not has_schema_privilege('authenticated', 'platform', 'usage')
+    and not has_schema_privilege('service_role', 'platform', 'usage'),
+  'no client role can use the platform schema'
+);
+
+select is_empty($$
+  select c.relname, r.rolname from pg_class c
+   cross join (values ('anon'), ('authenticated'), ('service_role')) as r (rolname)
+   where c.relnamespace = 'platform'::regnamespace and c.relkind in ('r', 'p', 'v', 'm')
+     and has_table_privilege(r.rolname, c.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')
+$$, 'no client role has any privilege on a platform table');
+
+select is_empty($$
+  select c.relname from pg_class c
+   where c.relnamespace = 'platform'::regnamespace and c.relkind in ('r', 'p') and not c.relrowsecurity
+$$, 'every platform table has row level security enabled too');
+
+select ok(
+  has_schema_privilege('supabase_auth_admin', 'auth_hooks', 'usage')
+    and not has_schema_privilege('authenticated', 'auth_hooks', 'usage')
+    and not has_schema_privilege('anon', 'auth_hooks', 'usage'),
+  'only Supabase Auth uses the auth_hooks schema'
+);
 
 select * from finish();
 rollback;

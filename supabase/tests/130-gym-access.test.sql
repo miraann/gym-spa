@@ -2,7 +2,7 @@
 -- Suspended gyms are read-only at once; locked (or closed) gyms lose all access. And the limits on
 -- active branches and devices.
 begin;
-select plan(39);
+select plan(41);
 select tests.create_fixture();
 
 insert into public.staff_pins (staff_id, gym_id, pin_hash)
@@ -24,6 +24,7 @@ select tests.clear_authentication();
 update public.gyms set paid_until = now() - interval '10 days' where code = 'pgtap-a';
 select tests.authenticate_as(tests.staff('owner'));
 select is((select access from public.my_gym()), 'grace', 'for 30 days after paid_until the gym is in grace');
+select is((select suspended from public.my_gym()), false, 'a gym whose subscription ran out is not suspended');
 select lives_ok($$ insert into public.branches (code, name_ckb) values ('B903', 'لقی نوێ') $$,
   'a gym in grace still works as usual');
 
@@ -73,6 +74,7 @@ select tests.clear_authentication();
 update public.gyms set paid_until = now() + interval '1 year', suspended_at = now() where code = 'pgtap-a';
 select tests.authenticate_as(tests.staff('owner'));
 select is((select access from public.my_gym()), 'read_only', 'a suspended gym is read-only, even when paid');
+select is((select suspended from public.my_gym()), true, 'my_gym() says it is suspended (step MT-3)');
 select throws_ok($$ insert into public.branches (code, name_ckb) values ('B904', 'لقی نوێ') $$,
   '42501', 'gym_read_only', 'a suspended gym adds nothing');
 

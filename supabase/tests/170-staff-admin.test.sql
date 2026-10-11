@@ -2,7 +2,7 @@
 -- made before any Auth call, the all-or-nothing staff rows of a new account, renames, what a
 -- read-only gym still allows, and which left-behind logins may be deleted.
 begin;
-select plan(67);
+select plan(70);
 select tests.create_fixture();
 
 -- A username that exists only in gym B.
@@ -312,9 +312,6 @@ select ok(
   'only the secret key can look for left-behind logins'
 );
 
--- Platform admins arrive in step MT-3 (Auth users without a staff row); a stand-in table until then.
-create table public.platform_admins (user_id uuid primary key);
-
 insert into auth.users (id, email, aud, role, raw_app_meta_data, created_at) values
   ('f0000000-0000-4000-8000-000000000001', 'lost@pgtap-a.staff.gym-spa.invalid', 'authenticated', 'authenticated',
    jsonb_build_object('gym_id', tests.gym('pgtap-a')), now() - interval '3 minutes'),
@@ -331,8 +328,20 @@ insert into auth.users (id, email, aud, role, raw_app_meta_data, created_at) val
   ('f0000000-0000-4000-8000-000000000007', 'ghost@no-such-gym.staff.gym-spa.invalid', 'authenticated', 'authenticated',
    jsonb_build_object('gym_id', tests.gym('pgtap-a')), now() - interval '1 day'),
   ('f0000000-0000-4000-8000-000000000008', 'ali+old@pgtap-a.staff.gym-spa.invalid', 'authenticated', 'authenticated',
-   jsonb_build_object('gym_id', tests.gym('pgtap-a')), now() - interval '1 day');
-insert into public.platform_admins (user_id) values ('f0000000-0000-4000-8000-000000000004');
+   jsonb_build_object('gym_id', tests.gym('pgtap-a')), now() - interval '1 day'),
+  -- Made by the seller panel for a new gym's Owner when the gym was never made (step MT-3).
+  ('f0000000-0000-4000-8000-000000000009', 'boss@never-made.staff.gym-spa.invalid', 'authenticated', 'authenticated',
+   '{"gym_id": "c0000000-0000-4000-8000-0000000000aa"}', now() - interval '3 minutes'),
+  ('f0000000-0000-4000-8000-000000000010', 'boss@never-plain.staff.gym-spa.invalid', 'authenticated', 'authenticated',
+   '{}', now() - interval '1 day'),
+  ('f0000000-0000-4000-8000-000000000011', 'boss@never-fresh.staff.gym-spa.invalid', 'authenticated', 'authenticated',
+   '{"gym_id": "c0000000-0000-4000-8000-0000000000bb"}', now() - interval '1 minute');
+-- A platform admin's login can never have a staff login address (180-platform-admins); past that
+-- guard, the look-up still never picks one.
+alter table platform.admins disable trigger guard;
+insert into platform.admins (user_id, full_name, must_change_password)
+values ('f0000000-0000-4000-8000-000000000004', 'بەڕێوەبەر', false);
+alter table platform.admins enable trigger guard;
 -- A real staff member whose login otherwise looks left behind.
 update auth.users
    set raw_app_meta_data = jsonb_build_object('gym_id', tests.gym('pgtap-a')), created_at = now() - interval '1 day'
@@ -354,7 +363,13 @@ select is(public.staff_admin_orphan('cross@pgtap-a.staff.gym-spa.invalid'), null
 select is(public.staff_admin_orphan('plain@pgtap-a.staff.gym-spa.invalid'), null,
   'a login the module did not make is never picked');
 select is(public.staff_admin_orphan('ghost@no-such-gym.staff.gym-spa.invalid'), null,
-  'a login for a gym that doesn''t exist is never picked');
+  'a login for a gym code that doesn''t exist, made for a gym that does, is never picked');
+select is(public.staff_admin_orphan('boss@never-made.staff.gym-spa.invalid'), 'f0000000-0000-4000-8000-000000000009'::uuid,
+  'a login the seller panel made for a gym that was never made (no gym with its code or its gym id) is left behind');
+select is(public.staff_admin_orphan('boss@never-plain.staff.gym-spa.invalid'), null,
+  'a login for a code nobody has, that no module made, is never picked');
+select is(public.staff_admin_orphan('boss@never-fresh.staff.gym-spa.invalid'), null,
+  'a seller-made login less than 2 minutes old is never picked (the gym may still be in the making)');
 select is(public.staff_admin_orphan('reception_b@pgtap-a.staff.gym-spa.invalid'), null,
   'a login with a staff account is never picked');
 select is(public.staff_admin_orphan('nobody@pgtap-a.staff.gym-spa.invalid'), null,
@@ -362,8 +377,8 @@ select is(public.staff_admin_orphan('nobody@pgtap-a.staff.gym-spa.invalid'), nul
 
 select tests.clear_authentication();
 select is(
-  (select count(*)::integer from auth.users where id::text like 'f0000000-0000-4000-8000-00000000000_'),
-  8, 'the look-up deletes nothing itself: the module deletes only the login it returns'
+  (select count(*)::integer from auth.users where id::text like 'f0000000-0000-4000-8000-0000000000__'),
+  11, 'the look-up deletes nothing itself: the module deletes only the login it returns'
 );
 
 select * from finish();

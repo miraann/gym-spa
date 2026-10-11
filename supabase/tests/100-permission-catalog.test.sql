@@ -1,7 +1,7 @@
 -- The built-in roles every gym gets (app.role_templates, migration 20261010100000) and their
 -- permissions.
 begin;
-select plan(9);
+select plan(10);
 
 select set_eq(
   'select key from app.role_templates',
@@ -51,6 +51,11 @@ select is_empty(
            where m.role_key = 'branch_manager' and m.permission_key = tp.permission_key
         ) $$,
   'a branch manager has every permission of the front-desk roles, so they can give those roles'
+);
+select ok(
+  exists (select 1 from public.permissions where key = 'billing.view')
+    and exists (select 1 from app.role_template_permissions where role_key = 'admin' and permission_key = 'billing.view'),
+  'billing.view (the gym''s subscription and its warnings) exists, and Admin has it (step MT-3)'
 );
 select is_empty(
   $$ select 1 from public.roles where key = 'super_admin' $$,

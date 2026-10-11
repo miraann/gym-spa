@@ -60,6 +60,10 @@ export function toAuthError(error: unknown): AuthFlowError {
     if (error.status === 429 || error.code === 'over_request_rate_limit') {
       return new AuthFlowError('too_many_requests');
     }
+    // Auth's hook refuses every token to staff of a locked gym (migration 20261010100700).
+    if (error.status === 403 && error.message === 'gym_locked') {
+      return new AuthFlowError('gym_locked', { cause: error });
+    }
   }
   // fetch() itself failed: no network, DNS, connection refused.
   if (error instanceof TypeError) return new AuthFlowError('network', { cause: error });

@@ -60,7 +60,7 @@ Run from the repository root:
 | `pnpm db:status` | Local URLs and keys: API, Studio (the database UI, http://localhost:54323), database |
 | `pnpm db:reset` | Rebuild the local database: every migration, then the demo data in `supabase/seed.sql`. Deletes local data, including your admin login |
 | `pnpm db:test` | Database tests (pgTAP in `supabase/tests`): row level security, the access rules and the PIN functions |
-| `pnpm db:lint` | Check the SQL functions for errors (plpgsql_check) |
+| `pnpm db:lint` | Check the SQL functions for errors (plpgsql_check) in the `public`, `app` and `auth_hooks` schemas |
 | `pnpm db:types` | Regenerate the TypeScript types of the database (`packages/db`). Run after changing migrations |
 | `pnpm bootstrap:admin` | Create a gym's first Owner: `--gym <code>`, and the gym itself if it doesn't exist yet (its code can never change). Add `--remote` for a cloud project (see [A cloud project](#a-cloud-project)) |
 | `pnpm smoke:staff-admin` | Smoke test of the staff module as a gym's Owner: creates `smoke.test`, checks that its temporary password logs in and must be changed, deactivates it and checks that its login is refused. Prints only the staff id, never a password. `--remote` for the cloud project (needs the publishable key: `SUPABASE_PUBLISHABLE_KEY` in `supabase/.env.local`, or the app's `apps/app/.env.local` for the same project); local needs `pnpm db:functions` |
@@ -135,8 +135,8 @@ Spec §2.6. Migrations `20261010100000_gyms.sql` and `20261010100100_gym_rules.s
 - **Access state** (`app.gym_access()`; the app asks with `public.my_gym()`):
   - active, then 30 days of **grace** after `paid_until`, then **read-only**;
   - **suspended** (`suspended_at`): read-only at once. Staff can log in, look and use their PINs, but nothing can be added or changed (`gym_read_only`);
-  - **locked** (`locked_at`): all access ends at once; staff see nothing (`gym_locked`).
-  - Until the seller panel exists (MT-3), these columns are set in SQL.
+  - **locked** (`locked_at`): all access ends at once; staff see nothing (`gym_locked`), and Supabase Auth gives them no new token ([The Auth hook](#the-auth-hook)).
+  - Click Group sets these with the seller functions ([Seller panel](#seller-panel-click-group)). `my_gym()` also says whether a read-only gym is suspended (`suspended`) or its subscription ran out.
 - **Limits:** `max_branches` and `max_devices` (empty: no limit) are checked whenever a branch or device is added or made active again (`gym_branch_limit`, `gym_device_limit`).
 
 ### How access works
@@ -194,6 +194,49 @@ Staff logins live in Supabase Auth, and only the secret key can create or change
 - **Errors** are stable keys with an HTTP status (`packages/staff-admin/src/errors.ts`), translated by the app (`staff:errors`).
 - **Tests:** `pnpm test` runs the unit cases with fakes, including every undo path. `pnpm test:int` runs the module in Node against the real local Auth and database, including a real database failure after the login was made. `pnpm test:deno` runs the same unit cases in Deno, plus HTTP tests against the served function. `pnpm db:test` covers the database half (`170-staff-admin`).
 - **Deno imports.** The packages the function imports (`packages/core`, `packages/db`, `packages/staff-admin`) name every relative import with `.ts`, because Deno resolves no other way; the lint rule `gym/explicit-ts-extensions` checks it. Their bare imports (`@gym/core`, `zod`, `@supabase/supabase-js`) are mapped in `supabase/functions/staff-admin/deno.json` with the same versions as the workspace: change both together.
+
+## Seller panel (Click Group)
+
+Spec §2.6, step MT-3. The database half is built (MT-3a: migrations `20261010100500_platform_admins.sql`, `20261010100600_seller_gyms.sql`, `20261010100700_auth_hook.sql`). The `seller-admin` function, the scripts and the `apps/seller` app follow in MT-3b to MT-3e.
+
+### Platform admins
+
+- Click Group's accounts are **platform admins**: Supabase Auth users with a real email address and a row in `platform.admins`. They have nothing to do with a gym's roles. A trigger on each side keeps one login from ever being both a staff member and a platform admin (`staff_cannot_be_platform_admin`, `platform_admin_cannot_be_staff`), and a platform admin's address is never a staff login address.
+- **Everything is in the private schema `platform`** (`admins`, `recovery_codes`, `audit_logs`). The API never exposes it, and no client role (not even the secret key) has any privilege on it. The panel uses only the `public.seller_*` functions.
+- **Every seller function checks the caller first** (`app.require_platform_admin()`): an active platform admin (`not_platform_admin`), a session that passed two-step login, `aal2` (`mfa_required`), and a password they chose themself (`password_change_required`). Only `seller_me()` and `seller_use_recovery_code()` work before the second step, for the login flow.
+- **Two-step login (TOTP) is required.** It is Supabase Auth's own MFA (`[auth.mfa.totp]` in `config.toml`; on by default in cloud projects).
+- **Recovery codes:** `seller_new_recovery_codes()` makes 10 one-time codes (`xxxx-xxxx-xxxx-xxxx`, about 80 random bits each), shown once and stored only as SHA-256. A new set replaces the old one. `seller_use_recovery_code()` accepts one after the password alone (the device is lost); 5 wrong codes in 15 minutes block further tries for 15 minutes. Every try is logged.
+- **At least one active platform admin, always:** nobody deactivates or resets themself through the panel, and the last active one can't be deactivated even by server code (`last_platform_admin`). The panel will warn while there is only one.
+- Deactivating a platform admin ends their access to every seller function at once.
+
+### Gyms in the seller panel
+
+- **Creating a gym never leaves it without its Owner:** `seller_prepare_create_gym()` checks the code (format, reserved list, never used) and the Owner's username; the `seller-admin` function makes the Owner's login; then `seller_create_gym()` makes the gym, its roles, branch B1, the Owner (every branch, must choose a password) and the log entry in one transaction. If that fails, the login is deleted again.
+- `seller_set_paid_until()` (empty: no end), `seller_suspend_gym()` (reason optional), `seller_lock_gym()` (reason required), `seller_reactivate_gym()` (ends both), `seller_set_limits()`, `seller_rename_gym()` (never the code). Offline gyms follow their license instead (`offline_gym`).
+- `seller_gyms()` returns each gym's record, its access state with the reason for a lock or suspension, and usage counts and dates (active branches, staff and devices, last login, last device seen). Never names, members or other business data: a platform admin's own session reads no row of any gym table.
+- The **seller log** (`platform.audit_logs`, read with `seller_audit_log()`) records every seller action: who, when, which gym or admin, what changed, and the reason. Nobody can change or delete it. Changes made by a script have no actor.
+- Seller writes to a gym's tables run under the platform admin's own session, so the gym's own audit log names them too.
+
+### The Auth hook
+
+Supabase Auth calls `auth_hooks.custom_access_token` (its "Customize Access Token" hook) before every token it issues: at a password login, at every token refresh, and after the second login step. It refuses the token to a staff member of a **locked** gym (HTTP 403, message `gym_locked`, which the app shows as the "gym locked" text). Everything else gets the token unchanged: staff of active, grace, read-only and suspended gyms, other gyms' staff, platform admins, users without a staff account, and any odd input. It never raises an error: anything unexpected lets the login through, and the database still keeps a locked gym's data closed. Reactivating the gym lets the same sessions refresh again. Only Supabase Auth's role can call it.
+
+- **Locally** it is turned on in `supabase/config.toml` (`[auth.hook.custom_access_token]`). Changing that file needs `pnpm db:stop` and `pnpm db:start`.
+- **In the cloud project** it is turned on in the dashboard: Authentication → Hooks → "Customize Access Token (JWT) Claims" → Postgres, schema `auth_hooks`, function `custom_access_token`. Never use `supabase config push` for it: that would also push the local auth settings.
+- **Tests:** `supabase/tests/210-auth-hook.test.sql` (who is refused, malformed input). A test with the real local Auth server (a login and a refresh against a locked gym) comes with MT-3b; the e2e test "a locked gym can't be used" already logs in through it.
+
+#### Emergency: nobody can log in
+
+The hook runs for every login of every gym and of Click Group. If logins fail everywhere after a change (the login screen says something went wrong, and Supabase's Auth logs mention the hook):
+
+1. Supabase dashboard → the project → **Authentication → Hooks** → "Customize Access Token (JWT) Claims" → turn it **off** (or delete it) and save. Logins work again at once.
+2. Locked gyms stay safe meanwhile: their staff can log in, but the database still shows them nothing and refuses every change (`app.current_gym_id()`).
+3. Find the cause in **Logs → Auth** (the hook's error) and reproduce it locally with `pnpm db:test`. Fix it with a new migration, push it, then turn the hook on again and check that a login works.
+4. Locally: set `enabled = false` under `[auth.hook.custom_access_token]` in `supabase/config.toml`, then `pnpm db:stop` and `pnpm db:start`.
+
+### Tests
+
+`supabase/tests/180-platform-admins.test.sql` (accounts, both-ways rule, recovery codes, scripts' functions, the log), `190-seller-gyms.test.sql` (creating a gym with its Owner all or nothing, subscription end, suspend, lock, reactivate, limits, usage), `200-platform-isolation.test.sql` (built from the catalog: every seller function refuses gym staff, even an Owner with two-step login, and refuses platform admins before the second step; platform admins see and change no row of any gym table) and `210-auth-hook.test.sql`.
 
 ## Connection
 

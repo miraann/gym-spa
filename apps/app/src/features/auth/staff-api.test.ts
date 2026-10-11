@@ -1,5 +1,17 @@
+import { AuthApiError } from '@supabase/supabase-js';
 import { describe, expect, it } from 'vitest';
-import { AuthFlowError, parsePinCheck, parseServerGym } from './staff-api';
+import { AuthFlowError, parsePinCheck, parseServerGym, toAuthError } from './staff-api';
+
+describe('toAuthError', () => {
+  it("explains Auth's refusal for a locked gym (the access token hook)", () => {
+    expect(toAuthError(new AuthApiError('gym_locked', 403, 'unknown')).key).toBe('gym_locked');
+  });
+
+  it('keeps other refusals apart', () => {
+    expect(toAuthError(new AuthApiError('Forbidden', 403, 'unknown')).key).toBe('unexpected');
+    expect(toAuthError(new AuthApiError('gym_locked', 500, 'unknown')).key).toBe('unexpected');
+  });
+});
 
 describe('parsePinCheck', () => {
   it.each(['ok', 'locked_out', 'no_pin', 'no_branch_access', 'inactive', 'gym_locked'] as const)(

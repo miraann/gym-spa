@@ -124,13 +124,15 @@ as $$
 declare
   gym_code text;
 begin
-  -- Start from no staff and no settings, whatever the local database holds (e.g. the admin from
-  -- `pnpm bootstrap:admin`). Every test file runs in a transaction that rolls back, so this
-  -- never removes anything for real.
+  -- Start from no staff, no platform admins and no settings, whatever the local database holds
+  -- (e.g. the admins from `pnpm bootstrap:admin` and `pnpm bootstrap:platform-admin`). Every test
+  -- file runs in a transaction that rolls back, so this never removes anything for real.
   delete from public.settings;
   delete from public.staff_pins;
   delete from public.staff_branches;
   delete from public.staff_users;
+  delete from platform.recovery_codes;
+  delete from platform.admins;
   delete from auth.users;
 
   foreach gym_code in array array['pgtap-a', 'pgtap-b'] loop
@@ -272,6 +274,86 @@ begin
     'amr', json_build_array(json_build_object('method', 'password', 'timestamp', floor(extract(epoch from logged_in_at))::bigint))
   )::text, true);
   perform set_config('role', 'authenticated', true);
+end
+$$;
+
+-- Like authenticate_as(), with the session's assurance level: aal1 after the password, aal2 after
+-- the second login step (TOTP).
+create or replace function tests.authenticate_with_aal(user_id uuid, aal text)
+returns void
+language plpgsql
+set search_path = ''
+as $$
+begin
+  perform set_config('request.jwt.claims',
+    json_build_object('sub', user_id, 'role', 'authenticated', 'aal', aal)::text, true);
+  perform set_config('role', 'authenticated', true);
+end
+$$;
+
+-- Platform admins (step MT-3) -------------------------------------------------------------------
+
+-- A Click Group platform admin: an Auth user with a real email address, and their row. Ready to
+-- use: their own password, and a two-step device.
+create or replace function tests.create_platform_admin(email text, is_active boolean default true)
+returns uuid
+language plpgsql
+set search_path = ''
+as $$
+declare
+  admin_id uuid;
+begin
+  insert into auth.users (id, email, aud, role)
+  values (gen_random_uuid(), create_platform_admin.email, 'authenticated', 'authenticated')
+  returning id into admin_id;
+  insert into platform.admins (user_id, full_name, must_change_password)
+  values (admin_id, 'بەڕێوەبەری ' || split_part(create_platform_admin.email, '@', 1), false);
+  perform tests.add_two_step(admin_id);
+  if not create_platform_admin.is_active then
+    -- keep_one refuses the last active one; the fixtures always make another first.
+    update platform.admins set is_active = false where user_id = admin_id;
+  end if;
+  return admin_id;
+end
+$$;
+
+-- A verified TOTP factor, as Supabase Auth keeps it after the two-step setup.
+create or replace function tests.add_two_step(user_id uuid)
+returns void
+language sql
+set search_path = ''
+as $$
+  insert into auth.mfa_factors (id, user_id, friendly_name, factor_type, status, created_at, updated_at, secret)
+  values (gen_random_uuid(), add_two_step.user_id, null, 'totp', 'verified', now(), now(), 'JBSWY3DPEHPK3PXP')
+$$;
+
+create or replace function tests.platform_admin(email text)
+returns uuid
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select u.id from auth.users u where u.email = platform_admin.email
+$$;
+
+-- Calls a function with null for every argument, as the current user (for "refuses everyone but
+-- ..." checks over every function of a kind). Returns the error message, or null when it worked.
+create or replace function tests.call_with_nulls(fn regprocedure)
+returns text
+language plpgsql
+set search_path = ''
+as $$
+declare
+  arguments integer;
+begin
+  select p.pronargs into arguments from pg_catalog.pg_proc p where p.oid = fn;
+  execute format('select * from %s(%s)', fn::regproc,
+    coalesce((select string_agg('null', ', ') from generate_series(1, arguments)), ''));
+  return null;
+exception
+  when others then
+    return sqlerrm;
 end
 $$;
 
