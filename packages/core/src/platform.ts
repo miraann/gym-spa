@@ -1,4 +1,5 @@
 import { toLatinDigits } from './digits.ts';
+import { MAX_PASSWORD_BYTES, type PasswordProblem } from './password.ts';
 
 // Click Group's platform admins (spec §2.6, step MT-3): rules the seller panel and the seller-admin
 // function share with the database. Tests compare them with the SQL (app.is_valid_admin_email,
@@ -44,4 +45,17 @@ export function looksLikeRecoveryCode(input: string): boolean {
     code.length === RECOVERY_CODE_LENGTH &&
     code.split('').every((character) => RECOVERY_CODE_ALPHABET.includes(character))
   );
+}
+
+/**
+ * A platform admin's own password is longer than a staff member's (MIN_PASSWORD_LENGTH): the panel
+ * guards every gym. Checked by the panel; Auth itself enforces the project-wide minimum.
+ */
+export const ADMIN_MIN_PASSWORD_LENGTH = 12;
+
+/** Why a platform admin's new password can't be used, or null when it's fine. */
+export function adminPasswordProblem(password: string): PasswordProblem | null {
+  if (Array.from(password).length < ADMIN_MIN_PASSWORD_LENGTH) return 'password_short';
+  if (new TextEncoder().encode(password).length > MAX_PASSWORD_BYTES) return 'password_long';
+  return null;
 }

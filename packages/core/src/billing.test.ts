@@ -5,6 +5,9 @@ import {
   billingNoticeAudience,
   isBillingNoticeDismissible,
   paidUntilFromDate,
+  addMonthsToDate,
+  baghdadDateOf,
+  paidDateOf,
   type BillingNotice,
 } from './billing.ts';
 import { latestFunctionBody } from './sql-functions.test-helper.ts';
@@ -137,5 +140,23 @@ describe('the same grace period as app.gym_access()', () => {
   it('uses 30 days', () => {
     const body = latestFunctionBody('app.gym_access');
     expect(/paid_until \+ interval '(\d+) days'/.exec(body)?.[1]).toBe(String(GRACE_DAYS));
+  });
+});
+
+describe('dates for the seller panel', () => {
+  it('reads back the paid date of a paid_until', () => {
+    expect(paidDateOf(PAID_UNTIL)).toBe('2026-12-31');
+    expect(paidDateOf(paidUntilFromDate('2027-02-28'))).toBe('2027-02-28');
+  });
+
+  it('knows the Baghdad date of a moment', () => {
+    expect(baghdadDateOf(new Date('2026-12-30T22:30:00Z'))).toBe('2026-12-31');
+  });
+
+  it('adds months within the month', () => {
+    expect(addMonthsToDate('2026-01-31', 1)).toBe('2026-02-28');
+    expect(addMonthsToDate('2028-01-31', 1)).toBe('2028-02-29');
+    expect(addMonthsToDate('2026-10-11', 12)).toBe('2027-10-11');
+    expect(addMonthsToDate('2026-11-30', 3)).toBe('2027-02-28');
   });
 });

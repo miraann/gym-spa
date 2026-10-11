@@ -119,3 +119,29 @@ export function paidUntilFromDate(date: string): string {
   }
   return new Date(start + DAY_MS - BAGHDAD_OFFSET_MS).toISOString();
 }
+
+/** The Baghdad calendar date (YYYY-MM-DD) of a moment. */
+export function baghdadDateOf(moment: Date | number): string {
+  const ms = typeof moment === 'number' ? moment : moment.getTime();
+  return new Date(ms + BAGHDAD_OFFSET_MS).toISOString().slice(0, 10);
+}
+
+/** The last paid Baghdad date of a paid_until (the inverse of paidUntilFromDate). */
+export function paidDateOf(paidUntil: string): string {
+  return baghdadDateOf(Date.parse(paidUntil) - 1);
+}
+
+/**
+ * A date (YYYY-MM-DD) some months later, kept within the month: 31 January + 1 month is
+ * 28 (or 29) February.
+ */
+export function addMonthsToDate(date: string, months: number): string {
+  paidUntilFromDate(date);
+  const [year = 0, month = 1, day = 1] = date.split('-').map(Number);
+  const target = new Date(Date.UTC(year, month - 1 + months, 1));
+  const lastDay = new Date(
+    Date.UTC(target.getUTCFullYear(), target.getUTCMonth() + 1, 0),
+  ).getUTCDate();
+  target.setUTCDate(Math.min(day, lastDay));
+  return target.toISOString().slice(0, 10);
+}

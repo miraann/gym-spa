@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { NAMESPACES, resources } from './resources';
+import { sellerResources } from './seller';
 
 /**
  * Spelling guard for the Kurdish (Sorani) source texts.
@@ -39,6 +40,7 @@ function textsOf(language: 'ckb' | 'ar'): { where: string; text: string }[] {
     }
   };
   for (const namespace of NAMESPACES) walk(resources[language][namespace], namespace);
+  walk(sellerResources[language].seller, 'seller');
   return out;
 }
 

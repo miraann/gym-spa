@@ -1,1 +1,4 @@
-export { contentSecurityPolicy } from './content-security-policy.ts';
+export {
+  contentSecurityPolicy,
+  type ContentSecurityPolicyOptions,
+} from './content-security-policy.ts';

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   ADMIN_EMAIL_MAX_LENGTH,
+  adminPasswordProblem,
   ADMIN_EMAIL_PATTERN,
   RECOVERY_CODE_ALPHABET,
   RECOVERY_CODE_LENGTH,
@@ -56,5 +57,17 @@ describe('recovery codes', () => {
     const body = latestFunctionBody('app.new_recovery_code');
     expect(/alphabet constant text := '([^']+)'/.exec(body)?.[1]).toBe(RECOVERY_CODE_ALPHABET);
     expect(/length\(code\) < (\d+)/.exec(body)?.[1]).toBe(String(RECOVERY_CODE_LENGTH));
+  });
+});
+
+describe('platform admin passwords', () => {
+  it('need at least 12 characters, counted as letters', () => {
+    expect(adminPasswordProblem('short-pass1')).toBe('password_short');
+    expect(adminPasswordProblem('long-enough-1')).toBeNull();
+    expect(adminPasswordProblem('وشەینهێنیی12')).toBeNull();
+  });
+
+  it('fit in what Auth reads (72 bytes)', () => {
+    expect(adminPasswordProblem('ە'.repeat(40))).toBe('password_long');
   });
 });

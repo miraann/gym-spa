@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { LANGUAGE_CODES } from './languages';
 import { NAMESPACES, resources } from './resources';
+import { sellerResources } from './seller';
 
 /** Flattens a translation tree into `path → text`; arrays are indexed (`months[0]`). */
 function flatten(tree: unknown): Map<string, string> {
@@ -28,11 +29,20 @@ function placeholders(text: string): string[] {
   return [...text.matchAll(/\{\{(\w+)\}\}/g)].map((match) => match[1] ?? '').sort();
 }
 
-describe.each(NAMESPACES)('namespace "%s"', (namespace) => {
-  const source = flatten(resources.ckb[namespace]);
+/** Every namespace of both apps: the gym app's, and the seller panel's own. */
+const ALL: Readonly<Record<string, Readonly<Record<string, unknown>>>> = Object.fromEntries(
+  LANGUAGE_CODES.map((language) => [
+    language,
+    { ...resources[language], seller: sellerResources[language].seller },
+  ]),
+);
+const ALL_NAMESPACES = [...NAMESPACES, 'seller'] as const;
+
+describe.each(ALL_NAMESPACES)('namespace "%s"', (namespace) => {
+  const source = flatten(ALL.ckb?.[namespace]);
 
   it.each(LANGUAGE_CODES)('%s has no empty texts', (language) => {
-    const empty = [...flatten(resources[language][namespace])]
+    const empty = [...flatten(ALL[language]?.[namespace])]
       .filter(([, text]) => text.trim() === '')
       .map(([path]) => path);
     expect(empty).toEqual([]);
@@ -41,7 +51,7 @@ describe.each(NAMESPACES)('namespace "%s"', (namespace) => {
   it.each(LANGUAGE_CODES.filter((language) => language !== 'ckb'))(
     '%s has exactly the same keys as Kurdish',
     (language) => {
-      const target = flatten(resources[language][namespace]);
+      const target = flatten(ALL[language]?.[namespace]);
       expect([...target.keys()].sort()).toEqual([...source.keys()].sort());
     },
   );
@@ -49,7 +59,7 @@ describe.each(NAMESPACES)('namespace "%s"', (namespace) => {
   it.each(LANGUAGE_CODES.filter((language) => language !== 'ckb'))(
     '%s uses the same {{placeholders}} as Kurdish',
     (language) => {
-      const target = flatten(resources[language][namespace]);
+      const target = flatten(ALL[language]?.[namespace]);
       for (const [path, text] of source) {
         expect(placeholders(target.get(path) ?? ''), path).toEqual(placeholders(text));
       }

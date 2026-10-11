@@ -18,7 +18,20 @@ function connectOrigins(address: string | undefined): string[] {
  * run its own scripts: the inline boot script in index.html is allowed by its hash. Dev mode has
  * none, because Vite injects its own inline scripts there.
  */
-export function contentSecurityPolicy(env: Record<string, string>): Plugin {
+export interface ContentSecurityPolicyOptions {
+  /** The app registers a service worker (the gym app's PWA). Default true. */
+  readonly serviceWorker?: boolean;
+  /** The app has a web manifest. Default true. */
+  readonly manifest?: boolean;
+  /** Images may come from the Supabase server (member photos) and blob: URLs. Default true. */
+  readonly serverImages?: boolean;
+}
+
+export function contentSecurityPolicy(
+  env: Record<string, string>,
+  options: ContentSecurityPolicyOptions = {},
+): Plugin {
+  const { serviceWorker = true, manifest = true, serverImages = true } = options;
   return {
     name: 'gym:content-security-policy',
     apply: 'build',
@@ -36,13 +49,15 @@ export function contentSecurityPolicy(env: Record<string, string>): Plugin {
         const policy = [
           "default-src 'self'",
           `script-src 'self' ${inlineScripts.join(' ')}`,
-          "worker-src 'self'",
+          serviceWorker ? "worker-src 'self'" : "worker-src 'none'",
           `connect-src 'self' ${servers.join(' ')}`,
           // Radix and sonner position things with inline styles.
           "style-src 'self' 'unsafe-inline'",
-          `img-src 'self' data: blob: ${supabase.join(' ')}`,
+          serverImages
+            ? `img-src 'self' data: blob: ${supabase.join(' ')}`
+            : "img-src 'self' data:",
           "font-src 'self' data:",
-          "manifest-src 'self'",
+          manifest ? "manifest-src 'self'" : "manifest-src 'none'",
           "object-src 'none'",
           "frame-src 'none'",
           "base-uri 'self'",

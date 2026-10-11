@@ -1,0 +1,7 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import 'shadcn/tailwind.css';
+
+/* The shared theme (tokens, fonts, base rules) lives in packages/ui, like the gym app's. */
+@import '@gym/ui/theme.css';
+@source '../../../packages/ui/src';

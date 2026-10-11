@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:web": "node scripts/build-web.mjs",
     "preview": "vite preview",
     "typecheck": "tsc -b",
     "test:e2e": "vite build --mode e2e && playwright test",

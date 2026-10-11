@@ -61,6 +61,10 @@ export default defineConfig(({ mode }) => ({
         // Precache the whole app (code, fonts, icons), so it opens fast. Data always needs the server.
         globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2,ttf,webmanifest}'],
         navigateFallback: '/index.html',
+        // The seller panel (/seller/, copied in by scripts/build-web.mjs) is never cached or
+        // answered by this service worker, so it is never available offline (spec §2.6).
+        navigateFallbackDenylist: [/^\/seller(?:\/|$)/],
+        globIgnores: ['seller/**'],
         cleanupOutdatedCaches: true,
         clientsClaim: true,
         maximumFileSizeToCacheInBytes: 10 * 1024 * 1024,

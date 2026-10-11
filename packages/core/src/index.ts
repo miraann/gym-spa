@@ -37,9 +37,12 @@ export {
 export {
   BILLING_STAGES,
   GRACE_DAYS,
+  addMonthsToDate,
+  baghdadDateOf,
   billingNotice,
   billingNoticeAudience,
   isBillingNoticeDismissible,
+  paidDateOf,
   paidUntilFromDate,
   type BillingNotice,
   type BillingStage,
@@ -61,6 +64,7 @@ export {
 } from './color.ts';
 export { toLatinDigits } from './digits.ts';
 export {
+  DEFAULT_FIRST_BRANCH_NAME,
   GYM_ACCESS_STATES,
   GYM_CODE_MAX_LENGTH,
   GYM_CODE_MIN_LENGTH,
@@ -104,6 +108,8 @@ export {
 } from './pin.ts';
 export {
   ADMIN_EMAIL_MAX_LENGTH,
+  ADMIN_MIN_PASSWORD_LENGTH,
+  adminPasswordProblem,
   ADMIN_EMAIL_PATTERN,
   RECOVERY_CODE_ALPHABET,
   RECOVERY_CODE_LENGTH,
@@ -112,6 +118,7 @@ export {
   normalizeAdminEmail,
   normalizeRecoveryCode,
 } from './platform.ts';
+export { matchesSearch, normalizeSearchText } from './search.ts';
 export {
   SETTINGS,
   isSettingKey,

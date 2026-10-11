@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="ckb" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="referrer" content="no-referrer" />
+    <link rel="icon" href="/logo.svg" type="image/svg+xml" />
+    <title>%APP_NAME%</title>
+    <script>
+      // Applies the saved language and theme before the first paint. The panel's own key, never
+      // the gym app's. Keep in sync with src/lib/preferences.ts.
+      (function () {
+        try {
+          var saved = JSON.parse(localStorage.getItem('seller.preferences') || '{}');
+          var language =
+            saved.language === 'en' || saved.language === 'ar' ? saved.language : 'ckb';
+          var root = document.documentElement;
+          root.lang = language;
+          root.dir = language === 'en' ? 'ltr' : 'rtl';
+          var dark =
+            saved.theme === 'dark' ||
+            (saved.theme !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+          root.classList.toggle('dark', dark);
+        } catch (error) {
+          // Storage blocked: keep the Kurdish defaults from the <html> tag.
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

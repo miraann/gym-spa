@@ -13,8 +13,10 @@ export {
   DEFAULT_NAMESPACE,
   NAMESPACES,
   resources,
+  type GymResources,
   type Namespace,
   type Resources,
+  type SellerTexts,
 } from './resources';
 export { createI18n } from './i18n';
 export {

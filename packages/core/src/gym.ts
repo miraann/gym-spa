@@ -72,3 +72,6 @@ export type GymAccess = (typeof GYM_ACCESS_STATES)[number];
 export function isGymAccess(value: unknown): value is GymAccess {
   return typeof value === 'string' && (GYM_ACCESS_STATES as readonly string[]).includes(value);
 }
+
+/** The first branch of a new gym is called this until the gym renames it (Kurdish data, "main branch"). */
+export const DEFAULT_FIRST_BRANCH_NAME = 'لقی سەرەکی';

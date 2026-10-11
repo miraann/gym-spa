@@ -14,18 +14,20 @@ const NO_SESSION = { persistSession: false, autoRefreshToken: false, detectSessi
 
 const BASE32 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
 
-function base32Bytes(secret: string): Uint8Array {
+/** The secret's bytes (an ArrayBuffer: the same type in Node's and Deno's TypeScript). */
+function base32Bytes(secret: string): ArrayBuffer {
   let bits = '';
   for (const character of secret.replace(/=+$/, '').toUpperCase()) {
     const value = BASE32.indexOf(character);
     if (value < 0) throw new Error('Not a base32 secret');
     bits += value.toString(2).padStart(5, '0');
   }
-  const bytes = new Uint8Array(Math.floor(bits.length / 8));
+  const buffer = new ArrayBuffer(Math.floor(bits.length / 8));
+  const bytes = new Uint8Array(buffer);
   for (let index = 0; index < bytes.length; index += 1) {
     bytes[index] = Number.parseInt(bits.slice(index * 8, index * 8 + 8), 2);
   }
-  return bytes;
+  return buffer;
 }
 
 /** The 6-digit code an authenticator app shows for this secret at this time. */

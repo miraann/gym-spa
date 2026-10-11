@@ -20,6 +20,9 @@ import enNav from './locales/en/nav.json';
 import enSettings from './locales/en/settings.json';
 import enStaff from './locales/en/staff.json';
 import type { Language } from './languages';
+// Types only (erased from every bundle): the seller panel's texts load from ./seller.ts, which the
+// gym app never imports, so its bundle never contains them.
+import type ckbSeller from './locales/ckb/seller.json';
 
 // Kurdish is the source language: its files define the keys every other language must have.
 const ckb = {
@@ -32,11 +35,16 @@ const ckb = {
   staff: ckbStaff,
 };
 
-export type Resources = typeof ckb;
+/** The gym app's texts (every namespace it loads). */
+export type GymResources = typeof ckb;
+/** The seller panel's own namespace (packages/i18n/src/seller.ts). */
+export type SellerTexts = typeof ckbSeller;
+/** Every namespace, for typed keys in both apps. */
+export type Resources = GymResources & { readonly seller: SellerTexts };
 export type Namespace = keyof Resources;
 
-// Typing these as `Resources` makes a key missing from English or Arabic a compile error.
-const en: Resources = {
+// Typing these as `GymResources` makes a key missing from English or Arabic a compile error.
+const en: GymResources = {
   common: enCommon,
   nav: enNav,
   home: enHome,
@@ -46,7 +54,7 @@ const en: Resources = {
   staff: enStaff,
 };
 
-const ar: Resources = {
+const ar: GymResources = {
   common: arCommon,
   nav: arNav,
   home: arHome,
@@ -56,7 +64,7 @@ const ar: Resources = {
   staff: arStaff,
 };
 
-export const resources: Record<Language, Resources> = { ckb, en, ar };
+export const resources: Record<Language, GymResources> = { ckb, en, ar };
 
 export const NAMESPACES = [
   'common',

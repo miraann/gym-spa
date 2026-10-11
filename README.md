@@ -43,7 +43,7 @@ Run from the repository root:
 | `pnpm build` | Production build into `apps/app/dist` |
 | `pnpm preview` | Serve the production build at http://localhost:4173 |
 | `pnpm test` | Unit tests (Vitest): formatting, translations, Sorani spelling, fonts, lint rules, connection state |
-| `pnpm test:e2e` | Build against the local backend (`--mode e2e`, `apps/app/.env.e2e`), then run Playwright tests for the web app (login, PIN, lock, lost connection, RTL) and the Windows app (encrypted sessions, storage and workers on `app://`, security rules). Needs `pnpm db:start` |
+| `pnpm test:e2e` | Build against the local backend (`--mode e2e`, `apps/app/.env.e2e`), then run Playwright tests for the web app (login, PIN, lock, lost connection, RTL), the Windows app (encrypted sessions, storage and workers on `app://`, security rules) and the seller panel (on the web deployment's own output: the gym app with the panel under `/seller/`). Needs `pnpm db:start`, and `pnpm db:functions` for the panel |
 | `pnpm test:int` | Integration tests of the staff module (`packages/staff-admin`) and the seller module (`packages/seller-admin`) against the local Supabase: the real Auth admin API (with TOTP and the access token hook) and database. Needs `pnpm db:start` |
 | `pnpm db:functions` | Serve the Edge Functions locally at http://127.0.0.1:54321/functions/v1/staff-admin and `.../seller-admin` (`supabase functions serve`). Leave it running in its own terminal |
 | `pnpm test:deno` | The staff and seller modules in Deno, the Edge Functions' runtime: type-checks each function, runs the unit cases, then HTTP tests against the served functions. Needs `pnpm db:start` and `pnpm db:functions` |
@@ -99,6 +99,7 @@ packages/staff-admin the staff module: staff logins through Supabase Auth's admi
                      the app imports only its request types and error keys)
 packages/seller-admin the seller panel's server module (Edge Function seller-admin): gyms with their
                      first Owner, platform admin logins; never imported by the gym app
+apps/seller          the seller panel (web only), served at /seller/ of the gym app's deployment
 supabase             the database
   functions          Edge Functions (Deno): staff-admin, seller-admin
   migrations         schema changes, in order (tables, RLS policies, triggers, functions, built-in roles)
@@ -209,7 +210,36 @@ Staff logins live in Supabase Auth, and only the secret key can create or change
 
 ## Seller panel (Click Group)
 
-Spec §2.6, step MT-3. Built so far: the database (MT-3a: migrations `20261010100500_platform_admins.sql`, `20261010100600_seller_gyms.sql`, `20261010100700_auth_hook.sql`), and the `seller-admin` function with the platform admin scripts (MT-3b). The gym app's warnings and the `apps/seller` app (served at `/seller/` of the gym app's domain) follow in MT-3c to MT-3e.
+Spec §2.6, step MT-3: the database (migrations `20261010100500_platform_admins.sql`, `20261010100600_seller_gyms.sql`, `20261010100700_auth_hook.sql`), the `seller-admin` function with the platform admin scripts, and the panel itself, `apps/seller`, at **`/seller/` of the gym app's domain** (for example `https://gym-spa-ten.vercel.app/seller/`).
+
+### The panel (`apps/seller`)
+
+- **Its own app and build:** React + Vite like the gym app, with the shared UI from `packages/ui`, its texts in the `seller` namespace of `packages/i18n` (Kurdish first, then English and Arabic; a separate entry, `@gym/i18n/seller`, so the gym app's bundle never contains them) and the requests and error keys of `@gym/seller-admin`. Web only: never in the APK, the EXE or the offline edition. It reads the gym app's env files (`envDir: ../app`): same backend.
+- **Signing in:** email and password, then the 6-digit code from an authenticator app. On the first login: their own password (at least 12 characters), then two-step setup (QR code, or the key typed in), then 10 recovery codes shown once (copy or download). "I lost my device" takes a recovery code. Gym staff are refused right after the password (`seller_me()` says they are no platform admin).
+- **Pages:** gyms (search that matches look-alike letters, state chips, counts), a gym (state with its reason, subscription date, usage, limits, the staff login link `…/?gym=<code>`, suspend, lock with a reason, reactivate, its log), a new gym (the permanent-code warning, then a confirmation with the code in large type, then the login link and the Owner's temporary password once), platform admins (add; deactivate, reactivate, remove a two-step device, new temporary password; never one's own; a warning while fewer than two are active), my account (new recovery codes, password) and the seller log.
+- **The session** lives in `sessionStorage` under `gym-seller-auth`: closing the tab or browser signs out, and it never meets the gym app's storage on the same origin. 30 minutes without a key press or click signs out too. Preferences (language, light/dark) are `seller.preferences`.
+- **Commands:** `pnpm --filter @gym/seller dev` (http://localhost:5174/seller/, against the backend in `apps/app/.env*`), `pnpm --filter @gym/seller test:e2e` (needs `pnpm db:start` and `pnpm db:functions`).
+
+### Deployed with the gym app at `/seller/`
+
+One Vercel project serves both (decided 2026-10-11): no separate domain, no DNS.
+
+- **Build:** `apps/app/vercel.json` runs `pnpm build:web` (`apps/app/scripts/build-web.mjs`): the gym app's build, the panel's build (Vite `base: '/seller/'`), then a copy of `apps/seller/dist` into `apps/app/dist/seller/`.
+- **Routing:** `/seller/*` is rewritten to the panel's `index.html` (before the gym app's catch-all), `/seller` redirects to `/seller/`.
+- **Headers for `/seller/*`:** its own Content-Security-Policy header (`frame-ancestors 'none'`, plus the panel's stricter `<meta>` policy: no service worker, no manifest, no server images), `X-Robots-Tag: noindex, nofollow`, `Referrer-Policy: no-referrer`, `Cross-Origin-Opener-Policy: same-origin` (a gym-app window can't hold a reference to a panel window), and `Cache-Control: no-store` for its pages. `apps/app/test/vercel.test.ts` checks the file.
+- **The gym app's service worker leaves it alone:** `/seller/` is in its `navigateFallbackDenylist` and `globIgnores`, so nothing of the panel is precached or answered, and the panel is never available offline. A service worker registered for `/` still technically controls every page of its origin; only a separate domain removes that. `apps/seller/e2e/deployment.spec.ts` proves the rest (no response from the worker, nothing cached, offline refused).
+- **Bundles:** `apps/app/e2e/bundle.spec.ts` checks that the gym app contains no panel code or texts; the panel's deployment test checks that its build holds no secret.
+
+### Moving the panel to its own domain later (e.g. `seller.clickgroup.site`)
+
+A separate domain isolates the panel completely from the gym app (its own origin: storage, service worker, cookies). When Click Group wants it:
+
+1. **A second Vercel project** for the same repository, *Root Directory* `apps/seller`, framework Vite, install `pnpm install --frozen-lockfile`, build `pnpm build`, output `dist`. Add the same two variables as the gym app's project (`VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`).
+2. **In the panel:** `base: '/'` instead of `/seller/` in `apps/seller/vite.config.ts`, the router's `basepath: '/'` (`src/router.tsx`), and an `apps/seller/vercel.json` with the SPA rewrite and the headers now under `/seller/*` in `apps/app/vercel.json` (with `frame-ancestors 'none'`). The staff login link it shows (`gymLoginLink`) must then point at the gym app's domain instead of `window.location.origin`.
+3. **Domain:** in the new project → Settings → Domains → add `seller.clickgroup.site`. Vercel shows the record to add.
+4. **DNS at Namecheap:** Domain List → `clickgroup.site` → Manage → Advanced DNS → Add New Record: type **CNAME Record**, Host **`seller`**, Value: the target Vercel shows (`cname.vercel-dns.com`, or a project-specific `…vercel-dns-0xx.com`), TTL Automatic. Save. If Vercel asks to verify the domain (it is used by another Vercel account), also add the **TXT Record** it shows (Host `_vercel`). If `clickgroup.site` has CAA records, add `CAA 0 issue "letsencrypt.org"`. Vercel issues the certificate by itself once the record resolves (minutes to an hour).
+5. **Clean-up in the gym app's project:** remove the `/seller` rewrite, redirect and headers from `apps/app/vercel.json`, the copy step from `build:web` (go back to `pnpm build`), and the service worker's `/seller/` exclusions; or keep a redirect from `/seller/` to the new domain for a while.
+6. Supabase needs nothing: the panel talks to it with a bearer token, and the functions answer any origin.
 
 ### Platform admins
 
@@ -367,6 +397,6 @@ Other changes:
 
 ## Deploying the web app (Vercel)
 
-Setting up the Vercel project: [A cloud project](#a-cloud-project), step 6. `apps/app/vercel.json` sets the install and build commands, the SPA rewrite and cache headers. Every push to `main` deploys to production and other branches get preview deploys; Vercel skips the build when a push changes nothing the app uses (for example only `supabase/`).
+Setting up the Vercel project: [A cloud project](#a-cloud-project), step 6. `apps/app/vercel.json` sets the install and build commands (`pnpm build:web`: the gym app plus the seller panel under `/seller/`, see [Deployed with the gym app at `/seller/`](#deployed-with-the-gym-app-at-seller)), the SPA rewrites and the headers. Every push to `main` deploys to production and other branches get preview deploys; Vercel skips the build when a push changes nothing the app uses (for example only `supabase/`).
 
 **Content-Security-Policy:** every production build (web, Windows and Android) carries a CSP `<meta>` tag made by `vite.config.ts`. The app may only connect to itself and the Supabase address in the build's `VITE_*` variables, and only run its own scripts (the inline start-up script by its hash). Changing the address needs a new build. `pnpm dev` has no CSP, because Vite injects inline scripts there.

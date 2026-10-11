@@ -37,3 +37,25 @@ test('only the variables the app reads reach the browser', async () => {
   expect(readsBackend).toBe(true);
   expect(leaks).toEqual([]);
 });
+
+test('the gym app contains no seller panel code or texts', async () => {
+  // The panel (apps/seller) is a separate build, copied under /seller/ only for the deployment.
+  const files = (await builtFiles()).filter(
+    (file) => !path.relative(DIST, file).split(path.sep).includes('seller'),
+  );
+  const markers = [
+    'seller_gyms',
+    'seller_me',
+    'seller-admin',
+    'gym-seller-auth',
+    'پانێڵی کلیک گرووپ',
+  ];
+  const found: string[] = [];
+  for (const file of files) {
+    const text = await readFile(file, 'utf8');
+    for (const marker of markers) {
+      if (text.includes(marker)) found.push(`${path.relative(DIST, file)}: ${marker}`);
+    }
+  }
+  expect(found).toEqual([]);
+});
