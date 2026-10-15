@@ -84,7 +84,10 @@ export interface TestStaff {
 }
 
 export interface StaffOptions {
+  /** A built-in role's key (default receptionist). */
   readonly role?: string;
+  /** A custom role made with role(); wins over `role`. */
+  readonly roleId?: string;
   readonly branchIds: readonly string[];
   /** Access to every branch (gym-wide settings need it). */
   readonly allBranches?: boolean;
@@ -164,14 +167,17 @@ export class TestData {
     const id = created.data.user.id;
     this.staffIds.push(id);
 
-    const role = await check(
-      admin()
-        .from('roles')
-        .select('id')
-        .eq('gym_id', gym.id)
-        .eq('key', options.role ?? 'receptionist')
-        .single(),
-    );
+    const role =
+      options.roleId === undefined
+        ? await check(
+            admin()
+              .from('roles')
+              .select('id')
+              .eq('gym_id', gym.id)
+              .eq('key', options.role ?? 'receptionist')
+              .single(),
+          )
+        : { id: options.roleId };
     // The secret key runs as the system, so the insert keeps must_change_password as given.
     await write(
       admin()
@@ -201,11 +207,38 @@ export class TestData {
     return { id, gymCode: gym.code, username, fullName, password, pin };
   }
 
+  /** A custom role of the test's gym with these permissions; returns its id. */
+  async role(nameCkb: string, permissionKeys: readonly string[]): Promise<string> {
+    const gym = await this.gym();
+    const role = await check(
+      admin().from('roles').insert({ gym_id: gym.id, name_ckb: nameCkb }).select('id').single(),
+    );
+    if (permissionKeys.length > 0) {
+      await write(
+        admin()
+          .from('role_permissions')
+          .insert(
+            permissionKeys.map((key) => ({
+              gym_id: gym.id,
+              role_id: role.id,
+              permission_key: key,
+            })),
+          ),
+      );
+    }
+    return role.id;
+  }
+
   /** Removes the test's gym and everything in it. Test data only: real data is never deleted. */
   async cleanup(): Promise<void> {
     if (!this.created) return;
     const { id: gymId } = await this.created;
     const db = admin();
+    // Staff made through the app's screens have logins too.
+    const { data: madeInApp } = await db.from('staff_users').select('id').eq('gym_id', gymId);
+    for (const { id } of madeInApp ?? []) {
+      if (!this.staffIds.includes(id)) this.staffIds.push(id);
+    }
     for (const table of ['staff_pins', 'settings', 'staff_branches', 'staff_users'] as const) {
       await write(db.from(table).delete().eq('gym_id', gymId));
     }

@@ -3,6 +3,7 @@ import arCommon from './locales/ar/common.json';
 import arDates from './locales/ar/dates.json';
 import arHome from './locales/ar/home.json';
 import arNav from './locales/ar/nav.json';
+import arPermissions from './locales/ar/permissions.json';
 import arSettings from './locales/ar/settings.json';
 import arStaff from './locales/ar/staff.json';
 import ckbAuth from './locales/ckb/auth.json';
@@ -10,6 +11,7 @@ import ckbCommon from './locales/ckb/common.json';
 import ckbDates from './locales/ckb/dates.json';
 import ckbHome from './locales/ckb/home.json';
 import ckbNav from './locales/ckb/nav.json';
+import ckbPermissions from './locales/ckb/permissions.json';
 import ckbSettings from './locales/ckb/settings.json';
 import ckbStaff from './locales/ckb/staff.json';
 import enAuth from './locales/en/auth.json';
@@ -17,6 +19,7 @@ import enCommon from './locales/en/common.json';
 import enDates from './locales/en/dates.json';
 import enHome from './locales/en/home.json';
 import enNav from './locales/en/nav.json';
+import enPermissions from './locales/en/permissions.json';
 import enSettings from './locales/en/settings.json';
 import enStaff from './locales/en/staff.json';
 import type { Language } from './languages';
@@ -33,6 +36,7 @@ const ckb = {
   dates: ckbDates,
   auth: ckbAuth,
   staff: ckbStaff,
+  permissions: ckbPermissions,
 };
 
 /** The gym app's texts (every namespace it loads). */
@@ -52,6 +56,7 @@ const en: GymResources = {
   dates: enDates,
   auth: enAuth,
   staff: enStaff,
+  permissions: enPermissions,
 };
 
 const ar: GymResources = {
@@ -62,6 +67,7 @@ const ar: GymResources = {
   dates: arDates,
   auth: arAuth,
   staff: arStaff,
+  permissions: arPermissions,
 };
 
 export const resources: Record<Language, GymResources> = { ckb, en, ar };
@@ -74,6 +80,7 @@ export const NAMESPACES = [
   'dates',
   'auth',
   'staff',
+  'permissions',
 ] as const satisfies readonly Namespace[];
 
 export const DEFAULT_NAMESPACE = 'common' satisfies Namespace;

@@ -10,20 +10,53 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as RolesRouteRouteImport } from './routes/roles/route'
 import { Route as SettingsRouteRouteImport } from './routes/settings/route'
+import { Route as StaffRouteRouteImport } from './routes/staff/route'
+import { Route as RolesIndexRouteImport } from './routes/roles/index'
+import { Route as RolesRoleIdRouteImport } from './routes/roles/$roleId'
+import { Route as RolesNewRouteImport } from './routes/roles/new'
 import { Route as SettingsIndexRouteImport } from './routes/settings/index'
 import { Route as SettingsAppearanceRouteImport } from './routes/settings/appearance'
 import { Route as SettingsDisplayRouteImport } from './routes/settings/display'
+import { Route as StaffIndexRouteImport } from './routes/staff/index'
+import { Route as StaffStaffIdRouteImport } from './routes/staff/$staffId'
+import { Route as StaffNewRouteImport } from './routes/staff/new'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RolesRouteRoute = RolesRouteRouteImport.update({
+  id: '/roles',
+  path: '/roles',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SettingsRouteRoute = SettingsRouteRouteImport.update({
   id: '/settings',
   path: '/settings',
   getParentRoute: () => rootRouteImport,
+} as any)
+const StaffRouteRoute = StaffRouteRouteImport.update({
+  id: '/staff',
+  path: '/staff',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RolesIndexRoute = RolesIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => RolesRouteRoute,
+} as any)
+const RolesRoleIdRoute = RolesRoleIdRouteImport.update({
+  id: '/$roleId',
+  path: '/$roleId',
+  getParentRoute: () => RolesRouteRoute,
+} as any)
+const RolesNewRoute = RolesNewRouteImport.update({
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => RolesRouteRoute,
 } as any)
 const SettingsIndexRoute = SettingsIndexRouteImport.update({
   id: '/',
@@ -40,50 +73,115 @@ const SettingsDisplayRoute = SettingsDisplayRouteImport.update({
   path: '/display',
   getParentRoute: () => SettingsRouteRoute,
 } as any)
+const StaffIndexRoute = StaffIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => StaffRouteRoute,
+} as any)
+const StaffStaffIdRoute = StaffStaffIdRouteImport.update({
+  id: '/$staffId',
+  path: '/$staffId',
+  getParentRoute: () => StaffRouteRoute,
+} as any)
+const StaffNewRoute = StaffNewRouteImport.update({
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => StaffRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/roles': typeof RolesRouteRouteWithChildren
   '/settings': typeof SettingsRouteRouteWithChildren
+  '/staff': typeof StaffRouteRouteWithChildren
+  '/roles/$roleId': typeof RolesRoleIdRoute
+  '/roles/new': typeof RolesNewRoute
   '/settings/appearance': typeof SettingsAppearanceRoute
   '/settings/display': typeof SettingsDisplayRoute
+  '/staff/$staffId': typeof StaffStaffIdRoute
+  '/staff/new': typeof StaffNewRoute
+  '/roles/': typeof RolesIndexRoute
   '/settings/': typeof SettingsIndexRoute
+  '/staff/': typeof StaffIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/roles/$roleId': typeof RolesRoleIdRoute
+  '/roles/new': typeof RolesNewRoute
   '/settings/appearance': typeof SettingsAppearanceRoute
   '/settings/display': typeof SettingsDisplayRoute
+  '/staff/$staffId': typeof StaffStaffIdRoute
+  '/staff/new': typeof StaffNewRoute
+  '/roles': typeof RolesIndexRoute
   '/settings': typeof SettingsIndexRoute
+  '/staff': typeof StaffIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/roles': typeof RolesRouteRouteWithChildren
   '/settings': typeof SettingsRouteRouteWithChildren
+  '/staff': typeof StaffRouteRouteWithChildren
+  '/roles/$roleId': typeof RolesRoleIdRoute
+  '/roles/new': typeof RolesNewRoute
   '/settings/appearance': typeof SettingsAppearanceRoute
   '/settings/display': typeof SettingsDisplayRoute
+  '/staff/$staffId': typeof StaffStaffIdRoute
+  '/staff/new': typeof StaffNewRoute
+  '/roles/': typeof RolesIndexRoute
   '/settings/': typeof SettingsIndexRoute
+  '/staff/': typeof StaffIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/roles'
     | '/settings'
+    | '/staff'
+    | '/roles/$roleId'
+    | '/roles/new'
     | '/settings/appearance'
     | '/settings/display'
+    | '/staff/$staffId'
+    | '/staff/new'
+    | '/roles/'
     | '/settings/'
+    | '/staff/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/settings/appearance' | '/settings/display' | '/settings'
+  to:
+    | '/'
+    | '/roles/$roleId'
+    | '/roles/new'
+    | '/settings/appearance'
+    | '/settings/display'
+    | '/staff/$staffId'
+    | '/staff/new'
+    | '/roles'
+    | '/settings'
+    | '/staff'
   id:
     | '__root__'
     | '/'
+    | '/roles'
     | '/settings'
+    | '/staff'
+    | '/roles/$roleId'
+    | '/roles/new'
     | '/settings/appearance'
     | '/settings/display'
+    | '/staff/$staffId'
+    | '/staff/new'
+    | '/roles/'
     | '/settings/'
+    | '/staff/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  RolesRouteRoute: typeof RolesRouteRouteWithChildren
   SettingsRouteRoute: typeof SettingsRouteRouteWithChildren
+  StaffRouteRoute: typeof StaffRouteRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -95,12 +193,47 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/roles': {
+      id: '/roles'
+      path: '/roles'
+      fullPath: '/roles'
+      preLoaderRoute: typeof RolesRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/settings': {
       id: '/settings'
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof SettingsRouteRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/staff': {
+      id: '/staff'
+      path: '/staff'
+      fullPath: '/staff'
+      preLoaderRoute: typeof StaffRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/roles/': {
+      id: '/roles/'
+      path: '/'
+      fullPath: '/roles/'
+      preLoaderRoute: typeof RolesIndexRouteImport
+      parentRoute: typeof RolesRouteRoute
+    }
+    '/roles/$roleId': {
+      id: '/roles/$roleId'
+      path: '/$roleId'
+      fullPath: '/roles/$roleId'
+      preLoaderRoute: typeof RolesRoleIdRouteImport
+      parentRoute: typeof RolesRouteRoute
+    }
+    '/roles/new': {
+      id: '/roles/new'
+      path: '/new'
+      fullPath: '/roles/new'
+      preLoaderRoute: typeof RolesNewRouteImport
+      parentRoute: typeof RolesRouteRoute
     }
     '/settings/': {
       id: '/settings/'
@@ -123,8 +256,45 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsDisplayRouteImport
       parentRoute: typeof SettingsRouteRoute
     }
+    '/staff/': {
+      id: '/staff/'
+      path: '/'
+      fullPath: '/staff/'
+      preLoaderRoute: typeof StaffIndexRouteImport
+      parentRoute: typeof StaffRouteRoute
+    }
+    '/staff/$staffId': {
+      id: '/staff/$staffId'
+      path: '/$staffId'
+      fullPath: '/staff/$staffId'
+      preLoaderRoute: typeof StaffStaffIdRouteImport
+      parentRoute: typeof StaffRouteRoute
+    }
+    '/staff/new': {
+      id: '/staff/new'
+      path: '/new'
+      fullPath: '/staff/new'
+      preLoaderRoute: typeof StaffNewRouteImport
+      parentRoute: typeof StaffRouteRoute
+    }
   }
 }
+
+interface RolesRouteRouteChildren {
+  RolesRoleIdRoute: typeof RolesRoleIdRoute
+  RolesNewRoute: typeof RolesNewRoute
+  RolesIndexRoute: typeof RolesIndexRoute
+}
+
+const RolesRouteRouteChildren: RolesRouteRouteChildren = {
+  RolesRoleIdRoute: RolesRoleIdRoute,
+  RolesNewRoute: RolesNewRoute,
+  RolesIndexRoute: RolesIndexRoute,
+}
+
+const RolesRouteRouteWithChildren = RolesRouteRoute._addFileChildren(
+  RolesRouteRouteChildren,
+)
 
 interface SettingsRouteRouteChildren {
   SettingsAppearanceRoute: typeof SettingsAppearanceRoute
@@ -142,9 +312,27 @@ const SettingsRouteRouteWithChildren = SettingsRouteRoute._addFileChildren(
   SettingsRouteRouteChildren,
 )
 
+interface StaffRouteRouteChildren {
+  StaffStaffIdRoute: typeof StaffStaffIdRoute
+  StaffNewRoute: typeof StaffNewRoute
+  StaffIndexRoute: typeof StaffIndexRoute
+}
+
+const StaffRouteRouteChildren: StaffRouteRouteChildren = {
+  StaffStaffIdRoute: StaffStaffIdRoute,
+  StaffNewRoute: StaffNewRoute,
+  StaffIndexRoute: StaffIndexRoute,
+}
+
+const StaffRouteRouteWithChildren = StaffRouteRoute._addFileChildren(
+  StaffRouteRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  RolesRouteRoute: RolesRouteRouteWithChildren,
   SettingsRouteRoute: SettingsRouteRouteWithChildren,
+  StaffRouteRoute: StaffRouteRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

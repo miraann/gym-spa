@@ -162,7 +162,7 @@ export async function fetchProfile(
     roleId: row.role_id,
     roleKey: role?.key ?? null,
     permissions: resolvePermissions(
-      role?.key ?? null,
+      role ?? null,
       (rolePermissions.data ?? []).map((each) => each.permission_key),
       (catalog.data ?? []).map((each) => each.key),
     ),

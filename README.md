@@ -8,7 +8,7 @@ Multi-branch gym & spa system with NFC check-in. One codebase for Web/PWA, Andro
 
 > **Status:** Phase 1d done, then reworked for two editions (1d-R). The app always talks to its server: Supabase in the cloud for the **online edition** (web, Android, Windows), and later a server PC on the gym's local network for the **offline edition** (Windows only, see [CLAUDE.md](CLAUDE.md) → Two editions). Staff log in with their password once per device, then switch with a PIN that the server checks. The cloud setup (Supabase, Vercel) is live. The auth spike is done: Supabase Auth runs on the offline edition's Windows server PC ([spikes/windows-auth/README.md](spikes/windows-auth/README.md)). This README grows with each step.
 >
-> **Many gyms (spec §2.6).** Click Group sells the system to many gyms. **MT-1 is done:** every row belongs to a gym, staff log in with their gym's code, and the gym's top role is the **Owner** (خاوەن, formerly Super Admin); see [Gyms](#gyms). Older projects move with [Moving a cloud project to many gyms](#moving-a-cloud-project-to-many-gyms-mt-1). A separate **seller panel** (`apps/seller`, step MT-3) creates and manages gyms and their subscriptions; see [Seller panel](#seller-panel-click-group). `pnpm bootstrap:admin --gym <code>` still works. MT-1 and the design step are live. **MT-2, the staff module, is done:** staff logins are created and changed through Supabase Auth's admin API by a server-side module, the Edge Function `staff-admin`. It is live on the cloud project, and a smoke test there passed (`pnpm smoke:staff-admin --remote`); see [Staff accounts](#staff-accounts). The screens that use it come in 1e. **MT-3, the seller panel, is done and live.** Next, in order (spec §8, changed 2026-10-11): 1e (admin screens: staff, roles, branches, devices), Phase 2 (members + NFC), Phase 3 (plans, subscriptions, payments), Phase 4 (check-in), MT-4 (support access). MT-5 (offline licenses) and 1f (offline-edition server test) come later, in the offline packaging phase before Phase 11.
+> **Many gyms (spec §2.6).** Click Group sells the system to many gyms. **MT-1 is done:** every row belongs to a gym, staff log in with their gym's code, and the gym's top role is the **Owner** (خاوەن, formerly Super Admin); see [Gyms](#gyms). Older projects move with [Moving a cloud project to many gyms](#moving-a-cloud-project-to-many-gyms-mt-1). A separate **seller panel** (`apps/seller`, step MT-3) creates and manages gyms and their subscriptions; see [Seller panel](#seller-panel-click-group). `pnpm bootstrap:admin --gym <code>` still works. MT-1 and the design step are live. **MT-2, the staff module, is done:** staff logins are created and changed through Supabase Auth's admin API by a server-side module, the Edge Function `staff-admin`. It is live on the cloud project, and a smoke test there passed (`pnpm smoke:staff-admin --remote`); see [Staff accounts](#staff-accounts). The staff and roles screens that use it are done (1e-2, [The staff and roles screens](#the-staff-and-roles-screens)). **MT-3, the seller panel, is done and live.** Next, in order (spec §8, changed 2026-10-11): 1e (admin screens: staff, roles, branches, devices), Phase 2 (members + NFC), Phase 3 (plans, subscriptions, payments), Phase 4 (check-in), MT-4 (support access). MT-5 (offline licenses) and 1f (offline-edition server test) come later, in the offline packaging phase before Phase 11.
 
 ## Requirements
 
@@ -201,7 +201,7 @@ Code: `apps/app/src/features/auth`, rules in `packages/core` (`gym.ts`, `staff.t
 
 ## Staff accounts
 
-Spec §2.5 (design B), step MT-2. Code: `packages/staff-admin`, the Edge Function `supabase/functions/staff-admin`, migration `20261010100400_staff_admin.sql`, and the app's calls in `apps/app/src/features/staff/staff-admin-api.ts`. The screens come in 1e.
+Spec §2.5 (design B), step MT-2. Code: `packages/staff-admin`, the Edge Function `supabase/functions/staff-admin`, migration `20261010100400_staff_admin.sql`, and the app's calls in `apps/app/src/features/staff/staff-admin-api.ts`. The screens are below ([The staff and roles screens](#the-staff-and-roles-screens)).
 
 Staff logins live in Supabase Auth, and only the secret key can create or change them. So five operations go through the staff module on the server: **create, reset password, deactivate, reactivate, rename**.
 
@@ -220,6 +220,20 @@ Staff logins live in Supabase Auth, and only the secret key can create or change
 - **Errors** are stable keys with an HTTP status (`packages/staff-admin/src/errors.ts`), translated by the app (`staff:errors`).
 - **Tests:** `pnpm test` runs the unit cases with fakes, including every undo path. `pnpm test:int` runs the module in Node against the real local Auth and database, including a real database failure after the login was made. `pnpm test:deno` runs the same unit cases in Deno, plus HTTP tests against the served function. `pnpm db:test` covers the database half (`170-staff-admin`).
 - **Deno imports.** The packages the function imports (`packages/core`, `packages/db`, `packages/staff-admin`) name every relative import with `.ts`, because Deno resolves no other way; the lint rule `gym/explicit-ts-extensions` checks it. Their bare imports (`@gym/core`, `zod`, `@supabase/supabase-js`) are mapped in `supabase/functions/staff-admin/deno.json` with the same versions as the workspace: change both together.
+
+### The staff and roles screens
+
+Step 1e-2. Code: `apps/app/src/features/staff` and `apps/app/src/features/roles`; the database calls are in [Staff, roles, branches and devices](#staff-roles-branches-and-devices).
+
+- **Staff** (`/staff`, needs `staff.view`): the staff the signed-in staff member may see, with search (look-alike letters match), active / deactivated / all, and their state (deactivated, PIN locked, temporary password), always as icon and text. With `staff.manage`:
+  - **New staff member:** full name, username, phone, role and branches; the server makes the login and a temporary password, shown once.
+  - **A staff member's page:** name, phone, role and branches, saved in one call; the account actions (new username, new temporary password, remove the PIN, deactivate, reactivate), each after a confirmation.
+  - Only the roles the manager may give are offered, and "all branches" only to someone with all branches. Their own account and anyone with more access are shown without any of this, with the reason.
+- **Roles** (`/roles`, needs `roles.manage`): every role of the gym with its permission and staff counts. A role's page has its names in Kurdish, English and Arabic and the **permission table** (خشتەی دەسەڵاتەکان), grouped by module, with a switch for a whole module and a search. Only permissions the manager has can be given. The Owner role (all permissions), the manager's own role and the built-in roles (the Owner's to edit) say why they can't change. A new role can start from another role's permissions; a custom role nobody has can be deleted.
+- **Permission labels** are in `packages/i18n` (namespace `permissions`). `packages/core/src/permission-catalog.ts` lists the catalog with typed keys; one test keeps it the same as the migrations, another keeps the labels the same as the catalog.
+- **Layout:** list and detail side by side from 1024px wide (tablets in landscape, desktops), one at a time below that, with a way back to the list. Forms save from the sticky action bar.
+- **Without a connection** nothing can be saved (the buttons are off, with a note). **A read-only gym** can still deactivate staff and give a new password or remove a PIN; everything else is off.
+- **Tests:** `apps/app/e2e/staff.spec.ts` and `roles.spec.ts` (they need `pnpm db:functions` for the staff module).
 
 ## Seller panel (Click Group)
 
