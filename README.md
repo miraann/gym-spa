@@ -150,7 +150,7 @@ Spec §2.6. Migrations `20261010100000_gyms.sql` and `20261010100100_gym_rules.s
   - to staff with `billing.view` (the Owner, and Admin in every gym): a warning when the subscription ends in 30 days or less, again at 7 days and on the last day, then the grace period with the date the gym becomes read-only. The 30- and 7-day warnings can be closed until the next stage (per staff member, on that device); the last day's warning and the grace notice can't;
   - to everyone: that the gym is read-only, and whether Click Group suspended it or the subscription ran out. It can't be closed;
   - nothing for a locked gym: the app locks itself. It uses the gym state of the device's last server check (at start, at unlock, every 5 minutes, and when the network returns), and counts the days again every hour.
-- **Limits:** `max_branches` and `max_devices` (empty: no limit) are checked whenever a branch or device is added or made active again (`gym_branch_limit`, `gym_device_limit`).
+- **Limits:** `max_branches` and `max_devices` (empty: no limit) are checked whenever a branch or device is added or made active again (`gym_branch_limit`, `gym_device_limit`). **Every registered device counts toward `max_devices`,** an Owner's or manager's personal phone or laptop too: a device must be registered before staff can work on it ([Staff, roles, branches and devices](#staff-roles-branches-and-devices)). Deactivate a device that is no longer used to free its place.
 
 ### How access works
 
@@ -164,6 +164,19 @@ Spec §2.6. Migrations `20261010100000_gyms.sql` and `20261010100100_gym_rules.s
 - These rules reject a change with a stable key as the error message (`cannot_grant_role`, `read_only_column`, ...) for the app to translate, and an English detail for the logs.
 - Every change to the important tables goes into `audit_logs`: who, when, the old and new values, IP and device. Nobody can change or delete it, and secrets such as PIN hashes are logged as `redacted`.
 - The permission catalog is in `supabase/migrations/20261005100300_permission_catalog.sql`. The 8 built-in roles are templates (`app.role_templates`, migration `20261010100000_gyms.sql`) that every new gym copies.
+
+### Staff, roles, branches and devices
+
+Step 1e, migration `20261011100000_admin_screens.sql`, tests `supabase/tests/220-admin-screens.test.sql`. The database half of the admin screens; every change still goes through the guards above.
+
+- **Multi-row changes are one call each, all or nothing**, running under the caller's own session (security invoker), so RLS, the guards and the audit log apply:
+  - `save_staff_access()`: a staff member's name, phone, role and branches. With all branches their `staff_branches` rows go, because access follows the flag. Their login (username, password, active or not) changes through the [staff module](#staff-accounts) instead.
+  - `save_role()`: creates a custom role (its id comes from the app) or changes one. It updates the names, and the permissions too unless the list is `null` (an empty list takes them all away). The Owner role is always saved with `null`: it has every permission and stores none. Refusals: `unknown_permission`, `cannot_grant_permission`, `cannot_edit_own_role`, `system_role_read_only` (built-in roles are the Owner's to edit), `role_deleted`.
+- **What the screens read:** `staff_directory()` lists the staff the caller may see, with role, branches (`hidden_branch_count` counts those the caller can't access), PIN state, last login and `can_manage`. `role_overview()` lists the gym's roles with their permissions, staff count, `can_edit`, `can_edit_permissions` and `can_grant`. Both work these flags out with the guards' own rules, so a button is never offered that the server would refuse.
+- **Branches:** `create_branch()` gives a new branch the gym's next code (`B2`, `B3`, ...). Codes are never reused, because receipt numbers carry them. Branches are deactivated, never removed, and a gym always keeps one active branch (`last_active_branch`).
+- **Devices must be registered** (decided 2026-10-11). Someone with `devices.manage` registers a device once (`register_device()`: a name, and a branch they can access; it must be active). From then on the device works in that branch. `my_device()` tells every staff member's app the device's branch and whether they may use it. `move_device()` moves it to another branch, where it gets the next code (`D01`, ...); `branch_id` and `code` change in no other way. `unlock_on_device()` checks the PIN on a device, after checking that the device is registered (`device_not_registered`), active (`device_inactive`), in an active branch (`branch_inactive`) and in the staff member's branches (`no_branch_access`). None of these use up a PIN try. The app moves from `unlock_with_pin()` to `unlock_on_device()` in step 1e-3.
+- **This is a deterrent, not a security boundary.** The device id comes from the device, so someone could make up a new one. What a staff member can read or change is still decided per staff member by RLS.
+- **A read-only gym** can still deactivate a device (it only takes access away), but it can't register, move, rename or reactivate one.
 
 ### Adding a table
 

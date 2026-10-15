@@ -628,6 +628,38 @@ export type Database = {
     };
     Functions: {
       clear_my_pin_lockout: { Args: Record<PropertyKey, never>; Returns: undefined };
+      create_branch: {
+        Args: {
+          p_address?: string;
+          p_id: string;
+          p_name_ar?: string;
+          p_name_ckb: string;
+          p_name_en?: string;
+          p_phone?: string;
+        };
+        Returns: {
+          address: string | null;
+          code: string;
+          created_at: string;
+          created_by: string | null;
+          deleted_at: string | null;
+          gym_id: string;
+          id: string;
+          is_active: boolean;
+          name_ar: string | null;
+          name_ckb: string;
+          name_en: string | null;
+          phone: string | null;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        SetofOptions: {
+          from: '*';
+          to: 'branches';
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
       create_gym: {
         Args: {
           p_code: string;
@@ -678,6 +710,48 @@ export type Database = {
       device_heartbeat: {
         Args: { p_app_version: string; p_device_id: string };
         Returns: undefined;
+      };
+      move_device: {
+        Args: { p_branch_id: string; p_device_id: string };
+        Returns: {
+          branch_id: string;
+          code: string;
+          created_at: string;
+          created_by: string | null;
+          default_language: Database['public']['Enums']['language_code'] | null;
+          deleted_at: string | null;
+          gym_id: string;
+          id: string;
+          is_active: boolean;
+          name: string;
+          platform: string;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        SetofOptions: {
+          from: '*';
+          to: 'devices';
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
+      my_device: {
+        Args: { p_device_id: string };
+        Returns: {
+          branch_code: string;
+          branch_id: string;
+          branch_is_active: boolean;
+          branch_name_ar: string;
+          branch_name_ckb: string;
+          branch_name_en: string;
+          can_use: boolean;
+          code: string;
+          default_language: Database['public']['Enums']['language_code'];
+          id: string;
+          is_active: boolean;
+          name: string;
+          platform: string;
+        }[];
       };
       my_gym: {
         Args: Record<PropertyKey, never>;
@@ -738,6 +812,44 @@ export type Database = {
         };
       };
       reset_staff_pin: { Args: { p_staff_id: string }; Returns: undefined };
+      role_overview: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          can_edit: boolean;
+          can_edit_permissions: boolean;
+          can_grant: boolean;
+          id: string;
+          is_own_role: boolean;
+          is_system: boolean;
+          key: string;
+          name_ar: string;
+          name_ckb: string;
+          name_en: string;
+          permission_keys: string[];
+          staff_count: number;
+        }[];
+      };
+      save_role: {
+        Args: {
+          p_name_ar?: string;
+          p_name_ckb: string;
+          p_name_en?: string;
+          p_permission_keys?: string[];
+          p_role_id: string;
+        };
+        Returns: undefined;
+      };
+      save_staff_access: {
+        Args: {
+          p_all_branches: boolean;
+          p_branch_ids: string[];
+          p_full_name: string;
+          p_phone?: string;
+          p_role_id: string;
+          p_staff_id: string;
+        };
+        Returns: undefined;
+      };
       seller_add_admin: { Args: { p_full_name: string; p_user_id: string }; Returns: undefined };
       seller_admins: {
         Args: Record<PropertyKey, never>;
@@ -881,6 +993,27 @@ export type Database = {
           gym_id: string;
         }[];
       };
+      staff_directory: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          all_branches: boolean;
+          branch_ids: string[];
+          can_manage: boolean;
+          created_at: string;
+          full_name: string;
+          has_pin: boolean;
+          hidden_branch_count: number;
+          id: string;
+          is_active: boolean;
+          last_login_at: string;
+          must_change_password: boolean;
+          phone: string;
+          pin_locked: boolean;
+          role_id: string;
+          username: string;
+        }[];
+      };
+      unlock_on_device: { Args: { p_device_id: string; p_pin: string }; Returns: Json };
       unlock_with_pin: { Args: { p_branch_id: string; p_pin: string }; Returns: Json };
     };
     Enums: {
