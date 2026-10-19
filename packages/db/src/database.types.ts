@@ -711,6 +711,32 @@ export type Database = {
         Args: { p_app_version: string; p_device_id: string };
         Returns: undefined;
       };
+      device_overview: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          app_version: string;
+          branch_id: string;
+          code: string;
+          created_at: string;
+          default_language: Database['public']['Enums']['language_code'];
+          id: string;
+          is_active: boolean;
+          last_seen_at: string;
+          last_seen_by: string;
+          last_seen_by_name: string;
+          name: string;
+          platform: string;
+        }[];
+      };
+      gym_limits: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          active_branches: number;
+          active_devices: number;
+          max_branches: number;
+          max_devices: number;
+        }[];
+      };
       move_device: {
         Args: { p_branch_id: string; p_device_id: string };
         Returns: {
@@ -1014,7 +1040,6 @@ export type Database = {
         }[];
       };
       unlock_on_device: { Args: { p_device_id: string; p_pin: string }; Returns: Json };
-      unlock_with_pin: { Args: { p_branch_id: string; p_pin: string }; Returns: Json };
     };
     Enums: {
       language_code: 'ckb' | 'en' | 'ar';

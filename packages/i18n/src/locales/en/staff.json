@@ -36,7 +36,15 @@
     "owner_has_all_permissions": "The Owner has every permission; they don't change.",
     "role_in_use": "Staff still have this role. Give them another role first.",
     "role_deleted": "This role has been deleted.",
-    "unknown_permission": "There is an unknown permission. Update the app and try again."
+    "unknown_permission": "There is an unknown permission. Update the app and try again.",
+    "last_active_branch": "The gym must keep at least one active branch.",
+    "gym_branch_limit": "This gym has reached its branch limit. Contact Click Group to add more.",
+    "branch_code_exhausted": "No branch codes are left. Contact Click Group.",
+    "branch_inactive": "That branch is inactive. Choose an active branch.",
+    "gym_device_limit": "This gym has reached its device limit. Deactivate an unused device, or contact Click Group.",
+    "device_not_accessible": "This device is in a branch you can't access.",
+    "device_code_exhausted": "No device codes are left in this branch.",
+    "not_allowed": "You don't have permission to do this."
   },
   "list": {
     "title": "Staff",
@@ -133,7 +141,8 @@
   "notices": {
     "offline": "There is no connection to the server, so nothing can change. Try again when the connection is back.",
     "readOnly": "This gym is view-only, so nothing can change.",
-    "readOnlyStaff": "This gym is view-only. You can only deactivate staff, or reset their password or PIN."
+    "readOnlyStaff": "This gym is view-only. You can only deactivate staff, or reset their password or PIN.",
+    "readOnlyDevices": "This gym is view-only. You can only deactivate devices."
   },
   "roles": {
     "title": "Roles and permissions",

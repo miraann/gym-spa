@@ -2,6 +2,7 @@ import type { Database } from '@gym/db';
 import type { LocalizedNames } from '@gym/i18n';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuthController, useAuthState } from '@/features/auth/auth-context';
+import { fetchGymLimits } from '@/features/auth/staff-api';
 import type { AppSupabaseClient } from '@/lib/backend';
 import {
   createStaffAccount,
@@ -17,7 +18,8 @@ import {
 
 const STAFF_QUERY = 'staff-directory';
 const ROLES_QUERY = 'role-overview';
-const BRANCHES_QUERY = 'admin-branches';
+export const BRANCHES_QUERY = 'admin-branches';
+export const LIMITS_QUERY = 'gym-limits';
 
 type Functions = Database['public']['Functions'];
 
@@ -114,18 +116,21 @@ function toRoleInfo(row: RoleOverviewRow): RoleInfo {
 }
 
 /** Branch codes in number order (B2 before B10). */
-function byCode(a: { code: string }, b: { code: string }): number {
+export function byCode(a: { code: string }, b: { code: string }): number {
   return Number(a.code.slice(1)) - Number(b.code.slice(1));
 }
 
 /** The acting staff member's client; undefined while the app is locked. */
-function useActingClient(): { client: AppSupabaseClient | undefined; actor: string | null } {
+export function useActingClient(): {
+  client: AppSupabaseClient | undefined;
+  actor: string | null;
+} {
   const controller = useAuthController();
   const { activeId } = useAuthState();
   return { client: activeId ? controller.activeClient : undefined, actor: activeId };
 }
 
-function requireClient(client: AppSupabaseClient | undefined): AppSupabaseClient {
+export function requireClient(client: AppSupabaseClient | undefined): AppSupabaseClient {
   // Locked or signed out: like a lost connection, nothing is sent.
   if (!client) throw new TypeError('Failed to fetch');
   return client;
@@ -180,6 +185,16 @@ export function useAdminBranches() {
         }))
         .sort(byCode);
     },
+  });
+}
+
+/** The gym's branch and device limits, and how many are active now. */
+export function useGymLimits() {
+  const { client, actor } = useActingClient();
+  return useQuery({
+    queryKey: [LIMITS_QUERY, actor],
+    enabled: client !== undefined,
+    queryFn: () => fetchGymLimits(requireClient(client)),
   });
 }
 

@@ -2,6 +2,10 @@
 begin;
 select plan(26);
 select tests.create_fixture();
+-- PINs work only on registered devices (step 1e): one in each of gym A's branches B901 and B902.
+insert into public.devices (id, gym_id, branch_id, code, name, platform) values
+  ('d0000000-0000-4000-8000-0000000000a1', tests.gym('pgtap-a'), tests.branch('B901'), 'D01', 'کۆمپیوتەری پێشوازی', 'web'),
+  ('d0000000-0000-4000-8000-0000000000a2', tests.gym('pgtap-a'), tests.branch('B902'), 'D01', 'کۆمپیوتەری پێشوازی', 'web');
 
 -- Setting a PIN
 select tests.authenticate_as(tests.staff('reception_a'));
@@ -34,26 +38,26 @@ select is_empty('select staff_id from public.staff_pins', 'other staff cannot se
 
 -- Unlocking (the fixture has no settings, so 5 tries)
 select tests.authenticate_as(tests.staff('reception_a'));
-select is(public.unlock_with_pin('482915', tests.branch('B902')) ->> 'result', 'no_branch_access',
+select is(public.unlock_on_device('482915', 'd0000000-0000-4000-8000-0000000000a2') ->> 'result', 'no_branch_access',
   'a PIN does not open a device in a branch the staff member cannot access');
-select is(public.unlock_with_pin('482915', tests.branch('B901')) ->> 'result', 'ok', 'the right PIN unlocks');
-select is(public.unlock_with_pin('000001', tests.branch('B901')), '{"result": "wrong_pin", "tries_left": 4}'::jsonb,
+select is(public.unlock_on_device('482915', 'd0000000-0000-4000-8000-0000000000a1') ->> 'result', 'ok', 'the right PIN unlocks');
+select is(public.unlock_on_device('000001', 'd0000000-0000-4000-8000-0000000000a1'), '{"result": "wrong_pin", "tries_left": 4}'::jsonb,
   'a wrong PIN says how many tries are left');
-select is(public.unlock_with_pin('482915', tests.branch('B901')) ->> 'result', 'ok', 'the right PIN still unlocks');
-select is(public.unlock_with_pin('000001', tests.branch('B901')) ->> 'tries_left', '4', 'the right PIN resets the count');
-select lives_ok($$ select public.unlock_with_pin('000002', tests.branch('B901')) from generate_series(1, 4) $$,
+select is(public.unlock_on_device('482915', 'd0000000-0000-4000-8000-0000000000a1') ->> 'result', 'ok', 'the right PIN still unlocks');
+select is(public.unlock_on_device('000001', 'd0000000-0000-4000-8000-0000000000a1') ->> 'tries_left', '4', 'the right PIN resets the count');
+select lives_ok($$ select public.unlock_on_device('000002', 'd0000000-0000-4000-8000-0000000000a1') from generate_series(1, 4) $$,
   'four more wrong PINs');
-select is(public.unlock_with_pin('482915', tests.branch('B901')) ->> 'result', 'locked_out',
+select is(public.unlock_on_device('482915', 'd0000000-0000-4000-8000-0000000000a1') ->> 'result', 'locked_out',
   'after too many wrong PINs even the right one is refused');
 
 -- Only a password login after the lockout clears it.
 select tests.authenticate_with_password(tests.staff('reception_a'), now() - interval '1 minute');
 select public.clear_my_pin_lockout();
-select is(public.unlock_with_pin('482915', tests.branch('B901')) ->> 'result', 'locked_out',
+select is(public.unlock_on_device('482915', 'd0000000-0000-4000-8000-0000000000a1') ->> 'result', 'locked_out',
   'a session from before the lockout cannot clear it');
 select tests.authenticate_with_password(tests.staff('reception_a'), now() + interval '1 second');
 select public.clear_my_pin_lockout();
-select is(public.unlock_with_pin('482915', tests.branch('B901')) ->> 'result', 'ok',
+select is(public.unlock_on_device('482915', 'd0000000-0000-4000-8000-0000000000a1') ->> 'result', 'ok',
   'a password login after the lockout clears it');
 
 -- Resetting someone's PIN
@@ -64,7 +68,7 @@ select tests.authenticate_as(tests.staff('manager_a'));
 select lives_ok($$ select public.reset_staff_pin(tests.staff('reception_a')) $$,
   'a branch manager can reset the PIN of staff they manage');
 select tests.authenticate_as(tests.staff('reception_a'));
-select is(public.unlock_with_pin('482915', tests.branch('B901')) ->> 'result', 'no_pin', 'after a reset there is no PIN');
+select is(public.unlock_on_device('482915', 'd0000000-0000-4000-8000-0000000000a1') ->> 'result', 'no_pin', 'after a reset there is no PIN');
 
 select tests.clear_authentication();
 select results_eq(

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  BRANCH_ADDRESS_MAX_LENGTH,
   BRANCH_NAME_MAX_LENGTH,
   PHONE_PATTERN,
   ROLE_NAME_MAX_LENGTH,
@@ -59,6 +60,9 @@ describe('names', () => {
     );
     expect(sql).toContain(
       `name_ckb text not null check (app.is_clean_text(name_ckb, ${String(BRANCH_NAME_MAX_LENGTH)}))`,
+    );
+    expect(sql).toContain(
+      `address text check (app.is_clean_text(address, ${String(BRANCH_ADDRESS_MAX_LENGTH)}))`,
     );
     const body = latestFunctionBody('app.is_clean_text');
     expect(body).toContain('length(value) between 1 and max_length');

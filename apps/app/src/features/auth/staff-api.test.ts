@@ -14,12 +14,19 @@ describe('toAuthError', () => {
 });
 
 describe('parsePinCheck', () => {
-  it.each(['ok', 'locked_out', 'no_pin', 'no_branch_access', 'inactive', 'gym_locked'] as const)(
-    'reads %s',
-    (result) => {
-      expect(parsePinCheck({ result })).toEqual({ result });
-    },
-  );
+  it.each([
+    'ok',
+    'locked_out',
+    'no_pin',
+    'no_branch_access',
+    'inactive',
+    'gym_locked',
+    'device_not_registered',
+    'device_inactive',
+    'branch_inactive',
+  ] as const)('reads %s', (result) => {
+    expect(parsePinCheck({ result })).toEqual({ result });
+  });
 
   it('reads the tries left after a wrong PIN', () => {
     expect(parsePinCheck({ result: 'wrong_pin', tries_left: 3 })).toEqual({

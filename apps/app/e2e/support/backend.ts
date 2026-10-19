@@ -98,6 +98,56 @@ export interface StaffOptions {
 }
 
 /**
+ * Registers a device the way a manager does at their first login on it (step 1e), so tests that
+ * aren't about registration can log anyone in. It goes in the branch the staff member (from their
+ * login address) works in: their first branch, or the gym's first one with all branches. A device
+ * already registered is left as it is.
+ */
+export async function registerTestDevice(
+  deviceId: string,
+  email: string,
+  platform: 'web' | 'windows' = 'web',
+): Promise<void> {
+  const db = admin();
+  const { data: existing } = await db.from('devices').select('id').eq('id', deviceId);
+  if (existing && existing.length > 0) return;
+  const match = /^([^@]+)@(.+)\.staff\.gym-spa\.invalid$/.exec(email);
+  if (!match) return;
+  const [, username, gymCode] = match;
+  const { data: staff } = await db
+    .from('staff_users')
+    .select('gym_id, all_branches, staff_branches(branch_id), gyms!inner(code)')
+    .eq('username', username ?? '')
+    .eq('gyms.code', gymCode ?? '')
+    .maybeSingle();
+  if (!staff) return;
+  let branchId = staff.all_branches ? undefined : staff.staff_branches[0]?.branch_id;
+  if (branchId === undefined) {
+    const { data: branches } = await db
+      .from('branches')
+      .select('id, code')
+      .eq('gym_id', staff.gym_id)
+      .eq('is_active', true);
+    branchId = branches?.sort((a, b) => Number(a.code.slice(1)) - Number(b.code.slice(1)))[0]?.id;
+  }
+  if (branchId === undefined) return;
+  const { count } = await db
+    .from('devices')
+    .select('id', { count: 'exact', head: true })
+    .eq('branch_id', branchId);
+  await write(
+    db.from('devices').insert({
+      id: deviceId,
+      gym_id: staff.gym_id,
+      branch_id: branchId,
+      code: `D${String((count ?? 0) + 1).padStart(2, '0')}`,
+      name: `ئامێری تاقیکردنەوە ${String((count ?? 0) + 1)}`,
+      platform,
+    }),
+  );
+}
+
+/**
  * A test's own gym (code e2e-<random>), made on first use with its roles and branch B1, plus the
  * branches and staff the test adds. cleanup() removes all of it.
  */
@@ -130,7 +180,7 @@ export class TestData {
   async setGym(
     change: Pick<
       Database['public']['Tables']['gyms']['Update'],
-      'paid_until' | 'suspended_at' | 'locked_at'
+      'paid_until' | 'suspended_at' | 'locked_at' | 'max_branches' | 'max_devices'
     >,
   ): Promise<void> {
     const gym = await this.gym();

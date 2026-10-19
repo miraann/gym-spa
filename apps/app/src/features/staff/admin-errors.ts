@@ -4,10 +4,11 @@ import { errorField } from '@/lib/save-error';
 import { StaffAdminCallError, type StaffAdminCallErrorKey } from './staff-admin-api';
 
 /**
- * Keys the database raises for roles (the guards and save_role); the staff module's keys come from
- * packages/staff-admin, and the database uses the same names for the staff rules.
+ * Keys the database raises for roles, branches and devices (the guards and the admin functions);
+ * the staff module's keys come from packages/staff-admin, and the database uses the same names for
+ * the staff rules.
  */
-const ROLE_ERROR_KEYS = [
+const DATABASE_ERROR_KEYS = [
   'cannot_edit_role',
   'cannot_edit_own_role',
   'cannot_grant_permission',
@@ -16,15 +17,23 @@ const ROLE_ERROR_KEYS = [
   'role_in_use',
   'role_deleted',
   'unknown_permission',
+  'last_active_branch',
+  'gym_branch_limit',
+  'branch_code_exhausted',
+  'branch_inactive',
+  'gym_device_limit',
+  'device_not_accessible',
+  'device_code_exhausted',
+  'not_allowed',
 ] as const;
 
-type RoleErrorKey = (typeof ROLE_ERROR_KEYS)[number];
+type DatabaseErrorKey = (typeof DATABASE_ERROR_KEYS)[number];
 
 /** Why an admin screen's change failed, as a key of staff:errors. */
-export type AdminErrorKey = StaffAdminCallErrorKey | RoleErrorKey;
+export type AdminErrorKey = StaffAdminCallErrorKey | DatabaseErrorKey;
 
-function isRoleErrorKey(value: unknown): value is RoleErrorKey {
-  return ROLE_ERROR_KEYS.some((key) => key === value);
+function isDatabaseErrorKey(value: unknown): value is DatabaseErrorKey {
+  return DATABASE_ERROR_KEYS.some((key) => key === value);
 }
 
 /**
@@ -36,7 +45,7 @@ export function adminErrorKey(error: unknown, action: string): AdminErrorKey {
   const message = errorField(error, 'message');
   const code = errorField(error, 'code');
   if (error instanceof TypeError || message === 'Failed to fetch') return 'network';
-  if (isStaffAdminErrorKey(message) || isRoleErrorKey(message)) return message;
+  if (isStaffAdminErrorKey(message) || isDatabaseErrorKey(message)) return message;
   // RLS, or a privilege the role lacks: no key of its own.
   if (code === '42501') return 'permission_denied';
   // A check constraint or a bad value: the forms check the same rules first.

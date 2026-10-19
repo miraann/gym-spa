@@ -7,7 +7,7 @@ import { useAdminWriteState } from './write-state';
  * Why the page's buttons are off: no connection, or a read-only gym (on the staff pages, what still
  * works then). Nothing otherwise.
  */
-export function WriteStateNotice({ area }: { readonly area: 'staff' | 'roles' }) {
+export function WriteStateNotice({ area }: { readonly area: 'staff' | 'devices' | 'roles' }) {
   const { t } = useTranslation('staff');
   const { online, readOnly } = useAdminWriteState();
   if (!online) {
@@ -23,7 +23,13 @@ export function WriteStateNotice({ area }: { readonly area: 'staff' | 'roles' })
       <Alert variant="warning">
         <EyeIcon />
         <AlertDescription>
-          {t(area === 'staff' ? 'notices.readOnlyStaff' : 'notices.readOnly')}
+          {t(
+            area === 'staff'
+              ? 'notices.readOnlyStaff'
+              : area === 'devices'
+                ? 'notices.readOnlyDevices'
+                : 'notices.readOnly',
+          )}
         </AlertDescription>
       </Alert>
     );

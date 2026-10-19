@@ -114,12 +114,12 @@ select throws_ok($$ select public.reset_staff_pin(tests.staff('reception_a', 'pg
   '42501', 'cannot_manage_staff', 'nobody resets the PIN of another gym''s staff');
 
 select tests.authenticate_as(tests.staff('reception_a'));
-select is(public.unlock_with_pin('482915', tests.branch('B901', 'pgtap-b')) ->> 'result', 'no_branch_access',
-  'a PIN never opens a device in another gym''s branch');
-select is(public.unlock_with_pin('000001', tests.branch('B901')) ->> 'tries_left', '4',
+select is(public.unlock_on_device('482915', 'd0000000-0000-4000-8000-0000000000b1') ->> 'result', 'device_not_registered',
+  'a PIN never opens another gym''s device');
+select is(public.unlock_on_device('000001', 'd0000000-0000-4000-8000-0000000000a1') ->> 'tries_left', '4',
   'gym B''s PIN setting (3 tries) does not apply in gym A (5 tries)');
 select tests.authenticate_as(tests.staff('reception_a', 'pgtap-b'));
-select is(public.unlock_with_pin('000001', tests.branch('B901', 'pgtap-b')) ->> 'tries_left', '2',
+select is(public.unlock_on_device('000001', 'd0000000-0000-4000-8000-0000000000b1') ->> 'tries_left', '2',
   'gym B''s PIN setting applies in gym B');
 
 -- Gym B's Owner against gym A ------------------------------------------------------------------

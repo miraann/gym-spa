@@ -10,6 +10,8 @@ export const PHONE_PATTERN = /^\+?[0-9][0-9 ]{3,18}[0-9]$/;
 export const STAFF_NAME_MAX_LENGTH = 100;
 export const ROLE_NAME_MAX_LENGTH = 60;
 export const BRANCH_NAME_MAX_LENGTH = 100;
+/** The longest branch address (branches.address). */
+export const BRANCH_ADDRESS_MAX_LENGTH = 300;
 
 /**
  * A phone number as staff type it: digits typed on a Kurdish or Arabic keyboard become 0-9, no

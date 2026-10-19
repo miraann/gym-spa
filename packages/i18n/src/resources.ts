@@ -1,22 +1,28 @@
 import arAuth from './locales/ar/auth.json';
+import arBranches from './locales/ar/branches.json';
 import arCommon from './locales/ar/common.json';
 import arDates from './locales/ar/dates.json';
+import arDevices from './locales/ar/devices.json';
 import arHome from './locales/ar/home.json';
 import arNav from './locales/ar/nav.json';
 import arPermissions from './locales/ar/permissions.json';
 import arSettings from './locales/ar/settings.json';
 import arStaff from './locales/ar/staff.json';
 import ckbAuth from './locales/ckb/auth.json';
+import ckbBranches from './locales/ckb/branches.json';
 import ckbCommon from './locales/ckb/common.json';
 import ckbDates from './locales/ckb/dates.json';
+import ckbDevices from './locales/ckb/devices.json';
 import ckbHome from './locales/ckb/home.json';
 import ckbNav from './locales/ckb/nav.json';
 import ckbPermissions from './locales/ckb/permissions.json';
 import ckbSettings from './locales/ckb/settings.json';
 import ckbStaff from './locales/ckb/staff.json';
 import enAuth from './locales/en/auth.json';
+import enBranches from './locales/en/branches.json';
 import enCommon from './locales/en/common.json';
 import enDates from './locales/en/dates.json';
+import enDevices from './locales/en/devices.json';
 import enHome from './locales/en/home.json';
 import enNav from './locales/en/nav.json';
 import enPermissions from './locales/en/permissions.json';
@@ -37,6 +43,8 @@ const ckb = {
   auth: ckbAuth,
   staff: ckbStaff,
   permissions: ckbPermissions,
+  branches: ckbBranches,
+  devices: ckbDevices,
 };
 
 /** The gym app's texts (every namespace it loads). */
@@ -57,6 +65,8 @@ const en: GymResources = {
   auth: enAuth,
   staff: enStaff,
   permissions: enPermissions,
+  branches: enBranches,
+  devices: enDevices,
 };
 
 const ar: GymResources = {
@@ -68,6 +78,8 @@ const ar: GymResources = {
   auth: arAuth,
   staff: arStaff,
   permissions: arPermissions,
+  branches: arBranches,
+  devices: arDevices,
 };
 
 export const resources: Record<Language, GymResources> = { ckb, en, ar };
@@ -81,6 +93,8 @@ export const NAMESPACES = [
   'auth',
   'staff',
   'permissions',
+  'branches',
+  'devices',
 ] as const satisfies readonly Namespace[];
 
 export const DEFAULT_NAMESPACE = 'common' satisfies Namespace;

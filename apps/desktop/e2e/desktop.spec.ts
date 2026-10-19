@@ -11,6 +11,7 @@ import {
   type Page,
 } from '@playwright/test';
 // Test staff in local Supabase (`pnpm db:start`), shared with the web tests.
+import { autoRegisterDevices } from '../../app/e2e/support/app';
 import { TestData, type TestStaff } from '../../app/e2e/support/backend';
 
 // path.resolve drops the trailing backslash: on Windows, `"...\desktop\"` would escape the quote.
@@ -55,6 +56,8 @@ async function newStaff(): Promise<TestStaff> {
 
 /** Password login on a fresh install (so it asks for the gym code); ends on the home page. */
 async function signIn(page: Page, staff: TestStaff): Promise<void> {
+  // Devices must be registered (step 1e): as a manager would have, before the login.
+  await autoRegisterDevices(page, 'windows');
   await expect(page.getByRole('heading', LOGIN_HEADING)).toBeVisible();
   await page.getByLabel('کۆدی جیم').fill(staff.gymCode);
   await page.getByLabel('ناوی بەکارهێنەر').fill(staff.username);
