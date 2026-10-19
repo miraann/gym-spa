@@ -9,7 +9,7 @@ import {
   type ThemePreference,
 } from '@gym/core';
 import type { Language } from '@gym/i18n';
-import type { SecureStorage } from '@gym/platform';
+import { platform, type SecureStorage } from '@gym/platform';
 import { clearGymAppearance } from '@/lib/appearance';
 import { createAppClient, type AppSupabaseClient, type BackendConfig } from '@/lib/backend';
 import { logError } from '@/lib/logger';
@@ -25,17 +25,28 @@ import {
 } from './accounts';
 import { DEVICE_GYM_KEY, parseDeviceGym, type DeviceGym } from './device-gym';
 import {
+  DEVICE_REGISTRATION_KEY,
+  devicePlatform,
+  parseDeviceRegistration,
+  type DeviceRegistration,
+} from './device-registration';
+import {
   AuthFlowError,
   changePassword,
   checkPin,
   clearPinLockout,
   fetchBranches,
   fetchGym,
+  fetchGymLimits,
+  fetchMyDevice,
   fetchProfile,
+  registerThisDevice,
+  reportDevice,
   setPin,
   toAuthError,
   usableSession,
   type BranchChoice,
+  type GymLimits,
   type PinCheck,
   type StaffProfile,
 } from './staff-api';
@@ -44,8 +55,9 @@ import {
 export type AuthStep =
   | { readonly kind: 'change_password'; readonly staffId: string }
   | { readonly kind: 'set_pin'; readonly staffId: string }
+  /** This device isn't registered yet: the staff member (devices.manage) registers it. */
   | {
-      readonly kind: 'choose_branch';
+      readonly kind: 'register_device';
       readonly staffId: string;
       readonly branches: readonly BranchChoice[];
     }
@@ -58,6 +70,12 @@ export type UnlockResult =
   | { readonly kind: 'password_required'; readonly reason: PasswordReason }
   /** Click Group locked the gym; no password helps. */
   | { readonly kind: 'gym_locked' }
+  /** This device isn't registered (any more): a manager registers it at a password login. */
+  | { readonly kind: 'device_not_registered' }
+  /** A manager deactivated this device. */
+  | { readonly kind: 'device_inactive' }
+  /** This device's branch was deactivated. */
+  | { readonly kind: 'branch_inactive' }
   /** The server couldn't be reached, so the PIN can't be checked. */
   | { readonly kind: 'network' };
 
@@ -69,15 +87,21 @@ export interface AuthState {
   readonly accounts: readonly DeviceAccount[];
   /** The staff member using the app; null while locked. */
   readonly activeId: string | null;
-  /** The branch this device works in, null until chosen. */
+  /** This device's registration in its gym; null until a manager registers it. */
+  readonly device: DeviceRegistration | null;
+  /** The branch this device works in (its registration's), null until it is registered. */
   readonly branchId: string | null;
   /** The gym this device works for, null until the first login. */
   readonly gym: DeviceGym | null;
 }
 
+/** Registering this device (and later managing it) needs this permission. */
+const DEVICES_PERMISSION = 'devices.manage';
+
 /** Secure storage keys of this install. */
 const DEVICE_ID_KEY = 'device.id';
-const BRANCH_KEY = 'device.branch_id';
+/** Before step 1e the device kept only a chosen branch; its registration replaces it. */
+const LEGACY_BRANCH_KEY = 'device.branch_id';
 
 /**
  * Login, PIN unlock, lock and logout on this device. Several staff members can be logged in on one
@@ -93,6 +117,7 @@ export class AuthController {
     failed: false,
     accounts: [],
     activeId: null,
+    device: null,
     branchId: null,
     gym: null,
   };
@@ -149,11 +174,12 @@ export class AuthController {
    * nobody is logged in on the device; otherwise the device stays with its gym.
    */
   async init(gymLink: string | null = null): Promise<void> {
-    let branchId: string | null;
+    let device: DeviceRegistration | null;
     let gym: DeviceGym | null;
     try {
       this.deviceId = await this.ensureDeviceId();
-      branchId = await this.storage.get(BRANCH_KEY);
+      device = parseDeviceRegistration(await this.storage.get(DEVICE_REGISTRATION_KEY));
+      await this.storage.delete(LEGACY_BRANCH_KEY);
       gym = parseDeviceGym(await this.storage.get(DEVICE_GYM_KEY));
       await this.store.load();
     } catch (error) {
@@ -162,7 +188,7 @@ export class AuthController {
     }
     this.gymLink = gymLink;
     // Always starts locked: a reload or restart asks for a PIN again.
-    this.setState({ ready: true, branchId, gym });
+    this.setState({ ready: true, device, branchId: device?.branch.id ?? null, gym });
     if (gymLink && gym && gym.code !== gymLink && this.store.list().length === 0) {
       await this.forgetGym();
     }
@@ -239,11 +265,19 @@ export class AuthController {
       const profile = await fetchProfile(client, staffId);
       if (!profile || !gym) throw new AuthFlowError('account_inactive');
       const branches = await fetchBranches(client);
-      const { branchId } = this.state;
-      const canUseBranch = branchId
-        ? branches.some((branch) => branch.id === branchId)
-        : branches.length > 0;
-      if (!canUseBranch) throw new AuthFlowError('no_branch_access');
+      // This device must be registered in the gym and usable by them (decided 2026-10-11).
+      const mine = await fetchMyDevice(client, this.deviceId);
+      await this.saveDevice(mine?.registration ?? null);
+      if (mine) {
+        if (!mine.registration.isActive) throw new AuthFlowError('device_inactive');
+        if (!mine.registration.branch.isActive) throw new AuthFlowError('branch_inactive');
+        if (!mine.canUse) throw new AuthFlowError('no_branch_access');
+      } else {
+        if (!profile.permissions.includes(DEVICES_PERMISSION)) {
+          throw new AuthFlowError('device_not_registered');
+        }
+        if (branches.length === 0) throw new AuthFlowError('no_branch_access');
+      }
 
       const existing = this.store.get(staffId);
       await this.store.save({
@@ -284,11 +318,31 @@ export class AuthController {
     return this.nextStep(staffId);
   }
 
-  /** Sets the branch this device works in. Changing it later is the devices screen (step 1e). */
-  async chooseBranch(staffId: string, branchId: string): Promise<AuthStep> {
-    await this.storage.set(BRANCH_KEY, branchId);
-    this.setState({ branchId });
+  /**
+   * Registers this device in a branch (the staff member has devices.manage). It counts toward the
+   * gym's device limit; moving it to another branch later is the devices screen.
+   */
+  async registerDevice(staffId: string, branchId: string, name: string): Promise<AuthStep> {
+    const client = this.clientFor(staffId);
+    try {
+      await registerThisDevice(client, {
+        id: this.deviceId,
+        branchId,
+        name,
+        platform: devicePlatform(platform),
+      });
+      const mine = await fetchMyDevice(client, this.deviceId);
+      if (!mine) throw new AuthFlowError('unexpected');
+      await this.saveDevice(mine.registration);
+    } catch (error) {
+      throw toAuthError(error);
+    }
     return this.nextStep(staffId);
+  }
+
+  /** The gym's limits, for the registration screen's hint; the server checks them anyway. */
+  gymLimits(staffId: string): Promise<GymLimits | null> {
+    return fetchGymLimits(this.clientFor(staffId));
   }
 
   private async nextStep(
@@ -299,13 +353,16 @@ export class AuthController {
     if (!account) throw new AuthFlowError('unexpected');
     if (account.mustChangePassword) return { kind: 'change_password', staffId };
     if (!account.hasPin) return { kind: 'set_pin', staffId };
-    if (!this.state.branchId) {
+    if (!this.state.device) {
+      if (!account.permissions.includes(DEVICES_PERMISSION)) {
+        throw new AuthFlowError('device_not_registered');
+      }
       const branches = knownBranches ?? (await fetchBranches(this.clientFor(staffId)));
-      const [only] = branches;
-      if (branches.length === 1 && only) return this.chooseBranch(staffId, only.id);
-      return { kind: 'choose_branch', staffId, branches };
+      return { kind: 'register_device', staffId, branches };
     }
     await this.activate(staffId);
+    // The device reports at once, so the devices screen shows it as seen.
+    void this.checkDevice(this.clientFor(staffId));
     return { kind: 'done' };
   }
 
@@ -316,7 +373,8 @@ export class AuthController {
     const account = this.store.get(staffId);
     const { branchId } = this.state;
     if (!account) return { kind: 'password_required', reason: 'session_ended' };
-    // The first login stopped before a branch was chosen: the password login asks for it.
+    // Not registered (the first login stopped before, or the device was removed): a password login
+    // registers it, or says to ask a manager.
     if (!branchId) {
       await this.markPasswordRequired(staffId, 'setup');
       return { kind: 'password_required', reason: 'setup' };
@@ -336,7 +394,7 @@ export class AuthController {
 
     let check: PinCheck;
     try {
-      check = await checkPin(client, pin, branchId);
+      check = await checkPin(client, pin, this.deviceId);
     } catch (error) {
       const authError = toAuthError(error);
       if (authError.key === 'network') return { kind: 'network' };
@@ -346,8 +404,22 @@ export class AuthController {
     switch (check.result) {
       case 'ok':
         await this.activate(staffId);
-        void this.refreshFromServer(staffId);
+        void this.refreshFromServer(staffId).then(async (usable) => {
+          if (usable) await this.checkDevice(client);
+        });
         return { kind: 'unlocked' };
+      case 'device_not_registered':
+        await this.saveDevice(null);
+        return { kind: 'device_not_registered' };
+      case 'device_inactive':
+        await this.updateDevice((device) => ({ ...device, isActive: false }));
+        return { kind: 'device_inactive' };
+      case 'branch_inactive':
+        await this.updateDevice((device) => ({
+          ...device,
+          branch: { ...device.branch, isActive: false },
+        }));
+        return { kind: 'branch_inactive' };
       case 'wrong_pin':
         return { kind: 'wrong_pin', triesLeft: check.triesLeft };
       case 'locked_out':
@@ -379,9 +451,11 @@ export class AuthController {
       passwordRequired: null,
       lastActiveAt: new Date().toISOString(),
     }));
-    // Language order: the staff member's own choice, otherwise the device's current language.
-    // Their own look the same way; the lock screen then keeps it for whoever comes next.
-    if (account?.preferredLanguage) setPreference('language', account.preferredLanguage);
+    // Language order: the staff member's own choice, then the device's default, otherwise the
+    // device's current language. Their own look the same way; the lock screen then keeps it for
+    // whoever comes next.
+    const language = account?.preferredLanguage ?? this.state.device?.defaultLanguage;
+    if (language) setPreference('language', language);
     if (account?.themePreference) setPreference('theme', account.themePreference);
     if (account?.textSize) setPreference('textSize', account.textSize);
     this.setState({ activeId: staffId });
@@ -415,29 +489,30 @@ export class AuthController {
   /**
    * Brings a staff member's cached details up to date: name, role and permissions, and their PIN.
    * A PIN removed by a manager, a lockout or a deactivated account takes effect here. Does nothing
-   * while the server can't be reached.
+   * while the server can't be reached. True when the staff member's session works and they are
+   * active in a gym that isn't locked (so the device can be checked with it).
    */
-  async refreshFromServer(staffId: string): Promise<void> {
-    if (!this.store.get(staffId)) return;
+  async refreshFromServer(staffId: string): Promise<boolean> {
+    if (!this.store.get(staffId)) return false;
     try {
       const client = this.clientFor(staffId);
       const session = await usableSession(client);
       if (session === 'ended') {
         await this.markPasswordRequired(staffId, 'session_ended');
-        return;
+        return false;
       }
-      if (session === 'unavailable') return;
+      if (session === 'unavailable') return false;
       const gym = await fetchGym(client);
       if (gym) await this.rememberGym(gym);
       if (gym?.access === 'locked') {
         // Nobody of a locked gym uses the app: it locks at once, and the PIN says why.
         if (this.state.activeId === staffId) this.lock();
-        return;
+        return false;
       }
       const profile = await fetchProfile(client, staffId);
       if (!profile) {
         await this.markPasswordRequired(staffId, 'inactive');
-        return;
+        return false;
       }
       const branches = await fetchBranches(client);
       const updated = await this.store.update(staffId, (account) => ({
@@ -452,16 +527,95 @@ export class AuthController {
       ) {
         this.lock();
       }
+      return true;
     } catch (error) {
       // Network trouble: the next check tries again.
       if (!(error instanceof AuthFlowError && error.key === 'network')) {
         logError(error, { area: 'auth', action: 'refresh' });
       }
+      return false;
     }
   }
 
+  /**
+   * Every staff member's details, then this device: its registration and branch (with the active
+   * staff member's session, else anyone's that works), and a report that it is alive.
+   */
   async refreshAll(): Promise<void> {
-    for (const account of this.store.list()) await this.refreshFromServer(account.staffId);
+    const { activeId } = this.state;
+    const accounts = [...this.store.list()].sort(
+      (a, b) => Number(b.staffId === activeId) - Number(a.staffId === activeId),
+    );
+    let checker: string | null = null;
+    for (const account of accounts) {
+      const usable = await this.refreshFromServer(account.staffId);
+      if (usable) checker ??= account.staffId;
+    }
+    if (checker) await this.checkDevice(this.clientFor(checker));
+  }
+
+  // This device ----------------------------------------------------------------------------------
+
+  /**
+   * Reads this device's registration again with an active staff member's session: moved to another
+   * branch, deactivated, or removed takes effect here. Then reports that it is alive.
+   */
+  private async checkDevice(client: AppSupabaseClient): Promise<void> {
+    try {
+      const mine = await fetchMyDevice(client, this.deviceId);
+      await this.saveDevice(mine?.registration ?? null);
+      if (mine?.registration.isActive && mine.registration.branch.isActive && mine.canUse) {
+        await reportDevice(client, this.deviceId, import.meta.env.VITE_APP_VERSION);
+      }
+    } catch (error) {
+      // No connection, or the staff member stopped being active meanwhile (their own check deals
+      // with that): the registration stays as it is, and the next check tries again.
+      if (!(
+        error instanceof AuthFlowError &&
+        (error.key === 'network' || error.key === 'account_inactive')
+      )) {
+        logError(error, { area: 'auth', action: 'check-device' });
+      }
+    }
+  }
+
+  /**
+   * Keeps this device's registration (null: not registered). The device's default language applies
+   * when it is new or changed, unless the staff member using the app has their own. A device that
+   * can't be worked on any more (removed, deactivated, its branch deactivated, or a branch the
+   * active staff member can't access) locks at once.
+   */
+  private async saveDevice(device: DeviceRegistration | null): Promise<void> {
+    const previous = this.state.device;
+    if (JSON.stringify(previous) !== JSON.stringify(device)) {
+      if (device) await this.storage.set(DEVICE_REGISTRATION_KEY, JSON.stringify(device));
+      else await this.storage.delete(DEVICE_REGISTRATION_KEY);
+      this.setState({ device, branchId: device?.branch.id ?? null });
+    }
+    if (
+      device?.defaultLanguage &&
+      device.defaultLanguage !== previous?.defaultLanguage &&
+      !this.activeAccount?.preferredLanguage
+    ) {
+      setPreference('language', device.defaultLanguage);
+    }
+    const active = this.activeAccount;
+    if (
+      active &&
+      (!device ||
+        !device.isActive ||
+        !device.branch.isActive ||
+        !canUseBranch(active, device.branch.id))
+    ) {
+      this.lock();
+    }
+  }
+
+  private async updateDevice(
+    change: (device: DeviceRegistration) => DeviceRegistration,
+  ): Promise<void> {
+    const { device } = this.state;
+    if (device) await this.saveDevice(change(device));
   }
 
   // The device's gym -----------------------------------------------------------------------------
@@ -480,15 +634,20 @@ export class AuthController {
   }
 
   /**
-   * "Use another gym": forgets the device's gym and its branch, so the next login asks for a gym
-   * code again. Only while nobody is logged in on the device: they all belong to its gym.
+   * "Use another gym": forgets the device's gym and its registration, so the next login asks for a
+   * gym code again. Only while nobody is logged in on the device: they all belong to its gym. The
+   * device gets a new id, because a device id belongs to one gym; its old registration stays in the
+   * old gym until a manager there deactivates it.
    */
   async forgetGym(): Promise<void> {
     if (this.store.list().length > 0) return;
     await this.storage.delete(DEVICE_GYM_KEY);
-    await this.storage.delete(BRANCH_KEY);
+    await this.storage.delete(DEVICE_REGISTRATION_KEY);
+    this.deviceId = crypto.randomUUID();
+    await this.storage.set(DEVICE_ID_KEY, this.deviceId);
+    this.clients.clear();
     clearGymAppearance();
-    this.setState({ gym: null, branchId: null });
+    this.setState({ gym: null, device: null, branchId: null });
   }
 
   private async markPasswordRequired(staffId: string, reason: PasswordReason): Promise<void> {

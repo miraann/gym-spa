@@ -1,6 +1,6 @@
 import type { Page } from '@playwright/test';
 import { admin, type TestData, type TestStaff } from './support/backend';
-import { expect, signIn, test, unlock } from './support/app';
+import { autoRegisterDevices, expect, signIn, test, unlock } from './support/app';
 
 // Settings → Appearance (spec §6.1): the gym's look (brand color, corners, logo), each staff
 // member's own look, and the gym's logo and name on the lock screen.
@@ -196,6 +196,7 @@ test('staff without the right see the gym look as a note, and set their own look
 
   // Their look follows them to another device.
   const otherDevice = await browser.newContext({ colorScheme: 'light' });
+  await autoRegisterDevices(otherDevice);
   const otherPage = await otherDevice.newPage();
   await signIn(otherPage, staff);
   await expect(otherPage.locator('html')).toHaveClass(/dark/);

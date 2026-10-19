@@ -1,10 +1,10 @@
 // Login, PIN and lock, and the gym at login, against local Supabase (`pnpm db:start`).
-import type { Page } from '@playwright/test';
 import { admin, write, type TestStaff } from './support/backend';
 import {
   GYM_CODE_LABEL,
   HOME_HEADING,
   LOGIN_HEADING,
+  lockFromMenu,
   expect,
   signIn,
   submitPasswordLogin,
@@ -83,12 +83,6 @@ test('first login: new password, then a PIN, then the app', async ({ page, data 
 });
 
 /** Locks the app from the account menu (to let someone else in). */
-async function lockFromMenu(page: Page): Promise<void> {
-  await page.getByRole('button', { name: 'هەژمارەکەم' }).click();
-  await page.getByRole('menuitem', { name: /قفڵکردن/ }).click();
-  await expect(page.getByRole('heading', { level: 1, name: 'کێ کار دەکات؟' })).toBeVisible();
-}
-
 /** The one branch a test staff member works in. */
 async function branchOf(staff: TestStaff): Promise<string> {
   const { data } = await admin()

@@ -1,6 +1,6 @@
 import type { Locator, Page } from '@playwright/test';
 import { admin } from './support/backend';
-import { HOME_HEADING, expect, signIn, test } from './support/app';
+import { HOME_HEADING, autoRegisterDevices, expect, signIn, test } from './support/app';
 
 // Navigation by width (CLAUDE.md → Design): desktop sidebar, tablet rail, phone tab bar, and the
 // layout guards (rail labels, bottom padding).
@@ -172,6 +172,7 @@ test('staff choose their own tabs, which follow them to other devices', async ({
 
   // Another device: the same tabs after logging in.
   const otherDevice = await browser.newContext({ viewport: PHONE });
+  await autoRegisterDevices(otherDevice);
   const otherPage = await otherDevice.newPage();
   await signIn(otherPage, staff);
   await expect.poll(() => tabNames(otherPage)).toEqual(chosen);

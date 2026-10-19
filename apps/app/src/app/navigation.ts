@@ -79,9 +79,9 @@ export const NAV_GROUPS: readonly NavGroup[] = [
   {
     key: 'management',
     items: [
-      { key: 'staff', icon: UserCogIcon, permission: 'staff.view' },
-      { key: 'roles', icon: ShieldCheckIcon, permission: 'roles.manage' },
-      { key: 'branches', icon: Building2Icon, permission: 'branches.manage' },
+      { key: 'staff', icon: UserCogIcon, to: '/staff', permission: 'staff.view' },
+      { key: 'roles', icon: ShieldCheckIcon, to: '/roles', permission: 'roles.manage' },
+      { key: 'branches', icon: Building2Icon, to: '/branches', permission: 'branches.manage' },
       { key: 'reports', icon: ChartColumnIcon, permission: 'reports.view' },
       { key: 'notifications', icon: BellIcon, permission: 'notifications.send' },
       { key: 'auditLog', icon: HistoryIcon, permission: 'audit.view' },
@@ -90,7 +90,7 @@ export const NAV_GROUPS: readonly NavGroup[] = [
   {
     key: 'system',
     items: [
-      { key: 'devices', icon: MonitorSmartphoneIcon, permission: 'devices.manage' },
+      { key: 'devices', icon: MonitorSmartphoneIcon, to: '/devices', permission: 'devices.manage' },
       { key: 'settings', icon: SettingsIcon, to: '/settings' },
     ],
   },

@@ -84,7 +84,10 @@ export interface TestStaff {
 }
 
 export interface StaffOptions {
+  /** A built-in role's key (default receptionist). */
   readonly role?: string;
+  /** A custom role made with role(); wins over `role`. */
+  readonly roleId?: string;
   readonly branchIds: readonly string[];
   /** Access to every branch (gym-wide settings need it). */
   readonly allBranches?: boolean;
@@ -92,6 +95,56 @@ export interface StaffOptions {
   /** false: no PIN yet (first login asks for one) */
   readonly withPin?: boolean;
   readonly fullName?: string;
+}
+
+/**
+ * Registers a device the way a manager does at their first login on it (step 1e), so tests that
+ * aren't about registration can log anyone in. It goes in the branch the staff member (from their
+ * login address) works in: their first branch, or the gym's first one with all branches. A device
+ * already registered is left as it is.
+ */
+export async function registerTestDevice(
+  deviceId: string,
+  email: string,
+  platform: 'web' | 'windows' = 'web',
+): Promise<void> {
+  const db = admin();
+  const { data: existing } = await db.from('devices').select('id').eq('id', deviceId);
+  if (existing && existing.length > 0) return;
+  const match = /^([^@]+)@(.+)\.staff\.gym-spa\.invalid$/.exec(email);
+  if (!match) return;
+  const [, username, gymCode] = match;
+  const { data: staff } = await db
+    .from('staff_users')
+    .select('gym_id, all_branches, staff_branches(branch_id), gyms!inner(code)')
+    .eq('username', username ?? '')
+    .eq('gyms.code', gymCode ?? '')
+    .maybeSingle();
+  if (!staff) return;
+  let branchId = staff.all_branches ? undefined : staff.staff_branches[0]?.branch_id;
+  if (branchId === undefined) {
+    const { data: branches } = await db
+      .from('branches')
+      .select('id, code')
+      .eq('gym_id', staff.gym_id)
+      .eq('is_active', true);
+    branchId = branches?.sort((a, b) => Number(a.code.slice(1)) - Number(b.code.slice(1)))[0]?.id;
+  }
+  if (branchId === undefined) return;
+  const { count } = await db
+    .from('devices')
+    .select('id', { count: 'exact', head: true })
+    .eq('branch_id', branchId);
+  await write(
+    db.from('devices').insert({
+      id: deviceId,
+      gym_id: staff.gym_id,
+      branch_id: branchId,
+      code: `D${String((count ?? 0) + 1).padStart(2, '0')}`,
+      name: `ئامێری تاقیکردنەوە ${String((count ?? 0) + 1)}`,
+      platform,
+    }),
+  );
 }
 
 /**
@@ -127,7 +180,7 @@ export class TestData {
   async setGym(
     change: Pick<
       Database['public']['Tables']['gyms']['Update'],
-      'paid_until' | 'suspended_at' | 'locked_at'
+      'paid_until' | 'suspended_at' | 'locked_at' | 'max_branches' | 'max_devices'
     >,
   ): Promise<void> {
     const gym = await this.gym();
@@ -164,14 +217,17 @@ export class TestData {
     const id = created.data.user.id;
     this.staffIds.push(id);
 
-    const role = await check(
-      admin()
-        .from('roles')
-        .select('id')
-        .eq('gym_id', gym.id)
-        .eq('key', options.role ?? 'receptionist')
-        .single(),
-    );
+    const role =
+      options.roleId === undefined
+        ? await check(
+            admin()
+              .from('roles')
+              .select('id')
+              .eq('gym_id', gym.id)
+              .eq('key', options.role ?? 'receptionist')
+              .single(),
+          )
+        : { id: options.roleId };
     // The secret key runs as the system, so the insert keeps must_change_password as given.
     await write(
       admin()
@@ -201,11 +257,38 @@ export class TestData {
     return { id, gymCode: gym.code, username, fullName, password, pin };
   }
 
+  /** A custom role of the test's gym with these permissions; returns its id. */
+  async role(nameCkb: string, permissionKeys: readonly string[]): Promise<string> {
+    const gym = await this.gym();
+    const role = await check(
+      admin().from('roles').insert({ gym_id: gym.id, name_ckb: nameCkb }).select('id').single(),
+    );
+    if (permissionKeys.length > 0) {
+      await write(
+        admin()
+          .from('role_permissions')
+          .insert(
+            permissionKeys.map((key) => ({
+              gym_id: gym.id,
+              role_id: role.id,
+              permission_key: key,
+            })),
+          ),
+      );
+    }
+    return role.id;
+  }
+
   /** Removes the test's gym and everything in it. Test data only: real data is never deleted. */
   async cleanup(): Promise<void> {
     if (!this.created) return;
     const { id: gymId } = await this.created;
     const db = admin();
+    // Staff made through the app's screens have logins too.
+    const { data: madeInApp } = await db.from('staff_users').select('id').eq('gym_id', gymId);
+    for (const { id } of madeInApp ?? []) {
+      if (!this.staffIds.includes(id)) this.staffIds.push(id);
+    }
     for (const table of ['staff_pins', 'settings', 'staff_branches', 'staff_users'] as const) {
       await write(db.from(table).delete().eq('gym_id', gymId));
     }

@@ -1,9 +1,18 @@
-import { EyeIcon, KeyRoundIcon, LockIcon, UserPlusIcon } from 'lucide-react';
+import { localizedName } from '@gym/i18n';
+import {
+  CircleOffIcon,
+  EyeIcon,
+  KeyRoundIcon,
+  LockIcon,
+  MonitorSmartphoneIcon,
+  UserPlusIcon,
+} from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, AlertDescription } from '@gym/ui/components/alert';
 import { Button } from '@gym/ui/components/button';
 import { useFormat } from '@/lib/format';
+import { usePreferences } from '@/lib/preferences';
 import { logError } from '@/lib/logger';
 import { canUseBranch, pinBlocker, type DeviceAccount, type PasswordReason } from '../accounts';
 import { useAuthController, useAuthState, useDeviceGym } from '../auth-context';
@@ -47,6 +56,40 @@ function GymStateNotice() {
   return null;
 }
 
+/**
+ * This device: its name and branch, or why nobody can work on it (not registered, deactivated, its
+ * branch deactivated). From the last check with the server; the PIN asks the server again.
+ */
+function DeviceNotice() {
+  const { t } = useTranslation('auth');
+  const { language } = usePreferences();
+  const { device } = useAuthState();
+  if (!device) {
+    return (
+      <Alert>
+        <MonitorSmartphoneIcon />
+        <AlertDescription>{t('errors.device_not_registered')}</AlertDescription>
+      </Alert>
+    );
+  }
+  if (!device.isActive || !device.branch.isActive) {
+    return (
+      <Alert variant="destructive">
+        <CircleOffIcon />
+        <AlertDescription>
+          {t(device.isActive ? 'errors.branch_inactive' : 'errors.device_inactive')}
+        </AlertDescription>
+      </Alert>
+    );
+  }
+  return (
+    <p className="flex items-center gap-2 text-sm text-muted-foreground" data-device={device.code}>
+      <MonitorSmartphoneIcon className="size-4" aria-hidden="true" />
+      {t('lock.device', { device: device.name, branch: localizedName(device.branch, language) })}
+    </p>
+  );
+}
+
 /** "Who's working?": the staff members who have logged in on this device. */
 export function LockScreen({
   onPick,
@@ -61,6 +104,7 @@ export function LockScreen({
   return (
     <AuthLayout title={t('lock.title')} description={t('lock.description')}>
       <GymStateNotice />
+      <DeviceNotice />
       <ul className="flex flex-col gap-2">
         {accounts.map((account) => (
           <li key={account.staffId}>
@@ -124,7 +168,15 @@ export function PinScreen({
   const format = useFormat();
   const [busy, setBusy] = useState(false);
   const [wrong, setWrong] = useState<number | null>(null);
-  const [failure, setFailure] = useState<'network' | 'gym_locked' | 'unexpected' | null>(null);
+  const [failure, setFailure] = useState<
+    | 'network'
+    | 'gym_locked'
+    | 'device_not_registered'
+    | 'device_inactive'
+    | 'branch_inactive'
+    | 'unexpected'
+    | null
+  >(null);
   const blocker: PasswordReason | null = pinBlocker(account);
 
   const submit = (pin: string) => {
@@ -134,7 +186,15 @@ export function PinScreen({
       .unlock(account.staffId, pin)
       .then((result) => {
         setWrong(result.kind === 'wrong_pin' ? result.triesLeft : null);
-        if (result.kind === 'network' || result.kind === 'gym_locked') setFailure(result.kind);
+        if (
+          result.kind === 'network' ||
+          result.kind === 'gym_locked' ||
+          result.kind === 'device_not_registered' ||
+          result.kind === 'device_inactive' ||
+          result.kind === 'branch_inactive'
+        ) {
+          setFailure(result.kind);
+        }
       })
       .catch((error: unknown) => {
         logError(error, { area: 'auth', action: 'unlock' });

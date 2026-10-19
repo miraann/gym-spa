@@ -1,8 +1,48 @@
-import { test as base, expect, type Page } from '@playwright/test';
-import { TestData, type TestStaff } from './backend';
+import { test as base, expect, type BrowserContext, type Page } from '@playwright/test';
+import { registerTestDevice, TestData, type TestStaff } from './backend';
+
+/**
+ * Registers the device of every password login in this page or context first, as a manager would
+ * have (step 1e: devices must be registered). The login request carries the device id (X-Device-Id)
+ * and the staff member's login address.
+ */
+export async function autoRegisterDevices(
+  target: Page | BrowserContext,
+  platform: 'web' | 'windows' = 'web',
+): Promise<void> {
+  await target.route(
+    (url) =>
+      url.pathname.endsWith('/auth/v1/token') && url.searchParams.get('grant_type') === 'password',
+    async (route) => {
+      const request = route.request();
+      const deviceId = await request.headerValue('x-device-id');
+      const body: unknown = request.postDataJSON();
+      const email =
+        typeof body === 'object' &&
+        body !== null &&
+        'email' in body &&
+        typeof body.email === 'string'
+          ? body.email
+          : null;
+      if (deviceId && email) await registerTestDevice(deviceId, email, platform);
+      await route.continue();
+    },
+  );
+}
 
 /** Each test gets its own gym, branch and staff (removed afterwards). */
-export const test = base.extend<{ data: TestData; otherGym: TestData; staff: TestStaff }>({
+export const test = base.extend<{
+  data: TestData;
+  otherGym: TestData;
+  staff: TestStaff;
+  /** false: devices stay unregistered (the tests of registration itself). */
+  autoRegister: boolean;
+}>({
+  autoRegister: [true, { option: true }],
+  context: async ({ context, autoRegister }, use) => {
+    if (autoRegister) await autoRegisterDevices(context);
+    await use(context);
+  },
   // Playwright reads the fixtures a fixture needs from this destructuring, so it must exist.
   // eslint-disable-next-line no-empty-pattern
   data: async ({}, use) => {
@@ -67,4 +107,11 @@ export async function unlock(page: Page, staff: TestStaff, pin = staff.pin ?? ''
   await expect(page.getByRole('heading', { level: 1, name: 'کێ کار دەکات؟' })).toBeVisible();
   await page.getByRole('button', { name: staff.fullName }).click();
   await typePin(page, pin);
+}
+
+/** Locks the app from the account menu: the open page (and its loaded data) stays behind the lock. */
+export async function lockFromMenu(page: Page): Promise<void> {
+  await page.getByRole('button', { name: 'هەژمارەکەم' }).click();
+  await page.getByRole('menuitem', { name: /قفڵکردن/ }).click();
+  await expect(page.getByRole('heading', { level: 1, name: 'کێ کار دەکات؟' })).toBeVisible();
 }

@@ -54,7 +54,7 @@ select is(tests.row_count($$ update public.staff_users set preferred_language = 
   'staff can still change their own language');
 
 select tests.authenticate_as(tests.staff('reception_a'));
-select is(public.unlock_with_pin('482915', tests.branch('B901')) ->> 'result', 'ok', 'PINs still work');
+select is(public.unlock_on_device('482915', 'd0000000-0000-4000-8000-0000000000a1') ->> 'result', 'ok', 'PINs still work');
 select lives_ok($$ select public.device_heartbeat('d0000000-0000-4000-8000-0000000000a1', '0.2.0') $$,
   'devices still report');
 select tests.authenticate_with_password(tests.staff('reception_b'), now());
@@ -98,7 +98,7 @@ select is_empty('select id from public.settings', 'staff of a locked gym see no 
 select is(tests.row_count($$ update public.staff_users set preferred_language = 'ar' where username = 'owner' $$), 0,
   'staff of a locked gym change nothing, not even their language');
 select tests.authenticate_as(tests.staff('reception_a'));
-select is(public.unlock_with_pin('482915', tests.branch('B901')) ->> 'result', 'gym_locked',
+select is(public.unlock_on_device('482915', 'd0000000-0000-4000-8000-0000000000a1') ->> 'result', 'gym_locked',
   'a PIN tells a locked gym''s staff why it doesn''t open');
 select tests.authenticate_as(tests.staff('owner', 'pgtap-b'));
 select ok(exists (select 1 from public.branches), 'other gyms are not affected');

@@ -1,4 +1,15 @@
 export {
+  BRANCH_ADDRESS_MAX_LENGTH,
+  BRANCH_NAME_MAX_LENGTH,
+  PHONE_PATTERN,
+  ROLE_NAME_MAX_LENGTH,
+  STAFF_NAME_MAX_LENGTH,
+  isCleanText,
+  isValidPhone,
+  normalizeName,
+  normalizePhone,
+} from './admin-forms.ts';
+export {
   APPEARANCE_SETTINGS,
   BRAND_PRESETS,
   CORNER_RADIUS,
@@ -98,6 +109,16 @@ export {
   type NavItemKey,
 } from './nav-tabs.ts';
 export { OWNER_ROLE, resolvePermissions } from './permissions.ts';
+export {
+  PERMISSIONS,
+  PERMISSION_GROUPS,
+  discountLimit,
+  isPermissionKey,
+  rolePermissionsToSave,
+  type PermissionGroup,
+  type PermissionKey,
+  type PermissionModule,
+} from './permission-catalog.ts';
 export {
   PIN_LENGTH,
   isWeakPin,

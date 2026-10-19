@@ -15,6 +15,11 @@ import { isAuthApiError, isAuthRetryableFetchError } from '@supabase/supabase-js
 import type { AppSupabaseClient } from '@/lib/backend';
 import { logError } from '@/lib/logger';
 import type { DeviceGym } from './device-gym';
+import {
+  parseServerDevice,
+  type DevicePlatform,
+  type DeviceRegistration,
+} from './device-registration';
 
 // The server calls of login and the PIN, made with the staff member's own session. RLS and the
 // server functions decide what each one may read or change.
@@ -36,6 +41,14 @@ export type AuthErrorKey =
   | 'gym_locked'
   /** The gym is read-only (suspended, or its subscription ended): nothing can be added or changed. */
   | 'gym_read_only'
+  /** This device isn't registered, and the staff member can't register it (devices.manage). */
+  | 'device_not_registered'
+  /** A manager deactivated this device. */
+  | 'device_inactive'
+  /** This device's branch was deactivated. */
+  | 'branch_inactive'
+  /** Registering this device would go over the gym's device limit. */
+  | 'gym_device_limit'
   | 'not_configured'
   | 'unexpected';
 
@@ -78,7 +91,12 @@ export function authErrorKey(error: unknown, action: string): AuthErrorKey {
 }
 
 /** Server errors (a stable key as the message) that the login screens explain themselves. */
-const SERVER_ERROR_KEYS = ['password_login_required', 'gym_read_only'] as const;
+const SERVER_ERROR_KEYS = [
+  'password_login_required',
+  'gym_read_only',
+  'gym_device_limit',
+  'branch_inactive',
+] as const;
 
 function failIfError(result: { error: unknown }): void {
   if (!result.error) return;
@@ -162,7 +180,7 @@ export async function fetchProfile(
     roleId: row.role_id,
     roleKey: role?.key ?? null,
     permissions: resolvePermissions(
-      role?.key ?? null,
+      role ?? null,
       (rolePermissions.data ?? []).map((each) => each.permission_key),
       (catalog.data ?? []).map((each) => each.key),
     ),
@@ -262,25 +280,116 @@ export async function clearPinLockout(client: AppSupabaseClient): Promise<void> 
   failIfError(await client.rpc('clear_my_pin_lockout'));
 }
 
+const PIN_RESULTS = [
+  'ok',
+  'locked_out',
+  'no_pin',
+  'no_branch_access',
+  'inactive',
+  'gym_locked',
+  'device_not_registered',
+  'device_inactive',
+  'branch_inactive',
+] as const;
+
 export type PinCheck =
-  | {
-      readonly result:
-        'ok' | 'locked_out' | 'no_pin' | 'no_branch_access' | 'inactive' | 'gym_locked';
-    }
+  | { readonly result: (typeof PIN_RESULTS)[number] }
   | { readonly result: 'wrong_pin'; readonly triesLeft: number };
 
-/** Asks the server whether the PIN is right; it counts wrong tries on every device. */
+/**
+ * Asks the server whether the PIN is right on this device; it checks the device first (registered,
+ * active, its branch active and the staff member's), and counts wrong tries on every device.
+ */
 export async function checkPin(
   client: AppSupabaseClient,
   pin: string,
-  branchId: string,
+  deviceId: string,
 ): Promise<PinCheck> {
-  const response = await client.rpc('unlock_with_pin', {
+  const response = await client.rpc('unlock_on_device', {
     p_pin: normalizePin(pin),
-    p_branch_id: branchId,
+    p_device_id: deviceId,
   });
   failIfError(response);
   return parsePinCheck(response.data);
+}
+
+/**
+ * This device as the server knows it in the staff member's gym; null: not registered there. Staff
+ * who aren't active (or whose gym is locked) get account_inactive, never "not registered".
+ */
+export async function fetchMyDevice(
+  client: AppSupabaseClient,
+  deviceId: string,
+): Promise<{ registration: DeviceRegistration; canUse: boolean } | null> {
+  const result = await client.rpc('my_device', { p_device_id: deviceId }).maybeSingle();
+  if (result.error?.message === 'staff_inactive') {
+    throw new AuthFlowError('account_inactive', { cause: result.error });
+  }
+  failIfError(result);
+  return parseServerDevice(result.data);
+}
+
+/** Registers this device in a branch (devices.manage). Retrying with the same id is safe. */
+export async function registerThisDevice(
+  client: AppSupabaseClient,
+  device: {
+    readonly id: string;
+    readonly branchId: string;
+    readonly name: string;
+    readonly platform: DevicePlatform;
+  },
+): Promise<void> {
+  failIfError(
+    await client.rpc('register_device', {
+      p_device_id: device.id,
+      p_branch_id: device.branchId,
+      p_name: device.name,
+      p_platform: device.platform,
+    }),
+  );
+}
+
+/** The gym's limits and what is in use (gym_limits()); null limits mean none. */
+export interface GymLimits {
+  readonly maxBranches: number | null;
+  readonly maxDevices: number | null;
+  readonly activeBranches: number;
+  readonly activeDevices: number;
+}
+
+export async function fetchGymLimits(client: AppSupabaseClient): Promise<GymLimits | null> {
+  const result = await client.rpc('gym_limits').maybeSingle();
+  failIfError(result);
+  return parseGymLimits(result.data);
+}
+
+export function parseGymLimits(data: unknown): GymLimits | null {
+  if (typeof data !== 'object' || data === null) return null;
+  const row: Partial<Record<string, unknown>> = data;
+  const count = (value: unknown) => (typeof value === 'number' ? value : 0);
+  const limit = (value: unknown) => (typeof value === 'number' ? value : null);
+  return {
+    maxBranches: limit(row.max_branches),
+    maxDevices: limit(row.max_devices),
+    activeBranches: count(row.active_branches),
+    activeDevices: count(row.active_devices),
+  };
+}
+
+/** Tells the server this device is alive, and its version (the devices screen shows both). */
+export async function reportDevice(
+  client: AppSupabaseClient,
+  deviceId: string,
+  appVersion: string,
+): Promise<void> {
+  const result = await client.rpc('device_heartbeat', {
+    p_device_id: deviceId,
+    p_app_version: appVersion,
+  });
+  // The device or the staff member changed since the device was read (moved, access taken away,
+  // gym locked): the next check reports again.
+  if (result.error?.message === 'device_not_accessible') return;
+  failIfError(result);
 }
 
 export function parsePinCheck(data: unknown): PinCheck {
@@ -292,16 +401,8 @@ export function parsePinCheck(data: unknown): PinCheck {
     const triesLeft = 'tries_left' in data ? data.tries_left : null;
     if (typeof triesLeft === 'number') return { result, triesLeft };
   }
-  if (
-    result === 'ok' ||
-    result === 'locked_out' ||
-    result === 'no_pin' ||
-    result === 'no_branch_access' ||
-    result === 'inactive' ||
-    result === 'gym_locked'
-  ) {
-    return { result };
-  }
+  const known = PIN_RESULTS.find((each) => each === result);
+  if (known) return { result: known };
   throw new AuthFlowError('unexpected', { cause: data });
 }
 

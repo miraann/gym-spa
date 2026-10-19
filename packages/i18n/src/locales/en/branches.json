@@ -1,0 +1,48 @@
+{
+  "list": {
+    "title": "Branches",
+    "description": "The gym's branches. Each branch's code (B1, B2…) is part of receipt numbers and never changes.",
+    "add": "New branch",
+    "choose": "Choose a branch from the list.",
+    "back": "Back to branches"
+  },
+  "status": {
+    "inactive": "Inactive"
+  },
+  "limits": {
+    "branches": "Active branches: {{used}} of {{max}}",
+    "devices": "Active devices: {{used}} of {{max}}"
+  },
+  "form": {
+    "nameCkb": "Name in Kurdish",
+    "nameEn": "Name in English (optional)",
+    "nameAr": "Name in Arabic (optional)",
+    "phone": "Phone (optional)",
+    "address": "Address (optional)",
+    "errors": {
+      "nameRequired": "Write the branch name in Kurdish.",
+      "name": "This name is too long.",
+      "phone": "This phone number is not valid. Use digits and spaces only.",
+      "address": "This address is too long."
+    }
+  },
+  "detail": {
+    "newTitle": "New branch",
+    "newDescription": "The branch gets its code by itself (B2, B3…).",
+    "allBranchesOnly": "Only someone with access to all branches can add or change branches.",
+    "save": "Save",
+    "create": "Create branch",
+    "saved": "Branch saved",
+    "created": "The new branch was created",
+    "notFound": "This branch wasn't found, or you can't see it.",
+    "deactivate": "Deactivate",
+    "reactivate": "Reactivate",
+    "deactivateTitle": "Deactivate the branch {{name}}?",
+    "deactivateDescription": "This branch's devices stop working until it is reactivated, or they are moved to another branch. Nothing is deleted.",
+    "reactivateTitle": "Reactivate the branch {{name}}?",
+    "reactivateDescription": "The branch and its devices work again.",
+    "deactivated": "The branch {{name}} was deactivated",
+    "reactivated": "The branch {{name}} was reactivated",
+    "cancel": "Cancel"
+  }
+}

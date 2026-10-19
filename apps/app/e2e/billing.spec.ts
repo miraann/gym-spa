@@ -1,6 +1,6 @@
 import type { Browser, Page } from '@playwright/test';
 import type { TestData, TestStaff } from './support/backend';
-import { HOME_HEADING, expect, signIn, test, unlock } from './support/app';
+import { HOME_HEADING, autoRegisterDevices, expect, signIn, test, unlock } from './support/app';
 
 // The gym's subscription with Click Group in the gym app (spec §2.6, step MT-3c): the 30-, 7- and
 // 1-day warnings and the grace period for staff with billing.view (the Owner here), and the
@@ -37,6 +37,7 @@ async function reloadAndUnlock(page: Page, staff: TestStaff): Promise<void> {
 /** A receptionist on another device (a fresh browser context). */
 async function receptionistPage(browser: Browser, staff: TestStaff): Promise<Page> {
   const page = await browser.newPage();
+  await autoRegisterDevices(page);
   await signIn(page, staff);
   await expect(page.getByRole('heading', HOME_HEADING)).toBeVisible();
   return page;

@@ -2,9 +2,9 @@ import { useState, type ReactNode } from 'react';
 import { useAuthController, useAuthState } from './auth-context';
 import type { AuthStep } from './auth-controller';
 import { ChangePasswordScreen } from './screens/change-password-screen';
-import { ChooseBranchScreen } from './screens/choose-branch-screen';
 import { LockScreen, PinScreen } from './screens/lock-screen';
 import { LoginScreen } from './screens/login-screen';
+import { RegisterDeviceScreen } from './screens/register-device-screen';
 import { SetPinScreen } from './screens/set-pin-screen';
 import { StartupError } from './screens/startup-error';
 import { useIdleLock } from './use-idle-lock';
@@ -101,9 +101,9 @@ export function AuthGate({ children }: { readonly children: ReactNode }) {
     case 'set_pin':
       lockScreen = <SetPinScreen staffId={screen.staffId} onStep={onStep} />;
       break;
-    case 'choose_branch':
+    case 'register_device':
       lockScreen = (
-        <ChooseBranchScreen staffId={screen.staffId} branches={screen.branches} onStep={onStep} />
+        <RegisterDeviceScreen staffId={screen.staffId} branches={screen.branches} onStep={onStep} />
       );
       break;
   }

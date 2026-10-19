@@ -8,7 +8,7 @@ Multi-branch gym & spa system with NFC check-in. One codebase for Web/PWA, Andro
 
 > **Status:** Phase 1d done, then reworked for two editions (1d-R). The app always talks to its server: Supabase in the cloud for the **online edition** (web, Android, Windows), and later a server PC on the gym's local network for the **offline edition** (Windows only, see [CLAUDE.md](CLAUDE.md) → Two editions). Staff log in with their password once per device, then switch with a PIN that the server checks. The cloud setup (Supabase, Vercel) is live. The auth spike is done: Supabase Auth runs on the offline edition's Windows server PC ([spikes/windows-auth/README.md](spikes/windows-auth/README.md)). This README grows with each step.
 >
-> **Many gyms (spec §2.6).** Click Group sells the system to many gyms. **MT-1 is done:** every row belongs to a gym, staff log in with their gym's code, and the gym's top role is the **Owner** (خاوەن, formerly Super Admin); see [Gyms](#gyms). Older projects move with [Moving a cloud project to many gyms](#moving-a-cloud-project-to-many-gyms-mt-1). A separate **seller panel** (`apps/seller`, step MT-3) will create and manage gyms, subscriptions and offline licenses; until then `pnpm bootstrap:admin --gym <code>` creates gyms. MT-1 and the design step are live. **MT-2, the staff module, is done:** staff logins are created and changed through Supabase Auth's admin API by a server-side module, the Edge Function `staff-admin`. It is live on the cloud project, and a smoke test there passed (`pnpm smoke:staff-admin --remote`); see [Staff accounts](#staff-accounts). The screens that use it come in 1e. Next, in order (spec §8): MT-3 to MT-5 (seller panel, support access, licenses), 1e (admin screens: staff, roles, branches, devices), 1f (offline-edition server test).
+> **Many gyms (spec §2.6).** Click Group sells the system to many gyms. **MT-1 is done:** every row belongs to a gym, staff log in with their gym's code, and the gym's top role is the **Owner** (خاوەن, formerly Super Admin); see [Gyms](#gyms). Older projects move with [Moving a cloud project to many gyms](#moving-a-cloud-project-to-many-gyms-mt-1). A separate **seller panel** (`apps/seller`, step MT-3) creates and manages gyms and their subscriptions; see [Seller panel](#seller-panel-click-group). `pnpm bootstrap:admin --gym <code>` still works. MT-1 and the design step are live. **MT-2, the staff module, is done:** staff logins are created and changed through Supabase Auth's admin API by a server-side module, the Edge Function `staff-admin`. It is live on the cloud project, and a smoke test there passed (`pnpm smoke:staff-admin --remote`); see [Staff accounts](#staff-accounts). The staff and roles screens that use it are done (1e-2, [The staff and roles screens](#the-staff-and-roles-screens)), and so are the branches and devices screens and required device registration (1e-3, [The branches and devices screens](#the-branches-and-devices-screens)). **MT-3, the seller panel, is done and live.** Next, in order (spec §8, changed 2026-10-11): Phase 2 (members + NFC), Phase 3 (plans, subscriptions, payments), Phase 4 (check-in), MT-4 (support access). MT-5 (offline licenses) and 1f (offline-edition server test) come later, in the offline packaging phase before Phase 11.
 
 ## Requirements
 
@@ -130,6 +130,7 @@ Both editions use the same migrations, so server logic goes into Postgres (funct
 
 - Every schema change is a new file in `supabase/migrations`. Create one with `pnpm --filter @gym/supabase exec supabase migration new <name> --workdir ..`. Never change a migration that has already run on a shared database.
 - After changing migrations or tests: `pnpm db:reset`, `pnpm db:test`, then `pnpm db:types`.
+- **Expand first, drop later.** The cloud gets a migration before every client is updated (the deployed web app, installed APKs and EXEs), so a migration only adds: new functions, columns and tables, with the old ones still working unchanged. Removing or changing something an older client uses goes in a later migration that waits in `supabase/pending-migrations/` (never pushed; its README says what each file waits for) until every client is updated, then moves into `supabase/migrations/` with a new timestamp.
 - Nothing is reachable through the API by default (`auto_expose_new_tables = false`, like new cloud projects): each migration grants exactly what it needs.
 - Operations that change several rows together (a payment with its invoice and subscription, a locker assignment, a spa booking) are one Postgres function called with `rpc()`, so they succeed or fail as a whole.
 
@@ -150,7 +151,7 @@ Spec §2.6. Migrations `20261010100000_gyms.sql` and `20261010100100_gym_rules.s
   - to staff with `billing.view` (the Owner, and Admin in every gym): a warning when the subscription ends in 30 days or less, again at 7 days and on the last day, then the grace period with the date the gym becomes read-only. The 30- and 7-day warnings can be closed until the next stage (per staff member, on that device); the last day's warning and the grace notice can't;
   - to everyone: that the gym is read-only, and whether Click Group suspended it or the subscription ran out. It can't be closed;
   - nothing for a locked gym: the app locks itself. It uses the gym state of the device's last server check (at start, at unlock, every 5 minutes, and when the network returns), and counts the days again every hour.
-- **Limits:** `max_branches` and `max_devices` (empty: no limit) are checked whenever a branch or device is added or made active again (`gym_branch_limit`, `gym_device_limit`).
+- **Limits:** `max_branches` and `max_devices` (empty: no limit) are checked whenever a branch or device is added or made active again (`gym_branch_limit`, `gym_device_limit`). **Every registered device counts toward `max_devices`,** an Owner's or manager's personal phone or laptop too: a device must be registered before staff can work on it ([Staff, roles, branches and devices](#staff-roles-branches-and-devices)). Deactivate a device that is no longer used to free its place.
 
 ### How access works
 
@@ -165,6 +166,19 @@ Spec §2.6. Migrations `20261010100000_gyms.sql` and `20261010100100_gym_rules.s
 - Every change to the important tables goes into `audit_logs`: who, when, the old and new values, IP and device. Nobody can change or delete it, and secrets such as PIN hashes are logged as `redacted`.
 - The permission catalog is in `supabase/migrations/20261005100300_permission_catalog.sql`. The 8 built-in roles are templates (`app.role_templates`, migration `20261010100000_gyms.sql`) that every new gym copies.
 
+### Staff, roles, branches and devices
+
+Step 1e, migration `20261011100000_admin_screens.sql`, tests `supabase/tests/220-admin-screens.test.sql`. The database half of the admin screens; every change still goes through the guards above.
+
+- **Multi-row changes are one call each, all or nothing**, running under the caller's own session (security invoker), so RLS, the guards and the audit log apply:
+  - `save_staff_access()`: a staff member's name, phone, role and branches. With all branches their `staff_branches` rows go, because access follows the flag. Their login (username, password, active or not) changes through the [staff module](#staff-accounts) instead.
+  - `save_role()`: creates a custom role (its id comes from the app) or changes one. It updates the names, and the permissions too unless the list is `null` (an empty list takes them all away). The Owner role is always saved with `null`: it has every permission and stores none. Refusals: `unknown_permission`, `cannot_grant_permission`, `cannot_edit_own_role`, `system_role_read_only` (built-in roles are the Owner's to edit), `role_deleted`.
+- **What the screens read:** `staff_directory()` lists the staff the caller may see, with role, branches (`hidden_branch_count` counts those the caller can't access), PIN state, last login and `can_manage`. `role_overview()` lists the gym's roles with their permissions, staff count, `can_edit`, `can_edit_permissions` and `can_grant`. Both work these flags out with the guards' own rules, so a button is never offered that the server would refuse.
+- **Branches:** `create_branch()` gives a new branch the gym's next code (`B2`, `B3`, ...). Codes are never reused, because receipt numbers carry them. Branches are deactivated, never removed, and a gym always keeps one active branch (`last_active_branch`).
+- **Devices must be registered** (decided 2026-10-11). Someone with `devices.manage` registers a device once (`register_device()`: a name, and a branch they can access; it must be active). From then on the device works in that branch. `my_device()` tells every staff member's app the device's branch and whether they may use it. `move_device()` moves it to another branch, where it gets the next code (`D01`, ...); `branch_id` and `code` change in no other way. `unlock_on_device()` checks the PIN on a device, after checking that the device is registered (`device_not_registered`), active (`device_inactive`), in an active branch (`branch_inactive`) and in the staff member's branches (`no_branch_access`). None of these use up a PIN try. The app no longer calls `unlock_with_pin()`, but it stays, unchanged, until every installed client is updated; its removal waits in `supabase/pending-migrations/` (expand first, drop later). Migration `20261015100000_devices_and_branches_screens.sql` adds `device_overview()` and `gym_limits()`.
+- **This is a deterrent, not a security boundary.** The device id comes from the device, so someone could make up a new one. What a staff member can read or change is still decided per staff member by RLS.
+- **A read-only gym** can still deactivate a device (it only takes access away), but it can't register, move, rename or reactivate one.
+
 ### Adding a table
 
 1. Columns: `id uuid primary key` (generated by the app), `gym_id uuid not null default app.current_gym_id()`, `branch_id` if it belongs to a branch, `created_at`, `created_by`, `updated_at`, `updated_by`, and `deleted_at` (rows are soft-deleted). Money is `numeric(14,2)`, times are `timestamptz`.
@@ -177,10 +191,10 @@ Spec §2.6. Migrations `20261010100000_gyms.sql` and `20261010100100_gym_rules.s
 
 Code: `apps/app/src/features/auth`, rules in `packages/core` (`gym.ts`, `staff.ts`, `pin.ts`, `settings.ts`, `permissions.ts`), PIN functions in `supabase/migrations/20261009100000_online_only.sql` and `20261010100100_gym_rules.sql`.
 
-- **First login on a device:** the gym code (a web link like `https://…/?gym=demo` fills it in), username and password. Then a new password if a manager set it (`must_change_password`), a 6-digit PIN if the staff member has none yet, and the device's branch if they have more than one. The branch is kept on the device (secure storage); changing it comes with the devices screen in 1e.
+- **First login on a device:** the gym code (a web link like `https://…/?gym=demo` fills it in), username and password. Then a new password if a manager set it (`must_change_password`), and a 6-digit PIN if the staff member has none yet. **A device that isn't registered** is registered next, by a staff member with `devices.manage` (تۆمارکردنی ئامێر: a name and its branch); anyone else is refused with `device_not_registered` and asks a manager to log in there once. The registration is kept on the device (secure storage) and read again at every server check, so a device moved, deactivated or removed on the devices screen (or whose branch was deactivated) takes effect there and locks the app. The device reports its version at login and at every check (`device_heartbeat`).
 - **The device remembers its gym** (secure storage). From then on, the login and lock screens show the gym's name and ask only for username and password. Everyone logged in on a device belongs to its gym, so "Use another gym" appears only while nobody is logged in. A wrong gym code, username or password gives the same message, so nobody learns which gyms or usernames exist.
 - **A gym that isn't active:** the lock screen says when the gym is read-only or locked (from the last server check). In a locked gym, the PIN and the password both refuse with that reason, and the app locks at the next server check.
-- **The PIN is checked by the server.** `set_my_pin()` hashes it (bcrypt) and works only within 15 minutes of a password login, so a session left on a device can't replace someone's PIN. `unlock_with_pin()` checks it, refuses a branch the staff member can't access, and counts wrong tries for every device. After `security.pin_max_attempts` wrong PINs (default 5) the PIN is locked; only a password login after that moment unlocks it (`clear_my_pin_lockout()` compares the login time in the token). Nobody can read a PIN hash, not even its owner. Easy guesses (`111111`, `123456`, `121212`) are refused on the screen and again by the server.
+- **The PIN is checked by the server.** `set_my_pin()` hashes it (bcrypt) and works only within 15 minutes of a password login, so a session left on a device can't replace someone's PIN. `unlock_on_device()` checks it on this device, after checking the device (registered, active, in an active branch the staff member can access), and counts wrong tries for every device. After `security.pin_max_attempts` wrong PINs (default 5) the PIN is locked; only a password login after that moment unlocks it (`clear_my_pin_lockout()` compares the login time in the token). Nobody can read a PIN hash, not even its owner. Easy guesses (`111111`, `123456`, `121212`) are refused on the screen and again by the server.
 - **What the device keeps per staff member**, encrypted: their Supabase session, name, role, permissions and whether they have a PIN (`packages/platform/src/secure-storage.ts`). Windows: DPAPI through Electron `safeStorage` (files in `%APPDATA%\gym-spa\secure`). Android: the Keystore. Browser: AES-GCM with a key the browser won't export, which is weaker: someone with the browser profile can still use the key.
 - **The lock screen** ("who's working") lists the staff who logged in on this device. The app locks after `security.idle_lock_minutes` without activity (default 10), from the account menu ("Lock"), and on every reload or restart. Locking covers the app instead of closing it, so a half-filled form survives.
 - **Server checks** (after each unlock, when the connection comes back, and every 5 minutes) refresh names, roles and permissions. A PIN removed by a manager (`reset_staff_pin`), a PIN lockout or a deactivated account takes effect there, or at once on the next PIN.
@@ -188,7 +202,7 @@ Code: `apps/app/src/features/auth`, rules in `packages/core` (`gym.ts`, `staff.t
 
 ## Staff accounts
 
-Spec §2.5 (design B), step MT-2. Code: `packages/staff-admin`, the Edge Function `supabase/functions/staff-admin`, migration `20261010100400_staff_admin.sql`, and the app's calls in `apps/app/src/features/staff/staff-admin-api.ts`. The screens come in 1e.
+Spec §2.5 (design B), step MT-2. Code: `packages/staff-admin`, the Edge Function `supabase/functions/staff-admin`, migration `20261010100400_staff_admin.sql`, and the app's calls in `apps/app/src/features/staff/staff-admin-api.ts`. The screens are below ([The staff and roles screens](#the-staff-and-roles-screens)).
 
 Staff logins live in Supabase Auth, and only the secret key can create or change them. So five operations go through the staff module on the server: **create, reset password, deactivate, reactivate, rename**.
 
@@ -207,6 +221,30 @@ Staff logins live in Supabase Auth, and only the secret key can create or change
 - **Errors** are stable keys with an HTTP status (`packages/staff-admin/src/errors.ts`), translated by the app (`staff:errors`).
 - **Tests:** `pnpm test` runs the unit cases with fakes, including every undo path. `pnpm test:int` runs the module in Node against the real local Auth and database, including a real database failure after the login was made. `pnpm test:deno` runs the same unit cases in Deno, plus HTTP tests against the served function. `pnpm db:test` covers the database half (`170-staff-admin`).
 - **Deno imports.** The packages the function imports (`packages/core`, `packages/db`, `packages/staff-admin`) name every relative import with `.ts`, because Deno resolves no other way; the lint rule `gym/explicit-ts-extensions` checks it. Their bare imports (`@gym/core`, `zod`, `@supabase/supabase-js`) are mapped in `supabase/functions/staff-admin/deno.json` with the same versions as the workspace: change both together.
+
+### The staff and roles screens
+
+Step 1e-2. Code: `apps/app/src/features/staff` and `apps/app/src/features/roles`; the database calls are in [Staff, roles, branches and devices](#staff-roles-branches-and-devices).
+
+- **Staff** (`/staff`, needs `staff.view`): the staff the signed-in staff member may see, with search (look-alike letters match), active / deactivated / all, and their state (deactivated, PIN locked, temporary password), always as icon and text. With `staff.manage`:
+  - **New staff member:** full name, username, phone, role and branches; the server makes the login and a temporary password, shown once.
+  - **A staff member's page:** name, phone, role and branches, saved in one call; the account actions (new username, new temporary password, remove the PIN, deactivate, reactivate), each after a confirmation.
+  - Only the roles the manager may give are offered, and "all branches" only to someone with all branches. Their own account and anyone with more access are shown without any of this, with the reason.
+- **Roles** (`/roles`, needs `roles.manage`): every role of the gym with its permission and staff counts. A role's page has its names in Kurdish, English and Arabic and the **permission table** (خشتەی دەسەڵاتەکان), grouped by module, with a switch for a whole module and a search. Only permissions the manager has can be given. The Owner role (all permissions), the manager's own role and the built-in roles (the Owner's to edit) say why they can't change. A new role can start from another role's permissions; a custom role nobody has can be deleted.
+- **Permission labels** are in `packages/i18n` (namespace `permissions`). `packages/core/src/permission-catalog.ts` lists the catalog with typed keys; one test keeps it the same as the migrations, another keeps the labels the same as the catalog.
+- **Layout:** list and detail side by side from 1024px wide (tablets in landscape, desktops), one at a time below that, with a way back to the list. Forms save from the sticky action bar.
+- **Without a connection** nothing can be saved (the buttons are off, with a note). **A read-only gym** can still deactivate staff and give a new password or remove a PIN; everything else is off.
+- **Tests:** `apps/app/e2e/staff.spec.ts` and `roles.spec.ts` (they need `pnpm db:functions` for the staff module).
+
+### The branches and devices screens
+
+Step 1e-3. Code: `apps/app/src/features/branches`, `apps/app/src/features/devices`, and the device registration in `apps/app/src/features/auth`.
+
+- **Branches** (`/branches`, needs `branches.manage`): every branch of the gym with its code. Adding one gives it the next code (`B2`, `B3`, ...); a branch's names, phone and address can change, and it can be deactivated (its devices stop working, nothing is deleted) or reactivated. The gym keeps at least one active branch. Adding and changing need access to all branches; without it the page only shows them. With a branch limit, the page shows "Active branches: 3 of 5".
+- **Devices** (`/devices`, needs `devices.manage`): the devices of the manager's branches with their branch, kind (web, Android, Windows), last seen time, version and last user (`device_overview()`), and "this device". A device can be renamed, given a language for before login (staff's own language still wins), moved to another active branch (it gets the next code there), and deactivated or reactivated. A read-only gym can still deactivate.
+- **Registration happens on the device itself,** at a password login by someone with `devices.manage` (see [Login, PIN and lock](#login-pin-and-lock)). **Every registered device counts toward the gym's `max_devices`, an Owner's or manager's personal phone or laptop too.** The registration screen and the devices page say how many are in use; deactivate a device that is no longer used to free its place.
+- **"Use another gym"** gives the device a new id, because a device id belongs to one gym. Its registration in the old gym stays until a manager there deactivates it.
+- **Tests:** `apps/app/e2e/devices.spec.ts` and `branches.spec.ts`. The other end-to-end tests register their browser's device the way a manager would (`autoRegisterDevices()` in `apps/app/e2e/support/app.ts`: it catches the password login and registers its `X-Device-Id` in the staff member's branch); the registration tests switch that off.
 
 ## Seller panel (Click Group)
 
@@ -286,14 +324,14 @@ A lost or stolen laptop with an open panel session: another admin **deactivates*
 Supabase Auth calls `auth_hooks.custom_access_token` (its "Customize Access Token" hook) before every token it issues: at a password login, at every token refresh, and after the second login step. It refuses the token to a staff member of a **locked** gym (HTTP 403, message `gym_locked`, which the app shows as the "gym locked" text). Everything else gets the token unchanged: staff of active, grace, read-only and suspended gyms, other gyms' staff, platform admins, users without a staff account, and any odd input. It never raises an error: anything unexpected lets the login through, and the database still keeps a locked gym's data closed. Reactivating the gym lets the same sessions refresh again. Only Supabase Auth's role can call it.
 
 - **Locally** it is turned on in `supabase/config.toml` (`[auth.hook.custom_access_token]`). Changing that file needs `pnpm db:stop` and `pnpm db:start`.
-- **In the cloud project** it is turned on in the dashboard: Authentication → Hooks → "Customize Access Token (JWT) Claims" → Postgres, schema `auth_hooks`, function `custom_access_token`. Never use `supabase config push` for it: that would also push the local auth settings.
+- **In the cloud project** it must be added by hand in the dashboard, and checked: see step 4 of [A cloud project](#a-cloud-project). Never use `supabase config push` for it: that would also push the local auth settings. Pushing the migration only creates the function; nothing calls it until the hook is added.
 - **Tests:** `supabase/tests/210-auth-hook.test.sql` (who is refused, malformed input), and `pnpm test:int` with the real local Auth server: a locked gym's Owner gets `403 gym_locked` at login and at a token refresh, an older token sees nothing, and after reactivating the same refresh token works again.
 
 #### Emergency: nobody can log in
 
 The hook runs for every login of every gym and of Click Group. If logins fail everywhere after a change (the login screen says something went wrong, and Supabase's Auth logs mention the hook):
 
-1. Supabase dashboard → the project → **Authentication → Hooks** → "Customize Access Token (JWT) Claims" → turn it **off** (or delete it) and save. Logins work again at once.
+1. Supabase dashboard → the project → **Authentication → Auth Hooks** → "Customize Access Token (JWT) Claims" → ⋮ → turn it **off** (or delete it) and save. Logins work again at once.
 2. Locked gyms stay safe meanwhile: their staff can log in, but the database still shows them nothing and refuses every change (`app.current_gym_id()`).
 3. Find the cause in **Logs → Auth** (the hook's error) and reproduce it locally with `pnpm db:test`. Fix it with a new migration, push it, then turn the hook on again and check that a login works.
 4. Locally: set `enabled = false` under `[auth.hook.custom_access_token]` in `supabase/config.toml`, then `pnpm db:stop` and `pnpm db:start`.
@@ -329,17 +367,29 @@ Settings live in three places. Never mix them:
    pnpm --filter @gym/supabase exec supabase db push --db-url "$db" --dry-run --workdir ..
    pnpm --filter @gym/supabase exec supabase db push --db-url "$db" --workdir ..
    ```
-4. **First gym and its Owner:** `pnpm bootstrap:admin --gym <code> --remote`. Its first line shows which Supabase project it is talking to; check it. For a gym that doesn't exist yet it asks you to confirm, then for the gym's Kurdish name and its first branch's name (`B1`; press Enter to keep the default name). The gym code can never change later. Type the password yourself; it never goes into a file.
-5. **App settings.** Copy `apps/app/.env.example` to `apps/app/.env.local` and fill in:
+4. **The Auth hook** (needs the migrations of step 3; it is what makes Lock refuse a locked gym's staff at login, see [The Auth hook](#the-auth-hook)). It is never set up by a migration or by `supabase config push`: add it by hand.
+   1. Dashboard → **Authentication → Auth Hooks** → **Add hook** → "Customize Access Token (JWT) Claims hook".
+   2. Hook type **Postgres**, schema `auth_hooks`, function `custom_access_token`. Create it. The card must say **ENABLED**.
+   3. Check that Auth really calls it. In the SQL Editor:
+      ```sql
+      select coalesce(sum(s.calls), 0) as hook_calls
+        from pg_stat_statements s join pg_roles r on r.oid = s.userid
+       where r.rolname = 'supabase_auth_admin' and s.query ilike '%custom_access_token%';
+      ```
+      Log in once (the gym app or the seller panel), then run it again: the number must go up with every login and every token refresh. If it stays the same after logins, the hook isn't running. (These statistics start again from 0 when they are reset.)
+
+   In our project the hook was missing from MT-3 (2026-10-11) until 2026-10-19: Lock closed a locked gym's data, but its staff could still log in. It was added and checked on 2026-10-19.
+5. **First gym and its Owner:** `pnpm bootstrap:admin --gym <code> --remote`. Its first line shows which Supabase project it is talking to; check it. For a gym that doesn't exist yet it asks you to confirm, then for the gym's Kurdish name and its first branch's name (`B1`; press Enter to keep the default name). The gym code can never change later. Type the password yourself; it never goes into a file.
+6. **App settings.** Copy `apps/app/.env.example` to `apps/app/.env.local` and fill in:
    - `VITE_SUPABASE_URL`: `https://<project-ref>.supabase.co`
    - `VITE_SUPABASE_PUBLISHABLE_KEY`: the **publishable** key (`sb_publishable_…`), never the secret key
-6. **Vercel.**
+7. **Vercel.**
    1. Add New → Project → import `miraann/gym-spa`. The repository is private: if it isn't listed, give Vercel's GitHub app access to it.
    2. **Root Directory** = `apps/app`. Leave "Include files outside the root directory" on, because the app uses the workspace packages. Leave the build settings alone: `apps/app/vercel.json` sets them.
    3. **Environment Variables**, for Production and Preview: the two `VITE_*` values (you can import `apps/app/.env.local`, but **never** `supabase/.env.local`), and `ENABLE_EXPERIMENTAL_COREPACK` = `1`, so Vercel uses the pnpm version pinned in `package.json`.
    4. **Settings → Build and Deployment → Node.js Version: 24.x.** The repository requires Node 24.
    5. Deploy. A build only picks up changed variables when it runs again: after changing one, use Deployments → ⋯ → Redeploy.
-7. **Check it works.** Open the site and log in as the admin. The connection indicator should say Connected. In DevTools → Network, switch to Offline: the indicator says No connection. If the login screen says the app isn't connected to a server, the build had no `VITE_*` values (the page's Content-Security-Policy then allows `connect-src 'self'` only). A tab that was already open may keep the old version until you accept the update prompt or reopen it.
+8. **Check it works.** Open the site and log in as the admin. The connection indicator should say Connected. In DevTools → Network, switch to Offline: the indicator says No connection. If the login screen says the app isn't connected to a server, the build had no `VITE_*` values (the page's Content-Security-Policy then allows `connect-src 'self'` only). A tab that was already open may keep the old version until you accept the update prompt or reopen it.
 
 **Later changes:**
 
@@ -393,10 +443,10 @@ Other changes:
 - No menu bar. Shortcuts: Ctrl and `=` / `-` / `0` zoom (by key position, so they also work with a Kurdish or Arabic keyboard layout), F11 full screen. When run from source (`pnpm desktop:dev`, `pnpm desktop:start`) there are also Ctrl+R (reload) and F12 or Ctrl+Shift+I (DevTools).
 - Security: the page has no Node or Electron access, only `window.gymDesktop`; the window can't navigate away from the app (https links open in the default browser); permissions such as camera or location are refused; Electron's security fuses are burned into the installed exe.
 - The secure store (`gymDesktop.secureGet/secureSet/secureDelete`) accepts calls only from the app's own pages, checks every key and value, and refuses to write when Windows encryption isn't available.
-- Kiosk mode, start with Windows, silent receipt printing and auto-update are built in later phases. The offline edition (server PC on the gym's network) is planned for step 1f and a later phase.
+- Kiosk mode, start with Windows, silent receipt printing and auto-update are built in later phases. The offline edition (server PC on the gym's network) is planned for the offline packaging phase (spec §8, before Phase 11), which starts with step 1f.
 
 ## Deploying the web app (Vercel)
 
-Setting up the Vercel project: [A cloud project](#a-cloud-project), step 6. `apps/app/vercel.json` sets the install and build commands (`pnpm build:web`: the gym app plus the seller panel under `/seller/`, see [Deployed with the gym app at `/seller/`](#deployed-with-the-gym-app-at-seller)), the SPA rewrites and the headers. Every push to `main` deploys to production and other branches get preview deploys; Vercel skips the build when a push changes nothing the app uses (for example only `supabase/`).
+Setting up the Vercel project: [A cloud project](#a-cloud-project), step 7. `apps/app/vercel.json` sets the install and build commands (`pnpm build:web`: the gym app plus the seller panel under `/seller/`, see [Deployed with the gym app at `/seller/`](#deployed-with-the-gym-app-at-seller)), the SPA rewrites and the headers. Every push to `main` deploys to production and other branches get preview deploys; Vercel skips the build when a push changes nothing the app uses (for example only `supabase/`).
 
 **Content-Security-Policy:** every production build (web, Windows and Android) carries a CSP `<meta>` tag made by `vite.config.ts`. The app may only connect to itself and the Supabase address in the build's `VITE_*` variables, and only run its own scripts (the inline start-up script by its hash). Changing the address needs a new build. `pnpm dev` has no CSP, because Vite injects inline scripts there.

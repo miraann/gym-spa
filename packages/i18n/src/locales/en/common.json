@@ -84,5 +84,9 @@
     "endedTitle": "This gym is view-only",
     "endedText": "This gym's subscription has ended: you can see all its data, but nothing can be added or changed. To renew the subscription, contact Click Group.",
     "hide": "Hide this notice"
+  },
+  "noAccess": {
+    "title": "You can't open this page",
+    "description": "Your role doesn't include this. Ask your manager if you need it."
   }
 }

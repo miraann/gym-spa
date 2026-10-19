@@ -1,0 +1,68 @@
+{
+  "list": {
+    "title": "Devices",
+    "description": "Every device the app is used on, managers' phones too. A new device is registered by a manager at its first login.",
+    "filter": "Show",
+    "filters": {
+      "active": "Active",
+      "inactive": "Deactivated",
+      "all": "All"
+    },
+    "empty": "There are no devices.",
+    "thisDevice": "This device",
+    "lastSeen": "Last seen: {{time}}",
+    "neverSeen": "Not seen yet",
+    "choose": "Choose a device from the list.",
+    "back": "Back to devices"
+  },
+  "status": {
+    "inactive": "Deactivated"
+  },
+  "platforms": {
+    "web": "Web browser",
+    "android": "Android",
+    "windows": "Windows"
+  },
+  "detail": {
+    "branch": "Branch",
+    "platform": "Kind",
+    "registered": "Registered on",
+    "lastSeen": "Last seen",
+    "lastUser": "Last used by",
+    "version": "App version",
+    "none": "None",
+    "settingsTitle": "Name and language",
+    "name": "Device name",
+    "nameError": "Write a name for the device, not too long.",
+    "language": "Device language",
+    "languageHint": "The language before login, and for staff who haven't chosen their own.",
+    "languageNone": "Not set",
+    "save": "Save",
+    "saved": "Device saved",
+    "notFound": "This device wasn't found, or you can't see it.",
+    "cancel": "Cancel"
+  },
+  "move": {
+    "title": "Move to another branch",
+    "description": "The device works in the new branch and gets a new code there. Only staff of that branch can work on it.",
+    "submit": "Move",
+    "confirmTitle": "Move {{device}} to {{branch}}?",
+    "confirmDescription": "Staff using the device now can't work on it unless they work in that branch.",
+    "confirmThisDevice": "This is this device: from now on it works in that branch.",
+    "done": "Device moved"
+  },
+  "state": {
+    "title": "Active or not",
+    "deactivateHint": "Nobody can work on a deactivated device, and it doesn't count toward the gym's device limit.",
+    "reactivateHint": "Reactivating counts it toward the device limit again.",
+    "thisDeviceWarning": "This is this device: once it is deactivated, nobody can work here.",
+    "deactivate": "Deactivate",
+    "reactivate": "Reactivate",
+    "deactivateTitle": "Deactivate {{name}}?",
+    "deactivateDescription": "Nobody can unlock or log in on it. You can reactivate it later.",
+    "reactivateTitle": "Reactivate {{name}}?",
+    "reactivateDescription": "Staff of its branch can work on it again.",
+    "deactivated": "{{name}} was deactivated",
+    "reactivated": "{{name}} was reactivated"
+  }
+}

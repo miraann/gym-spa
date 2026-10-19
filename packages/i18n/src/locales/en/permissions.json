@@ -1,0 +1,156 @@
+{
+  "modules": {
+    "dashboard": "Dashboard",
+    "branches": "Branches",
+    "staff": "Staff and roles",
+    "devices": "Devices",
+    "settings": "Settings",
+    "members": "Members",
+    "subscriptions": "Plans and subscriptions",
+    "payments": "Payments",
+    "checkin": "Check-in",
+    "lockers": "Lockers",
+    "spa": "Spa",
+    "classes": "Classes and personal training",
+    "hr": "Staff HR",
+    "shop": "Shop and cash register",
+    "notifications": "Notifications",
+    "reports": "Reports"
+  },
+  "items": {
+    "dashboard": {
+      "view": "View the dashboard"
+    },
+    "branches": {
+      "manage": "Add and change branches"
+    },
+    "staff": {
+      "view": "View staff",
+      "manage": "Add and manage staff"
+    },
+    "roles": {
+      "manage": "Manage roles and permissions"
+    },
+    "devices": {
+      "manage": "Register and manage devices"
+    },
+    "settings": {
+      "edit": "Change settings"
+    },
+    "backups": {
+      "export": "Export data backups"
+    },
+    "audit": {
+      "view": "View the audit log"
+    },
+    "billing": {
+      "view": "See the gym's subscription notices"
+    },
+    "members": {
+      "view": "View members",
+      "create": "Add members",
+      "edit": "Edit members' details",
+      "delete": "Delete members",
+      "medical": {
+        "view": "View members' medical notes"
+      },
+      "import": "Import members from Excel",
+      "export": "Export the member list"
+    },
+    "cards": {
+      "manage": "Give and replace NFC cards",
+      "blacklist": "Block lost or stolen cards"
+    },
+    "plans": {
+      "manage": "Manage plans"
+    },
+    "subscriptions": {
+      "sell": "Sell and renew subscriptions",
+      "freeze": "Freeze and unfreeze subscriptions",
+      "change": "Upgrade or downgrade subscriptions",
+      "transfer": "Transfer subscriptions to another member",
+      "cancel": "Cancel subscriptions"
+    },
+    "discount": {
+      "apply": {
+        "max_10": "Discounts up to {{max}}%",
+        "max_25": "Discounts up to {{max}}%",
+        "max_50": "Discounts up to {{max}}%",
+        "any": "Any discount"
+      }
+    },
+    "payments": {
+      "view": "View payments",
+      "create": "Take payments",
+      "refund": "Refund payments",
+      "void": "Void payments"
+    },
+    "checkin": {
+      "perform": "Check members in with their card",
+      "manual": "Check in without a card",
+      "override": "Let a member in when the system refuses"
+    },
+    "attendance": {
+      "view": "View attendance",
+      "void": "Cancel a wrong check-in"
+    },
+    "lockers": {
+      "view": "View lockers",
+      "assign": "Give out lockers",
+      "manage": "Manage lockers"
+    },
+    "spa": {
+      "view": "View the spa",
+      "book": "Book spa sessions",
+      "manage": "Manage spa services and rooms"
+    },
+    "classes": {
+      "view": "View classes",
+      "book": "Book class places",
+      "manage": "Manage classes"
+    },
+    "pt": {
+      "log": "Log personal training sessions",
+      "manage": "Manage personal training"
+    },
+    "hr": {
+      "view": "View staff HR (pay and shifts)",
+      "manage": "Manage staff HR"
+    },
+    "pos": {
+      "sell": "Sell in the shop"
+    },
+    "products": {
+      "manage": "Manage products"
+    },
+    "inventory": {
+      "adjust": "Adjust stock"
+    },
+    "cash_register": {
+      "operate": "Open and close the cash register",
+      "view_all": "View every cash register"
+    },
+    "notifications": {
+      "send": "Send notifications",
+      "templates": {
+        "manage": "Edit notification texts"
+      }
+    },
+    "reports": {
+      "view": "View reports",
+      "financial": {
+        "view": "View financial reports"
+      },
+      "export": "Export reports (Excel and PDF)"
+    }
+  },
+  "table": {
+    "title": "Permission table",
+    "hint": "Choose what this role can do. You can only give permissions you have yourself.",
+    "count": "{{chosen}} of {{total}}",
+    "search": "Search permissions",
+    "noMatch": "No permission matches this search.",
+    "allInModule": "All of {{module}}",
+    "notYours": "You don't have it"
+  }
+}
