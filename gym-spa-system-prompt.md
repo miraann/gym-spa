@@ -39,7 +39,7 @@ Every member gets an **NFC card** (MIFARE / NTAG). At the entrance, staff or a k
 - **Currency formatting:** IQD with thousands separators and no decimals (e.g. `25,000 د.ع`); USD with 2 decimals.
 - **Dates:** Gregorian calendar, format per language, Asia/Baghdad time; Kurdish month names in Sorani.
 - **Member data:** members choose a preferred language; SMS/WhatsApp reminders and printed/shared receipts use the member's language. Notification templates exist in all 3 languages.
-- **Search:** member search must work with Kurdish, Arabic, and English input, and normalize similar letters (e.g. ي/ی، ك/ک، ه/ە) so the receptionist finds the member regardless of keyboard layout.
+- **Search:** member search must work with Kurdish, Arabic, and English input, and normalize similar letters (e.g. ي/ی، ك/ک، ه/ە) so the receptionist finds the member regardless of keyboard layout. The Kurdish letters an Arabic keyboard can't type (پ چ ژ گ ڤ ڕ ڵ ێ ۆ) match the letters typed instead (ب ج ز ک ف ر ل ی و), so "ريباز" finds "ڕێباز"; invisible joiners and direction marks are ignored (step 2a; `normalizeSearchText()` in `packages/core` and `app.normalize_search_text()` in Postgres, kept identical by a test).
 - **Database:** store user-entered text as-is (UTF-8); settings like plan names, service names, and product names have translations (`name_ckb`, `name_en`, `name_ar`, with Kurdish required and others optional, falling back to Kurdish).
 - **Seed data:** demo data in Kurdish by default.
 
@@ -55,6 +55,13 @@ Support every platform behind one `NfcReader` interface (in `/packages/platform/
 Rules:
 - Store the card UID **normalized** (uppercase hex, no separators) in `nfc_cards.uid` with a unique index.
 - A member can have multiple cards over time, but only **one active** card. Support: assign, replace (lost/damaged, with optional fee), deactivate, blacklist.
+- **Decided by the user on 2026-10-19 (Phase 2 plan), built in steps 2d–2f:**
+  - A card UID is unique **per gym**, not across the whole system: two gyms' cheap 4-byte cards can share a UID, and a system-wide check would tell one gym that another has that card.
+  - The design accepts 4-byte and 7-byte UIDs, and readers that type a 10-digit decimal number (e.g. 125 kHz EM readers). Which cards and readers to recommend is still open.
+  - **Lost or damaged:** the old card stops working at once; the new card can be given in the same step. A lost card that turns up can be given out again.
+  - **Stolen:** the card is also blocked (`cards.blacklist`). Nobody can be given it until a manager unblocks it, and the check-in screen (Phase 4) shows that it was reported stolen. A receptionist marks a card lost, which already stops it; a manager blocks it if needed.
+  - **Returned** (the member leaves): the card can be given to someone else. Archiving a member returns their card.
+  - The replacement fee comes with Phase 3 (payments). A read-only gym can't change cards.
 - Never trust the UID alone for sensitive actions (payments, refunds) — require staff login.
 - Manual fallback: search member by name/phone/member code if the card is forgotten (log it as `method = 'manual'`).
 
@@ -99,7 +106,7 @@ Also implement `check_out(...)` (optional, for occupancy tracking and locker rel
 - **PIN switching on shared PCs:** a staff member logs in with their password once per device; others switch to them with a PIN. The server checks the PIN, counts wrong tries and locks it (a password login unlocks it); PIN hashes never leave the server.
 - **Devices must be registered** (decided by the user on 2026-10-11, built in step 1e): a staff member with `devices.manage` registers a device once, at their first login on it (a name and its branch); anyone else is refused on an unregistered device and asks a manager. The device then works in that branch, and the PIN works only on a registered, active device of an active branch (`unlock_on_device`). Every registered device counts toward the gym's device limit, an Owner's or manager's personal phone too. Managers rename, move and deactivate devices on the devices screen. The device id comes from the device, so this is a deterrent, not a security boundary: data access is still decided per staff member by RLS.
 - **Internet-only features** (online edition only; hidden in the offline edition): SMS/WhatsApp, online payment gateways, cross-branch cloud reports.
-- **Photos:** Supabase Storage in the online edition, files on the server PC in the offline edition, behind one storage adapter.
+- **Member photos are kept in Postgres**, like the gym logo (decided by the user on 2026-10-19, replacing Supabase Storage online and files on the server PC offline): the app resizes a photo to at most 480 px and 150 KB, plus a thumbnail of at most 12 KB, and the database checks the size and the file type again. So both editions work the same, with no storage service on the offline server, and every backup includes the photos. Built in step 2c.
 - **Staff accounts** (create, reset password, deactivate/reactivate, change username) use Supabase Auth's official admin API, from **one shared TypeScript module** that runs as an Edge Function in the online edition and as a `gym-server` route in the offline edition. The secret key exists only there. The module first checks the caller's rights in Postgres under the caller's own session, then calls Auth, then writes the staff rows under the caller's session (so the usual guards run). If that last step fails, it removes the new Auth user again (compensation). Decided by the user on 2026-10-10 after the auth spike (`spikes/windows-auth/README.md`). Further decisions with the MT-2 plan (2026-10-10):
   - **Temporary passwords:** for create and password reset, the server generates a random temporary password (at least 12 characters, no look-alike characters such as 0/O and 1/l/I) and returns it once. The manager never types a password. The app shows it once with a copy button and a Kurdish note that it is shown only once. `must_change_password` stays true, so staff set their own at first login. The temporary password is never logged.
   - **Logins left behind** by a failed compensation may be deleted (so their username works again) only if the email has the staff login form (`@<gym code>.staff.gym-spa.invalid`), the user is not a platform admin, it has no staff row, and it is more than 2 minutes old. pgTAP tests prove that a non-staff email and a platform-admin-like user are never picked.
@@ -210,13 +217,21 @@ Do not hardcode role checks in the UI only. Use a permission-based model:
 ## 4. Modules
 
 ### 4.1 Members
-- Profile: member code (auto, e.g. `GYM-000123`), full name, phone (unique, Iraqi format validation), gender, birth date, photo (captured from webcam or upload → Supabase Storage), address, emergency contact, blood type, medical notes / injuries, goals, body measurements history (weight, height, body fat, BMI auto-calc, with chart), referral source, notes, tags
+- Profile: member number (auto, e.g. `000123`), full name, phone (unique, Iraqi format validation), gender, birth date, photo (captured from webcam or upload, kept in Postgres, §2.5), address, emergency contact, blood type, medical notes / injuries, goals, body measurements history (weight, height, body fat, BMI auto-calc, with chart), referral source, notes, tags
 - Waiver / terms acceptance with signature capture (canvas) and timestamp
 - Tabs: Overview, Subscriptions, Attendance, Payments & Invoices, Spa Bookings, Locker, Measurements, Documents, Activity Log
 - Family / group memberships (one payer, several members)
 - Member statuses: active, expired, frozen, suspended, banned, archived
 - Duplicate detection on create (same phone / similar name)
 - Bulk import from Excel/CSV with validation preview
+- **Decided by the user on 2026-10-19 (Phase 2 plan), built from step 2a:**
+  - **Members belong to the whole gym:** everyone with `members.view` sees every member of their gym. The home branch (where the member joined) is a filter.
+  - **Member number:** a plain number per gym, shown as `000123` (no prefix), given by the server in order, never changed. Search also finds it as `123`.
+  - **Phone:** required, unless the member has no phone of their own (a child); then their emergency contact's phone is required. Iraqi mobiles are typed in any common form and stored as `+9647XXXXXXXXX`; other countries' numbers are allowed with `+` and the country code. Unique per gym, archived members included, so a returning member is restored, not added twice.
+  - **Health info** (blood type, medical notes, injuries) is kept apart from the profile. Only `members.medical.view` can read it. Staff with `members.create` may also write it while creating a member, without being able to read it afterwards; later changes need `members.medical.view` and `members.edit`. Staff who can't read it see a "has health notes" badge. The audit log records that health info changed, never the values.
+  - **Statuses** staff set: active, suspended, banned, archived. Suspending, banning, archiving and restoring need `members.delete` and a reason (not for restoring). Members are never deleted. Expired and frozen come from the subscriptions (Phase 3) and are never stored on the member.
+  - **Duplicates:** the same phone is refused; the same name (as search compares it) or a similar one (the same first two words, or a letter or two apart) is a warning, and the member can still be saved.
+  - **In Phase 2:** profile, health info, photos, NFC cards, global search and the Excel/CSV import. Measurements, the waiver with signature and documents come later.
 
 ### 4.2 Plans & Subscriptions
 - Plans: name, type (time / visit / hybrid / unlimited), duration, visit count, price, gender restriction, allowed hours/days, allowed branches, included services (e.g. 2 free spa sessions, sauna access, locker included), max freeze days, is_active
@@ -288,7 +303,7 @@ Do not hardcode role checks in the UI only. Use a permission-based model:
 - Every business table has: `id`, `branch_id` (where relevant), `created_at`, `updated_at`, `created_by`, `deleted_at` (soft delete)
 - Use Postgres enums or check constraints for statuses
 - Money stored as `numeric(14,2)` — never float
-- Indexes on: `nfc_cards.uid`, `members.phone`, `members.member_code`, `attendance(member_id, checked_in_at)`, `subscriptions(member_id, status, end_date)`, all foreign keys
+- Indexes on: `nfc_cards.uid`, `members.phone`, `members.member_number`, `attendance(member_id, checked_in_at)`, `subscriptions(member_id, status, end_date)`, all foreign keys
 - RLS **enabled on every table**, no table left open
 - Views / materialized views for heavy reports
 - Write all schema changes as numbered SQL migration files in `supabase/migrations`
@@ -340,7 +355,7 @@ The app must not have only one look. The default is indigo + light + soft corner
 
 ## 8. Build phases (do them in order, stop for my review after each)
 1. **Foundation:** monorepo + Vite PWA + Vercel deploy + Capacitor (Android) + Electron (Windows) projects — debug APK and EXE build from day one, Supabase connection, connection indicator, PIN switching (checked by the server), i18n + RTL, auth, branches, RBAC tables + RLS + permission matrix UI, staff management, audit log trigger, layout & navigation. Sub-step order after 1d-R (updated by the user on 2026-10-10): the auth spike, then **MT-1** (§2.6: gyms and `gym_id` isolation, per-gym login; split into MT-1a and MT-1b), then the **design step** (Calm Bento theme, phone tab bar / tablet rail / desktop sidebar, the §6.1 Appearance settings and the §6 layout rules), then **MT-2 and MT-3** (§2.6: the staff module, the seller panel), then 1e (admin screens), which ends Phase 1. Changed by the user on 2026-10-11: MT-4 now comes after Phase 4, and MT-5 and 1f (offline-edition server test) move to the offline packaging phase (see below Phase 10)
-2. **Members & NFC:** member CRUD, photo capture, NFC card assign/replace, NFC reader abstraction, global search
+2. **Members & NFC:** member CRUD, photo capture, NFC card assign/replace, NFC reader abstraction, global search. Plan approved by the user on 2026-10-19 (decisions in §1 and §4.1), on branch `2a`, one commit per sub-step, each stopping for review: **2a** members database and seed, **2b** members screens, **2c** member photos, **2d** NFC cards database, **2e** keyboard-type readers and the card screens, **2f** Android NFC and Web NFC, **2g** global search, member counts in the seller panel, docs, **2j** import from Excel/CSV. The cloud gets the Phase 2 migrations only after the user's OK (dry run first).
 3. **Plans, subscriptions & payments:** plans, subscribe/renew/freeze/upgrade, payments, invoices, receipts, debts, installments
 4. **Check-in engine:** `check_in` function + tests, check-in kiosk screen, attendance list, live occupancy
    - **Then MT-4 Support access** (§2.6), before Phase 5.

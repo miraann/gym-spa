@@ -89,6 +89,27 @@ export {
   type GymAccess,
 } from './gym.ts';
 export {
+  BLOOD_TYPES,
+  GENDERS,
+  IRAQI_MOBILE_PATTERN,
+  MEMBER_LIMITS,
+  MEMBER_NUMBER_QUERY,
+  MEMBER_PHONE_PATTERN,
+  MEMBER_STATUSES,
+  MIN_BIRTH_DATE,
+  REFERRAL_SOURCES,
+  formatMemberNumber,
+  formatMemberPhone,
+  isValidMemberPhone,
+  isValidMemberTags,
+  memberSearchNeedle,
+  normalizeMemberPhone,
+  type BloodType,
+  type Gender,
+  type MemberStatus,
+  type ReferralSource,
+} from './members.ts';
+export {
   MAX_PASSWORD_BYTES,
   MIN_PASSWORD_LENGTH,
   newPasswordProblem,
@@ -139,7 +160,12 @@ export {
   normalizeAdminEmail,
   normalizeRecoveryCode,
 } from './platform.ts';
-export { matchesSearch, normalizeSearchText } from './search.ts';
+export {
+  SEARCH_IGNORED,
+  SEARCH_LOOK_ALIKES,
+  matchesSearch,
+  normalizeSearchText,
+} from './search.ts';
 export {
   SETTINGS,
   isSettingKey,

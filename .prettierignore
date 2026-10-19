@@ -7,5 +7,7 @@ pnpm-lock.yaml
 apps/app/public/
 apps/app/android/
 apps/desktop/release/
+# The Supabase CLI's own files (linked project, versions); git ignores them too.
+supabase/.temp/
 # Docs are written by hand; don't reflow them.
 *.md

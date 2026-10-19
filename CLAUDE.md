@@ -41,6 +41,7 @@ Decided by the user on 2026-10-10; the plan was approved the same day. Spec §2.
 ## How to work
 
 - Build in the phases from spec §8, in order. **Stop for the user's review after each phase.**
+- **Phase 2 (members + NFC, plan approved 2026-10-19; decisions in spec §1 and §4.1):** sub-steps 2a members database, 2b members screens, 2c photos, 2d NFC cards database, 2e keyboard-type readers + card screens, 2f Android NFC + Web NFC, 2g global search + seller member counts, 2j Excel/CSV import. All on branch `2a`, one commit per sub-step, each stopping for review; the cloud gets the migrations only after the user's OK.
 - **When a phase is split into sub-steps (Phase 1: 1a–1d, then 1d-R (PowerSync removed), the auth spike (Supabase Auth on the offline edition's Windows server PC), MT-1 (gyms and isolation, split into MT-1a database and MT-1b app; see Many gyms below), the design step (Calm Bento theme, adaptive navigation and Appearance settings, see Design below; split into D-1 look and navigation, and D-2 Appearance settings), MT-2 and MT-3 (staff module, seller panel; MT-3 is split into MT-3a database, MT-3b seller-admin module and scripts, MT-3c gym-app warnings, MT-3d packages/ui, MT-3e apps/seller), 1e; later MT-4 (support access, after Phase 4), MT-5 (license format and signing, just before the offline packaging phase) and 1f (offline-edition server test, which opens that phase)), stop for review after each sub-step** and say how to test it and what to commit.
 - **Commits (decided by the user on 2026-10-10):** Claude may commit and push on feature branches (e.g. `d-2`, `mt-2`), when the user asks for it or a step is approved. Claude never commits to `main` and never merges into it: **the user always does the merge into `main` themself.** **Never push to `main`, ever.** Check `git branch --show-current` right before every commit and push, and push with an explicit refspec (`git push origin mt-3`). If `main` requires pull requests, open one from the feature branch with `gh pr create` and the user merges it on GitHub.
 - Before writing code for a phase, present the plan (tables, files, assumptions) and **wait for approval**.
@@ -94,6 +95,7 @@ Shared UI goes in `packages/ui` (`components/` for the vendored shadcn/ui compon
 - Invoice/receipt numbers come from the server, per branch: `B1-000457`.
 - **Always-online UI:** a connection indicator is always visible (Connected / No connection). Without a connection, actions are disabled with a clear translated message; nothing is queued.
 - Internet-only features (online edition only; hidden in the offline edition): SMS/WhatsApp, payment gateways, cross-branch cloud reports.
+- **Member photos are kept in Postgres**, like the logo, never in Storage (decided 2026-10-19): at most 480 px and 150 KB, thumbnail at most 12 KB, checked by the app and again by the database.
 - Conflicts are decided by the server at once: locker and spa room/therapist bookings use constraints (the second one gets an error right away); visit limits are checked and recorded in one Postgres function, so no double use. Member profile edits: last write wins.
 
 ## Language: Kurdish Sorani is the default
@@ -108,7 +110,7 @@ Shared UI goes in `packages/ui` (`components/` for the vendored shadcn/ui compon
 - Latin digits by default (a setting allows Eastern Arabic). Phone numbers, card UIDs and invoice numbers are always Latin and LTR.
 - IQD: `25,000 د.ع` with no decimals. USD: 2 decimals. Gregorian calendar with Sorani month names.
 - Translatable config columns: `name_ckb` (required), `name_en`, `name_ar` (optional, fall back to Kurdish).
-- Search normalizes look-alike letters (ي/ی, ك/ک, ه/ە). Seed/demo data is in Kurdish.
+- Search normalizes look-alike letters (ي/ی, ك/ک, ه/ە), and the Kurdish letters an Arabic keyboard can't type (پ چ ژ گ ڤ ڕ ڵ ێ ۆ) match what is typed instead (ب ج ز ک ف ر ل ی و). `normalizeSearchText()` in `packages/core` and `app.normalize_search_text()` in Postgres are kept identical by a test. Seed/demo data is in Kurdish.
 
 ## Design: "Calm Bento" (2026 visual direction)
 

@@ -2,7 +2,7 @@
 -- table. The table list comes from the catalog (every table with gym_id), so new tables are covered
 -- as soon as they exist; inserts need a case per table, and a test fails when one is missing.
 begin;
-select plan(27);
+select plan(29);
 select tests.create_fixture();
 
 -- Rows in every gym table of both gyms: settings, a device and its report, a PIN.
@@ -22,6 +22,14 @@ insert into public.staff_pins (staff_id, gym_id, pin_hash) values
   (tests.staff('reception_a'), tests.gym('pgtap-a'), extensions.crypt('482915', extensions.gen_salt('bf', 4))),
   (tests.staff('reception_a', 'pgtap-b'), tests.gym('pgtap-b'), extensions.crypt('482915', extensions.gen_salt('bf', 4)));
 select tests.create_auth_user('new_b', 'pgtap-b');
+insert into public.members (id, gym_id, branch_id, full_name, gender, phone) values
+  ('e0000000-0000-4000-8000-0000000000a1', tests.gym('pgtap-a'), tests.branch('B901'), 'ئارام کەریم', 'male', '+9647501234567'),
+  ('e0000000-0000-4000-8000-0000000000b1', tests.gym('pgtap-b'), tests.branch('B901', 'pgtap-b'), 'ئارام کەریم', 'male', '+9647501234567'),
+  -- Without health info: what the cases below try to add it to.
+  ('e0000000-0000-4000-8000-0000000000b2', tests.gym('pgtap-b'), tests.branch('B901', 'pgtap-b'), 'شیلان عەلی', 'female', '+9647501234568');
+insert into public.member_health (id, gym_id, injuries) values
+  ('e0000000-0000-4000-8000-0000000000a1', tests.gym('pgtap-a'), 'ئازاری ئەژنۆ'),
+  ('e0000000-0000-4000-8000-0000000000b1', tests.gym('pgtap-b'), 'ئازاری ئەژنۆ');
 
 select is_empty(
   $$ select t from tests.gym_tables() t
@@ -58,13 +66,22 @@ insert into insert_cases (table_name, statement) values
                        values (tests.gym('pgtap-b'), 'd0000000-0000-4000-8000-0000000000b1', now()) $$),
   ('settings', $$ insert into public.settings (gym_id, key, value) values (tests.gym('pgtap-b'), 'security.pin_max_attempts', '4') $$),
   ('audit_logs', $$ insert into public.audit_logs (gym_id, table_name, row_id, action) values (tests.gym('pgtap-b'), 'branches', 'x', 'insert') $$),
+  ('members', $$ insert into public.members (gym_id, id, branch_id, full_name, gender, phone)
+                 values (tests.gym('pgtap-b'), 'e0000000-0000-4000-8000-0000000000c1', tests.branch('B901', 'pgtap-b'), 'ئەندام', 'male', '+9647501230001') $$),
+  ('members', $$ select public.create_member(p_id => 'e0000000-0000-4000-8000-0000000000c2', p_branch_id => tests.branch('B901', 'pgtap-b'),
+                   p_full_name => 'ئەندام', p_gender => 'male', p_phone => '+9647501230002') $$),
+  ('member_health', $$ insert into public.member_health (gym_id, id, injuries)
+                       values (tests.gym('pgtap-b'), 'e0000000-0000-4000-8000-0000000000b2', 'ئازاری پشت') $$),
   -- Their own gym (gym_id left to fill itself in), pointing at gym B's rows.
   ('role_permissions', $$ insert into public.role_permissions (role_id, permission_key) values (tests.role('trainer', 'pgtap-b'), 'payments.view') $$),
   ('staff_users', $$ insert into public.staff_users (id, username, full_name, role_id)
                      values (tests.auth_user_id('new_b', 'pgtap-b'), 'new_b', 'کارمەندی نوێ', tests.role('receptionist', 'pgtap-b')) $$),
   ('staff_branches', $$ insert into public.staff_branches (staff_id, branch_id) values (tests.staff('reception_b', 'pgtap-b'), tests.branch('B901')) $$),
   ('staff_branches', $$ insert into public.staff_branches (staff_id, branch_id) values (tests.staff('reception_b'), tests.branch('B901', 'pgtap-b')) $$),
-  ('settings', $$ insert into public.settings (branch_id, key, value) values (tests.branch('B902', 'pgtap-b'), 'security.pin_max_attempts', '4') $$);
+  ('settings', $$ insert into public.settings (branch_id, key, value) values (tests.branch('B902', 'pgtap-b'), 'security.pin_max_attempts', '4') $$),
+  ('members', $$ insert into public.members (id, branch_id, full_name, gender, phone)
+                 values ('e0000000-0000-4000-8000-0000000000c3', tests.branch('B901', 'pgtap-b'), 'ئەندام', 'male', '+9647501230003') $$),
+  ('member_health', $$ insert into public.member_health (id, injuries) values ('e0000000-0000-4000-8000-0000000000b2', 'ئازاری پشت') $$);
 
 select is_empty(
   $$ select t from tests.gym_tables() t where t not in (select c.table_name from insert_cases c) $$,
@@ -161,6 +178,16 @@ select is(
   tests.error_code($$ insert into public.devices (id, gym_id, branch_id, code, name, platform)
                       values ('d0000000-0000-4000-8000-0000000000c3', tests.gym('pgtap-a'), tests.branch('B901', 'pgtap-b'), 'D60', 'ئامێر', 'web') $$),
   '23503', 'a device can''t be in another gym''s branch'
+);
+select is(
+  tests.error_code($$ insert into public.members (id, gym_id, branch_id, full_name, gender, phone)
+                      values ('e0000000-0000-4000-8000-0000000000c4', tests.gym('pgtap-a'), tests.branch('B901', 'pgtap-b'), 'ئەندام', 'male', '+9647501230004') $$),
+  '23503', 'a member can''t join another gym''s branch'
+);
+select is(
+  tests.error_code($$ insert into public.member_health (id, gym_id, injuries)
+                      values ('e0000000-0000-4000-8000-0000000000b2', tests.gym('pgtap-a'), 'ئازاری پشت') $$),
+  '23503', 'health info can''t belong to another gym''s member'
 );
 select is_empty(
   $$ select t from tests.gym_tables() t

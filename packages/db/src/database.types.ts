@@ -255,6 +255,158 @@ export type Database = {
         };
         Relationships: [];
       };
+      member_health: {
+        Row: {
+          blood_type: string | null;
+          created_at: string;
+          created_by: string | null;
+          deleted_at: string | null;
+          gym_id: string;
+          id: string;
+          injuries: string | null;
+          medical_notes: string | null;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          blood_type?: string | null;
+          created_at?: string;
+          created_by?: string | null;
+          deleted_at?: string | null;
+          gym_id?: string;
+          id: string;
+          injuries?: string | null;
+          medical_notes?: string | null;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          blood_type?: string | null;
+          created_at?: string;
+          created_by?: string | null;
+          deleted_at?: string | null;
+          gym_id?: string;
+          id?: string;
+          injuries?: string | null;
+          medical_notes?: string | null;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'member_health_id_gym_id_fkey';
+            columns: ['id', 'gym_id'];
+            isOneToOne: true;
+            referencedRelation: 'members';
+            referencedColumns: ['id', 'gym_id'];
+          },
+        ];
+      };
+      members: {
+        Row: {
+          address: string | null;
+          birth_date: string | null;
+          branch_id: string;
+          created_at: string;
+          created_by: string | null;
+          deleted_at: string | null;
+          emergency_contact_name: string | null;
+          emergency_phone: string | null;
+          full_name: string;
+          gender: string;
+          goals: string | null;
+          gym_id: string;
+          has_health_notes: boolean;
+          id: string;
+          member_number: number;
+          notes: string | null;
+          phone: string | null;
+          preferred_language: Database['public']['Enums']['language_code'];
+          referral_source: string | null;
+          search_text: string;
+          status: string;
+          status_changed_at: string | null;
+          status_changed_by: string | null;
+          status_reason: string | null;
+          tags: string[];
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          address?: string | null;
+          birth_date?: string | null;
+          branch_id: string;
+          created_at?: string;
+          created_by?: string | null;
+          deleted_at?: string | null;
+          emergency_contact_name?: string | null;
+          emergency_phone?: string | null;
+          full_name: string;
+          gender: string;
+          goals?: string | null;
+          gym_id?: string;
+          has_health_notes?: boolean;
+          id: string;
+          member_number: number;
+          notes?: string | null;
+          phone?: string | null;
+          preferred_language?: Database['public']['Enums']['language_code'];
+          referral_source?: string | null;
+          search_text?: never;
+          status?: string;
+          status_changed_at?: string | null;
+          status_changed_by?: string | null;
+          status_reason?: string | null;
+          tags?: string[];
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          address?: string | null;
+          birth_date?: string | null;
+          branch_id?: string;
+          created_at?: string;
+          created_by?: string | null;
+          deleted_at?: string | null;
+          emergency_contact_name?: string | null;
+          emergency_phone?: string | null;
+          full_name?: string;
+          gender?: string;
+          goals?: string | null;
+          gym_id?: string;
+          has_health_notes?: boolean;
+          id?: string;
+          member_number?: number;
+          notes?: string | null;
+          phone?: string | null;
+          preferred_language?: Database['public']['Enums']['language_code'];
+          referral_source?: string | null;
+          search_text?: never;
+          status?: string;
+          status_changed_at?: string | null;
+          status_changed_by?: string | null;
+          status_reason?: string | null;
+          tags?: string[];
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'members_branch_id_gym_id_fkey';
+            columns: ['branch_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'branches';
+            referencedColumns: ['id', 'gym_id'];
+          },
+          {
+            foreignKeyName: 'members_gym_id_fkey';
+            columns: ['gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'gyms';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       permissions: {
         Row: {
           created_at: string;
@@ -695,6 +847,62 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      create_member: {
+        Args: {
+          p_address?: string;
+          p_birth_date?: string;
+          p_blood_type?: string;
+          p_branch_id: string;
+          p_emergency_contact_name?: string;
+          p_emergency_phone?: string;
+          p_full_name: string;
+          p_gender: string;
+          p_goals?: string;
+          p_id: string;
+          p_injuries?: string;
+          p_medical_notes?: string;
+          p_notes?: string;
+          p_phone?: string;
+          p_preferred_language?: Database['public']['Enums']['language_code'];
+          p_referral_source?: string;
+          p_tags?: string[];
+        };
+        Returns: {
+          address: string | null;
+          birth_date: string | null;
+          branch_id: string;
+          created_at: string;
+          created_by: string | null;
+          deleted_at: string | null;
+          emergency_contact_name: string | null;
+          emergency_phone: string | null;
+          full_name: string;
+          gender: string;
+          goals: string | null;
+          gym_id: string;
+          has_health_notes: boolean;
+          id: string;
+          member_number: number;
+          notes: string | null;
+          phone: string | null;
+          preferred_language: Database['public']['Enums']['language_code'];
+          referral_source: string | null;
+          search_text: string;
+          status: string;
+          status_changed_at: string | null;
+          status_changed_by: string | null;
+          status_reason: string | null;
+          tags: string[];
+          updated_at: string;
+          updated_by: string | null;
+        };
+        SetofOptions: {
+          from: '*';
+          to: 'members';
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
       create_staff_profile: {
         Args: {
           p_all_branches: boolean;
@@ -726,6 +934,18 @@ export type Database = {
           last_seen_by_name: string;
           name: string;
           platform: string;
+        }[];
+      };
+      find_member_duplicates: {
+        Args: { p_exclude_id?: string; p_full_name?: string; p_phone?: string };
+        Returns: {
+          branch_id: string;
+          full_name: string;
+          id: string;
+          match: string;
+          member_number: number;
+          phone: string;
+          status: string;
         }[];
       };
       gym_limits: {
@@ -876,6 +1096,44 @@ export type Database = {
         };
         Returns: undefined;
       };
+      search_members: {
+        Args: { p_include_archived?: boolean; p_limit?: number; p_query: string };
+        Returns: {
+          address: string | null;
+          birth_date: string | null;
+          branch_id: string;
+          created_at: string;
+          created_by: string | null;
+          deleted_at: string | null;
+          emergency_contact_name: string | null;
+          emergency_phone: string | null;
+          full_name: string;
+          gender: string;
+          goals: string | null;
+          gym_id: string;
+          has_health_notes: boolean;
+          id: string;
+          member_number: number;
+          notes: string | null;
+          phone: string | null;
+          preferred_language: Database['public']['Enums']['language_code'];
+          referral_source: string | null;
+          search_text: string;
+          status: string;
+          status_changed_at: string | null;
+          status_changed_by: string | null;
+          status_reason: string | null;
+          tags: string[];
+          updated_at: string;
+          updated_by: string | null;
+        }[];
+        SetofOptions: {
+          from: '*';
+          to: 'members';
+          isOneToOne: false;
+          isSetofReturn: true;
+        };
+      };
       seller_add_admin: { Args: { p_full_name: string; p_user_id: string }; Returns: undefined };
       seller_admins: {
         Args: Record<PropertyKey, never>;
@@ -997,6 +1255,44 @@ export type Database = {
       };
       seller_suspend_gym: { Args: { p_gym_id: string; p_reason?: string }; Returns: undefined };
       seller_use_recovery_code: { Args: { p_code: string }; Returns: Json };
+      set_member_status: {
+        Args: { p_id: string; p_reason?: string; p_status: string };
+        Returns: {
+          address: string | null;
+          birth_date: string | null;
+          branch_id: string;
+          created_at: string;
+          created_by: string | null;
+          deleted_at: string | null;
+          emergency_contact_name: string | null;
+          emergency_phone: string | null;
+          full_name: string;
+          gender: string;
+          goals: string | null;
+          gym_id: string;
+          has_health_notes: boolean;
+          id: string;
+          member_number: number;
+          notes: string | null;
+          phone: string | null;
+          preferred_language: Database['public']['Enums']['language_code'];
+          referral_source: string | null;
+          search_text: string;
+          status: string;
+          status_changed_at: string | null;
+          status_changed_by: string | null;
+          status_reason: string | null;
+          tags: string[];
+          updated_at: string;
+          updated_by: string | null;
+        };
+        SetofOptions: {
+          from: '*';
+          to: 'members';
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
       set_my_pin: { Args: { p_pin: string }; Returns: undefined };
       staff_admin_orphan: { Args: { p_email: string }; Returns: string };
       staff_admin_prepare_change: {
@@ -1040,6 +1336,64 @@ export type Database = {
         }[];
       };
       unlock_on_device: { Args: { p_device_id: string; p_pin: string }; Returns: Json };
+      unlock_with_pin: { Args: { p_branch_id: string; p_pin: string }; Returns: Json };
+      update_member: {
+        Args: {
+          p_address?: string;
+          p_birth_date?: string;
+          p_blood_type?: string;
+          p_branch_id: string;
+          p_emergency_contact_name?: string;
+          p_emergency_phone?: string;
+          p_full_name: string;
+          p_gender: string;
+          p_goals?: string;
+          p_id: string;
+          p_injuries?: string;
+          p_medical_notes?: string;
+          p_notes?: string;
+          p_phone?: string;
+          p_preferred_language?: Database['public']['Enums']['language_code'];
+          p_referral_source?: string;
+          p_save_health?: boolean;
+          p_tags?: string[];
+        };
+        Returns: {
+          address: string | null;
+          birth_date: string | null;
+          branch_id: string;
+          created_at: string;
+          created_by: string | null;
+          deleted_at: string | null;
+          emergency_contact_name: string | null;
+          emergency_phone: string | null;
+          full_name: string;
+          gender: string;
+          goals: string | null;
+          gym_id: string;
+          has_health_notes: boolean;
+          id: string;
+          member_number: number;
+          notes: string | null;
+          phone: string | null;
+          preferred_language: Database['public']['Enums']['language_code'];
+          referral_source: string | null;
+          search_text: string;
+          status: string;
+          status_changed_at: string | null;
+          status_changed_by: string | null;
+          status_reason: string | null;
+          tags: string[];
+          updated_at: string;
+          updated_by: string | null;
+        };
+        SetofOptions: {
+          from: '*';
+          to: 'members';
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
     };
     Enums: {
       language_code: 'ckb' | 'en' | 'ar';
