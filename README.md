@@ -324,14 +324,14 @@ A lost or stolen laptop with an open panel session: another admin **deactivates*
 Supabase Auth calls `auth_hooks.custom_access_token` (its "Customize Access Token" hook) before every token it issues: at a password login, at every token refresh, and after the second login step. It refuses the token to a staff member of a **locked** gym (HTTP 403, message `gym_locked`, which the app shows as the "gym locked" text). Everything else gets the token unchanged: staff of active, grace, read-only and suspended gyms, other gyms' staff, platform admins, users without a staff account, and any odd input. It never raises an error: anything unexpected lets the login through, and the database still keeps a locked gym's data closed. Reactivating the gym lets the same sessions refresh again. Only Supabase Auth's role can call it.
 
 - **Locally** it is turned on in `supabase/config.toml` (`[auth.hook.custom_access_token]`). Changing that file needs `pnpm db:stop` and `pnpm db:start`.
-- **In the cloud project** it is turned on in the dashboard: Authentication → Hooks → "Customize Access Token (JWT) Claims" → Postgres, schema `auth_hooks`, function `custom_access_token`. Never use `supabase config push` for it: that would also push the local auth settings.
+- **In the cloud project** it must be added by hand in the dashboard, and checked: see step 4 of [A cloud project](#a-cloud-project). Never use `supabase config push` for it: that would also push the local auth settings. Pushing the migration only creates the function; nothing calls it until the hook is added.
 - **Tests:** `supabase/tests/210-auth-hook.test.sql` (who is refused, malformed input), and `pnpm test:int` with the real local Auth server: a locked gym's Owner gets `403 gym_locked` at login and at a token refresh, an older token sees nothing, and after reactivating the same refresh token works again.
 
 #### Emergency: nobody can log in
 
 The hook runs for every login of every gym and of Click Group. If logins fail everywhere after a change (the login screen says something went wrong, and Supabase's Auth logs mention the hook):
 
-1. Supabase dashboard → the project → **Authentication → Hooks** → "Customize Access Token (JWT) Claims" → turn it **off** (or delete it) and save. Logins work again at once.
+1. Supabase dashboard → the project → **Authentication → Auth Hooks** → "Customize Access Token (JWT) Claims" → ⋮ → turn it **off** (or delete it) and save. Logins work again at once.
 2. Locked gyms stay safe meanwhile: their staff can log in, but the database still shows them nothing and refuses every change (`app.current_gym_id()`).
 3. Find the cause in **Logs → Auth** (the hook's error) and reproduce it locally with `pnpm db:test`. Fix it with a new migration, push it, then turn the hook on again and check that a login works.
 4. Locally: set `enabled = false` under `[auth.hook.custom_access_token]` in `supabase/config.toml`, then `pnpm db:stop` and `pnpm db:start`.
@@ -367,17 +367,29 @@ Settings live in three places. Never mix them:
    pnpm --filter @gym/supabase exec supabase db push --db-url "$db" --dry-run --workdir ..
    pnpm --filter @gym/supabase exec supabase db push --db-url "$db" --workdir ..
    ```
-4. **First gym and its Owner:** `pnpm bootstrap:admin --gym <code> --remote`. Its first line shows which Supabase project it is talking to; check it. For a gym that doesn't exist yet it asks you to confirm, then for the gym's Kurdish name and its first branch's name (`B1`; press Enter to keep the default name). The gym code can never change later. Type the password yourself; it never goes into a file.
-5. **App settings.** Copy `apps/app/.env.example` to `apps/app/.env.local` and fill in:
+4. **The Auth hook** (needs the migrations of step 3; it is what makes Lock refuse a locked gym's staff at login, see [The Auth hook](#the-auth-hook)). It is never set up by a migration or by `supabase config push`: add it by hand.
+   1. Dashboard → **Authentication → Auth Hooks** → **Add hook** → "Customize Access Token (JWT) Claims hook".
+   2. Hook type **Postgres**, schema `auth_hooks`, function `custom_access_token`. Create it. The card must say **ENABLED**.
+   3. Check that Auth really calls it. In the SQL Editor:
+      ```sql
+      select coalesce(sum(s.calls), 0) as hook_calls
+        from pg_stat_statements s join pg_roles r on r.oid = s.userid
+       where r.rolname = 'supabase_auth_admin' and s.query ilike '%custom_access_token%';
+      ```
+      Log in once (the gym app or the seller panel), then run it again: the number must go up with every login and every token refresh. If it stays the same after logins, the hook isn't running. (These statistics start again from 0 when they are reset.)
+
+   In our project the hook was missing from MT-3 (2026-10-11) until 2026-10-19: Lock closed a locked gym's data, but its staff could still log in. It was added and checked on 2026-10-19.
+5. **First gym and its Owner:** `pnpm bootstrap:admin --gym <code> --remote`. Its first line shows which Supabase project it is talking to; check it. For a gym that doesn't exist yet it asks you to confirm, then for the gym's Kurdish name and its first branch's name (`B1`; press Enter to keep the default name). The gym code can never change later. Type the password yourself; it never goes into a file.
+6. **App settings.** Copy `apps/app/.env.example` to `apps/app/.env.local` and fill in:
    - `VITE_SUPABASE_URL`: `https://<project-ref>.supabase.co`
    - `VITE_SUPABASE_PUBLISHABLE_KEY`: the **publishable** key (`sb_publishable_…`), never the secret key
-6. **Vercel.**
+7. **Vercel.**
    1. Add New → Project → import `miraann/gym-spa`. The repository is private: if it isn't listed, give Vercel's GitHub app access to it.
    2. **Root Directory** = `apps/app`. Leave "Include files outside the root directory" on, because the app uses the workspace packages. Leave the build settings alone: `apps/app/vercel.json` sets them.
    3. **Environment Variables**, for Production and Preview: the two `VITE_*` values (you can import `apps/app/.env.local`, but **never** `supabase/.env.local`), and `ENABLE_EXPERIMENTAL_COREPACK` = `1`, so Vercel uses the pnpm version pinned in `package.json`.
    4. **Settings → Build and Deployment → Node.js Version: 24.x.** The repository requires Node 24.
    5. Deploy. A build only picks up changed variables when it runs again: after changing one, use Deployments → ⋯ → Redeploy.
-7. **Check it works.** Open the site and log in as the admin. The connection indicator should say Connected. In DevTools → Network, switch to Offline: the indicator says No connection. If the login screen says the app isn't connected to a server, the build had no `VITE_*` values (the page's Content-Security-Policy then allows `connect-src 'self'` only). A tab that was already open may keep the old version until you accept the update prompt or reopen it.
+8. **Check it works.** Open the site and log in as the admin. The connection indicator should say Connected. In DevTools → Network, switch to Offline: the indicator says No connection. If the login screen says the app isn't connected to a server, the build had no `VITE_*` values (the page's Content-Security-Policy then allows `connect-src 'self'` only). A tab that was already open may keep the old version until you accept the update prompt or reopen it.
 
 **Later changes:**
 
@@ -435,6 +447,6 @@ Other changes:
 
 ## Deploying the web app (Vercel)
 
-Setting up the Vercel project: [A cloud project](#a-cloud-project), step 6. `apps/app/vercel.json` sets the install and build commands (`pnpm build:web`: the gym app plus the seller panel under `/seller/`, see [Deployed with the gym app at `/seller/`](#deployed-with-the-gym-app-at-seller)), the SPA rewrites and the headers. Every push to `main` deploys to production and other branches get preview deploys; Vercel skips the build when a push changes nothing the app uses (for example only `supabase/`).
+Setting up the Vercel project: [A cloud project](#a-cloud-project), step 7. `apps/app/vercel.json` sets the install and build commands (`pnpm build:web`: the gym app plus the seller panel under `/seller/`, see [Deployed with the gym app at `/seller/`](#deployed-with-the-gym-app-at-seller)), the SPA rewrites and the headers. Every push to `main` deploys to production and other branches get preview deploys; Vercel skips the build when a push changes nothing the app uses (for example only `supabase/`).
 
 **Content-Security-Policy:** every production build (web, Windows and Android) carries a CSP `<meta>` tag made by `vite.config.ts`. The app may only connect to itself and the Supabase address in the build's `VITE_*` variables, and only run its own scripts (the inline start-up script by its hash). Changing the address needs a new build. `pnpm dev` has no CSP, because Vite injects inline scripts there.
