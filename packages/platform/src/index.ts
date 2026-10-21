@@ -11,4 +11,6 @@ export {
   type CameraResult,
 } from './camera';
 export { secureStorage, type SecureStorage } from './secure-storage';
+export { cardReaders, type CardRead, type CardReaderKind, type NfcReader } from './nfc';
+export { CARD_INPUT_ATTRIBUTE } from './keyboard-card-reader';
 export { haptic, type HapticKind } from './haptics';

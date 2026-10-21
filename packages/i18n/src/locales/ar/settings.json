@@ -15,7 +15,8 @@
   "tabs": {
     "label": "أقسام الإعدادات",
     "display": "العرض",
-    "appearance": "المظهر"
+    "appearance": "المظهر",
+    "cardReader": "قارئ البطاقات"
   },
   "appearance": {
     "title": "المظهر",

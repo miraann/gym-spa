@@ -28,6 +28,7 @@ import { Route as RolesRoleIdRouteImport } from './routes/roles/$roleId'
 import { Route as RolesNewRouteImport } from './routes/roles/new'
 import { Route as SettingsIndexRouteImport } from './routes/settings/index'
 import { Route as SettingsAppearanceRouteImport } from './routes/settings/appearance'
+import { Route as SettingsCardReaderRouteImport } from './routes/settings/card-reader'
 import { Route as SettingsDisplayRouteImport } from './routes/settings/display'
 import { Route as StaffIndexRouteImport } from './routes/staff/index'
 import { Route as StaffStaffIdRouteImport } from './routes/staff/$staffId'
@@ -130,6 +131,11 @@ const SettingsAppearanceRoute = SettingsAppearanceRouteImport.update({
   path: '/appearance',
   getParentRoute: () => SettingsRouteRoute,
 } as any)
+const SettingsCardReaderRoute = SettingsCardReaderRouteImport.update({
+  id: '/card-reader',
+  path: '/card-reader',
+  getParentRoute: () => SettingsRouteRoute,
+} as any)
 const SettingsDisplayRoute = SettingsDisplayRouteImport.update({
   id: '/display',
   path: '/display',
@@ -176,6 +182,7 @@ export interface FileRoutesByFullPath {
   '/roles/$roleId': typeof RolesRoleIdRoute
   '/roles/new': typeof RolesNewRoute
   '/settings/appearance': typeof SettingsAppearanceRoute
+  '/settings/card-reader': typeof SettingsCardReaderRoute
   '/settings/display': typeof SettingsDisplayRoute
   '/staff/$staffId': typeof StaffStaffIdRoute
   '/staff/new': typeof StaffNewRoute
@@ -197,6 +204,7 @@ export interface FileRoutesByTo {
   '/roles/$roleId': typeof RolesRoleIdRoute
   '/roles/new': typeof RolesNewRoute
   '/settings/appearance': typeof SettingsAppearanceRoute
+  '/settings/card-reader': typeof SettingsCardReaderRoute
   '/settings/display': typeof SettingsDisplayRoute
   '/staff/$staffId': typeof StaffStaffIdRoute
   '/staff/new': typeof StaffNewRoute
@@ -225,6 +233,7 @@ export interface FileRoutesById {
   '/roles/$roleId': typeof RolesRoleIdRoute
   '/roles/new': typeof RolesNewRoute
   '/settings/appearance': typeof SettingsAppearanceRoute
+  '/settings/card-reader': typeof SettingsCardReaderRoute
   '/settings/display': typeof SettingsDisplayRoute
   '/staff/$staffId': typeof StaffStaffIdRoute
   '/staff/new': typeof StaffNewRoute
@@ -254,6 +263,7 @@ export interface FileRouteTypes {
     | '/roles/$roleId'
     | '/roles/new'
     | '/settings/appearance'
+    | '/settings/card-reader'
     | '/settings/display'
     | '/staff/$staffId'
     | '/staff/new'
@@ -275,6 +285,7 @@ export interface FileRouteTypes {
     | '/roles/$roleId'
     | '/roles/new'
     | '/settings/appearance'
+    | '/settings/card-reader'
     | '/settings/display'
     | '/staff/$staffId'
     | '/staff/new'
@@ -302,6 +313,7 @@ export interface FileRouteTypes {
     | '/roles/$roleId'
     | '/roles/new'
     | '/settings/appearance'
+    | '/settings/card-reader'
     | '/settings/display'
     | '/staff/$staffId'
     | '/staff/new'
@@ -460,6 +472,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsAppearanceRouteImport
       parentRoute: typeof SettingsRouteRoute
     }
+    '/settings/card-reader': {
+      id: '/settings/card-reader'
+      path: '/card-reader'
+      fullPath: '/settings/card-reader'
+      preLoaderRoute: typeof SettingsCardReaderRouteImport
+      parentRoute: typeof SettingsRouteRoute
+    }
     '/settings/display': {
       id: '/settings/display'
       path: '/display'
@@ -571,12 +590,14 @@ const RolesRouteRouteWithChildren = RolesRouteRoute._addFileChildren(
 
 interface SettingsRouteRouteChildren {
   SettingsAppearanceRoute: typeof SettingsAppearanceRoute
+  SettingsCardReaderRoute: typeof SettingsCardReaderRoute
   SettingsDisplayRoute: typeof SettingsDisplayRoute
   SettingsIndexRoute: typeof SettingsIndexRoute
 }
 
 const SettingsRouteRouteChildren: SettingsRouteRouteChildren = {
   SettingsAppearanceRoute: SettingsAppearanceRoute,
+  SettingsCardReaderRoute: SettingsCardReaderRoute,
   SettingsDisplayRoute: SettingsDisplayRoute,
   SettingsIndexRoute: SettingsIndexRoute,
 }

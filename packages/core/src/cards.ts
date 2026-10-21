@@ -75,3 +75,8 @@ export function normalizeCardUid(
   if (EMPTY_UID.test(uid)) return null;
   return byteOrder === 'reversed' ? (uid.match(/../g) ?? []).reverse().join('') : uid;
 }
+
+/** A stored UID as people read it: its bytes apart (04 A2 3B C1 5D 6E 80). Always Latin and LTR. */
+export function formatCardUid(uid: string): string {
+  return (uid.match(/.{1,2}/g) ?? []).join(' ');
+}

@@ -14,6 +14,7 @@ import { ArchiveIcon, HeartPulseIcon, PencilIcon, SearchXIcon } from 'lucide-rea
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { usePermission } from '@/features/auth/use-permissions';
+import { MemberCardsCard } from '@/features/cards/member-cards';
 import { BackToList } from '@/features/staff/admin-error';
 import { useFormat } from '@/lib/format';
 import { useBaghdadToday } from '@/lib/use-today';
@@ -105,6 +106,7 @@ function MemberProfile({ member }: { readonly member: Member }) {
       )}
 
       <MemberPhotoCard member={member} />
+      <MemberCardsCard member={member} />
       <MemberDetails member={member} />
       <HealthCard member={member} />
       <MemberStatusCard member={member} />

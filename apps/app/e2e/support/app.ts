@@ -115,3 +115,37 @@ export async function lockFromMenu(page: Page): Promise<void> {
   await page.getByRole('menuitem', { name: /قفڵکردن/ }).click();
   await expect(page.getByRole('heading', { level: 1, name: 'کێ کار دەکات؟' })).toBeVisible();
 }
+
+/**
+ * Holds a card to a keyboard-type reader: the UID's keys and Enter, 5 ms apart. The keys go through
+ * the browser's own input (real key events, typed into a focused field), stamped with the times a
+ * reader would type them: a busy test machine may deliver them later, but a reader's keys keep the
+ * time they were pressed, and that is what the app measures.
+ */
+export async function scanCard(page: Page, uid: string): Promise<void> {
+  const cdp = await page.context().newCDPSession(page);
+  const start = Date.now() / 1000;
+  const keys = [...Array.from(uid), 'Enter'];
+  for (const [index, key] of keys.entries()) {
+    const enter = key === 'Enter';
+    const code = enter ? 'Enter' : /[0-9]/.test(key) ? `Digit${key}` : `Key${key.toUpperCase()}`;
+    const keyCode = enter ? 13 : key.toUpperCase().charCodeAt(0);
+    const timestamp = start + index * 0.005;
+    await cdp.send('Input.dispatchKeyEvent', {
+      type: 'keyDown',
+      key,
+      code,
+      windowsVirtualKeyCode: keyCode,
+      text: enter ? '\r' : key,
+      timestamp,
+    });
+    await cdp.send('Input.dispatchKeyEvent', {
+      type: 'keyUp',
+      key,
+      code,
+      windowsVirtualKeyCode: keyCode,
+      timestamp: timestamp + 0.001,
+    });
+  }
+  await cdp.detach();
+}

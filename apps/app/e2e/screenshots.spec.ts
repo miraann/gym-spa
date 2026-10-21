@@ -6,6 +6,7 @@ import {
   LOGIN_HEADING,
   expect,
   lockFromMenu,
+  scanCard,
   signIn,
   submitPasswordLogin,
   test,
@@ -85,6 +86,31 @@ for (const [device, viewport] of Object.entries(VIEWPORTS)) {
             }),
         );
       }
+      // The first member has a card, and lost one before it.
+      await write(
+        admin()
+          .from('nfc_cards')
+          .insert({
+            id: randomUUID(),
+            gym_id: gym.id,
+            member_id: memberIds[0] ?? '',
+            uid: 'DEADBEEF',
+            status: 'ended',
+            end_reason: 'lost',
+            ended_at: new Date(Date.now() - 86_400_000).toISOString(),
+            created_at: new Date(Date.now() - 90 * 86_400_000).toISOString(),
+          }),
+      );
+      await write(
+        admin()
+          .from('nfc_cards')
+          .insert({
+            id: randomUUID(),
+            gym_id: gym.id,
+            member_id: memberIds[0] ?? '',
+            uid: '04A23BC15D6E80',
+          }),
+      );
       const prefix = `${device}-${scheme}`;
 
       // A fresh device: the login screen, before anyone logs in.
@@ -118,6 +144,19 @@ for (const [device, viewport] of Object.entries(VIEWPORTS)) {
         await open(page, owner, path);
         await shot(page, `${prefix}-${name}`);
       }
+
+      // Cards (step 2e): a member's card and history, giving a card, and testing the reader.
+      await open(page, owner, `/members/${memberIds[0] ?? ''}`);
+      await page.getByTestId('member-cards').scrollIntoViewIfNeeded();
+      await shot(page, `${prefix}-14-member-card`);
+      await open(page, owner, `/members/${memberIds[1] ?? ''}`);
+      await page.getByRole('button', { name: 'پێدانی کارت' }).click();
+      await shot(page, `${prefix}-15-give-card`);
+      await page.keyboard.press('Escape');
+      await open(page, owner, '/settings/card-reader');
+      await scanCard(page, '04A23BC15D6E80');
+      await expect(page.getByTestId('card-holder')).toBeVisible();
+      await shot(page, `${prefix}-16-card-reader`);
 
       if (device === 'phone') {
         await open(page, owner, '/');

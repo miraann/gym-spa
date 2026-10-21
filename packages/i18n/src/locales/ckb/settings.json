@@ -15,7 +15,8 @@
   "tabs": {
     "label": "بەشەکانی ڕێکخستن",
     "display": "پیشاندان",
-    "appearance": "ڕووکار"
+    "appearance": "ڕووکار",
+    "cardReader": "خوێنەری کارت"
   },
   "appearance": {
     "title": "ڕووکار",

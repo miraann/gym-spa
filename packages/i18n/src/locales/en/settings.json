@@ -15,7 +15,8 @@
   "tabs": {
     "label": "Settings sections",
     "display": "Display",
-    "appearance": "Appearance"
+    "appearance": "Appearance",
+    "cardReader": "Card reader"
   },
   "appearance": {
     "title": "Appearance",

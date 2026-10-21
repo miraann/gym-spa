@@ -82,6 +82,7 @@ export {
   CARD_REPLACE_REASONS,
   CARD_STATUSES,
   CARD_UID_PATTERN,
+  formatCardUid,
   normalizeCardUid,
   type CardByteOrder,
   type CardEndReason,

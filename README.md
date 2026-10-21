@@ -210,6 +210,7 @@ Phase 2, step 2d, migration `20261021300000_nfc_cards.sql`, tests `supabase/test
 - **Archiving a member** ends their working card (`member_archived`, also for staff without `cards.manage`), so it can be given to someone else. A blocked card stays blocked.
 - **Seeing cards** needs `members.view`. A read-only gym changes no cards, but staff can still look them up.
 - **Seed:** the demo members have made-up cards (7-byte `04…` UIDs, 4-byte for every 7th member), ids `md5('demo-card-<n>')`. Every 10th member (4, 14, 24, …) has no card yet. Members 11, 61, 111 and 161 lost a card before, member 21's old card was stolen (blocked), and member 71's lost card was blocked later.
+- **The card screens** (step 2e, `apps/app/src/features/cards`): a member's page has a card section with the card that works now (its UID with the bytes apart, always left to right) and the cards they had before, each with what happened to it (icon and words, never color alone). With `cards.manage`: give a card (پێدانی کارت), replace it when it was lost or damaged (گۆڕینی کارت; the new card can come later), and take it back (وەرگرتنەوەی کارت). With `cards.blacklist`: report it stolen, block it with a reason (بلۆککردن) and unblock it (لابردنی بلۆک), also from the history. In the dialogs, holding a card to any reader fills in the number and saves at once when nothing else is missing; a number typed by hand waits for the button. When a card is someone else's or blocked, the dialog says whose it is. Nothing can be changed without a connection or in a read-only gym. Tests: `apps/app/e2e/cards.spec.ts`.
 
 ### Adding a table
 
@@ -379,14 +380,16 @@ The app always needs its server. `apps/app/src/lib/connection.ts` checks `GET /a
 
 ## NFC cards and readers
 
-Decided with the user on 2026-10-19 (spec §1). Card reading is built in Phase 2, steps 2e (keyboard-type readers), 2f (PC/SC readers in the Windows app) and 2g (Android phones and tablets); this section grows with them.
+Decided with the user on 2026-10-19 (spec §1). Card reading is built in Phase 2, steps 2e (keyboard-type readers, done), 2f (PC/SC readers in the Windows app) and 2g (Android phones and tablets); this section grows with them. Every reader is an `NfcReader` in `packages/platform/src/nfc.ts`; the screens get normalized UIDs through `useCardScans()` (`apps/app/src/features/cards/card-reader.ts`) and never know which reader read a card.
 
 - **Cards:** a card is known by its UID, stored as uppercase hex with no separators. 7-byte UIDs (NTAG cards) and 4-byte UIDs both work. For a real gym, buy **genuine NXP NTAG213 or NTAG215** cards: NFC Tools (Android or iPhone) shows their NXP signature as "Valid". Cheaper compatible clones read the same, but their UID may be changeable, so such a card can be copied. The app never relies on the NXP signature. The check-in screen (Phase 4) shows the member's photo on every scan, so staff can spot a copied card.
 - **Readers at the desk:**
   - **PC/SC readers** such as the ACR122U (they don't type anything): only in the **Windows app**, which reads them directly.
-  - **Keyboard-type readers** (they type the UID and Enter): in the Windows app and in the browser.
+  - **Keyboard-type readers** (they type the UID and Enter): in the Windows app, in the browser, and on Android with a USB reader. Step 2e, `packages/platform/src/keyboard-card-reader.ts`.
   - **The web app in a browser can't use PC/SC readers.** It says so, and points to the Windows app, a keyboard-type reader, or an NFC phone.
   - **What readers type differs.** Some keyboard-type readers type the UID's bytes in reverse order, or a 4-byte UID as a 10-digit number; the app reads both as the same card ([NFC cards](#nfc-cards)). A reader that types 10 digits gives only 4 bytes of a 7-byte card, though, so use the same kind of reader for giving cards and for check-in.
+- **How a keyboard-type reader is told from typing:** a burst of at least 8 hex keys less than 50 ms apart, ended by Enter, is a card. People never type that fast, so their typing is left alone. The keys are read by their place on the keyboard (`KeyboardEvent.code`), so a Kurdish or Arabic keyboard layout doesn't matter. The app listens only while a screen waits for a card (a card dialog, the reader test), and the newest such screen gets the card. Keys typed in other text fields (a search box) are never a card; the card number fields are marked `data-card-input`, so a reader typing into them still counts as a scan. The Enter that ends a card is kept from the page, so it presses no button.
+- **Setting up a reader** (Settings → خوێنەری کارت, this device only): plug it in, open the page and hold a card that someone already has to the reader. The page shows the number it read and whose card it is. If a card's number differs from the one another reader (or NFC Tools) shows, with the bytes the other way round, choose «پێچەوانە» (reversed). Only staff with `devices.manage` change that, because a wrong byte order would give members cards under the wrong UID. It applies to keyboard-type readers only.
 - **Phones and tablets:** the Android app reads cards with the device's own NFC. Later, the iOS app will use Core NFC.
 
 ## A cloud project

@@ -5,6 +5,7 @@ import {
   CARD_REPLACE_REASONS,
   CARD_STATUSES,
   CARD_UID_PATTERN,
+  formatCardUid,
   normalizeCardUid,
 } from './cards.ts';
 import { databaseTestSql, latestFunctionBody, migrationsSql } from './sql-functions.test-helper.ts';
@@ -54,6 +55,17 @@ describe('normalizeCardUid', () => {
         expect(normalizeCardUid(uid ?? '')).toBe(uid);
       }
     }
+  });
+});
+
+describe('formatCardUid', () => {
+  it('shows the bytes apart', () => {
+    expect(formatCardUid('04A23BC15D6E80')).toBe('04 A2 3B C1 5D 6E 80');
+    expect(formatCardUid('DEADBEEF')).toBe('DE AD BE EF');
+  });
+
+  it('reads back as the same UID', () => {
+    expect(normalizeCardUid(formatCardUid('04A23BC15D6E80'))).toBe('04A23BC15D6E80');
   });
 });
 

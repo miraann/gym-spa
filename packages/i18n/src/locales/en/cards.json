@@ -1,0 +1,123 @@
+{
+  "card": {
+    "title": "Card",
+    "since": "Since {{date}}",
+    "none": "This member has no card."
+  },
+  "state": {
+    "active": "Active",
+    "blocked": "Blocked"
+  },
+  "reasons": {
+    "returned": "Returned",
+    "lost": "Lost",
+    "damaged": "Damaged",
+    "stolen": "Stolen",
+    "blocked": "Was blocked",
+    "member_archived": "Member archived"
+  },
+  "actions": {
+    "give": "Give a card",
+    "replace": "Replace card",
+    "return": "Take card back",
+    "block": "Block",
+    "unblock": "Unblock",
+    "cancel": "Cancel"
+  },
+  "history": {
+    "title": "Previous cards",
+    "period": "{{from}} to {{to}}",
+    "blockReason": "Blocked because: {{reason}}",
+    "unblocked": "Unblocked on {{date}}"
+  },
+  "scan": {
+    "hold": "Hold the card to the card reader",
+    "waiting": "Waiting for the card…",
+    "number": "Card number",
+    "typeHint": "Or type its number, e.g.",
+    "browser": "In a web browser, only readers that type the card number like a keyboard work. For a reader like the ACR122U, use the Windows app or a phone with NFC.",
+    "problems": {
+      "required": "Hold the card to the reader or type its number.",
+      "invalid": "This isn't a card number. Hold the card to the reader again or check the number."
+    }
+  },
+  "holder": {
+    "member": "This card belongs to {{name}} (member number {{number}}).",
+    "open": "Open",
+    "blocked": "This card is blocked.",
+    "stolen": "This card was reported stolen and is blocked.",
+    "blockReason": "Reason: {{reason}}"
+  },
+  "give": {
+    "title": "Give {{name}} a card",
+    "description": "As soon as the card is read, the member gets it."
+  },
+  "replace": {
+    "title": "Replace {{name}}'s card",
+    "description": "The old card stops working at once, and the new card is given in the same step.",
+    "old": "Old card:",
+    "reason": "What happened to the card?",
+    "reasonMissing": "Choose what happened to the card.",
+    "stolenHint": "A stolen card is blocked, so nobody can use it or be given it.",
+    "newNumber": "New card number",
+    "withoutNew": "No new card now"
+  },
+  "return": {
+    "title": "Take back {{name}}'s card?",
+    "description": "The card stops working for this member and can be given to someone else."
+  },
+  "block": {
+    "title": "Block this card?",
+    "description": "It is given to nobody until it is unblocked.",
+    "descriptionActive": "The card stops working at once, and it is given to nobody until it is unblocked.",
+    "reason": "Reason",
+    "reasonRequired": "Write a reason.",
+    "reasonText": "This text is too long."
+  },
+  "unblock": {
+    "title": "Unblock this card?",
+    "description": "It can be given to a member again, but it doesn't start working for anyone automatically."
+  },
+  "done": {
+    "given": "{{name}} has a card now",
+    "replaced": "{{name}}'s card was replaced",
+    "stopped": "{{name}}'s old card no longer works",
+    "returned": "The card was taken back",
+    "blocked": "The card was blocked",
+    "unblocked": "The card was unblocked"
+  },
+  "reader": {
+    "title": "Card reader",
+    "description": "This device's card reader. These settings apply to this device only.",
+    "testTitle": "Test the reader",
+    "testHint": "Hold a card to the reader to see the number it reads and whose card it is.",
+    "notACard": "The reader typed this, which isn't a card number:",
+    "nobody": "This card doesn't belong to any member now.",
+    "byteOrder": "Card number order",
+    "byteOrderHint": "Some readers that type like a keyboard type the number backwards. If the same card shows a different number here than on another reader, choose “Reversed”.",
+    "byteOrders": {
+      "normal": "Normal",
+      "reversed": "Reversed"
+    },
+    "managerOnly": "Only staff who can manage devices can change this."
+  },
+  "errors": {
+    "invalid_card_uid": "This isn't a card number.",
+    "card_in_use": "This card is already a member's card.",
+    "card_blocked": "This card is blocked, so nobody can be given it until a manager unblocks it.",
+    "member_has_card": "This member already has a card. Replace their card instead.",
+    "card_not_found": "This card was not found, or you can't see it.",
+    "card_not_active": "This card no longer works.",
+    "card_not_blocked": "This card isn't blocked.",
+    "card_reassigned": "This card was given to someone else later. Block it from that member's page.",
+    "same_card": "This is the old card itself. Hold another card to the reader.",
+    "member_archived": "This member is archived. Reactivate them first.",
+    "member_not_found": "This member was not found, or you can't see them.",
+    "reason_required": "Write a reason.",
+    "permission_denied": "You don't have permission to do this.",
+    "gym_read_only": "This gym is view-only, so no cards can be given or changed.",
+    "invalid_request": "These details are not valid. Check them and try again.",
+    "network": "Couldn't reach the server. Check your internet connection and try again.",
+    "unexpected": "Something went wrong. Try again. If it keeps happening, contact Click Group."
+  }
+}
