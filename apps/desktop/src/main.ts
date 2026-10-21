@@ -29,7 +29,10 @@ const APP_ID = 'site.clickgroup.gymspa';
 const DEV_SERVER_URL = 'http://localhost:5173';
 /** `electron . --dev` loads the Vite dev server (`pnpm dev`) instead of the built app. */
 const devServerUrl = !app.isPackaged && process.argv.includes('--dev') ? DEV_SERVER_URL : undefined;
-/** Window permissions the app may use. Everything else (camera, location, ...) is refused. */
+/**
+ * Window permissions the app may use. The camera is allowed only as video for the app itself
+ * (member photos, isAppCamera); everything else (microphone, location, ...) is refused.
+ */
 const ALLOWED_PERMISSIONS = new Set(['clipboard-sanitized-write', 'fullscreen']);
 
 // Keep local data in one fixed folder, so renaming the product can never orphan the offline
@@ -98,12 +101,36 @@ function handleShortcuts(contents: WebContents): void {
   });
 }
 
+/** A camera request of the app's own page, for video only (never the microphone). */
+function isAppCamera(url: string, mediaTypes: readonly string[]): boolean {
+  const origins = [APP_ORIGIN, devServerUrl].filter((origin) => origin !== undefined);
+  return (
+    mediaTypes.length > 0 &&
+    mediaTypes.every((type) => type === 'video') &&
+    origins.some((origin) => url === origin || url.startsWith(`${origin}/`))
+  );
+}
+
 function lockDownWebContents(): void {
-  session.defaultSession.setPermissionRequestHandler((_contents, permission, callback) => {
+  session.defaultSession.setPermissionRequestHandler((_contents, permission, callback, details) => {
+    if (permission === 'media') {
+      callback(
+        isAppCamera(
+          details.requestingUrl,
+          'mediaTypes' in details ? (details.mediaTypes ?? []) : [],
+        ),
+      );
+      return;
+    }
     callback(ALLOWED_PERMISSIONS.has(permission));
   });
-  session.defaultSession.setPermissionCheckHandler((_contents, permission) =>
-    ALLOWED_PERMISSIONS.has(permission),
+  session.defaultSession.setPermissionCheckHandler(
+    (_contents, permission, requestingOrigin, details) => {
+      if (permission === 'media') {
+        return isAppCamera(requestingOrigin, details.mediaType ? [details.mediaType] : []);
+      }
+      return ALLOWED_PERMISSIONS.has(permission);
+    },
   );
 
   app.on('web-contents-created', (_event, contents) => {

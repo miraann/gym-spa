@@ -13,6 +13,7 @@ const DATABASE_ERROR_KEYS = [
   'branch_inactive',
   'permission_denied',
   'gym_read_only',
+  'invalid_photo',
 ] as const;
 
 /** Why a members screen's load or change failed, as a key of members:errors. */

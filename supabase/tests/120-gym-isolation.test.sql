@@ -30,6 +30,9 @@ insert into public.members (id, gym_id, branch_id, full_name, gender, phone) val
 insert into public.member_health (id, gym_id, injuries) values
   ('e0000000-0000-4000-8000-0000000000a1', tests.gym('pgtap-a'), 'ئازاری ئەژنۆ'),
   ('e0000000-0000-4000-8000-0000000000b1', tests.gym('pgtap-b'), 'ئازاری ئەژنۆ');
+insert into public.member_photos (id, gym_id, photo_type, photo, thumbnail_type, thumbnail) values
+  ('e0000000-0000-4000-8000-0000000000a1', tests.gym('pgtap-a'), 'image/jpeg', '/9j/4AAQSkZJRg==', 'image/jpeg', '/9j/4AAQSkZJRg=='),
+  ('e0000000-0000-4000-8000-0000000000b1', tests.gym('pgtap-b'), 'image/jpeg', '/9j/4AAQSkZJRg==', 'image/jpeg', '/9j/4AAQSkZJRg==');
 
 select is_empty(
   $$ select t from tests.gym_tables() t
@@ -72,6 +75,9 @@ insert into insert_cases (table_name, statement) values
                    p_full_name => 'ئەندام', p_gender => 'male', p_phone => '+9647501230002') $$),
   ('member_health', $$ insert into public.member_health (gym_id, id, injuries)
                        values (tests.gym('pgtap-b'), 'e0000000-0000-4000-8000-0000000000b2', 'ئازاری پشت') $$),
+  ('member_photos', $$ insert into public.member_photos (gym_id, id, photo_type, photo, thumbnail_type, thumbnail)
+                       values (tests.gym('pgtap-b'), 'e0000000-0000-4000-8000-0000000000b2', 'image/jpeg', '/9j/4AAQSkZJRg==', 'image/jpeg', '/9j/4AAQSkZJRg==') $$),
+  ('member_photos', $$ select public.set_member_photo('e0000000-0000-4000-8000-0000000000b2', 'image/jpeg', '/9j/4AAQSkZJRg==', 'image/jpeg', '/9j/4AAQSkZJRg==') $$),
   -- Their own gym (gym_id left to fill itself in), pointing at gym B's rows.
   ('role_permissions', $$ insert into public.role_permissions (role_id, permission_key) values (tests.role('trainer', 'pgtap-b'), 'payments.view') $$),
   ('staff_users', $$ insert into public.staff_users (id, username, full_name, role_id)
@@ -81,7 +87,9 @@ insert into insert_cases (table_name, statement) values
   ('settings', $$ insert into public.settings (branch_id, key, value) values (tests.branch('B902', 'pgtap-b'), 'security.pin_max_attempts', '4') $$),
   ('members', $$ insert into public.members (id, branch_id, full_name, gender, phone)
                  values ('e0000000-0000-4000-8000-0000000000c3', tests.branch('B901', 'pgtap-b'), 'ئەندام', 'male', '+9647501230003') $$),
-  ('member_health', $$ insert into public.member_health (id, injuries) values ('e0000000-0000-4000-8000-0000000000b2', 'ئازاری پشت') $$);
+  ('member_health', $$ insert into public.member_health (id, injuries) values ('e0000000-0000-4000-8000-0000000000b2', 'ئازاری پشت') $$),
+  ('member_photos', $$ insert into public.member_photos (id, photo_type, photo, thumbnail_type, thumbnail)
+                       values ('e0000000-0000-4000-8000-0000000000b2', 'image/jpeg', '/9j/4AAQSkZJRg==', 'image/jpeg', '/9j/4AAQSkZJRg==') $$);
 
 select is_empty(
   $$ select t from tests.gym_tables() t where t not in (select c.table_name from insert_cases c) $$,
@@ -110,9 +118,10 @@ select is_empty(
       where tests.rows_changed(format('update public.%I set gym_id = %L where gym_id = %L', t, tests.gym('pgtap-b'), tests.gym('pgtap-a'))) > 0 $$,
   'gym A''s Owner can''t move any of gym A''s rows into gym B'
 );
+-- Refused: no permission, a link to another gym's row, or (P0002) that row isn't even visible.
 select is_empty(
   $$ select c.table_name, c.statement from insert_cases c
-      where coalesce(tests.error_code(c.statement), 'worked') not in ('42501', '23503') $$,
+      where coalesce(tests.error_code(c.statement), 'worked') not in ('42501', '23503', 'P0002') $$,
   'gym A''s Owner can add nothing to gym B, in any table'
 );
 

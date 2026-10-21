@@ -36,7 +36,13 @@ import { useFormat } from '@/lib/format';
 import { usePreferences } from '@/lib/preferences';
 import { HealthNotesBadge, MemberAvatar, MemberStatusBadge } from './member-badges';
 import { useBranchName } from './member-branch-name';
-import { MEMBER_PAGE_SIZE, useMemberPage, useMemberTags, type Member } from './member-data';
+import {
+  MEMBER_PAGE_SIZE,
+  useMemberPage,
+  useMemberTags,
+  useMemberThumbnails,
+  type Member,
+} from './member-data';
 import { memberErrorKey } from './member-errors';
 import { MemberError } from './member-error';
 import {
@@ -348,6 +354,7 @@ function MemberCards({ members }: { readonly members: readonly Member[] }) {
   const { t } = useTranslation('members');
   const branchName = useBranchName();
   const openId = useOpenMemberId();
+  const thumbnails = useMemberThumbnails(members).data;
   return (
     <ul className="flex flex-col gap-2" aria-label={t('list.title')}>
       {members.map((member) => {
@@ -365,7 +372,7 @@ function MemberCards({ members }: { readonly members: readonly Member[] }) {
                 selected && 'ring-2 ring-primary',
               )}
             >
-              <MemberAvatar name={member.fullName} />
+              <MemberAvatar name={member.fullName} image={thumbnails?.get(member.id)} />
               <span className="flex min-w-0 flex-1 flex-col gap-1">
                 <span className="flex items-center justify-between gap-2">
                   <span className="truncate text-base">{member.fullName}</span>
@@ -432,6 +439,7 @@ function MemberTable({ members }: { readonly members: readonly Member[] }) {
   const navigate = useNavigate({ from: '/members' });
   const openId = useOpenMemberId();
   const [columnVisibility, setColumnVisibility] = useColumnVisibility();
+  const thumbnails = useMemberThumbnails(members).data;
 
   const columns = useMemo(
     () =>
@@ -461,7 +469,7 @@ function MemberTable({ members }: { readonly members: readonly Member[] }) {
                 event.stopPropagation();
               }}
             >
-              <MemberAvatar name={info.getValue()} />
+              <MemberAvatar name={info.getValue()} image={thumbnails?.get(info.row.original.id)} />
               <span>{info.getValue()}</span>
             </Link>
           ),
@@ -506,7 +514,7 @@ function MemberTable({ members }: { readonly members: readonly Member[] }) {
           cell: (info) => info.getValue().join('، '),
         }),
       ]),
-    [t, format, branchName],
+    [t, format, branchName, thumbnails],
   );
 
   const data = useMemo(() => [...members], [members]);

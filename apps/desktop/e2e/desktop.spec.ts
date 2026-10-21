@@ -34,7 +34,8 @@ async function launch(): Promise<ElectronApplication> {
   const env = { ...process.env };
   delete env.ELECTRON_RUN_AS_NODE;
   return electron.launch({
-    args: [desktopDir],
+    // Chromium's fake camera, so the camera test works on machines without one.
+    args: [desktopDir, '--use-fake-device-for-media-stream'],
     env: { ...env, GYM_USER_DATA_DIR: userData, GYM_WEB_ROOT: webRoot },
   });
 }
@@ -262,6 +263,24 @@ test('the window never leaves the app', async () => {
   await expect(page.getByRole('heading', LOGIN_HEADING)).toBeVisible();
   expect(await page.evaluate(() => location.origin)).toBe('app://gym-spa');
   expect(running().windows()).toHaveLength(1);
+});
+
+test('the app may use the camera for photos, but never the microphone', async () => {
+  const page = await mainWindow();
+  const result = (constraints: MediaStreamConstraints) =>
+    page.evaluate(async (asked) => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia(asked);
+        for (const track of stream.getTracks()) track.stop();
+        return 'allowed';
+      } catch (error) {
+        return error instanceof DOMException ? error.name : 'failed';
+      }
+    }, constraints);
+
+  expect(await result({ video: true })).toBe('allowed');
+  expect(await result({ audio: true })).toBe('NotAllowedError');
+  expect(await result({ video: true, audio: true })).toBe('NotAllowedError');
 });
 
 test('the title bar follows the app theme', async () => {

@@ -1,4 +1,4 @@
-import type { MemberStatus } from '@gym/core';
+import { imageDataUrl, type MemberStatus, type StoredImage } from '@gym/core';
 import { Badge } from '@gym/ui/components/badge';
 import { cn } from '@gym/ui/lib/utils';
 import {
@@ -45,23 +45,29 @@ export function HealthNotesBadge() {
   );
 }
 
-/** The first letter of the name in a circle, until the member has a photo (step 2c). */
+/** The member's photo (its thumbnail) in a circle, or the first letter of the name without one. */
 export function MemberAvatar({
   name,
+  image,
   size = 'md',
 }: {
   readonly name: string;
+  readonly image?: StoredImage | null;
   readonly size?: 'md' | 'lg';
 }) {
   return (
     <span
       aria-hidden="true"
       className={cn(
-        'inline-flex shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground',
+        'inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-muted text-muted-foreground',
         size === 'lg' ? 'size-16 text-2xl' : 'size-10 text-base',
       )}
     >
-      {Array.from(name.trim())[0] ?? ''}
+      {image ? (
+        <img src={imageDataUrl(image)} alt="" className="size-full object-cover" />
+      ) : (
+        (Array.from(name.trim())[0] ?? '')
+      )}
     </span>
   );
 }

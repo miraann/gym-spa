@@ -19,9 +19,10 @@ import { useFormat } from '@/lib/format';
 import { useBaghdadToday } from '@/lib/use-today';
 import { HealthNotesBadge, MemberAvatar, MemberStatusBadge } from './member-badges';
 import { useBranchName } from './member-branch-name';
-import { useMember, useMemberHealth, type Member } from './member-data';
+import { useMember, useMemberHealth, useMemberPhoto, type Member } from './member-data';
 import { memberErrorKey } from './member-errors';
 import { MemberError } from './member-error';
+import { MemberPhotoCard } from './member-photo';
 import { MemberStatusCard } from './member-status';
 
 /** One member: who they are, their health info (for those allowed), and their status. */
@@ -57,6 +58,7 @@ function MemberProfile({ member }: { readonly member: Member }) {
   const sideBySide = useSideBySide();
   const phone = useLayout() === 'phone';
   const canEdit = usePermission('members.edit') && member.status !== 'archived';
+  const photo = useMemberPhoto(member);
   const Heading = sideBySide ? 'h2' : 'h1';
 
   const editButton = canEdit && (
@@ -76,7 +78,7 @@ function MemberProfile({ member }: { readonly member: Member }) {
     <div className="flex flex-col gap-4" data-member-page={formatMemberNumber(member.memberNumber)}>
       <BackToList to="/members" label={t('list.back')} />
       <div className="flex flex-wrap items-center gap-4">
-        <MemberAvatar name={member.fullName} size="lg" />
+        <MemberAvatar name={member.fullName} image={photo.data} size="lg" />
         <div className="flex min-w-0 flex-1 flex-col gap-1">
           <Heading className="text-2xl">{member.fullName}</Heading>
           <p className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
@@ -102,6 +104,7 @@ function MemberProfile({ member }: { readonly member: Member }) {
         </Alert>
       )}
 
+      <MemberPhotoCard member={member} />
       <MemberDetails member={member} />
       <HealthCard member={member} />
       <MemberStatusCard member={member} />

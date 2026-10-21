@@ -42,4 +42,9 @@
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Member photos (step 2c). The WebView asks for it the first time the camera opens. -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <!-- Tablets and phones without a camera can still install the app (they upload photos instead). -->
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <uses-feature android:name="android.hardware.camera.front" android:required="false" />
 </manifest>

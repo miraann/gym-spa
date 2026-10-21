@@ -1,5 +1,9 @@
 import {
   BLOOD_TYPES,
+  MEMBER_PHOTO_MAX_BYTES,
+  MEMBER_THUMBNAIL_MAX_BYTES,
+  parseStoredImage,
+  type StoredImage,
   GENDERS,
   MEMBER_STATUSES,
   REFERRAL_SOURCES,
@@ -19,6 +23,7 @@ import type { AppSupabaseClient } from '@/lib/backend';
 import { errorField } from '@/lib/save-error';
 import { hasHealthInput, type MemberInput } from './member-form';
 import type { MemberListParams } from './member-list-search';
+import type { PreparedPhoto } from './member-photo-image';
 
 // The members screens' server calls, each with the acting staff member's own session: RLS and the
 // database functions decide what they see and may change (README → Members). The query keys
@@ -53,6 +58,8 @@ export interface Member {
   readonly statusReason: string | null;
   readonly statusChangedAt: string | null;
   readonly hasHealthNotes: boolean;
+  /** When the photo last changed; null: no photo. */
+  readonly photoUpdatedAt: string | null;
   readonly createdAt: string;
 }
 
@@ -79,7 +86,7 @@ export interface MemberPage {
 }
 
 const MEMBER_COLUMNS =
-  'id, member_number, branch_id, full_name, gender, phone, emergency_contact_name, emergency_phone, birth_date, preferred_language, address, referral_source, goals, notes, tags, status, status_reason, status_changed_at, has_health_notes, created_at';
+  'id, member_number, branch_id, full_name, gender, phone, emergency_contact_name, emergency_phone, birth_date, preferred_language, address, referral_source, goals, notes, tags, status, status_reason, status_changed_at, has_health_notes, photo_updated_at, created_at';
 
 /** The database's checks keep these columns to their lists; this only narrows the types. */
 function oneOf<T extends string>(values: readonly T[], value: string | null, fallback: T): T {
@@ -111,6 +118,7 @@ type MemberColumns = Pick<
   | 'status_reason'
   | 'status_changed_at'
   | 'has_health_notes'
+  | 'photo_updated_at'
   | 'created_at'
 >;
 
@@ -135,6 +143,7 @@ export function toMember(row: MemberColumns): Member {
     statusReason: row.status_reason,
     statusChangedAt: row.status_changed_at,
     hasHealthNotes: row.has_health_notes,
+    photoUpdatedAt: row.photo_updated_at,
     createdAt: row.created_at,
   };
 }
@@ -388,6 +397,97 @@ export function useSetMemberStatus() {
       });
       if (error) throw error;
       return toMember(data);
+    },
+    onSettled: refresh,
+  });
+}
+
+// Photos (step 2c) -------------------------------------------------------------------------------
+// Keyed by photo_updated_at, so a cached picture is used until the photo changes.
+
+/** A member's photo, or null without one. */
+export function useMemberPhoto(member: Pick<Member, 'id' | 'photoUpdatedAt'>) {
+  const { client, actor } = useActingClient();
+  return useQuery({
+    queryKey: [MEMBERS_QUERY, actor, 'photo', member.id, member.photoUpdatedAt],
+    enabled: client !== undefined && member.photoUpdatedAt !== null,
+    staleTime: Infinity,
+    queryFn: async (): Promise<StoredImage | null> => {
+      const { data, error } = await requireClient(client)
+        .from('member_photos')
+        .select('photo_type, photo')
+        .eq('id', member.id)
+        .maybeSingle();
+      if (error) throw error;
+      return data ? parseStoredImage(data.photo_type, data.photo, MEMBER_PHOTO_MAX_BYTES) : null;
+    },
+  });
+}
+
+/** The thumbnails of the members shown (only those with a photo), by member id. */
+export function useMemberThumbnails(members: readonly Pick<Member, 'id' | 'photoUpdatedAt'>[]) {
+  const { client, actor } = useActingClient();
+  const withPhoto = members.filter((member) => member.photoUpdatedAt !== null);
+  return useQuery({
+    queryKey: [
+      MEMBERS_QUERY,
+      actor,
+      'thumbnails',
+      withPhoto.map((member) => `${member.id}@${member.photoUpdatedAt ?? ''}`),
+    ],
+    enabled: client !== undefined && withPhoto.length > 0,
+    staleTime: Infinity,
+    queryFn: async (): Promise<ReadonlyMap<string, StoredImage>> => {
+      const { data, error } = await requireClient(client)
+        .from('member_photos')
+        .select('id, thumbnail_type, thumbnail')
+        .in(
+          'id',
+          withPhoto.map((member) => member.id),
+        );
+      if (error) throw error;
+      const thumbnails = new Map<string, StoredImage>();
+      for (const row of data) {
+        const image = parseStoredImage(
+          row.thumbnail_type,
+          row.thumbnail,
+          MEMBER_THUMBNAIL_MAX_BYTES,
+        );
+        if (image) thumbnails.set(row.id, image);
+      }
+      return thumbnails;
+    },
+    placeholderData: keepPreviousData,
+  });
+}
+
+/** Adds or replaces a member's photo (set_member_photo, members.edit). */
+export function useSetMemberPhoto() {
+  const { client } = useActingClient();
+  const refresh = useRefreshMembers();
+  return useMutation({
+    mutationFn: async ({ id, photo }: { id: string; photo: PreparedPhoto }): Promise<void> => {
+      const { error } = await requireClient(client).rpc('set_member_photo', {
+        p_member_id: id,
+        p_photo_type: photo.photo.type,
+        p_photo: photo.photo.data,
+        p_thumbnail_type: photo.thumbnail.type,
+        p_thumbnail: photo.thumbnail.data,
+      });
+      if (error) throw error;
+    },
+    onSettled: refresh,
+  });
+}
+
+/** Removes a member's photo; it is deleted, not kept (remove_member_photo, members.edit). */
+export function useRemoveMemberPhoto() {
+  const { client } = useActingClient();
+  const refresh = useRefreshMembers();
+  return useMutation({
+    mutationFn: async (id: string): Promise<void> => {
+      const { error } = await requireClient(client).rpc('remove_member_photo', { p_member_id: id });
+      if (error) throw error;
     },
     onSettled: refresh,
   });

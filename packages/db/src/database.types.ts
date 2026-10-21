@@ -302,6 +302,56 @@ export type Database = {
           },
         ];
       };
+      member_photos: {
+        Row: {
+          created_at: string;
+          created_by: string | null;
+          deleted_at: string | null;
+          gym_id: string;
+          id: string;
+          photo: string;
+          photo_type: string;
+          thumbnail: string;
+          thumbnail_type: string;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          created_at?: string;
+          created_by?: string | null;
+          deleted_at?: string | null;
+          gym_id?: string;
+          id: string;
+          photo: string;
+          photo_type: string;
+          thumbnail: string;
+          thumbnail_type: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          created_at?: string;
+          created_by?: string | null;
+          deleted_at?: string | null;
+          gym_id?: string;
+          id?: string;
+          photo?: string;
+          photo_type?: string;
+          thumbnail?: string;
+          thumbnail_type?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'member_photos_id_gym_id_fkey';
+            columns: ['id', 'gym_id'];
+            isOneToOne: true;
+            referencedRelation: 'members';
+            referencedColumns: ['id', 'gym_id'];
+          },
+        ];
+      };
       members: {
         Row: {
           address: string | null;
@@ -321,6 +371,7 @@ export type Database = {
           member_number: number;
           notes: string | null;
           phone: string | null;
+          photo_updated_at: string | null;
           preferred_language: Database['public']['Enums']['language_code'];
           referral_source: string | null;
           search_text: string;
@@ -350,6 +401,7 @@ export type Database = {
           member_number: number;
           notes?: string | null;
           phone?: string | null;
+          photo_updated_at?: string | null;
           preferred_language?: Database['public']['Enums']['language_code'];
           referral_source?: string | null;
           search_text?: never;
@@ -379,6 +431,7 @@ export type Database = {
           member_number?: number;
           notes?: string | null;
           phone?: string | null;
+          photo_updated_at?: string | null;
           preferred_language?: Database['public']['Enums']['language_code'];
           referral_source?: string | null;
           search_text?: never;
@@ -885,6 +938,7 @@ export type Database = {
           member_number: number;
           notes: string | null;
           phone: string | null;
+          photo_updated_at: string | null;
           preferred_language: Database['public']['Enums']['language_code'];
           referral_source: string | null;
           search_text: string;
@@ -1064,6 +1118,7 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      remove_member_photo: { Args: { p_member_id: string }; Returns: undefined };
       reset_staff_pin: { Args: { p_staff_id: string }; Returns: undefined };
       role_overview: {
         Args: Record<PropertyKey, never>;
@@ -1123,6 +1178,7 @@ export type Database = {
           member_number: number;
           notes: string | null;
           phone: string | null;
+          photo_updated_at: string | null;
           preferred_language: Database['public']['Enums']['language_code'];
           referral_source: string | null;
           search_text: string;
@@ -1262,6 +1318,16 @@ export type Database = {
       };
       seller_suspend_gym: { Args: { p_gym_id: string; p_reason?: string }; Returns: undefined };
       seller_use_recovery_code: { Args: { p_code: string }; Returns: Json };
+      set_member_photo: {
+        Args: {
+          p_member_id: string;
+          p_photo: string;
+          p_photo_type: string;
+          p_thumbnail: string;
+          p_thumbnail_type: string;
+        };
+        Returns: string;
+      };
       set_member_status: {
         Args: { p_id: string; p_reason?: string; p_status: string };
         Returns: {
@@ -1282,6 +1348,7 @@ export type Database = {
           member_number: number;
           notes: string | null;
           phone: string | null;
+          photo_updated_at: string | null;
           preferred_language: Database['public']['Enums']['language_code'];
           referral_source: string | null;
           search_text: string;
@@ -1383,6 +1450,7 @@ export type Database = {
           member_number: number;
           notes: string | null;
           phone: string | null;
+          photo_updated_at: string | null;
           preferred_language: Database['public']['Enums']['language_code'];
           referral_source: string | null;
           search_text: string;

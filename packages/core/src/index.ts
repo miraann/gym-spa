@@ -115,6 +115,17 @@ export {
   type ReferralSource,
 } from './members.ts';
 export {
+  MEMBER_PHOTO_MAX_BYTES,
+  MEMBER_PHOTO_MAX_SIDE,
+  MEMBER_PHOTO_TYPES,
+  MEMBER_THUMBNAIL_MAX_BYTES,
+  MEMBER_THUMBNAIL_SIDE,
+  imageDataUrl,
+  parseStoredImage,
+  type MemberPhotoType,
+  type StoredImage,
+} from './member-photos.ts';
+export {
   MAX_PASSWORD_BYTES,
   MIN_PASSWORD_LENGTH,
   newPasswordProblem,

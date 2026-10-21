@@ -180,6 +180,37 @@
     },
     "cancel": "Cancel"
   },
+  "photo": {
+    "title": "Photo",
+    "alt": "Photo of {{name}}",
+    "none": "No photo yet. Take one, so staff can recognise the member when they come in.",
+    "take": "Take photo",
+    "choose": "Choose photo",
+    "preparing": "Preparing the picture…",
+    "remove": "Remove photo",
+    "saved": "The photo is saved",
+    "removed": "The photo is removed",
+    "preview": "The new photo",
+    "confirmTitle": "Use this photo?",
+    "confirmDescription": "It becomes {{name}}'s photo and is shown every time they come in.",
+    "save": "Use this photo",
+    "back": "Go back",
+    "removeTitle": "Remove {{name}}'s photo?",
+    "removeDescription": "The photo is deleted for good. You can add a new one at any time.",
+    "cameraTitle": "Take photo",
+    "cameraDescription": "Ask the member to look at the camera, then press \"Take\".",
+    "capture": "Take",
+    "errors": {
+      "photo_type": "Only PNG, JPEG or WebP pictures.",
+      "photo_unreadable": "This picture can't be read. Choose another one.",
+      "photo_too_large": "The picture is too large, even after resizing. Choose another one.",
+      "camera_unsupported": "This device can't open a camera here. Choose a photo instead.",
+      "camera_denied": "The camera is blocked. Allow it in the browser or device settings, or choose a photo instead.",
+      "camera_no_camera": "No camera was found on this device. Choose a photo instead.",
+      "camera_busy": "The camera is in use by another program. Close it and try again.",
+      "camera_unavailable": "The camera didn't open. Try again, or choose a photo instead."
+    }
+  },
   "errors": {
     "phone_in_use": "This mobile number belongs to another member.",
     "contact_phone_required": "This member has no number of their own, so a close person's number is needed.",
@@ -191,6 +222,7 @@
     "branch_inactive": "That branch is deactivated. Choose an active branch.",
     "permission_denied": "You don't have permission to do this.",
     "gym_read_only": "This gym is view-only, so no members can be added or changed.",
+    "invalid_photo": "This photo can't be saved. Take or choose it again.",
     "invalid_request": "These details are not valid. Check them and try again.",
     "network": "Couldn't reach the server. Check your internet connection and try again.",
     "unexpected": "Something went wrong. Try again. If it keeps happening, contact Click Group."
