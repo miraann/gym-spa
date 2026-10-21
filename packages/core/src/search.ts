@@ -34,7 +34,7 @@ export const SEARCH_LOOK_ALIKES: Readonly<Record<string, string>> = {
 };
 
 /** Arabic vowel marks, tatweel and the invisible joiners and direction marks: ignored. */
-export const SEARCH_IGNORED = /[ً-ٰٟـ‌-‏]/g;
+export const SEARCH_IGNORED = /[\u064B-\u065F\u0670\u0640\u200C-\u200F]/g;
 
 const LOOK_ALIKE_LETTERS = new RegExp(`[${Object.keys(SEARCH_LOOK_ALIKES).join('')}]`, 'g');
 

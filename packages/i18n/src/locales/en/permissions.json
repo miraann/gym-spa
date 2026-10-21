@@ -50,7 +50,7 @@
       "view": "View members",
       "create": "Add members",
       "edit": "Edit members' details",
-      "delete": "Delete members",
+      "delete": "Suspend, ban and archive members",
       "medical": {
         "view": "View members' medical notes"
       },

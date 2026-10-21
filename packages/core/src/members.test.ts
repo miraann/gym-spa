@@ -9,12 +9,17 @@ import {
   MEMBER_STATUSES,
   MIN_BIRTH_DATE,
   REFERRAL_SOURCES,
+  ageOn,
+  escapeLikePattern,
   formatMemberNumber,
   formatMemberPhone,
+  isCalendarDate,
+  isValidBirthDate,
   isValidMemberPhone,
   isValidMemberTags,
   memberSearchNeedle,
   normalizeMemberPhone,
+  normalizeMemberTag,
 } from './members.ts';
 import { latestFunctionBody, migrationsSql } from './sql-functions.test-helper.ts';
 
@@ -35,7 +40,7 @@ describe('normalizeMemberPhone', () => {
     ['٠٧٥٠ ١٢٣ ٤٥٦٧', '+9647501234567'],
     ['۰۷۷۰-۱۲۳-۴۵۶۷', '+9647701234567'],
     ['(0780) 123.4567', '+9647801234567'],
-    ['‎+964 790 123 4567‎', '+9647901234567'],
+    ['\u200E+964 790 123 4567\u200E', '+9647901234567'],
     ['+90 532 123 45 67', '+905321234567'],
     ['0098 912 345 6789', '+989123456789'],
   ])('reads %s as %s', (input, phone) => {
@@ -177,5 +182,38 @@ describe('the members table', () => {
 
   it('has the same earliest birth date', () => {
     expect(sql).toContain(`check (birth_date >= date '${MIN_BIRTH_DATE}')`);
+  });
+});
+
+describe('birth dates', () => {
+  it('knows which dates exist', () => {
+    expect(isCalendarDate('2024-02-29')).toBe(true);
+    expect(isCalendarDate('2023-02-29')).toBe(false);
+    expect(isCalendarDate('2024-04-31')).toBe(false);
+    expect(isCalendarDate('2024-4-1')).toBe(false);
+  });
+
+  it('accepts real dates from 1900 to today', () => {
+    expect(isValidBirthDate('1990-05-20', '2026-10-19')).toBe(true);
+    expect(isValidBirthDate('2026-10-19', '2026-10-19')).toBe(true);
+    expect(isValidBirthDate('2026-10-20', '2026-10-19')).toBe(false);
+    expect(isValidBirthDate('1899-12-31', '2026-10-19')).toBe(false);
+  });
+
+  it('counts whole years', () => {
+    expect(ageOn('1990-05-20', '2026-05-19')).toBe(35);
+    expect(ageOn('1990-05-20', '2026-05-20')).toBe(36);
+    expect(ageOn('2012-02-29', '2026-02-28')).toBe(13);
+  });
+});
+
+describe('tags and LIKE patterns', () => {
+  it('tidies a tag', () => {
+    expect(normalizeMemberTag('  ڕاهێنانی   تایبەت ')).toBe('ڕاهێنانی تایبەت');
+  });
+
+  it('escapes the LIKE wildcards', () => {
+    expect(escapeLikePattern('50%_a\\b')).toBe('50\\%\\_a\\\\b');
+    expect(escapeLikePattern('ئارام')).toBe('ئارام');
   });
 });

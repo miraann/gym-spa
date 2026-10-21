@@ -30,7 +30,7 @@ describe('normalizeSearchText', () => {
   it('ignores Arabic vowel marks, tatweel and invisible joiners', () => {
     expect(normalizeSearchText('جـيمُ')).toBe(normalizeSearchText('جیم'));
     expect(normalizeSearchText('ون‌بوو')).toBe(normalizeSearchText('ونبوو'));
-    expect(normalizeSearchText('‏گۆران‎')).toBe(normalizeSearchText('گۆران'));
+    expect(normalizeSearchText('\u200Fگۆران\u200E')).toBe(normalizeSearchText('گۆران'));
   });
 
   it('keeps single spaces only', () => {
@@ -42,7 +42,25 @@ describe('the database compares member searches the same way (app.normalize_sear
   const body = latestFunctionBody('app.normalize_search_text');
 
   it('ignores the same characters', () => {
-    expect(body).toContain(`'${SEARCH_IGNORED.source}'`);
+    // regexp_replace(lower(value), '<class>', '', 'g'): the SQL writes the characters themselves.
+    const sqlClass = /regexp_replace\(lower\(value\), '(\[[^']+\])'/.exec(body)?.[1];
+    expect(sqlClass).toBeDefined();
+    const inSql = new RegExp(sqlClass ?? '[]', 'u');
+    const inApp = new RegExp(SEARCH_IGNORED.source, 'u');
+    const differences: string[] = [];
+    // Arabic letters and marks, and the general punctuation block (joiners, direction marks).
+    for (const [from, to] of [
+      [0x0600, 0x06ff],
+      [0x2000, 0x206f],
+    ] as const) {
+      for (let codePoint = from; codePoint <= to; codePoint += 1) {
+        const character = String.fromCodePoint(codePoint);
+        if (inSql.test(character) !== inApp.test(character)) {
+          differences.push(codePoint.toString(16));
+        }
+      }
+    }
+    expect(differences).toEqual([]);
   });
 
   it('makes the same letters and digits one', () => {

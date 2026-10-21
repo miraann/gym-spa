@@ -107,13 +107,7 @@ test("phones get a bottom tab bar with the role's tabs, and pages end above it",
   // yet keep their place.
   await expect
     .poll(() => tabNames(page))
-    .toEqual([
-      'سەرەکی',
-      'ئەندامان (بەم زووانە)',
-      'تۆمارکردنی هاتن (بەم زووانە)',
-      'قاسە (بەم زووانە)',
-      'زیاتر',
-    ]);
+    .toEqual(['سەرەکی', 'ئەندامان', 'تۆمارکردنی هاتن (بەم زووانە)', 'قاسە (بەم زووانە)', 'زیاتر']);
 
   // The last card of a long page scrolls clear of the bar.
   await page.evaluate(() => {
@@ -187,11 +181,5 @@ test('staff choose their own tabs, which follow them to other devices', async ({
   // The toast of the first save may still be showing: wait for the tabs themselves.
   await expect
     .poll(() => tabNames(page))
-    .toEqual([
-      'سەرەکی',
-      'ئەندامان (بەم زووانە)',
-      'تۆمارکردنی هاتن (بەم زووانە)',
-      'قاسە (بەم زووانە)',
-      'زیاتر',
-    ]);
+    .toEqual(['سەرەکی', 'ئەندامان', 'تۆمارکردنی هاتن (بەم زووانە)', 'قاسە (بەم زووانە)', 'زیاتر']);
 });

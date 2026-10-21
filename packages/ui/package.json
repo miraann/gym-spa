@@ -19,6 +19,7 @@
     "@fontsource-variable/inter": "^5.3.0",
     "@fontsource-variable/vazirmatn": "^5.3.0",
     "@gym/i18n": "workspace:*",
+    "@tanstack/react-table": "^9.3.1",
     "class-variance-authority": "^0.7.1",
     "cmdk": "^1.1.1",
     "cn": "^0.4.0",

@@ -957,6 +957,13 @@ export type Database = {
           max_devices: number;
         }[];
       };
+      member_tags: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          member_count: number;
+          tag: string;
+        }[];
+      };
       move_device: {
         Args: { p_branch_id: string; p_device_id: string };
         Returns: {

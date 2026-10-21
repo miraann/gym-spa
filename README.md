@@ -358,6 +358,17 @@ The hook runs for every login of every gym and of Click Group. If logins fail ev
 
 The app always needs its server. `apps/app/src/lib/connection.ts` checks `GET /auth/v1/health` every 30 seconds (every 10 while disconnected) and whenever the network changes. The top bar shows Connected / No connection / Server not responding, with the time of the last check and a "Check again" button. While the server can't be reached, TanStack Query pauses its requests and runs them again when it is back; the PIN and the password login say that the server is needed.
 
+## NFC cards and readers
+
+Decided with the user on 2026-10-19 (spec §1). Card reading is built in Phase 2, steps 2e (keyboard-type readers), 2f (PC/SC readers in the Windows app) and 2g (Android phones and tablets); this section grows with them.
+
+- **Cards:** a card is known by its UID, stored as uppercase hex with no separators. 7-byte UIDs (NTAG cards) and 4-byte UIDs both work. For a real gym, buy **genuine NXP NTAG213 or NTAG215** cards: NFC Tools (Android or iPhone) shows their NXP signature as "Valid". Cheaper compatible clones read the same, but their UID may be changeable, so such a card can be copied. The app never relies on the NXP signature. The check-in screen (Phase 4) shows the member's photo on every scan, so staff can spot a copied card.
+- **Readers at the desk:**
+  - **PC/SC readers** such as the ACR122U (they don't type anything): only in the **Windows app**, which reads them directly.
+  - **Keyboard-type readers** (they type the UID and Enter): in the Windows app and in the browser.
+  - **The web app in a browser can't use PC/SC readers.** It says so, and points to the Windows app, a keyboard-type reader, or an NFC phone.
+- **Phones and tablets:** the Android app reads cards with the device's own NFC. Later, the iOS app will use Core NFC.
+
 ## A cloud project
 
 The production setup of the online edition: Supabase and the web app on Vercel. Put Supabase close to Iraq (ours is in Frankfurt, `eu-central-1`).

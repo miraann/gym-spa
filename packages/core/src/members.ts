@@ -49,7 +49,7 @@ export const MEMBER_PHONE_PATTERN = /^\+[1-9][0-9]{7,14}$/;
 export const IRAQI_MOBILE_PATTERN = /^\+9647[0-9]{9}$/;
 
 /** Spaces, dashes, dots, brackets and direction marks that people type or paste in a number. */
-const PHONE_SEPARATORS = /[\s\-.()‎‏‪-‮⁦-⁩]/g;
+const PHONE_SEPARATORS = /[\s\-.()\u200E\u200F\u202A-\u202E\u2066-\u2069]/g;
 
 /** Whether a stored phone (E.164) is one the database accepts. */
 export function isValidMemberPhone(phone: string): boolean {
@@ -114,4 +114,42 @@ export const MEMBER_NUMBER_QUERY = /^[+0-9 ()-]+$/;
 export function memberSearchNeedle(query: string): string {
   const needle = normalizeSearchText(query);
   return MEMBER_NUMBER_QUERY.test(needle) ? needle.replace(/[^0-9]/g, '') : needle;
+}
+
+/** Whether a YYYY-MM-DD date exists in the calendar (no 30 February). */
+export function isCalendarDate(date: string): boolean {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date);
+  if (!match) return false;
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const value = new Date(Date.UTC(year, month - 1, day));
+  return (
+    value.getUTCFullYear() === year &&
+    value.getUTCMonth() === month - 1 &&
+    value.getUTCDate() === day
+  );
+}
+
+/** Like the database: a real date from 1900 to today (Baghdad, YYYY-MM-DD). */
+export function isValidBirthDate(date: string, today: string): boolean {
+  return isCalendarDate(date) && date >= MIN_BIRTH_DATE && date <= today;
+}
+
+/** Whole years from a birth date to a day (both YYYY-MM-DD). */
+export function ageOn(birthDate: string, day: string): number {
+  const [birthYear = 0, birthMonth = 0, birthDay = 0] = birthDate.split('-').map(Number);
+  const [year = 0, month = 0, date = 0] = day.split('-').map(Number);
+  const beforeBirthday = month < birthMonth || (month === birthMonth && date < birthDay);
+  return year - birthYear - (beforeBirthday ? 1 : 0);
+}
+
+/** A tag as stored: no spaces around it, inner runs of spaces made single. */
+export function normalizeMemberTag(input: string): string {
+  return input.trim().replace(/\s+/g, ' ');
+}
+
+/** Text for a LIKE pattern in which %, _ and \ match only themselves. */
+export function escapeLikePattern(text: string): string {
+  return text.replace(/[\\%_]/g, (character) => `\\${character}`);
 }

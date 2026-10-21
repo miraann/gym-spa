@@ -47,7 +47,7 @@ Every member gets an **NFC card** (MIFARE / NTAG). At the entrance, staff or a k
 
 ## 1. NFC integration
 Support every platform behind one `NfcReader` interface (in `/packages/platform/nfc`):
-1. **USB desktop reader (Windows EXE + web)** — e.g. ACR122U or any reader in keyboard-wedge (HID) mode that types the card UID + Enter. Build a focused, always-listening input on the check-in screen that captures fast keystroke bursts (< 50 ms between chars) and ignores normal typing. In Electron, optionally read the reader directly via PC/SC (`nfc-pcsc`) for more reliable scans.
+1. **USB desktop reader (Windows EXE + web)** — any reader in keyboard-wedge (HID) mode that types the card UID + Enter. Build a focused, always-listening input on the check-in screen that captures fast keystroke bursts (< 50 ms between chars) and ignores normal typing. **PC/SC readers such as the ACR122U** (they don't type) are read by the Windows EXE directly: required, step 2f (below).
 2. **Android (APK)** — native NFC through a Capacitor NFC plugin (read tag UID in foreground). Android tablets can be used as a check-in kiosk.
 3. **iOS (later phase)** — choose a Capacitor NFC plugin that also supports Core NFC, so iOS works later without rewriting.
 4. **Web NFC API** — fallback for Android Chrome when running as a PWA (`NDEFReader`). Feature-detect and fall back to manual search.
@@ -57,11 +57,19 @@ Rules:
 - A member can have multiple cards over time, but only **one active** card. Support: assign, replace (lost/damaged, with optional fee), deactivate, blacklist.
 - **Decided by the user on 2026-10-19 (Phase 2 plan), built in steps 2d–2f:**
   - A card UID is unique **per gym**, not across the whole system: two gyms' cheap 4-byte cards can share a UID, and a system-wide check would tell one gym that another has that card.
-  - The design accepts 4-byte and 7-byte UIDs, and readers that type a 10-digit decimal number (e.g. 125 kHz EM readers). Which cards and readers to recommend is still open.
+  - The design accepts 4-byte and 7-byte UIDs, and readers that type a 10-digit decimal number (e.g. 125 kHz EM readers).
   - **Lost or damaged:** the old card stops working at once; the new card can be given in the same step. A lost card that turns up can be given out again.
   - **Stolen:** the card is also blocked (`cards.blacklist`). Nobody can be given it until a manager unblocks it, and the check-in screen (Phase 4) shows that it was reported stolen. A receptionist marks a card lost, which already stops it; a manager blocks it if needed.
   - **Returned** (the member leaves): the card can be given to someone else. Archiving a member returns their card.
   - The replacement fee comes with Phase 3 (payments). A read-only gym can't change cards.
+- **Card hardware (decision 6, answered by the user on 2026-10-19):**
+  - **Reader:** the user's desk reader is an ACR122U-type USB reader. It is PC/SC, not keyboard-type, so **ACR122U support in the Windows EXE is part of Phase 2**, its own step 2f after 2e: a maintained PC/SC native module in Electron's main process (licence and the Electron rebuild checked first), exposed to the page over IPC as UID events only, behind the same `NfcReader` interface. It reads the UID with the standard Get UID command (`FF CA 00 00 00`), handles the reader being plugged in and out, and uses the reader's beep and LED for success and error where it can.
+  - **Keyboard-type readers** stay supported as planned: other gyms may have those.
+  - **The web app can't use PC/SC:** it shows a clear message that reading cards at the desk needs the Windows app, a keyboard-type reader, or an NFC phone.
+  - **Cards:** the user's test cards are NXP NTAG215 type (ISO 14443-3A, NFC Forum Type 2, 7-byte UID, no password). Their NXP originality signature is invalid, so they are compatible clones. **The UID is the card's identity** (uppercase hex); 4-byte UIDs are still accepted. The NXP signature is never relied on.
+  - **README (NFC section):** recommend genuine NXP NTAG213/215 cards for real gyms (signature "Valid" in NFC Tools). Clones work, but their UID may be changeable, so a card can be copied.
+  - **Phase 4:** the check-in screen shows the member's photo on every scan, so staff can spot a copied card.
+  - **Later (iOS):** the user tests with an iPhone, so the future iOS app reads cards through Core NFC. No change to Phase 2.
 - Never trust the UID alone for sensitive actions (payments, refunds) — require staff login.
 - Manual fallback: search member by name/phone/member code if the card is forgotten (log it as `method = 'manual'`).
 
@@ -317,7 +325,7 @@ Core tables (expand as needed):
 - Clean, modern, touch-first look ("Calm Bento", see CLAUDE.md → Design); dark/light mode; the look is adjustable (§6.1)
 - Navigation fits the screen: sidebar grouped by module on desktop, an icon rail on tablets, a bottom tab bar with a "More" sheet on phones
 - Phone tabs never move by themselves (decided by the user on 2026-10-10): staff learn tab positions, and moving tabs causes mistakes at a busy reception. Each role has 4 fixed default tabs, kept in one place in code (e.g. receptionist: home, members, check-in, cash register; manager: home, members, reports, staff). Each staff member can change their own 4 tabs from the "More" sheet; the choice is saved on their profile, so it follows them to other devices, and only they can change it. When check-in is one of the tabs, it is the raised scan button in the middle
-- **Check-in screen**: full-screen, large text, member photo, big colored status, sound feedback (success/fail beep), auto-reset after 5 seconds, works on a tablet in kiosk mode
+- **Check-in screen**: full-screen, large text, member photo (on every scan, so staff can spot a copied card: §1), big colored status, sound feedback (success/fail beep), auto-reset after 5 seconds, works on a tablet in kiosk mode
 - Fast reception workflow: global search (Ctrl+K) by name, phone, code, or card scan from anywhere
 - Every table: search, filters, sorting, pagination (server-side, through PostgREST), column visibility, export
 - Forms: Zod validation, clear error messages in the user's language (Kurdish by default), confirmation dialogs for destructive actions
@@ -355,7 +363,7 @@ The app must not have only one look. The default is indigo + light + soft corner
 
 ## 8. Build phases (do them in order, stop for my review after each)
 1. **Foundation:** monorepo + Vite PWA + Vercel deploy + Capacitor (Android) + Electron (Windows) projects — debug APK and EXE build from day one, Supabase connection, connection indicator, PIN switching (checked by the server), i18n + RTL, auth, branches, RBAC tables + RLS + permission matrix UI, staff management, audit log trigger, layout & navigation. Sub-step order after 1d-R (updated by the user on 2026-10-10): the auth spike, then **MT-1** (§2.6: gyms and `gym_id` isolation, per-gym login; split into MT-1a and MT-1b), then the **design step** (Calm Bento theme, phone tab bar / tablet rail / desktop sidebar, the §6.1 Appearance settings and the §6 layout rules), then **MT-2 and MT-3** (§2.6: the staff module, the seller panel), then 1e (admin screens), which ends Phase 1. Changed by the user on 2026-10-11: MT-4 now comes after Phase 4, and MT-5 and 1f (offline-edition server test) move to the offline packaging phase (see below Phase 10)
-2. **Members & NFC:** member CRUD, photo capture, NFC card assign/replace, NFC reader abstraction, global search. Plan approved by the user on 2026-10-19 (decisions in §1 and §4.1), on branch `2a`, one commit per sub-step, each stopping for review: **2a** members database and seed, **2b** members screens, **2c** member photos, **2d** NFC cards database, **2e** keyboard-type readers and the card screens, **2f** Android NFC and Web NFC, **2g** global search, member counts in the seller panel, docs, **2j** import from Excel/CSV. The cloud gets the Phase 2 migrations only after the user's OK (dry run first).
+2. **Members & NFC:** member CRUD, photo capture, NFC card assign/replace, NFC reader abstraction, global search. Plan approved by the user on 2026-10-19 (decisions in §1 and §4.1), on branch `2a`, one commit per sub-step, each stopping for review: **2a** members database and seed (done), **2b** members screens, **2c** member photos, **2d** NFC cards database, **2e** keyboard-type readers and the card screens, **2f** ACR122U (PC/SC) reader in the Windows EXE (added with decision 6), **2g** Android NFC and Web NFC, **2h** global search, member counts in the seller panel, docs, **2j** import from Excel/CSV. The cloud gets the Phase 2 migrations only after the user's OK (dry run first).
 3. **Plans, subscriptions & payments:** plans, subscribe/renew/freeze/upgrade, payments, invoices, receipts, debts, installments
 4. **Check-in engine:** `check_in` function + tests, check-in kiosk screen, attendance list, live occupancy
    - **Then MT-4 Support access** (§2.6), before Phase 5.
@@ -371,6 +379,6 @@ The app must not have only one look. The default is indigo + light + soft corner
      - On the signed (release) APK, log in and unlock while watching `adb logcat`: no session tokens, refresh tokens or plugin call contents may appear. Debug builds print every Capacitor plugin call, including the staff member's session, to logcat; Capacitor's `loggingBehavior` default (`'debug'`) keeps release builds quiet, so check it was not changed.
 12. **Polish:** test on all 3 targets (web, Android, Windows), offline-edition tests (server PC + several PCs on a LAN, lost connection, concurrent bookings), performance, security review of every RLS policy, accessibility, final tests, README
 
-13. **Later (separate request):** iOS build — `npx cap add ios`, Core NFC, TestFlight/App Store
+13. **Later (separate request):** iOS build — `npx cap add ios`, Core NFC (the user tests with an iPhone), TestFlight/App Store
 
 At the end of each phase, give me: what was built, migrations added, how to test it manually, and known limitations.
