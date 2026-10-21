@@ -8,6 +8,7 @@ import { Skeleton } from '@gym/ui/components/skeleton';
 import { Spinner } from '@gym/ui/components/spinner';
 import { cn } from '@gym/ui/lib/utils';
 import { CameraIcon, ImageUpIcon, TrashIcon, TriangleAlertIcon, UserRoundIcon } from 'lucide-react';
+import { useLocation } from '@tanstack/react-router';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
@@ -55,6 +56,9 @@ export function MemberPhotoImage({
   );
 }
 
+/** The member page's address for "take their photo now": where adding a member ends. */
+export const PHOTO_HASH = 'photo';
+
 /**
  * The photo on a member's page (spec §4.1, step 2c): taken with the camera or picked from a file,
  * shown before saving, saved at once. Staff with members.edit change it; an archived member's
@@ -62,6 +66,7 @@ export function MemberPhotoImage({
  */
 export function MemberPhotoCard({ member }: { readonly member: Member }) {
   const { t } = useTranslation('members');
+  const hash = useLocation({ select: (location) => location.hash });
   const { online, readOnly } = useAdminWriteState();
   const canEdit = usePermission('members.edit') && member.status !== 'archived';
   const photo = useMemberPhoto(member);
@@ -81,6 +86,17 @@ export function MemberPhotoCard({ member }: { readonly member: Member }) {
   // Without a photo (a member just added, too) taking one is the card's main action.
   const takeIsMain = !hasPhoto && canUseCamera;
   const chooseIsMain = !hasPhoto && !canUseCamera;
+  // Just added (#photo) and still without a photo: the card stands out and its main button has
+  // the focus, so taking the photo is the obvious next step.
+  const prompt = hash === PHOTO_HASH && !hasPhoto && canEdit;
+  const card = useRef<HTMLDivElement>(null);
+  const mainButton = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!prompt) return;
+    card.current?.scrollIntoView({ block: 'center' });
+    mainButton.current?.focus({ preventScroll: true });
+  }, [prompt]);
 
   const pick = async (picker: HTMLInputElement) => {
     const file = picker.files?.[0];
@@ -134,7 +150,12 @@ export function MemberPhotoCard({ member }: { readonly member: Member }) {
   };
 
   return (
-    <Card>
+    <Card
+      ref={card}
+      id={PHOTO_HASH}
+      data-photo-prompt={prompt || undefined}
+      className={cn('scroll-mt-20', prompt && 'ring-2 ring-primary')}
+    >
       <CardHeader>
         <CardTitle>{t('photo.title')}</CardTitle>
       </CardHeader>
@@ -154,6 +175,7 @@ export function MemberPhotoCard({ member }: { readonly member: Member }) {
             <div className="flex flex-wrap gap-2">
               {canUseCamera && (
                 <Button
+                  ref={takeIsMain ? mainButton : undefined}
                   variant={takeIsMain ? 'default' : 'outline'}
                   size={takeIsMain ? 'lg' : 'default'}
                   disabled={!writable || busy}
@@ -168,6 +190,7 @@ export function MemberPhotoCard({ member }: { readonly member: Member }) {
                 </Button>
               )}
               <Button
+                ref={chooseIsMain ? mainButton : undefined}
                 variant={chooseIsMain ? 'default' : 'outline'}
                 size={chooseIsMain ? 'lg' : 'default'}
                 disabled={!writable || busy}

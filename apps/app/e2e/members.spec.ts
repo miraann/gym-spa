@@ -60,8 +60,11 @@ test('a receptionist adds a member, and finds them by a name typed with Arabic l
 
   await expect(page.getByText('ژیلا کەریم تۆمار کرا. ژمارەی ئەندام: 000001')).toBeVisible();
   await expect(page.locator('[data-member-page="000001"]')).toBeVisible();
-  // The new member has no photo yet: taking one is the main action on their page.
-  await expect(page.getByRole('button', { name: 'گرتنی وێنە' })).toBeVisible();
+  // The new member has no photo yet: their page points to the photo card, and taking one is the
+  // focused main action.
+  await expect(page).toHaveURL(/#photo$/);
+  await expect(page.locator('[data-photo-prompt]')).toBeInViewport();
+  await expect(page.getByRole('button', { name: 'گرتنی وێنە' })).toBeFocused();
   const gym = await data.gym();
   const { data: rows } = await admin()
     .from('members')

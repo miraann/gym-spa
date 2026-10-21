@@ -53,6 +53,7 @@ import {
 import { memberErrorKey, type MemberErrorKey } from './member-errors';
 import { MemberError } from './member-error';
 import { BirthDateField, DuplicateWarning, TagInput } from './member-fields';
+import { PHOTO_HASH } from './member-photo';
 import {
   emptyMemberForm,
   memberFormSchema,
@@ -107,10 +108,12 @@ function NewMember() {
               number: formatMemberNumber(member.memberNumber),
             }),
           );
+          // #photo: the new member's page points staff to the photo first (member-photo.tsx).
           void navigate({
             to: '/members/$memberId',
             params: { memberId: member.id },
             search: (previous) => previous,
+            hash: PHOTO_HASH,
           });
         },
         onError: (thrown) => {
