@@ -5,7 +5,7 @@
     "search": "Search by name, member number or mobile number",
     "statusFilter": "Status",
     "statuses": {
-      "current": "All",
+      "current": "All (not archived)",
       "active": "Active",
       "suspended": "Suspended",
       "banned": "Banned",

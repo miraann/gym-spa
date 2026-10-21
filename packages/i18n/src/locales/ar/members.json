@@ -5,7 +5,7 @@
     "search": "ابحث بالاسم أو رقم العضو أو رقم الموبايل",
     "statusFilter": "الحالة",
     "statuses": {
-      "current": "الكل",
+      "current": "الكل (بدون المؤرشفين)",
       "active": "نشط",
       "suspended": "موقوف",
       "banned": "محظور",

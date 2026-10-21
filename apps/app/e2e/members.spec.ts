@@ -124,7 +124,7 @@ test('a branch manager changes a member, suspends, archives and reactivates them
   await signIn(page, manager, `/members/${id}`);
   await expect(page.getByRole('heading', { name: 'هێمن سەلیم' })).toBeVisible();
 
-  await page.getByRole('link', { name: 'دەستکاریکردن' }).click();
+  await page.getByRole('link', { name: 'دەستکاری', exact: true }).click();
   await page.getByRole('textbox', { name: 'ژمارەی مۆبایل', exact: true }).fill('0770 555 1234');
   await page.getByRole('button', { name: 'پاشەکەوتکردن' }).click();
   await expect(page.getByText('گۆڕانکارییەکان پاشەکەوت کران')).toBeVisible();
@@ -178,7 +178,7 @@ test("a receptionist can't change a member's status or read their health notes",
   await expect(page.getByRole('heading', { name: 'شنۆ عەلی' })).toBeVisible();
   await expect(page.getByText('تێبینیی تەندروستیی هەیە').first()).toBeVisible();
   await expect(page.getByText('شەکرە')).toHaveCount(0);
-  await expect(page.getByRole('link', { name: 'دەستکاریکردن' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'دەستکاری', exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'ڕاگرتن' })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'ئەرشیفکردن' })).toHaveCount(0);
 });
