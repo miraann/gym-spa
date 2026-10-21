@@ -2,7 +2,7 @@ import { Alert, AlertDescription } from '@gym/ui/components/alert';
 import { Button } from '@gym/ui/components/button';
 import { useSideBySide } from '@gym/ui/hooks/use-side-by-side';
 import { Link } from '@tanstack/react-router';
-import { ArrowRightIcon, TriangleAlertIcon } from 'lucide-react';
+import { ChevronRightIcon, TriangleAlertIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { AppPath } from '@/app/navigation';
 import type { AdminErrorKey } from './admin-errors';
@@ -19,14 +19,21 @@ export function AdminError({ error }: { readonly error: AdminErrorKey | null }) 
   );
 }
 
-/** Back to the list, when the list isn't beside the open item. */
+/**
+ * Back to the list, when the list isn't beside the open item: a native app's back button, in the
+ * brand color.
+ */
 export function BackToList({ to, label }: { readonly to: AppPath; readonly label: string }) {
   if (useSideBySide()) return null;
   return (
-    <Button asChild variant="ghost" className="self-start">
+    <Button
+      asChild
+      variant="ghost"
+      className="-ms-2 gap-1 self-start ps-1 text-base font-medium text-primary hover:bg-primary/8 hover:text-primary"
+    >
       <Link to={to}>
         {/* Points back to the reading start: right in Kurdish and Arabic, left in English. */}
-        <ArrowRightIcon className="ltr:rotate-180" aria-hidden="true" />
+        <ChevronRightIcon className="size-6 ltr:rotate-180" aria-hidden="true" />
         {label}
       </Link>
     </Button>

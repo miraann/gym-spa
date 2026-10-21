@@ -200,6 +200,37 @@ export function useMemberPage(params: MemberListParams) {
   });
 }
 
+export interface MemberCounts {
+  readonly active: number;
+  /** Members registered since `since` (the start of this month, for the dashboard). */
+  readonly newSince: number;
+}
+
+/** The dashboard's member numbers, counted by the server in the branches the staff member sees. */
+export function useMemberCounts(since: Date) {
+  const { client, actor } = useActingClient();
+  return useQuery({
+    queryKey: [MEMBERS_QUERY, actor, 'counts', since.toISOString()],
+    enabled: client !== undefined,
+    queryFn: async (): Promise<MemberCounts> => {
+      const db = requireClient(client);
+      const count = (filter: 'active' | 'new') => {
+        const query = db
+          .from('members')
+          .select('id', { count: 'exact', head: true })
+          .is('deleted_at', null);
+        return filter === 'active'
+          ? query.eq('status', 'active')
+          : query.gte('created_at', since.toISOString());
+      };
+      const [active, created] = await Promise.all([count('active'), count('new')]);
+      if (active.error) throw active.error;
+      if (created.error) throw created.error;
+      return { active: active.count ?? 0, newSince: created.count ?? 0 };
+    },
+  });
+}
+
 export function useMember(memberId: string) {
   const { client, actor } = useActingClient();
   return useQuery({

@@ -1,4 +1,5 @@
 import { normalizePin, PIN_LENGTH } from '@gym/core';
+import { haptic } from '@gym/platform';
 import { localizeDigits } from '@gym/i18n';
 import { DeleteIcon } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
@@ -44,6 +45,7 @@ export function PinPad({
   const update = (next: string) => {
     if (locked) return;
     const value = normalizePin(next).replace(/\D/g, '').slice(0, PIN_LENGTH);
+    if (value.length > pin.length) haptic('light');
     setPin(value);
     if (value.length === PIN_LENGTH) onComplete(value);
   };
@@ -70,20 +72,30 @@ export function PinPad({
           // The PIN is the only thing on this screen.
           autoFocus
         />
-        <span aria-hidden dir="ltr" className="flex gap-3" onClick={() => input.current?.focus()}>
+        <span
+          aria-hidden
+          dir="ltr"
+          className="flex gap-4 py-2"
+          onClick={() => input.current?.focus()}
+        >
           {Array.from({ length: PIN_LENGTH }, (_, index) => (
             <span
               key={index}
               className={cn(
-                'size-3.5 rounded-full border-2 border-primary transition-colors',
-                index < pin.length && 'bg-primary',
+                'size-4 rounded-full border-2 border-primary transition-[background-color,scale] duration-150 ease-spring motion-reduce:transition-none',
+                index < pin.length ? 'scale-110 bg-primary' : 'scale-100',
               )}
             />
           ))}
         </span>
       </label>
 
-      <div role="group" aria-label={t('pin.keypad')} dir="ltr" className="grid grid-cols-3 gap-2">
+      <div
+        role="group"
+        aria-label={t('pin.keypad')}
+        dir="ltr"
+        className="grid grid-cols-3 gap-x-5 gap-y-3"
+      >
         {KEYS.map((key) => (
           <PadKey
             key={key}
@@ -105,7 +117,7 @@ export function PinPad({
         <Button
           type="button"
           variant="ghost"
-          className="size-16 rounded-full"
+          className="size-18 rounded-full [&_svg:not([class*='size-'])]:size-6"
           disabled={locked || pin.length === 0}
           aria-label={t('pin.delete')}
           onClick={() => {
@@ -113,7 +125,7 @@ export function PinPad({
             input.current?.focus();
           }}
         >
-          <DeleteIcon className="size-5" />
+          <DeleteIcon />
         </Button>
       </div>
       {busy && (
@@ -138,8 +150,8 @@ function PadKey({
   return (
     <Button
       type="button"
-      variant="outline"
-      className="size-16 rounded-full text-xl"
+      variant="secondary"
+      className="size-18 rounded-full text-[1.75rem] font-medium tabular-nums shadow-xs"
       disabled={disabled}
       onClick={onPress}
     >

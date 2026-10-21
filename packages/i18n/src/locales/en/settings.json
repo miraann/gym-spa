@@ -25,6 +25,14 @@
       "description": "For every device of this gym. What you change here changes for all staff.",
       "readOnly": "Only staff who can change settings and have access to all branches can change the gym's look."
     },
+    "looks": {
+      "label": "Ready-made looks",
+      "hint": "Sets the color and the corner style together. You can still change either one afterwards.",
+      "classic": "Classic",
+      "midnight": "Midnight",
+      "gold": "Gold",
+      "sport": "Sport"
+    },
     "brand": {
       "label": "Brand color",
       "hint": "For buttons, the selected item and field borders. Green, amber and red are kept for status and never change.",
@@ -32,7 +40,10 @@
         "indigo": "Indigo",
         "blue": "Blue",
         "purple": "Purple",
-        "gray": "Gray"
+        "gray": "Gray",
+        "midnight": "Midnight blue",
+        "gold": "Gold",
+        "teal": "Teal"
       },
       "custom": "Custom color",
       "picker": "Pick a color",

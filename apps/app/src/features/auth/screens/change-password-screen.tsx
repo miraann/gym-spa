@@ -107,7 +107,7 @@ export function ChangePasswordScreen({
             <FieldError>{message(errors.confirm?.message)}</FieldError>
           </Field>
           <AuthErrorMessage error={error} />
-          <Button type="submit" disabled={isSubmitting}>
+          <Button type="submit" size="lg" disabled={isSubmitting}>
             {isSubmitting && <Spinner />}
             {t('changePassword.submit')}
           </Button>

@@ -2,7 +2,7 @@ import { getDirection } from '@gym/i18n';
 import { Link, useRouterState } from '@tanstack/react-router';
 import { Fragment } from 'react';
 import { useTranslation } from 'react-i18next';
-import { isNavItemActive, visibleNavGroups, type NavItem } from '@/app/navigation';
+import { isNavItemActive, visibleNavGroups, type OpenNavItem } from '@/app/navigation';
 import { Separator } from '@gym/ui/components/separator';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@gym/ui/components/tooltip';
 import { usePermissions } from '@/features/auth/use-permissions';
@@ -12,8 +12,9 @@ import { GymMark } from './gym-mark';
 import { useGymName } from './use-gym-name';
 
 /**
- * Tablets (768–1279px): the menu as an icon rail on the reading-start side. Each item shows its
- * short name in at most two lines; the full name is the tooltip and the accessible name.
+ * Tablets (768–1279px): the menu as an icon rail on the reading-start side, like a tablet app's.
+ * Each item shows its short name in at most two lines; the full name is the tooltip and the
+ * accessible name. Pages that are not built yet are not shown.
  */
 export function NavRail() {
   const { t } = useTranslation(['common', 'nav']);
@@ -24,14 +25,14 @@ export function NavRail() {
     <nav
       data-slot="nav-rail"
       aria-label={t('sidebar.title')}
-      className="sticky top-0 flex h-svh w-22 shrink-0 flex-col items-stretch gap-1 overflow-y-auto bg-sidebar px-1.5 pt-[calc(env(safe-area-inset-top)+0.5rem)] pb-[calc(env(safe-area-inset-bottom)+0.5rem)] text-sidebar-foreground *:shrink-0"
+      className="sticky top-0 flex h-svh w-24 shrink-0 flex-col items-stretch gap-1 overflow-y-auto border-e border-sidebar-border bg-sidebar px-2 pt-[calc(env(safe-area-inset-top)+0.5rem)] pb-[calc(env(safe-area-inset-bottom)+0.5rem)] text-sidebar-foreground *:shrink-0"
     >
       <Link
         to="/"
         aria-label={gymName ?? t('app.name')}
-        className="mx-auto mb-1 rounded-2xl outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+        className="mx-auto mb-2 rounded-2xl outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
       >
-        <GymMark className="size-11 rounded-2xl" />
+        <GymMark className="size-12 rounded-2xl" />
       </Link>
       {groups.map((group, index) => (
         <Fragment key={group.key}>
@@ -45,14 +46,13 @@ export function NavRail() {
   );
 }
 
-function RailItem({ item }: { readonly item: NavItem }) {
-  const { t } = useTranslation(['common', 'nav']);
+function RailItem({ item }: { readonly item: OpenNavItem }) {
+  const { t } = useTranslation('nav');
   const { language } = usePreferences();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
-  const label = t(`nav:items.${item.key}`);
+  const label = t(`items.${item.key}`);
   const isActive = isNavItemActive(item, pathname);
   const Icon = item.icon;
-  const soon = item.to === undefined;
   // Radix sides are physical: the tooltip opens towards the page, away from the rail.
   const tooltipSide = getDirection(language) === 'rtl' ? 'left' : 'right';
 
@@ -60,20 +60,22 @@ function RailItem({ item }: { readonly item: NavItem }) {
     <>
       <span
         className={cn(
-          'flex h-8 w-12 items-center justify-center rounded-full transition-colors motion-reduce:transition-none',
-          isActive ? 'bg-accent text-accent-foreground' : 'group-hover/rail:bg-sidebar-accent',
+          'flex h-9 w-14 items-center justify-center rounded-full transition-colors duration-150 motion-reduce:transition-none',
+          isActive
+            ? 'bg-primary text-primary-foreground shadow-sm'
+            : 'text-muted-foreground group-hover/rail:bg-sidebar-accent group-hover/rail:text-foreground',
         )}
       >
-        <Icon aria-hidden className="size-5" />
+        <Icon aria-hidden className="size-5.5" />
       </span>
       <span
         data-slot="rail-label"
         className={cn(
-          'line-clamp-2 w-full text-center text-[0.6875rem] leading-tight [overflow-wrap:anywhere]',
-          isActive ? 'text-foreground' : 'text-muted-foreground',
+          'line-clamp-2 w-full text-center text-xs leading-tight [overflow-wrap:anywhere]',
+          isActive ? 'font-semibold text-foreground' : 'text-muted-foreground',
         )}
       >
-        {t(`nav:short.${item.key}`)}
+        {t(`short.${item.key}`)}
       </span>
     </>
   );
@@ -83,30 +85,16 @@ function RailItem({ item }: { readonly item: NavItem }) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        {soon ? (
-          // Not built yet: focusable (so the tooltip says so), but it goes nowhere.
-          <button
-            type="button"
-            aria-disabled="true"
-            aria-label={`${label} (${t('sidebar.soon')})`}
-            className={cn(className, 'cursor-default opacity-50')}
-          >
-            {content}
-          </button>
-        ) : (
-          <Link
-            to={item.to}
-            aria-label={label}
-            aria-current={isActive ? 'page' : undefined}
-            className={className}
-          >
-            {content}
-          </Link>
-        )}
+        <Link
+          to={item.to}
+          aria-label={label}
+          aria-current={isActive ? 'page' : undefined}
+          className={className}
+        >
+          {content}
+        </Link>
       </TooltipTrigger>
-      <TooltipContent side={tooltipSide}>
-        {soon ? `${label} (${t('sidebar.soon')})` : label}
-      </TooltipContent>
+      <TooltipContent side={tooltipSide}>{label}</TooltipContent>
     </Tooltip>
   );
 }

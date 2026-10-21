@@ -1,6 +1,8 @@
 import {
   BRAND_PRESETS,
+  CORNER_RADIUS,
   CORNER_STYLES,
+  LOOK_PRESETS,
   brandShades,
   checkBrandContrast,
   isBrandPreset,
@@ -111,6 +113,15 @@ export function GymLookCard() {
         <CardDescription>{t('appearance.gym.description')}</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-6">
+        <LookPresets
+          draft={draft}
+          customOpen={customOpen}
+          onChoose={(look) => {
+            setCustomOpen(false);
+            setDraft(look);
+          }}
+        />
+
         <section className="flex flex-col gap-3" aria-labelledby="brand-color">
           <div>
             <h3 id="brand-color">{t('appearance.brand.label')}</h3>
@@ -266,6 +277,85 @@ export function GymLookCard() {
         <ColorWarnings issues={issues} statusLike={statusLike} />
       </ResponsiveDialog>
     </Card>
+  );
+}
+
+/**
+ * Ready-made looks (step D-3): a brand color and a corner style that go well together, each shown
+ * as a small preview. The midnight look is previewed dark, the way it looks best.
+ */
+function LookPresets({
+  draft,
+  customOpen,
+  onChoose,
+}: {
+  readonly draft: GymLook;
+  readonly customOpen: boolean;
+  readonly onChoose: (look: GymLook) => void;
+}) {
+  const { t } = useTranslation('settings');
+  return (
+    <section className="flex flex-col gap-3" aria-labelledby="look-presets">
+      <div>
+        <h3 id="look-presets" className="font-semibold">
+          {t('appearance.looks.label')}
+        </h3>
+        <p className="text-sm text-muted-foreground">{t('appearance.looks.hint')}</p>
+      </div>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {LOOK_PRESETS.map((look) => {
+          const selected =
+            !customOpen &&
+            draft.brandColor === look.brandColor &&
+            draft.cornerStyle === look.cornerStyle;
+          const { light, dark } = brandShades(look.brandColor);
+          const shade = look.key === 'midnight' ? dark : light;
+          const surface =
+            look.key === 'midnight'
+              ? `oklch(0.2 0.02 ${String(light.h)})`
+              : `oklch(0.965 0.015 ${String(light.h)})`;
+          const line =
+            look.key === 'midnight'
+              ? `oklch(0.32 0.03 ${String(light.h)})`
+              : `oklch(0.88 0.03 ${String(light.h)})`;
+          const radius = CORNER_RADIUS[look.cornerStyle];
+          return (
+            <button
+              key={look.key}
+              type="button"
+              aria-pressed={selected}
+              onClick={() => {
+                onChoose({ brandColor: look.brandColor, cornerStyle: look.cornerStyle });
+              }}
+              className={cn(
+                'flex flex-col gap-2 rounded-2xl bg-card p-2 text-start ring-1 transition-[box-shadow,background-color] duration-150 outline-none focus-visible:ring-3 focus-visible:ring-ring/50',
+                selected ? 'shadow-md ring-2 ring-primary' : 'ring-border hover:bg-muted/50',
+              )}
+            >
+              <span
+                aria-hidden
+                className="flex h-24 flex-col justify-end gap-2 overflow-hidden p-3"
+                style={{ background: surface, borderRadius: `calc(${radius} * 0.85)` }}
+              >
+                <span className="h-2 w-3/4 rounded-full" style={{ background: line }} />
+                <span className="h-2 w-1/2 rounded-full" style={{ background: line }} />
+                <span
+                  className="h-7 w-20"
+                  style={{
+                    background: `oklch(${String(shade.l)} ${String(shade.c)} ${String(shade.h)})`,
+                    borderRadius: `calc(${radius} * 0.6)`,
+                  }}
+                />
+              </span>
+              <span className="flex items-center justify-between gap-2 px-1 pb-0.5 font-semibold">
+                {t(`appearance.looks.${look.key}`)}
+                {selected && <CheckIcon aria-hidden className="size-4.5 text-primary" />}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </section>
   );
 }
 

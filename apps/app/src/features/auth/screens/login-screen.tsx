@@ -176,7 +176,11 @@ export function LoginScreen({
             <FieldError>{message(errors.password?.message)}</FieldError>
           </Field>
           <AuthErrorMessage error={error} />
-          <Button type="submit" disabled={isSubmitting || !online || !controller.configured}>
+          <Button
+            type="submit"
+            size="lg"
+            disabled={isSubmitting || !online || !controller.configured}
+          >
             {isSubmitting && <Spinner />}
             {t('login.submit')}
           </Button>

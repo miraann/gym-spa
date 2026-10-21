@@ -19,20 +19,58 @@ export const APPEARANCE_SETTINGS = {
   logo: 'appearance.logo',
 } as const;
 
-export const BRAND_PRESETS = ['indigo', 'blue', 'purple', 'gray'] as const;
+/**
+ * Add new presets at the end, together with a migration that lets the database accept them (a
+ * test keeps both lists the same). An older app shows a preset it doesn't know as the default.
+ */
+export const BRAND_PRESETS = [
+  'indigo',
+  'blue',
+  'purple',
+  'gray',
+  'midnight',
+  'gold',
+  'teal',
+] as const;
 export type BrandPreset = (typeof BRAND_PRESETS)[number];
 /** A preset name, or a custom color as lowercase `#rrggbb`. */
 export type BrandColor = BrandPreset | `#${string}`;
 export const DEFAULT_BRAND_COLOR: BrandColor = 'indigo';
 
-/** The light- and dark-mode shades of each preset; all pass every contrast check (tested). */
+/**
+ * The light- and dark-mode shades of each preset; all pass every contrast check (tested). The
+ * dark shade may turn the hue a little: a light indigo at the same hue would look blue.
+ */
 const PRESET_SHADES: Readonly<Record<BrandPreset, { light: Oklch; dark: Oklch }>> = {
-  // The same as the default tokens in apps/app/src/styles.css (a test keeps them equal).
-  indigo: { light: { l: 0.51, c: 0.23, h: 277 }, dark: { l: 0.68, c: 0.17, h: 277 } },
+  // The same as the default tokens in packages/ui's theme.css (a test keeps them equal).
+  indigo: { light: { l: 0.51, c: 0.23, h: 277 }, dark: { l: 0.7, c: 0.16, h: 284 } },
   blue: { light: { l: 0.52, c: 0.19, h: 256 }, dark: { l: 0.7, c: 0.15, h: 256 } },
   purple: { light: { l: 0.5, c: 0.22, h: 303 }, dark: { l: 0.7, c: 0.17, h: 303 } },
   gray: { light: { l: 0.45, c: 0.025, h: 265 }, dark: { l: 0.74, c: 0.02, h: 265 } },
+  // Deep navy, nearly black: a calm, dark look.
+  midnight: { light: { l: 0.3, c: 0.06, h: 265 }, dark: { l: 0.84, c: 0.05, h: 265 } },
+  // Deep gold for a premium look; a bright gold in dark mode.
+  gold: { light: { l: 0.48, c: 0.1, h: 78 }, dark: { l: 0.8, c: 0.13, h: 85 } },
+  // A sporty teal, kept out of the status green's hues (STATUS_HUES).
+  teal: { light: { l: 0.5, c: 0.1, h: 172 }, dark: { l: 0.76, c: 0.13, h: 172 } },
 };
+
+/**
+ * Ready-made looks (Appearance settings): a brand color and a corner style chosen together.
+ * Choosing one fills in both; the gym can still change either afterwards.
+ */
+export const LOOK_PRESETS = [
+  { key: 'classic', brandColor: 'indigo', cornerStyle: 'soft' },
+  { key: 'midnight', brandColor: 'midnight', cornerStyle: 'medium' },
+  { key: 'gold', brandColor: 'gold', cornerStyle: 'sharp' },
+  { key: 'sport', brandColor: 'teal', cornerStyle: 'soft' },
+] as const satisfies readonly {
+  key: string;
+  brandColor: BrandPreset;
+  cornerStyle: CornerStyle;
+}[];
+export type LookPreset = (typeof LOOK_PRESETS)[number];
+export type LookPresetKey = LookPreset['key'];
 
 const HEX_COLOR = /^#[0-9a-f]{6}$/;
 
@@ -150,9 +188,10 @@ export function brandVariables(color: BrandColor): Record<string, string> {
     '--brand-l': round(light.l, 3),
     '--brand-c': round(light.c, 3),
     '--brand-foreground': css(foregroundFor(light)),
+    '--brand-dark-h': round(dark.h, 1),
     '--brand-dark-l': round(dark.l, 3),
     '--brand-dark-c': round(dark.c, 3),
-    '--brand-dark-foreground': css(foregroundFor({ ...dark, h: light.h })),
+    '--brand-dark-foreground': css(foregroundFor(dark)),
   };
 }
 
@@ -174,7 +213,7 @@ export function checkBrandContrast(color: BrandColor): ContrastIssue[] {
   const shades = brandShades(color);
   const issues: ContrastIssue[] = [];
   for (const mode of ['light', 'dark'] as const) {
-    const shade = mode === 'light' ? shades.light : { ...shades.dark, h: shades.light.h };
+    const shade = mode === 'light' ? shades.light : shades.dark;
     if (contrast(foregroundFor(shade), shade) < CONTRAST_TEXT) {
       issues.push({ mode, problem: 'text_on_brand' });
     }

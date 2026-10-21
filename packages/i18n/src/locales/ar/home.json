@@ -1,6 +1,30 @@
 {
   "title": "الرئيسية",
   "today": "اليوم: {{date}}",
-  "emptyTitle": "سيظهر ملخص اليوم هنا",
-  "emptyHint": "ستظهر هنا زيارات الأعضاء وإيرادات اليوم والاشتراكات التي تنتهي قريبًا."
+  "welcome": "أهلًا بعودتك، {{name}}",
+  "welcomeHint": "هذا ملخص يومك في النادي.",
+  "stats": {
+    "label": "ملخص اليوم",
+    "activeMembers": "الأعضاء النشطون",
+    "newThisMonth": "{{count}} أعضاء جدد هذا الشهر",
+    "viewMembers": "عرض الأعضاء",
+    "checkinsToday": "حضور اليوم",
+    "expiring": "اشتراكات تنتهي هذا الأسبوع",
+    "revenueToday": "إيرادات اليوم",
+    "noNumberYet": "لا يوجد رقم بعد",
+    "comesWithCheckin": "يأتي مع قسم تسجيل الحضور",
+    "comesWithSubscriptions": "يأتي مع قسم الاشتراكات",
+    "comesWithPayments": "يأتي مع قسم المدفوعات"
+  },
+  "quick": {
+    "title": "إجراءات سريعة",
+    "newMember": "عضو جديد",
+    "newMemberHint": "سجّل عضوًا والتقط صورته",
+    "members": "الأعضاء",
+    "membersHint": "ابحث وتصفّح كل الأعضاء",
+    "staff": "الموظفون",
+    "staffHint": "حسابات الموظفين وأدوارهم",
+    "appearance": "مظهر النادي",
+    "appearanceHint": "اللون والشعار وشكل الزوايا"
+  }
 }

@@ -1,8 +1,10 @@
+import { NAV_TAB_COUNT } from '@gym/core';
 import { Link, useRouterState } from '@tanstack/react-router';
 import { PencilIcon } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { isNavItemActive, visibleNavGroups, type NavItem } from '@/app/navigation';
+import { isNavItemActive, visibleNavGroups, type OpenNavItem } from '@/app/navigation';
+import { ListGroup, ListRow, ListRowIcon } from '@gym/ui/blocks/list-group';
 import { Button } from '@gym/ui/components/button';
 import {
   Sheet,
@@ -12,6 +14,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@gym/ui/components/sheet';
+import { useActiveAccount } from '@/features/auth/auth-context';
 import { usePermissions } from '@/features/auth/use-permissions';
 import { cn } from '@gym/ui/lib/utils';
 import { TabEditor } from './tab-editor';
@@ -26,6 +29,15 @@ export function MoreSheet({
 }) {
   const { t } = useTranslation('nav');
   const [editing, setEditing] = useState(false);
+  const permissions = usePermissions();
+  const savedTabs = useActiveAccount()?.navTabs ?? null;
+  // A choice only when there are more pages than tabs (pages not built yet don't count), or to
+  // go back from an earlier choice.
+  const pageCount = visibleNavGroups(permissions).reduce(
+    (count, group) => count + group.items.length,
+    0,
+  );
+  const canChooseTabs = pageCount > NAV_TAB_COUNT || savedTabs !== null;
   const close = () => {
     onOpenChange(false);
   };
@@ -38,7 +50,7 @@ export function MoreSheet({
         if (!next) setEditing(false);
       }}
     >
-      <SheetContent side="bottom" className="max-h-[85svh] gap-0 rounded-t-3xl">
+      <SheetContent side="bottom" className="max-h-[88svh] gap-0 bg-background">
         <SheetHeader className="pe-12">
           <SheetTitle>{editing ? t('tabEditor.title') : t('tabBar.moreTitle')}</SheetTitle>
           <SheetDescription>
@@ -54,18 +66,20 @@ export function MoreSheet({
         ) : (
           <>
             <MenuGrid onNavigate={close} />
-            <SheetFooter className="border-t">
-              <Button
-                variant="outline"
-                size="lg"
-                onClick={() => {
-                  setEditing(true);
-                }}
-              >
-                <PencilIcon aria-hidden />
-                {t('tabEditor.open')}
-              </Button>
-            </SheetFooter>
+            {canChooseTabs && (
+              <SheetFooter className="border-t bg-background">
+                <Button
+                  variant="outline"
+                  size="lg"
+                  onClick={() => {
+                    setEditing(true);
+                  }}
+                >
+                  <PencilIcon aria-hidden />
+                  {t('tabEditor.open')}
+                </Button>
+              </SheetFooter>
+            )}
           </>
         )}
       </SheetContent>
@@ -76,65 +90,49 @@ export function MoreSheet({
 function MenuGrid({ onNavigate }: { readonly onNavigate: () => void }) {
   const { t } = useTranslation('nav');
   const groups = visibleNavGroups(usePermissions());
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
 
   return (
-    <div className="flex flex-col gap-4 overflow-y-auto px-4 pb-4">
+    <div className="flex flex-col gap-5 overflow-y-auto bg-background px-4 pt-1 pb-4">
       {groups.map((group) => (
-        <section key={group.key} aria-labelledby={`more-${group.key}`}>
-          <h3 id={`more-${group.key}`} className="mb-2 text-xs text-muted-foreground">
-            {t(`groups.${group.key}`)}
-          </h3>
-          <ul className="grid grid-cols-3 gap-2 sm:grid-cols-4">
-            {group.items.map((item) => (
-              <li key={item.key}>
-                <MenuTile item={item} onNavigate={onNavigate} />
-              </li>
-            ))}
-          </ul>
-        </section>
+        <ListGroup key={group.key} title={t(`groups.${group.key}`)}>
+          {group.items.map((item) => (
+            <MenuRow
+              key={item.key}
+              item={item}
+              isActive={isNavItemActive(item, pathname)}
+              onNavigate={onNavigate}
+            />
+          ))}
+        </ListGroup>
       ))}
     </div>
   );
 }
 
-function MenuTile({
+function MenuRow({
   item,
+  isActive,
   onNavigate,
 }: {
-  readonly item: NavItem;
+  readonly item: OpenNavItem;
+  readonly isActive: boolean;
   readonly onNavigate: () => void;
 }) {
-  const { t } = useTranslation(['common', 'nav']);
-  const pathname = useRouterState({ select: (state) => state.location.pathname });
-  const isActive = isNavItemActive(item, pathname);
+  const { t } = useTranslation('nav');
   const Icon = item.icon;
-  const className = cn(
-    'flex min-h-20 w-full flex-col items-center justify-center gap-1.5 rounded-2xl p-2 text-center outline-none focus-visible:ring-3 focus-visible:ring-ring/50',
-    isActive ? 'bg-accent text-accent-foreground' : 'bg-muted/60',
-  );
-  const content = (
-    <>
-      <Icon aria-hidden className="size-6" />
-      <span className="line-clamp-2 text-xs leading-tight">{t(`nav:items.${item.key}`)}</span>
-    </>
-  );
-
-  if (item.to === undefined) {
-    return (
-      <div aria-disabled="true" className={cn(className, 'opacity-50')}>
-        {content}
-        <span className="text-[0.625rem] text-muted-foreground">{t('sidebar.soon')}</span>
-      </div>
-    );
-  }
   return (
-    <Link
-      to={item.to}
-      aria-current={isActive ? 'page' : undefined}
-      onClick={onNavigate}
-      className={className}
+    <ListRow
+      asChild
+      title={t(`items.${item.key}`)}
+      leading={
+        <ListRowIcon>
+          <Icon aria-hidden />
+        </ListRowIcon>
+      }
+      className={cn(isActive && 'bg-accent')}
     >
-      {content}
-    </Link>
+      <Link to={item.to} aria-current={isActive ? 'page' : undefined} onClick={onNavigate} />
+    </ListRow>
   );
 }

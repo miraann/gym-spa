@@ -7,7 +7,7 @@ import { HOME_HEADING, autoRegisterDevices, expect, signIn, test } from './suppo
 
 const PHONE = { width: 390, height: 844 };
 // Short enough that the rail has to scroll, like a landscape tablet with a long menu.
-const TABLET = { width: 1024, height: 600 };
+const TABLET = { width: 1024, height: 440 };
 const DESKTOP = { width: 1440, height: 900 };
 
 const SIDEBAR = '[data-slot="sidebar-container"]';
@@ -40,7 +40,9 @@ test('desktops get the full sidebar', async ({ page, staff }) => {
   expect((box?.x ?? 0) + (box?.width ?? 0)).toBe(DESKTOP.width);
 });
 
-test('tablets get an icon rail whose labels never overflow', async ({ page, staff }) => {
+test('tablets get an icon rail whose labels never overflow', async ({ page, data }) => {
+  // An owner: the longest menu.
+  const staff = await data.staff({ role: 'owner', branchIds: [], allBranches: true });
   await page.setViewportSize(TABLET);
   await signIn(page, staff);
   await expect(page.getByRole('heading', HOME_HEADING)).toBeVisible();
@@ -103,11 +105,10 @@ test("phones get a bottom tab bar with the role's tabs, and pages end above it",
   await expect(page.locator(SIDEBAR)).toHaveCount(0);
   await expect(page.locator(RAIL)).toHaveCount(0);
 
-  // A receptionist's default tabs; check-in is the raised one in the middle. Pages not built
-  // yet keep their place.
-  await expect
-    .poll(() => tabNames(page))
-    .toEqual(['سەرەکی', 'ئەندامان', 'تۆمارکردنی هاتن (بەم زووانە)', 'قاسە (بەم زووانە)', 'زیاتر']);
+  // A receptionist's default tabs (home, members, check-in, cash register): pages not built yet
+  // have no tab, and the free slot gets the next page they may open.
+  await expect.poll(() => tabNames(page)).toEqual(['سەرەکی', 'ئەندامان', 'ڕێکخستنەکان', 'زیاتر']);
+  await expect(page.getByText('بەم زووانە')).toHaveCount(0);
 
   // The last card of a long page scrolls clear of the bar.
   await page.evaluate(() => {
@@ -122,6 +123,9 @@ test("phones get a bottom tab bar with the role's tabs, and pages end above it",
   await expect(page.getByRole('heading', HOME_HEADING)).toBeVisible();
   await page.getByRole('button', { name: 'زیاتر' }).click();
   const more = page.getByRole('dialog', { name: 'هەموو بەشەکان' });
+  // Every page they may open is a tab already: nothing to choose.
+  await expect(more.getByRole('button', { name: 'گۆڕینی تابەکانم' })).toHaveCount(0);
+  await expect(more.getByRole('link')).toHaveText(['سەرەکی', 'ئەندامان', 'ڕێکخستنەکان']);
   await more.getByRole('link', { name: 'ڕێکخستنەکان' }).click();
   await expect(more).toBeHidden();
   await expect(page).toHaveURL(/\/settings\/display$/);
@@ -130,39 +134,41 @@ test("phones get a bottom tab bar with the role's tabs, and pages end above it",
 test('staff choose their own tabs, which follow them to other devices', async ({
   page,
   browser,
-  staff,
+  data,
 }) => {
+  // An owner sees more built pages than there are tabs.
+  const staff = await data.staff({ role: 'owner', branchIds: [], allBranches: true });
   await page.setViewportSize(PHONE);
   await signIn(page, staff);
   await page.getByRole('button', { name: 'زیاتر' }).click();
   await page.getByRole('button', { name: 'گۆڕینی تابەکانم' }).click();
   const editor = tabEditor(page);
 
-  // It starts from the role's tabs.
-  for (const name of ['سەرەکی', 'ئەندامان', 'تۆمارکردنی هاتن', 'قاسە']) {
+  // It starts from the role's tabs (reports isn't built yet: roles fills its slot).
+  for (const name of ['سەرەکی', 'ئەندامان', 'کارمەندان', 'ڕۆڵ و دەسەڵاتەکان']) {
     await editor.getByRole('button', { name, exact: true, pressed: true }).click();
   }
   await expect(editor.getByRole('button', { name: 'پاشەکەوتکردن' })).toBeDisabled();
-  // Tapped in this order; check-in still goes to the middle.
-  for (const name of ['ڕێکخستنەکان', 'تۆمارکردنی هاتن', 'سەرەکی', 'دۆڵابەکان']) {
+  // Pages not built yet can't be chosen.
+  await expect(editor.getByRole('button', { name: 'تۆمارکردنی هاتن', exact: true })).toHaveCount(0);
+  // Tapped in this order.
+  for (const name of ['ڕێکخستنەکان', 'لقەکان', 'سەرەکی', 'ئامێرەکان']) {
     await editor.getByRole('button', { name, exact: true }).click();
   }
   // A fifth one can't be added.
-  await expect(editor.getByRole('button', { name: 'سپا', exact: true })).toBeDisabled();
+  await expect(editor.getByRole('button', { name: 'ئەندامان', exact: true })).toBeDisabled();
   await editor.getByRole('button', { name: 'پاشەکەوتکردن' }).click();
   await expect(page.getByText('تابەکانت پاشەکەوت کران')).toBeVisible();
   await page.keyboard.press('Escape');
 
-  const chosen = [
-    'ڕێکخستنەکان',
-    'سەرەکی',
-    'تۆمارکردنی هاتن (بەم زووانە)',
-    'دۆڵابەکان (بەم زووانە)',
-    'زیاتر',
-  ];
+  const chosen = ['ڕێکخستنەکان', 'لقەکان', 'سەرەکی', 'ئامێرەکان', 'زیاتر'];
   await expect.poll(() => tabNames(page)).toEqual(chosen);
-  const { data } = await admin().from('staff_users').select('nav_tabs').eq('id', staff.id).single();
-  expect(data?.nav_tabs).toEqual(['settings', 'home', 'checkin', 'lockers']);
+  const { data: row } = await admin()
+    .from('staff_users')
+    .select('nav_tabs')
+    .eq('id', staff.id)
+    .single();
+  expect(row?.nav_tabs).toEqual(['settings', 'branches', 'home', 'devices']);
 
   // Another device: the same tabs after logging in.
   const otherDevice = await browser.newContext({ viewport: PHONE });
@@ -176,10 +182,11 @@ test('staff choose their own tabs, which follow them to other devices', async ({
   await page.getByRole('button', { name: 'زیاتر' }).click();
   await page.getByRole('button', { name: 'گۆڕینی تابەکانم' }).click();
   await tabEditor(page).getByRole('button', { name: 'گەڕانەوە بۆ تابە بنەڕەتییەکان' }).click();
-  await expect(page.getByText('تابەکانت پاشەکەوت کران')).toBeVisible();
+  // The first save's toast may still be showing: the newest one is this save's.
+  await expect(page.getByText('تابەکانت پاشەکەوت کران').last()).toBeVisible();
   await page.keyboard.press('Escape');
   // The toast of the first save may still be showing: wait for the tabs themselves.
   await expect
     .poll(() => tabNames(page))
-    .toEqual(['سەرەکی', 'ئەندامان', 'تۆمارکردنی هاتن (بەم زووانە)', 'قاسە (بەم زووانە)', 'زیاتر']);
+    .toEqual(['سەرەکی', 'ئەندامان', 'کارمەندان', 'ڕۆڵ و دەسەڵاتەکان', 'زیاتر']);
 });

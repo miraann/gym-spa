@@ -59,8 +59,8 @@ export function MemberAvatar({
     <span
       aria-hidden="true"
       className={cn(
-        'inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-muted text-muted-foreground',
-        size === 'lg' ? 'size-16 text-2xl' : 'size-10 text-base',
+        'inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary/12 font-bold text-primary',
+        size === 'lg' ? 'size-20 text-3xl shadow-sm' : 'size-10 text-base',
       )}
     >
       {image ? (

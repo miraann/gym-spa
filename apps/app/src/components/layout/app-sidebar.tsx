@@ -1,6 +1,6 @@
 import { Link, useRouterState } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
-import { isNavItemActive, visibleNavGroups, type NavItem } from '@/app/navigation';
+import { isNavItemActive, visibleNavGroups, type OpenNavItem } from '@/app/navigation';
 import { usePermissions } from '@/features/auth/use-permissions';
 import {
   Sidebar,
@@ -10,7 +10,6 @@ import {
   SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
-  SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
@@ -18,7 +17,10 @@ import {
 import { GymMark } from './gym-mark';
 import { useGymName } from './use-gym-name';
 
-/** Desktops (≥ 1280px): the full menu, grouped by module. Collapses to icons on request. */
+/**
+ * Desktops (≥ 1280px): the full menu, grouped by module, like a tablet app's sidebar. Pages that
+ * are not built yet are not shown. Collapses to icons on request.
+ */
 export function AppSidebar({ side }: { readonly side: 'left' | 'right' }) {
   const { t } = useTranslation(['common', 'nav']);
   const groups = visibleNavGroups(usePermissions());
@@ -26,15 +28,15 @@ export function AppSidebar({ side }: { readonly side: 'left' | 'right' }) {
 
   return (
     <Sidebar side={side} collapsible="icon">
-      <SidebarHeader>
+      <SidebarHeader className="p-3">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton size="lg" asChild>
+            <SidebarMenuButton size="lg" asChild className="gap-3 px-2 hover:bg-transparent">
               <Link to="/">
-                <GymMark />
+                <GymMark className="size-11 rounded-2xl group-data-[collapsible=icon]:size-10" />
                 {/* The gym's name first: staff work for the gym, the app is secondary. */}
                 <span className="grid flex-1 text-start leading-tight">
-                  <span className="truncate">{gymName ?? t('app.name')}</span>
+                  <span className="truncate text-base font-bold">{gymName ?? t('app.name')}</span>
                   <span className="truncate text-xs text-muted-foreground">
                     {gymName ? t('app.name') : t('app.fullName')}
                   </span>
@@ -45,11 +47,11 @@ export function AppSidebar({ side }: { readonly side: 'left' | 'right' }) {
         </SidebarMenu>
       </SidebarHeader>
 
-      <SidebarContent>
+      <SidebarContent className="gap-1 px-1">
         {groups.map((group) => (
-          <SidebarGroup key={group.key}>
+          <SidebarGroup key={group.key} className="py-1.5">
             <SidebarGroupLabel>{t(`nav:groups.${group.key}`)}</SidebarGroupLabel>
-            <SidebarMenu>
+            <SidebarMenu className="gap-0.5">
               {group.items.map((item) => (
                 <NavMenuItem key={item.key} item={item} />
               ))}
@@ -62,7 +64,7 @@ export function AppSidebar({ side }: { readonly side: 'left' | 'right' }) {
         {/* App version, so support can tell which build a device runs. */}
         <span
           dir="ltr"
-          className="px-2 text-end text-xs text-muted-foreground group-data-[collapsible=icon]:hidden"
+          className="px-3 text-end text-xs text-muted-foreground group-data-[collapsible=icon]:hidden"
         >
           {import.meta.env.VITE_APP_VERSION}
         </span>
@@ -72,36 +74,17 @@ export function AppSidebar({ side }: { readonly side: 'left' | 'right' }) {
   );
 }
 
-function NavMenuItem({ item }: { readonly item: NavItem }) {
-  const { t } = useTranslation(['common', 'nav']);
+function NavMenuItem({ item }: { readonly item: OpenNavItem }) {
+  const { t } = useTranslation('nav');
   const pathname = useRouterState({ select: (state) => state.location.pathname });
-  const label = t(`nav:items.${item.key}`);
+  const label = t(`items.${item.key}`);
   const Icon = item.icon;
-
-  if (item.to === undefined) {
-    return (
-      <SidebarMenuItem>
-        <SidebarMenuButton disabled>
-          <Icon />
-          <span>{label}</span>
-        </SidebarMenuButton>
-        <SidebarMenuBadge className="text-[0.65rem] font-normal text-muted-foreground">
-          {t('sidebar.soon')}
-        </SidebarMenuBadge>
-      </SidebarMenuItem>
-    );
-  }
 
   return (
     <SidebarMenuItem>
-      <SidebarMenuButton
-        asChild
-        isActive={isNavItemActive(item, pathname)}
-        tooltip={label}
-        className="data-active:bg-accent data-active:text-accent-foreground"
-      >
+      <SidebarMenuButton asChild isActive={isNavItemActive(item, pathname)} tooltip={label}>
         <Link to={item.to}>
-          <Icon />
+          <Icon aria-hidden />
           <span>{label}</span>
         </Link>
       </SidebarMenuButton>

@@ -1,7 +1,7 @@
 import { Link, Outlet, useRouterState } from '@tanstack/react-router';
 import { MonitorSmartphoneIcon, PaletteIcon, type LucideIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Chip, ChipRow } from '@gym/ui/blocks/chip-row';
+import { cn } from '@gym/ui/lib/utils';
 import type { AppPath } from '@/app/navigation';
 
 const TABS: readonly { to: AppPath; key: 'display' | 'appearance'; icon: LucideIcon }[] = [
@@ -9,26 +9,37 @@ const TABS: readonly { to: AppPath; key: 'display' | 'appearance'; icon: LucideI
   { to: '/settings/appearance', key: 'appearance', icon: PaletteIcon },
 ];
 
-/** Settings: one page per topic, picked with chips. */
+/** Settings: one page per topic, picked with a segmented control like a native app's. */
 export function SettingsLayout() {
   const { t } = useTranslation('settings');
   const pathname = useRouterState({ select: (state) => state.location.pathname });
 
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-6">
-      <ChipRow label={t('tabs.label')}>
+    <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
+      <nav
+        aria-label={t('tabs.label')}
+        className="flex w-full rounded-full bg-muted p-1 sm:w-fit dark:bg-muted/70"
+      >
         {TABS.map(({ to, key, icon: Icon }) => {
           const selected = pathname.startsWith(to);
           return (
-            <Chip key={key} selected={selected} asChild>
-              <Link to={to} aria-current={selected ? 'page' : undefined}>
-                <Icon aria-hidden className="size-4" />
-                {t(`tabs.${key}`)}
-              </Link>
-            </Chip>
+            <Link
+              key={key}
+              to={to}
+              aria-current={selected ? 'page' : undefined}
+              className={cn(
+                'flex h-10 flex-1 items-center justify-center gap-2 rounded-full px-5 text-sm whitespace-nowrap transition-[background-color,color,box-shadow] duration-200 outline-none focus-visible:ring-3 focus-visible:ring-ring/50 pointer-coarse:h-11',
+                selected
+                  ? 'bg-card font-semibold text-foreground shadow-sm'
+                  : 'font-medium text-muted-foreground hover:text-foreground',
+              )}
+            >
+              <Icon aria-hidden className="size-4.5" />
+              {t(`tabs.${key}`)}
+            </Link>
           );
         })}
-      </ChipRow>
+      </nav>
       <Outlet />
     </div>
   );

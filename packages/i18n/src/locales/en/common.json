@@ -5,6 +5,7 @@
     "description": "Manage members, subscriptions, payments and the spa — even without internet"
   },
   "skipToContent": "Skip to content",
+  "refreshing": "Refreshing…",
   "actions": {
     "reload": "Reload page",
     "tryAgain": "Try again",
@@ -54,8 +55,7 @@
   "sidebar": {
     "title": "Main menu",
     "description": "Sections of the system",
-    "toggle": "Show or hide the menu",
-    "soon": "Soon"
+    "toggle": "Show or hide the menu"
   },
   "errors": {
     "notFoundTitle": "Page not found",

@@ -12,7 +12,7 @@ const VAZIRMATN_FILES = fileURLToPath(
   new URL('../node_modules/@fontsource-variable/vazirmatn/files/', import.meta.url),
 );
 const UNISALAR_FILE = fileURLToPath(
-  new URL('../src/assets/fonts/unisalar-f-007.ttf', import.meta.url),
+  new URL('../src/assets/fonts/unisalar-f-113.otf', import.meta.url),
 );
 const STYLES_FILE = fileURLToPath(new URL('../src/styles/theme.css', import.meta.url));
 
@@ -37,7 +37,6 @@ const ARABIC_ONLY_LETTERS = 'ءآأإؤةيكى';
 const ARABIC_INDIC_DIGITS = '٠١٢٣٤٥٦٧٨٩';
 const ARABIC_PUNCTUATION = '،؛؟';
 const ARABIC_NUMBER_SEPARATORS = '٫٬';
-const ZWNJ = '‌';
 
 function missingGlyphs(font: Font, characters: string): string[] {
   return Array.from(characters).filter(
@@ -66,23 +65,23 @@ describe('Vazirmatn (Arabic UI, and fallback for Kurdish)', () => {
 describe('UniSalar (Kurdish UI font)', () => {
   const font = openFont(UNISALAR_FILE);
 
-  it('has every Kurdish Sorani letter', () => {
-    expect(missingGlyphs(font, SORANI_LETTERS)).toEqual([]);
+  it('has every Kurdish Sorani letter and the Arabic letters Sorani does not use', () => {
+    expect(missingGlyphs(font, SORANI_LETTERS + ARABIC_ONLY_LETTERS)).toEqual([]);
   });
 
-  it('has Eastern Arabic digits, Arabic punctuation and the zero-width non-joiner', () => {
-    // The Arabic number separators (٫ ٬) are missing; they fall back to Vazirmatn.
-    expect(missingGlyphs(font, ARABIC_INDIC_DIGITS + ARABIC_PUNCTUATION + ZWNJ)).toEqual([]);
+  it('has Eastern Arabic digits and Arabic punctuation', () => {
+    // The zero-width non-joiner and the number separators (٫ ٬) fall back to Vazirmatn.
+    expect(missingGlyphs(font, ARABIC_INDIC_DIGITS + ARABIC_PUNCTUATION)).toEqual([]);
   });
 });
 
-/** Parses the `unicode-range` of the @font-face that declares the given family. */
+/** Parses the unicode-range of the @font-face that declares the given family. */
 function unicodeRangeOf(css: string, family: string): (codePoint: number) => boolean {
   const face = [...css.matchAll(/@font-face\s*\{([^}]*)\}/g)]
     .map((match) => match[1] ?? '')
-    .find((body) => body.includes(`'${family}'`));
+    .find((body) => body.includes("'" + family + "'"));
   const range = face?.match(/unicode-range:\s*([^;]+);/)?.[1];
-  if (!range) throw new Error(`No unicode-range for ${family} in theme.css`);
+  if (!range) throw new Error('No unicode-range for ' + family + ' in theme.css');
   const spans = range.split(',').map((part) => {
     const [start = '', end] = part.trim().replace(/^U\+/i, '').split('-');
     return [Number.parseInt(start, 16), Number.parseInt(end ?? start, 16)] as const;
@@ -90,8 +89,19 @@ function unicodeRangeOf(css: string, family: string): (codePoint: number) => boo
   return (codePoint) => spans.some(([start, end]) => codePoint >= start && codePoint <= end);
 }
 
-describe('UniSalar unicode-range in theme.css', () => {
-  const covers = unicodeRangeOf(readFileSync(STYLES_FILE, 'utf8'), 'UniSalar');
+describe('the Kurdish font stack in theme.css', () => {
+  const css = readFileSync(STYLES_FILE, 'utf8');
+  const font = () => openFont(UNISALAR_FILE);
+  const covers = unicodeRangeOf(css, 'UniSalar');
+
+  it('starts with UniSalar, with Vazirmatn behind it', () => {
+    expect(css).toMatch(/--font-ckb:\s*'UniSalar', 'Vazirmatn Variable'/);
+  });
+
+  it('never lets the browser fake a bold UniSalar (it has one weight)', () => {
+    expect(font().subfamilyName).toBe('Regular');
+    expect(css).toMatch(/:lang\(ckb\)\s*\{\s*font-synthesis-weight:\s*none;/);
+  });
 
   it('covers the Kurdish letters, so Kurdish text uses UniSalar', () => {
     const uncovered = Array.from(SORANI_LETTERS).filter(
@@ -101,8 +111,7 @@ describe('UniSalar unicode-range in theme.css', () => {
   });
 
   it('leaves ASCII (except the space) to Vazirmatn', () => {
-    // UniSalar draws ASCII digits as Eastern Arabic and the comma as "،". If it rendered them,
-    // the Western-digit default and Latin phone numbers, card UIDs and invoice numbers would break.
+    // Western digits, Latin phone numbers, card UIDs and invoice numbers must not change shape.
     const covered: string[] = [];
     for (let codePoint = 0x21; codePoint <= 0x7e; codePoint += 1) {
       if (covers(codePoint)) covered.push(String.fromCharCode(codePoint));

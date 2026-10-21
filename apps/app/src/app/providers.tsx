@@ -1,14 +1,26 @@
 import { getDirection } from '@gym/i18n';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { haptic } from '@gym/platform';
+import { MutationCache, QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState, type ReactNode } from 'react';
 import { DirectionProvider } from '@gym/ui/components/direction';
 import { Toaster } from '@gym/ui/components/sonner';
 import { TooltipProvider } from '@gym/ui/components/tooltip';
 import { usePreferences } from '@/lib/preferences';
 
-/** Data from the server, through TanStack Query. The connection monitor pauses it while offline. */
+/**
+ * Data from the server, through TanStack Query. The connection monitor pauses it while offline.
+ * Every save gives haptic feedback in the Android app: a tap when it worked, a buzz when it didn't.
+ */
 function createQueryClient(): QueryClient {
   return new QueryClient({
+    mutationCache: new MutationCache({
+      onSuccess: () => {
+        haptic('success');
+      },
+      onError: () => {
+        haptic('error');
+      },
+    }),
     defaultOptions: {
       queries: { staleTime: 30_000, retry: 1 },
       mutations: { retry: 0 },

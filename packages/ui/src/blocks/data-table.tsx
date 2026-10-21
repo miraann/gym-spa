@@ -30,17 +30,17 @@ export function DataTable<TData extends RowData>({
   readonly isRowSelected?: (row: TData) => boolean;
 }) {
   return (
-    <div className="overflow-x-auto rounded-2xl bg-card ring-1 ring-border">
-      <table className="w-full text-sm">
+    <div className="overflow-x-auto rounded-card bg-card shadow-sm ring-1 ring-foreground/6 dark:ring-foreground/7">
+      <table className="w-full text-[0.9375rem]">
         <caption className="sr-only">{label}</caption>
-        <thead className="bg-muted/50 text-muted-foreground">
+        <thead className="bg-muted/40 text-sm text-muted-foreground">
           {table.getHeaderGroups().map((group) => (
             <tr key={group.id}>
               {group.headers.map((header) => (
                 <th
                   key={header.id}
                   scope="col"
-                  className="h-10 px-3 text-start font-normal whitespace-nowrap"
+                  className="h-11 px-4 text-start font-semibold whitespace-nowrap"
                 >
                   {header.isPlaceholder ? null : <table.FlexRender header={header} />}
                 </th>
@@ -64,12 +64,12 @@ export function DataTable<TData extends RowData>({
                 }
                 className={cn(
                   'border-t border-border transition-colors',
-                  onRowClick && 'cursor-pointer hover:bg-muted/40',
-                  selected && 'bg-muted',
+                  onRowClick && 'cursor-pointer hover:bg-muted/50',
+                  selected && 'bg-accent hover:bg-accent',
                 )}
               >
                 {row.getVisibleCells().map((cell) => (
-                  <td key={cell.id} className="px-3 py-2.5 align-middle pointer-coarse:py-3.5">
+                  <td key={cell.id} className="px-4 py-3 align-middle pointer-coarse:py-3.5">
                     <table.FlexRender cell={cell} />
                   </td>
                 ))}

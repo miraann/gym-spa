@@ -2,7 +2,10 @@ import { describe, expect, it } from 'vitest';
 import {
   BRAND_PRESETS,
   CORNER_STYLES,
+  DEFAULT_BRAND_COLOR,
+  DEFAULT_CORNER_STYLE,
   LOGO_MAX_BYTES,
+  LOOK_PRESETS,
   TEXT_SIZES,
   THEME_PREFERENCES,
   base64Bytes,
@@ -23,13 +26,26 @@ describe('brand presets', () => {
     expect(looksLikeStatusColor(preset)).toBe(false);
   });
 
+  it('ready-made looks pair a preset with a corner style, the first one being the default', () => {
+    expect(new Set(LOOK_PRESETS.map((look) => look.key)).size).toBe(LOOK_PRESETS.length);
+    for (const look of LOOK_PRESETS) {
+      expect(BRAND_PRESETS).toContain(look.brandColor);
+      expect(CORNER_STYLES).toContain(look.cornerStyle);
+    }
+    expect(LOOK_PRESETS[0]).toMatchObject({
+      brandColor: DEFAULT_BRAND_COLOR,
+      cornerStyle: DEFAULT_CORNER_STYLE,
+    });
+  });
+
   it('indigo is the default look of styles.css', () => {
     expect(brandVariables('indigo')).toMatchObject({
       '--brand-h': '277',
       '--brand-l': '0.51',
       '--brand-c': '0.23',
-      '--brand-dark-l': '0.68',
-      '--brand-dark-c': '0.17',
+      '--brand-dark-h': '284',
+      '--brand-dark-l': '0.7',
+      '--brand-dark-c': '0.16',
     });
   });
 });

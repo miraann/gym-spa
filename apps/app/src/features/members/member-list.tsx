@@ -1,6 +1,13 @@
 import { GENDERS, formatMemberNumber, formatMemberPhone } from '@gym/core';
 import { localizedName } from '@gym/i18n';
 import { Chip, ChipRow } from '@gym/ui/blocks/chip-row';
+import {
+  GroupedList,
+  GroupedListItem,
+  GroupedListSkeleton,
+  RowChevron,
+} from '@gym/ui/blocks/list-group';
+import { groupedRowClass } from '@gym/ui/lib/grouped-list';
 import { ColumnVisibilityMenu, DataTable } from '@gym/ui/blocks/data-table';
 import { dataTableFeatures, type DataTableFeatures } from '@gym/ui/lib/data-table-features';
 import { PageHeader } from '@gym/ui/blocks/page-header';
@@ -15,7 +22,6 @@ import {
 } from '@gym/ui/components/empty';
 import { Input } from '@gym/ui/components/input';
 import { NativeSelect, NativeSelectOption } from '@gym/ui/components/native-select';
-import { Skeleton } from '@gym/ui/components/skeleton';
 import { useLayout } from '@gym/ui/hooks/use-layout';
 import { useSideBySide } from '@gym/ui/hooks/use-side-by-side';
 import { cn } from '@gym/ui/lib/utils';
@@ -139,11 +145,7 @@ export function MemberList({ layout }: { readonly layout: 'full' | 'compact' }) 
       <ListFilters search={search} onChange={update} compact={layout === 'compact'} />
 
       {result.isPending ? (
-        <div className="flex flex-col gap-2">
-          {[0, 1, 2, 3, 4].map((row) => (
-            <Skeleton key={row} className="h-18 rounded-2xl" />
-          ))}
-        </div>
+        <GroupedListSkeleton rows={5} avatar />
       ) : result.isError ? (
         <MemberError error={memberErrorKey(result.error, 'list')} />
       ) : result.data.members.length === 0 ? (
@@ -356,26 +358,23 @@ function MemberCards({ members }: { readonly members: readonly Member[] }) {
   const openId = useOpenMemberId();
   const thumbnails = useMemberThumbnails(members).data;
   return (
-    <ul className="flex flex-col gap-2" aria-label={t('list.title')}>
+    <GroupedList aria-label={t('list.title')}>
       {members.map((member) => {
         const selected = member.id === openId;
         return (
-          <li key={member.id}>
+          <GroupedListItem key={member.id} inset>
             <Link
               to="/members/$memberId"
               params={{ memberId: member.id }}
               search={(previous) => previous}
               aria-current={selected ? 'page' : undefined}
               data-member={formatMemberNumber(member.memberNumber)}
-              className={cn(
-                'flex items-center gap-3 rounded-2xl bg-card p-3 ring-1 ring-border transition-colors hover:bg-muted/50',
-                selected && 'ring-2 ring-primary',
-              )}
+              className={groupedRowClass(selected)}
             >
               <MemberAvatar name={member.fullName} image={thumbnails?.get(member.id)} />
               <span className="flex min-w-0 flex-1 flex-col gap-1">
                 <span className="flex items-center justify-between gap-2">
-                  <span className="truncate text-base">{member.fullName}</span>
+                  <span className="truncate font-medium">{member.fullName}</span>
                   <span dir="ltr" className="shrink-0 text-sm text-muted-foreground tabular-nums">
                     {formatMemberNumber(member.memberNumber)}
                   </span>
@@ -391,11 +390,12 @@ function MemberCards({ members }: { readonly members: readonly Member[] }) {
                   {member.hasHealthNotes && <HealthNotesBadge />}
                 </span>
               </span>
+              <RowChevron />
             </Link>
-          </li>
+          </GroupedListItem>
         );
       })}
-    </ul>
+    </GroupedList>
   );
 }
 

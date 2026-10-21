@@ -155,7 +155,7 @@ test('the logo is resized to at most 300 KB and shows on the lock screen', async
   await page.getByRole('menuitem', { name: /قفڵکردن/ }).click();
   const lockScreen = page.locator('[data-auth-screen]');
   await expect(lockScreen.getByTestId('device-gym')).toHaveText((await data.gym()).nameCkb);
-  await expect(lockScreen.locator('header img')).toBeVisible();
+  await expect(lockScreen.locator('img')).toBeVisible();
 
   // Removed again: the app's mark comes back.
   await unlock(page, staff);
@@ -211,13 +211,15 @@ test('on phones the brand chips scroll edge to edge and the save bar keeps clear
   await page.setViewportSize(PHONE);
   await signIn(page, await owner(data), PAGE);
 
-  // The settings tabs sit on the page: their row reaches both screen edges.
-  const tabsRow = await page.locator('[data-slot="chip-row"]').first().boundingBox();
-  expect(tabsRow?.x).toBe(0);
-  expect((tabsRow?.x ?? 0) + (tabsRow?.width ?? 0)).toBe(PHONE.width);
+  // The settings tabs are a segmented control as wide as the page's content.
+  const settingsTabs = await page
+    .getByRole('navigation', { name: 'بەشەکانی ڕێکخستن' })
+    .boundingBox();
+  expect(settingsTabs?.x).toBe(16);
+  expect(settingsTabs?.width).toBe(PHONE.width - 32);
 
   // The brand chips sit in a card: their row reaches the card's edges, and scrolls.
-  const row = page.locator('[data-slot="chip-row"]').nth(1);
+  const row = page.locator('[data-slot="chip-row"]').first();
   const card = await page.locator('#main [data-slot="card"]').first().boundingBox();
   const rowBox = await row.boundingBox();
   expect(rowBox?.x).toBe(card?.x);

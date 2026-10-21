@@ -137,7 +137,8 @@ test('keeps content clear of the system bars on edge-to-edge screens', async ({ 
   // Phone: the tab bar floats above the navigation bar and keeps out of the cutout.
   await page.setViewportSize({ width: 390, height: 844 });
   const tabBar = page.locator('[data-slot="tab-bar"]');
-  await expect(tabBar).toHaveCSS('padding-bottom', '28px');
+  // 10px above the navigation bar (16px).
+  await expect(tabBar).toHaveCSS('padding-bottom', '26px');
   await expect(tabBar).toHaveCSS('padding-right', '44px');
   // "More" opens as a bottom sheet, clear of the navigation bar.
   await page.getByRole('button', { name: 'زیاتر' }).click();
@@ -153,8 +154,10 @@ test('the login screen also stays clear of the system bars', async ({ page }) =>
     insets: { top: 24, bottom: 16, left: 0, right: 0 },
   });
   await page.goto('/');
-  await expect(page.locator('[data-auth-screen]')).toHaveCSS('padding-top', '24px');
-  await expect(page.locator('[data-auth-screen]')).toHaveCSS('padding-bottom', '16px');
+  // The form's column; on wide screens the brand panel beside it is drawn behind the bars.
+  const form = page.locator('[data-slot="auth-content"]');
+  await expect(form).toHaveCSS('padding-top', '24px');
+  await expect(form).toHaveCSS('padding-bottom', '16px');
 });
 
 test('unknown pages show a friendly message', async ({ page, staff }) => {

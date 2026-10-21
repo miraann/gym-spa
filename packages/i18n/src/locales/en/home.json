@@ -1,6 +1,30 @@
 {
   "title": "Home",
   "today": "Today: {{date}}",
-  "emptyTitle": "Your daily summary will appear here",
-  "emptyHint": "Member visits, today's revenue and expiring subscriptions will be shown here."
+  "welcome": "Welcome back, {{name}}",
+  "welcomeHint": "Here is today at your gym.",
+  "stats": {
+    "label": "Today at a glance",
+    "activeMembers": "Active members",
+    "newThisMonth": "{{count}} new this month",
+    "viewMembers": "View members",
+    "checkinsToday": "Check-ins today",
+    "expiring": "Subscriptions ending this week",
+    "revenueToday": "Today's revenue",
+    "noNumberYet": "No number yet",
+    "comesWithCheckin": "Comes with the check-in section",
+    "comesWithSubscriptions": "Comes with the subscriptions section",
+    "comesWithPayments": "Comes with the payments section"
+  },
+  "quick": {
+    "title": "Quick actions",
+    "newMember": "New member",
+    "newMemberHint": "Register a member and take their photo",
+    "members": "Members",
+    "membersHint": "Search and browse all members",
+    "staff": "Staff",
+    "staffHint": "Staff accounts and roles",
+    "appearance": "Gym look",
+    "appearanceHint": "Color, logo and corner style"
+  }
 }

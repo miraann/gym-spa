@@ -32,7 +32,10 @@ export type { NavItemKey };
 export interface NavItem {
   readonly key: NavItemKey;
   readonly icon: LucideIcon;
-  /** Not set until the module is built in its phase; the menu shows it as "soon". */
+  /**
+   * Not set until the module is built in its phase. Until then the item is hidden everywhere (menu,
+   * tabs, search); it appears by itself once its page exists.
+   */
   readonly to?: AppPath;
   /** Hidden from staff without it. Revisit when the module is built. */
   readonly permission?: string;
@@ -107,9 +110,12 @@ export function navItem(key: NavItemKey): NavItem {
   return item;
 }
 
-/** Whether the staff member may see the item (pages not built yet are shown as "soon"). */
-export function canSeeNavItem(item: NavItem, permissions: ReadonlySet<string>): boolean {
-  return !item.permission || permissions.has(item.permission);
+/** Whether the item is built and the staff member may see it. */
+export function canSeeNavItem(
+  item: NavItem,
+  permissions: ReadonlySet<string>,
+): item is OpenNavItem {
+  return item.to !== undefined && (!item.permission || permissions.has(item.permission));
 }
 
 /** Whether the item is the page being shown (or one of its sub-pages). */
@@ -118,8 +124,18 @@ export function isNavItemActive(item: NavItem, pathname: string): boolean {
   return item.to === '/' ? pathname === '/' : pathname.startsWith(item.to);
 }
 
-/** The menu as one staff member sees it: items they lack the permission for are left out. */
-export function visibleNavGroups(permissions: ReadonlySet<string>): NavGroup[] {
+/** A menu item whose page exists. */
+export type OpenNavItem = NavItem & { readonly to: AppPath };
+
+export interface VisibleNavGroup extends NavGroup {
+  readonly items: readonly OpenNavItem[];
+}
+
+/**
+ * The menu as one staff member sees it: pages not built yet and pages they lack the permission
+ * for are left out.
+ */
+export function visibleNavGroups(permissions: ReadonlySet<string>): VisibleNavGroup[] {
   return NAV_GROUPS.map((group) => ({
     ...group,
     items: group.items.filter((item) => canSeeNavItem(item, permissions)),
@@ -134,15 +150,13 @@ export function navTabItems(
   saved: readonly NavItemKey[] | null,
   roleKey: string | null,
   permissions: ReadonlySet<string>,
-): NavItem[] {
-  return resolveNavTabs(saved, roleKey, (key) => canSeeNavItem(navItem(key), permissions)).map(
-    navItem,
-  );
+): OpenNavItem[] {
+  return resolveNavTabs(saved, roleKey, (key) => canSeeNavItem(navItem(key), permissions))
+    .map(navItem)
+    .filter((item) => canSeeNavItem(item, permissions));
 }
 
-/** Pages that exist already, and that the staff member may open: offered in the search palette. */
+/** The pages the staff member may open: offered in the search palette. */
 export function navPages(permissions: ReadonlySet<string>) {
-  return visibleNavGroups(permissions)
-    .flatMap((group) => group.items)
-    .filter((item): item is NavItem & { readonly to: AppPath } => item.to !== undefined);
+  return visibleNavGroups(permissions).flatMap((group) => group.items);
 }

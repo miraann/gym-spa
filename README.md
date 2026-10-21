@@ -117,7 +117,7 @@ tools/eslint-plugin-gym  project lint rules
 - Lint rules:
   - `gym/no-hardcoded-ui-text`: text in JSX, labels, placeholders and toasts must come from `t('...')`.
   - `gym/no-physical-direction-classes`: use `ms-`/`me-`/`ps-`/`pe-`/`start-`/`end-`/`text-start`, never `ml-`/`mr-`/`left-`/`text-left`, so layouts mirror in RTL.
-- Fonts (all bundled, never loaded from the internet): **UniSalar_F_007** for Kurdish (`packages/ui/src/assets/fonts`), Vazirmatn for Arabic, Inter for English. UniSalar is limited to Arabic-script characters with `unicode-range`, because it draws ASCII digits as Eastern Arabic. Digits and Latin text in Kurdish screens use Vazirmatn.
+- Fonts (all bundled, never loaded from the internet): **UniSalar_F_113** for Kurdish (`packages/ui/src/assets/fonts`), Vazirmatn for Arabic, Inter for English. UniSalar is limited to Arabic-script characters with `unicode-range` (it has no Latin letters or ASCII digits): digits and Latin text in Kurdish screens use Vazirmatn. **UniSalar_F_113 was supplied by the project owner, who is responsible for its licence: confirm the licence before selling the system.** It has one weight, so Kurdish text is never made bold (`font-synthesis-weight: none`): Kurdish headings are larger instead.
 - Dates are shown in Baghdad time. Kurdish uses Sorani month names (`4ی تشرینی یەکەمی 2026`). Digits are Western by default, with Eastern Arabic (`٢٥٬٠٠٠ د.ع`) as a setting.
 
 ## Database (Supabase)

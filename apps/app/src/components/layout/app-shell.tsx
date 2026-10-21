@@ -1,7 +1,10 @@
 import { getDirection } from '@gym/i18n';
+import { haptic } from '@gym/platform';
+import { useQueryClient } from '@tanstack/react-query';
 import { Outlet } from '@tanstack/react-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { PullToRefresh } from '@gym/ui/blocks/pull-to-refresh';
 import { SidebarInset, SidebarProvider } from '@gym/ui/components/sidebar';
 import { useGymAppearanceSync } from '@/features/appearance/use-gym-appearance';
 import { BillingBanner } from '@/features/billing/billing-banner';
@@ -34,7 +37,8 @@ function saveSidebarOpen(open: boolean): void {
 /**
  * The frame of every page. Navigation fits the width (CLAUDE.md → Design): the full sidebar on
  * desktops, an icon rail on tablets, a bottom tab bar on phones. Both side menus sit on the
- * reading-start side: right for Kurdish and Arabic.
+ * reading-start side: right for Kurdish and Arabic. On phones, pulling down at the top of a page
+ * reloads its data.
  */
 export function AppShell() {
   const { t } = useTranslation();
@@ -42,6 +46,7 @@ export function AppShell() {
   const layout = useLayout();
   const [sidebarOpen, setSidebarOpen] = useState(readSidebarOpen);
   const [searchOpen, setSearchOpen] = useState(false);
+  const queryClient = useQueryClient();
   useGymAppearanceSync();
 
   const handleSidebarOpenChange = (open: boolean): void => {
@@ -68,9 +73,27 @@ export function AppShell() {
             setSearchOpen(true);
           }}
         />
-        <main id="main" tabIndex={-1} className="flex-1 p-4 outline-none md:p-6">
-          <BillingBanner />
-          <Outlet />
+        <main
+          id="main"
+          tabIndex={-1}
+          className="flex-1 px-4 pt-3 pb-6 outline-none md:px-8 md:pt-6"
+        >
+          <div className="mx-auto flex w-full max-w-6xl flex-col gap-4">
+            <BillingBanner />
+            {layout === 'phone' ? (
+              <PullToRefresh
+                label={t('refreshing')}
+                onThreshold={() => {
+                  haptic('light');
+                }}
+                onRefresh={() => queryClient.refetchQueries({ type: 'active' })}
+              >
+                <Outlet />
+              </PullToRefresh>
+            ) : (
+              <Outlet />
+            )}
+          </div>
         </main>
       </SidebarInset>
       {layout === 'phone' && <BottomTabBar />}

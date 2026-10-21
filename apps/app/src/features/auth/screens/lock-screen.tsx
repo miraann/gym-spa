@@ -7,28 +7,21 @@ import {
   MonitorSmartphoneIcon,
   UserPlusIcon,
 } from 'lucide-react';
+import { haptic } from '@gym/platform';
+import { ListGroup, ListRow, ListRowIcon } from '@gym/ui/blocks/list-group';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, AlertDescription } from '@gym/ui/components/alert';
 import { Button } from '@gym/ui/components/button';
 import { useFormat } from '@/lib/format';
 import { usePreferences } from '@/lib/preferences';
+import { initials } from '@/lib/initials';
 import { logError } from '@/lib/logger';
 import { canUseBranch, pinBlocker, type DeviceAccount, type PasswordReason } from '../accounts';
 import { useAuthController, useAuthState, useDeviceGym } from '../auth-context';
 import { AuthLayout } from './auth-layout';
 import { FormError } from './form-error';
 import { PinPad } from './pin-pad';
-
-/** The first letter of the first two names, for the round badge. */
-function initials(fullName: string): string {
-  return fullName
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part.charAt(0))
-    .join('');
-}
 
 /**
  * The gym's state, when it isn't the usual one: locked (nobody can use it) or read-only (look, but
@@ -105,49 +98,57 @@ export function LockScreen({
     <AuthLayout title={t('lock.title')} description={t('lock.description')}>
       <GymStateNotice />
       <DeviceNotice />
-      <ul className="flex flex-col gap-2">
+      <ListGroup>
         {accounts.map((account) => (
-          <li key={account.staffId}>
-            <Button
-              variant="outline"
-              className="h-auto w-full justify-start gap-3 py-3 text-start"
-              onClick={() => {
-                onPick(account.staffId);
-              }}
-            >
+          <ListRow
+            key={account.staffId}
+            asChild
+            className="min-h-16"
+            title={account.fullName}
+            description={<span dir="ltr">{account.username}</span>}
+            leading={
               <span
                 aria-hidden
-                className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 font-semibold text-primary"
+                className="flex size-11 shrink-0 items-center justify-center rounded-full bg-primary/12 font-bold text-primary"
               >
                 {initials(account.fullName)}
               </span>
-              <span className="grid flex-1 leading-tight">
-                <span className="truncate font-medium">{account.fullName}</span>
-                <span dir="ltr" className="truncate text-start text-xs text-muted-foreground">
-                  {account.username}
-                </span>
-              </span>
-              {!canUseBranch(account, branchId) ? (
-                <span className="text-xs text-muted-foreground">{t('lock.noBranchAccess')}</span>
+            }
+            trailing={
+              !canUseBranch(account, branchId) ? (
+                <span className="text-xs">{t('lock.noBranchAccess')}</span>
               ) : (
                 pinBlocker(account) && (
-                  <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <span className="flex items-center gap-1 text-xs">
                     <KeyRoundIcon className="size-3.5" />
                     {t('lock.needsPassword')}
                   </span>
                 )
-              )}
-            </Button>
-          </li>
+              )
+            }
+          >
+            <button
+              type="button"
+              onClick={() => {
+                onPick(account.staffId);
+              }}
+            />
+          </ListRow>
         ))}
-      </ul>
-      <div className="flex flex-col gap-1 border-t pt-4">
-        <Button variant="ghost" className="justify-start" onClick={onOtherStaff}>
-          <UserPlusIcon />
-          {t('lock.otherStaff')}
-        </Button>
-        <p className="px-2 text-xs text-muted-foreground">{t('lock.otherStaffHint')}</p>
-      </div>
+      </ListGroup>
+      <ListGroup footer={t('lock.otherStaffHint')}>
+        <ListRow
+          asChild
+          title={t('lock.otherStaff')}
+          leading={
+            <ListRowIcon>
+              <UserPlusIcon aria-hidden />
+            </ListRowIcon>
+          }
+        >
+          <button type="button" onClick={onOtherStaff} />
+        </ListRow>
+      </ListGroup>
     </AuthLayout>
   );
 }
@@ -186,6 +187,7 @@ export function PinScreen({
       .unlock(account.staffId, pin)
       .then((result) => {
         setWrong(result.kind === 'wrong_pin' ? result.triesLeft : null);
+        if (result.kind !== 'unlocked') haptic('error');
         if (
           result.kind === 'network' ||
           result.kind === 'gym_locked' ||

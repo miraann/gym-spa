@@ -1,7 +1,7 @@
 import { NAV_ITEM_KEYS } from '@gym/core';
 import { describe, expect, it } from 'vitest';
 import ckbNav from '../../../../packages/i18n/src/locales/ckb/nav.json';
-import { NAV_GROUPS, isNavItemActive, navItem, navTabItems } from './navigation';
+import { NAV_GROUPS, isNavItemActive, navItem, navTabItems, visibleNavGroups } from './navigation';
 
 describe('the menu', () => {
   it('lists exactly the pages the database knows, in the same order', () => {
@@ -25,14 +25,23 @@ describe('isNavItemActive', () => {
   });
 });
 
+describe('visibleNavGroups', () => {
+  it('hides pages that are not built yet, even with the permission', () => {
+    const keys = visibleNavGroups(new Set(['checkin.perform', 'members.view'])).flatMap((group) =>
+      group.items.map((item) => item.key),
+    );
+    expect(keys).toEqual(['home', 'members', 'settings']);
+  });
+});
+
 describe('navTabItems', () => {
-  it("gives a receptionist their role's tabs", () => {
+  it("gives a receptionist their role's tabs that are built, filling free slots", () => {
     const permissions = new Set(['checkin.perform', 'members.view', 'cash_register.operate']);
+    // Check-in and the cash register come back by themselves once their pages exist.
     expect(navTabItems(null, 'receptionist', permissions).map((item) => item.key)).toEqual([
       'home',
       'members',
-      'checkin',
-      'cashRegister',
+      'settings',
     ]);
   });
 

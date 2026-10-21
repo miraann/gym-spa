@@ -1,11 +1,17 @@
 import { Chip, ChipRow } from '@gym/ui/blocks/chip-row';
+import {
+  GroupedList,
+  GroupedListItem,
+  GroupedListSkeleton,
+  ListRowIcon,
+  RowChevron,
+} from '@gym/ui/blocks/list-group';
+import { groupedRowClass } from '@gym/ui/lib/grouped-list';
 import { MasterDetail } from '@gym/ui/blocks/master-detail';
 import { PageHeader } from '@gym/ui/blocks/page-header';
 import { Badge } from '@gym/ui/components/badge';
 import { Card } from '@gym/ui/components/card';
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia } from '@gym/ui/components/empty';
-import { Skeleton } from '@gym/ui/components/skeleton';
-import { cn } from '@gym/ui/lib/utils';
 import { Link, Outlet, useRouterState } from '@tanstack/react-router';
 import { CircleOffIcon, MonitorSmartphoneIcon } from 'lucide-react';
 import { useState } from 'react';
@@ -51,15 +57,14 @@ function DeviceRow({
       params={{ deviceId: device.id }}
       aria-current={selected ? 'page' : undefined}
       data-device-row={device.name}
-      className={cn(
-        'flex items-start gap-3 rounded-2xl bg-card p-4 ring-1 ring-border transition-colors hover:bg-muted/50',
-        selected && 'ring-2 ring-primary',
-      )}
+      className={groupedRowClass(selected)}
     >
-      <Icon className="mt-1 size-5 shrink-0 text-muted-foreground" aria-hidden="true" />
+      <ListRowIcon>
+        <Icon aria-hidden="true" />
+      </ListRowIcon>
       <span className="flex min-w-0 flex-1 flex-col gap-1">
         <span className="flex items-center justify-between gap-2">
-          <span className="truncate text-base">{device.name}</span>
+          <span className="truncate font-medium">{device.name}</span>
           <span className="flex shrink-0 gap-1">
             {thisDevice && <Badge variant="secondary">{t('list.thisDevice')}</Badge>}
             {!device.isActive && (
@@ -83,6 +88,7 @@ function DeviceRow({
             : t('list.neverSeen')}
         </span>
       </span>
+      <RowChevron />
     </Link>
   );
 }
@@ -115,11 +121,7 @@ function DeviceList() {
         ))}
       </ChipRow>
       {devices.isPending ? (
-        <div className="flex flex-col gap-2">
-          {[0, 1, 2].map((row) => (
-            <Skeleton key={row} className="h-20 rounded-2xl" />
-          ))}
-        </div>
+        <GroupedListSkeleton rows={3} avatar />
       ) : devices.isError ? (
         <AdminError error={adminErrorKey(devices.error, 'devices')} />
       ) : shown.length === 0 ? (
@@ -128,13 +130,13 @@ function DeviceList() {
           {t('list.empty')}
         </Card>
       ) : (
-        <ul className="flex flex-col gap-2" aria-label={t('list.title')}>
+        <GroupedList aria-label={t('list.title')}>
           {shown.map((device) => (
-            <li key={device.id}>
+            <GroupedListItem key={device.id} inset>
               <DeviceRow device={device} selected={pathname === `/devices/${device.id}`} />
-            </li>
+            </GroupedListItem>
           ))}
-        </ul>
+        </GroupedList>
       )}
     </div>
   );

@@ -11,3 +11,4 @@ export {
   type CameraResult,
 } from './camera';
 export { secureStorage, type SecureStorage } from './secure-storage';
+export { haptic, type HapticKind } from './haptics';

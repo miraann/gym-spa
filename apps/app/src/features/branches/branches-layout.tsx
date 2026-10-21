@@ -1,11 +1,16 @@
 import { localizedName } from '@gym/i18n';
 import { MasterDetail } from '@gym/ui/blocks/master-detail';
+import {
+  GroupedList,
+  GroupedListItem,
+  GroupedListSkeleton,
+  RowChevron,
+} from '@gym/ui/blocks/list-group';
+import { groupedRowClass } from '@gym/ui/lib/grouped-list';
 import { PageHeader } from '@gym/ui/blocks/page-header';
 import { Badge } from '@gym/ui/components/badge';
 import { Button } from '@gym/ui/components/button';
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia } from '@gym/ui/components/empty';
-import { Skeleton } from '@gym/ui/components/skeleton';
-import { cn } from '@gym/ui/lib/utils';
 import { Link, Outlet, useRouterState } from '@tanstack/react-router';
 import { Building2Icon, CircleOffIcon, PlusIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -72,54 +77,52 @@ function BranchList() {
       />
       <LimitLine kind="branches" />
       {branches.isPending ? (
-        <div className="flex flex-col gap-2">
-          {[0, 1, 2].map((row) => (
-            <Skeleton key={row} className="h-16 rounded-2xl" />
-          ))}
-        </div>
+        <GroupedListSkeleton rows={3} />
       ) : branches.isError ? (
         <AdminError error={adminErrorKey(branches.error, 'branches')} />
       ) : (
-        <ul className="flex flex-col gap-2" aria-label={t('list.title')}>
+        <GroupedList aria-label={t('list.title')}>
           {branches.data.map((branch) => {
             const selected = pathname === `/branches/${branch.id}`;
             return (
-              <li key={branch.id}>
+              <GroupedListItem key={branch.id}>
                 <Link
                   to="/branches/$branchId"
                   params={{ branchId: branch.id }}
                   aria-current={selected ? 'page' : undefined}
                   data-branch={branch.code}
-                  className={cn(
-                    'flex flex-col gap-1 rounded-2xl bg-card p-4 ring-1 ring-border transition-colors hover:bg-muted/50',
-                    selected && 'ring-2 ring-primary',
-                  )}
+                  className={groupedRowClass(selected)}
                 >
-                  <span className="flex items-center justify-between gap-2">
-                    <span className="truncate text-base">{localizedName(branch, language)}</span>
-                    {!branch.isActive && (
-                      <Badge variant="destructive">
-                        <CircleOffIcon aria-hidden="true" />
-                        {t('status.inactive')}
-                      </Badge>
-                    )}
-                  </span>
-                  <span className="flex flex-wrap gap-x-2 text-sm text-muted-foreground">
-                    <span dir="ltr" className="font-mono">
-                      {branch.code}
+                  <span className="flex min-w-0 flex-1 flex-col gap-1">
+                    <span className="flex items-center justify-between gap-2">
+                      <span className="truncate font-medium">
+                        {localizedName(branch, language)}
+                      </span>
+                      {!branch.isActive && (
+                        <Badge variant="destructive">
+                          <CircleOffIcon aria-hidden="true" />
+                          {t('status.inactive')}
+                        </Badge>
+                      )}
                     </span>
-                    {branch.phone && (
-                      <>
-                        <span aria-hidden="true">·</span>
-                        <span dir="ltr">{branch.phone}</span>
-                      </>
-                    )}
+                    <span className="flex flex-wrap gap-x-2 text-sm text-muted-foreground">
+                      <span dir="ltr" className="font-mono">
+                        {branch.code}
+                      </span>
+                      {branch.phone && (
+                        <>
+                          <span aria-hidden="true">·</span>
+                          <span dir="ltr">{branch.phone}</span>
+                        </>
+                      )}
+                    </span>
                   </span>
+                  <RowChevron />
                 </Link>
-              </li>
+              </GroupedListItem>
             );
           })}
-        </ul>
+        </GroupedList>
       )}
     </div>
   );
