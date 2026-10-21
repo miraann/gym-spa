@@ -76,6 +76,18 @@ export {
   type Oklch,
   type Rgb,
 } from './color.ts';
+export {
+  CARD_BLOCK_REASON_MAX_LENGTH,
+  CARD_END_REASONS,
+  CARD_REPLACE_REASONS,
+  CARD_STATUSES,
+  CARD_UID_PATTERN,
+  normalizeCardUid,
+  type CardByteOrder,
+  type CardEndReason,
+  type CardReplaceReason,
+  type CardStatus,
+} from './cards.ts';
 export { toLatinDigits } from './digits.ts';
 export {
   DEFAULT_FIRST_BRANCH_NAME,

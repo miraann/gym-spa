@@ -33,6 +33,10 @@ insert into public.member_health (id, gym_id, injuries) values
 insert into public.member_photos (id, gym_id, photo_type, photo, thumbnail_type, thumbnail) values
   ('e0000000-0000-4000-8000-0000000000a1', tests.gym('pgtap-a'), 'image/jpeg', '/9j/4AAQSkZJRg==', 'image/jpeg', '/9j/4AAQSkZJRg=='),
   ('e0000000-0000-4000-8000-0000000000b1', tests.gym('pgtap-b'), 'image/jpeg', '/9j/4AAQSkZJRg==', 'image/jpeg', '/9j/4AAQSkZJRg==');
+-- The same card UID in both gyms: UIDs are unique per gym.
+insert into public.nfc_cards (id, gym_id, member_id, uid) values
+  ('e0000000-0000-4000-8000-0000000000a1', tests.gym('pgtap-a'), 'e0000000-0000-4000-8000-0000000000a1', '04A23BC15D6E80'),
+  ('e0000000-0000-4000-8000-0000000000b1', tests.gym('pgtap-b'), 'e0000000-0000-4000-8000-0000000000b1', '04A23BC15D6E80');
 
 select is_empty(
   $$ select t from tests.gym_tables() t
@@ -78,6 +82,9 @@ insert into insert_cases (table_name, statement) values
   ('member_photos', $$ insert into public.member_photos (gym_id, id, photo_type, photo, thumbnail_type, thumbnail)
                        values (tests.gym('pgtap-b'), 'e0000000-0000-4000-8000-0000000000b2', 'image/jpeg', '/9j/4AAQSkZJRg==', 'image/jpeg', '/9j/4AAQSkZJRg==') $$),
   ('member_photos', $$ select public.set_member_photo('e0000000-0000-4000-8000-0000000000b2', 'image/jpeg', '/9j/4AAQSkZJRg==', 'image/jpeg', '/9j/4AAQSkZJRg==') $$),
+  ('nfc_cards', $$ insert into public.nfc_cards (gym_id, id, member_id, uid)
+                   values (tests.gym('pgtap-b'), 'e0000000-0000-4000-8000-0000000000c5', 'e0000000-0000-4000-8000-0000000000b2', 'DEADBEEF') $$),
+  ('nfc_cards', $$ select public.assign_card('e0000000-0000-4000-8000-0000000000c6', 'e0000000-0000-4000-8000-0000000000b2', 'DEADBEEF') $$),
   -- Their own gym (gym_id left to fill itself in), pointing at gym B's rows.
   ('role_permissions', $$ insert into public.role_permissions (role_id, permission_key) values (tests.role('trainer', 'pgtap-b'), 'payments.view') $$),
   ('staff_users', $$ insert into public.staff_users (id, username, full_name, role_id)
@@ -89,7 +96,8 @@ insert into insert_cases (table_name, statement) values
                  values ('e0000000-0000-4000-8000-0000000000c3', tests.branch('B901', 'pgtap-b'), 'ئەندام', 'male', '+9647501230003') $$),
   ('member_health', $$ insert into public.member_health (id, injuries) values ('e0000000-0000-4000-8000-0000000000b2', 'ئازاری پشت') $$),
   ('member_photos', $$ insert into public.member_photos (id, photo_type, photo, thumbnail_type, thumbnail)
-                       values ('e0000000-0000-4000-8000-0000000000b2', 'image/jpeg', '/9j/4AAQSkZJRg==', 'image/jpeg', '/9j/4AAQSkZJRg==') $$);
+                       values ('e0000000-0000-4000-8000-0000000000b2', 'image/jpeg', '/9j/4AAQSkZJRg==', 'image/jpeg', '/9j/4AAQSkZJRg==') $$),
+  ('nfc_cards', $$ insert into public.nfc_cards (id, member_id, uid) values ('e0000000-0000-4000-8000-0000000000c7', 'e0000000-0000-4000-8000-0000000000b2', 'DEADBEEF') $$);
 
 select is_empty(
   $$ select t from tests.gym_tables() t where t not in (select c.table_name from insert_cases c) $$,

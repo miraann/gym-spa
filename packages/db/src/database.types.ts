@@ -460,6 +460,87 @@ export type Database = {
           },
         ];
       };
+      nfc_cards: {
+        Row: {
+          block_reason: string | null;
+          blocked_at: string | null;
+          blocked_by: string | null;
+          created_at: string;
+          created_by: string | null;
+          deleted_at: string | null;
+          end_reason: string | null;
+          ended_at: string | null;
+          ended_by: string | null;
+          gym_id: string;
+          id: string;
+          member_id: string;
+          replaces_id: string | null;
+          status: string;
+          uid: string;
+          unblocked_at: string | null;
+          unblocked_by: string | null;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          block_reason?: string | null;
+          blocked_at?: string | null;
+          blocked_by?: string | null;
+          created_at?: string;
+          created_by?: string | null;
+          deleted_at?: string | null;
+          end_reason?: string | null;
+          ended_at?: string | null;
+          ended_by?: string | null;
+          gym_id?: string;
+          id: string;
+          member_id: string;
+          replaces_id?: string | null;
+          status?: string;
+          uid: string;
+          unblocked_at?: string | null;
+          unblocked_by?: string | null;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          block_reason?: string | null;
+          blocked_at?: string | null;
+          blocked_by?: string | null;
+          created_at?: string;
+          created_by?: string | null;
+          deleted_at?: string | null;
+          end_reason?: string | null;
+          ended_at?: string | null;
+          ended_by?: string | null;
+          gym_id?: string;
+          id?: string;
+          member_id?: string;
+          replaces_id?: string | null;
+          status?: string;
+          uid?: string;
+          unblocked_at?: string | null;
+          unblocked_by?: string | null;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'nfc_cards_member_id_gym_id_fkey';
+            columns: ['member_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'members';
+            referencedColumns: ['id', 'gym_id'];
+          },
+          {
+            foreignKeyName: 'nfc_cards_replaces_id_gym_id_fkey';
+            columns: ['replaces_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'nfc_cards';
+            referencedColumns: ['id', 'gym_id'];
+          },
+        ];
+      };
       permissions: {
         Row: {
           created_at: string;
@@ -832,6 +913,66 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      assign_card: {
+        Args: { p_id: string; p_member_id: string; p_uid: string };
+        Returns: {
+          block_reason: string | null;
+          blocked_at: string | null;
+          blocked_by: string | null;
+          created_at: string;
+          created_by: string | null;
+          deleted_at: string | null;
+          end_reason: string | null;
+          ended_at: string | null;
+          ended_by: string | null;
+          gym_id: string;
+          id: string;
+          member_id: string;
+          replaces_id: string | null;
+          status: string;
+          uid: string;
+          unblocked_at: string | null;
+          unblocked_by: string | null;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        SetofOptions: {
+          from: '*';
+          to: 'nfc_cards';
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
+      block_card: {
+        Args: { p_card_id: string; p_reason: string };
+        Returns: {
+          block_reason: string | null;
+          blocked_at: string | null;
+          blocked_by: string | null;
+          created_at: string;
+          created_by: string | null;
+          deleted_at: string | null;
+          end_reason: string | null;
+          ended_at: string | null;
+          ended_by: string | null;
+          gym_id: string;
+          id: string;
+          member_id: string;
+          replaces_id: string | null;
+          status: string;
+          uid: string;
+          unblocked_at: string | null;
+          unblocked_by: string | null;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        SetofOptions: {
+          from: '*';
+          to: 'nfc_cards';
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
       clear_my_pin_lockout: { Args: Record<PropertyKey, never>; Returns: undefined };
       create_branch: {
         Args: {
@@ -990,6 +1131,66 @@ export type Database = {
           platform: string;
         }[];
       };
+      end_card: {
+        Args: { p_card_id: string };
+        Returns: {
+          block_reason: string | null;
+          blocked_at: string | null;
+          blocked_by: string | null;
+          created_at: string;
+          created_by: string | null;
+          deleted_at: string | null;
+          end_reason: string | null;
+          ended_at: string | null;
+          ended_by: string | null;
+          gym_id: string;
+          id: string;
+          member_id: string;
+          replaces_id: string | null;
+          status: string;
+          uid: string;
+          unblocked_at: string | null;
+          unblocked_by: string | null;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        SetofOptions: {
+          from: '*';
+          to: 'nfc_cards';
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
+      find_card: {
+        Args: { p_uid: string };
+        Returns: {
+          block_reason: string | null;
+          blocked_at: string | null;
+          blocked_by: string | null;
+          created_at: string;
+          created_by: string | null;
+          deleted_at: string | null;
+          end_reason: string | null;
+          ended_at: string | null;
+          ended_by: string | null;
+          gym_id: string;
+          id: string;
+          member_id: string;
+          replaces_id: string | null;
+          status: string;
+          uid: string;
+          unblocked_at: string | null;
+          unblocked_by: string | null;
+          updated_at: string;
+          updated_by: string | null;
+        }[];
+        SetofOptions: {
+          from: '*';
+          to: 'nfc_cards';
+          isOneToOne: false;
+          isSetofReturn: true;
+        };
+      };
       find_member_duplicates: {
         Args: { p_exclude_id?: string; p_full_name?: string; p_phone?: string };
         Returns: {
@@ -1119,6 +1320,36 @@ export type Database = {
         };
       };
       remove_member_photo: { Args: { p_member_id: string }; Returns: undefined };
+      replace_card: {
+        Args: { p_card_id: string; p_new_id?: string; p_new_uid?: string; p_reason: string };
+        Returns: {
+          block_reason: string | null;
+          blocked_at: string | null;
+          blocked_by: string | null;
+          created_at: string;
+          created_by: string | null;
+          deleted_at: string | null;
+          end_reason: string | null;
+          ended_at: string | null;
+          ended_by: string | null;
+          gym_id: string;
+          id: string;
+          member_id: string;
+          replaces_id: string | null;
+          status: string;
+          uid: string;
+          unblocked_at: string | null;
+          unblocked_by: string | null;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        SetofOptions: {
+          from: '*';
+          to: 'nfc_cards';
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
       reset_staff_pin: { Args: { p_staff_id: string }; Returns: undefined };
       role_overview: {
         Args: Record<PropertyKey, never>;
@@ -1408,6 +1639,36 @@ export type Database = {
           role_id: string;
           username: string;
         }[];
+      };
+      unblock_card: {
+        Args: { p_card_id: string };
+        Returns: {
+          block_reason: string | null;
+          blocked_at: string | null;
+          blocked_by: string | null;
+          created_at: string;
+          created_by: string | null;
+          deleted_at: string | null;
+          end_reason: string | null;
+          ended_at: string | null;
+          ended_by: string | null;
+          gym_id: string;
+          id: string;
+          member_id: string;
+          replaces_id: string | null;
+          status: string;
+          uid: string;
+          unblocked_at: string | null;
+          unblocked_by: string | null;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        SetofOptions: {
+          from: '*';
+          to: 'nfc_cards';
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
       };
       unlock_on_device: { Args: { p_device_id: string; p_pin: string }; Returns: Json };
       unlock_with_pin: { Args: { p_branch_id: string; p_pin: string }; Returns: Json };

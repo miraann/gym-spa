@@ -3,6 +3,12 @@ import { readdirSync, readFileSync } from 'node:fs';
 /** Test helper: reads SQL from supabase/migrations, so tests can compare rules with the database. */
 
 const MIGRATIONS = new URL('../../../supabase/migrations/', import.meta.url);
+const DATABASE_TESTS = new URL('../../../supabase/tests/', import.meta.url);
+
+/** The SQL of a pgTAP file in supabase/tests, for cases the app and the database share. */
+export function databaseTestSql(file: string): string {
+  return readFileSync(new URL(file, DATABASE_TESTS), 'utf8');
+}
 
 /** The SQL of every migration, oldest first. */
 export function migrationsSql(): string[] {

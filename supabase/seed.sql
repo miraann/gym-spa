@@ -92,3 +92,37 @@ select md5('demo-member-' || i)::uuid,
        case when i % 9 = 0 then (array['ئازاری ئەژنۆ', 'ئازاری پشت', 'شکانی دەستی ڕاست پێش ساڵێک'])[i % 3 + 1] end
   from generate_series(1, 200) as i
  where i % 5 = 0 or i % 9 = 0;
+
+-- NFC cards, with made-up UIDs: 7 bytes like the NTAG cards (04…), 4 bytes for every 7th member.
+-- Each member's card has the id md5('demo-card-<n>'). Every 10th member (4, 14, 24, …) has no card
+-- yet, so one can be given on the screens; an archived member's card ended with them. History:
+-- members 11, 61, 111 and 161 lost a card before; member 21's card was stolen (blocked); member
+-- 71's lost card was blocked later by a manager.
+insert into public.nfc_cards (
+  id, gym_id, member_id, uid, status, end_reason, ended_at, block_reason, blocked_at, created_at
+)
+select md5('demo-old-card-' || p.i)::uuid, m.gym_id, m.id,
+       '04' || upper(substr(md5('demo-old-card-uid-' || p.i), 1, 12)),
+       case when p.i in (21, 71) then 'blocked' else 'ended' end,
+       case when p.i = 21 then 'stolen' else 'lost' end,
+       m.created_at + interval '60 days',
+       case when p.i = 71 then 'لەلای کەسێکی تر بینرا' end,
+       case p.i when 21 then m.created_at + interval '60 days' when 71 then m.created_at + interval '63 days' end,
+       m.created_at + interval '1 day'
+  from generate_series(1, 200) as p (i)
+  join public.members m on m.id = md5('demo-member-' || p.i)::uuid
+ where p.i % 50 = 11 or p.i in (21, 71);
+
+insert into public.nfc_cards (id, gym_id, member_id, uid, status, replaces_id, end_reason, ended_at, created_at)
+select md5('demo-card-' || p.i)::uuid, m.gym_id, m.id,
+       case when p.i % 7 = 0 then upper(substr(md5('demo-card-uid-' || p.i), 1, 8))
+            else '04' || upper(substr(md5('demo-card-uid-' || p.i), 1, 12)) end,
+       case when m.status = 'archived' then 'ended' else 'active' end,
+       old.id,
+       case when m.status = 'archived' then 'member_archived' end,
+       case when m.status = 'archived' then greatest(m.status_changed_at, m.created_at + interval '1 day') end,
+       m.created_at + case when old.id is null then interval '1 day' else interval '60 days' end
+  from generate_series(1, 200) as p (i)
+  join public.members m on m.id = md5('demo-member-' || p.i)::uuid
+  left join public.nfc_cards old on old.id = md5('demo-old-card-' || p.i)::uuid
+ where p.i % 10 <> 4;

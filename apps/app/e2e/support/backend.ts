@@ -294,6 +294,7 @@ export class TestData {
     }
     for (const id of this.staffIds) await db.auth.admin.deleteUser(id);
     for (const table of [
+      'nfc_cards',
       'member_photos',
       'member_health',
       'members',
