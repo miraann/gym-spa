@@ -101,7 +101,7 @@
     "paidUntil": "Paid until",
     "noEnd": "No end",
     "usage": "Usage",
-    "usageShort": "{{branches}} branches · {{staff}} staff · {{devices}} devices",
+    "usageShort": "{{members}} members · {{branches}} branches · {{staff}} staff · {{devices}} devices",
     "offline": "Offline"
   },
   "gym": {
@@ -117,9 +117,12 @@
     "graceUntil": "Grace period until {{date}}",
     "changeSubscription": "Change the subscription date",
     "usageTitle": "Usage",
+    "members": "Members",
+    "activeMembers": "Active members",
     "branches": "Active branches",
     "staff": "Active staff",
     "devices": "Active devices",
+    "membersNote": "Archived members aren't counted. Only the numbers are shown, never the members' names or details.",
     "lastLogin": "Last staff login",
     "lastDevice": "Last time a device was seen",
     "created": "Created",

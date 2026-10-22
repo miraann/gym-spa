@@ -1513,6 +1513,14 @@ export type Database = {
           user_id: string;
         }[];
       };
+      seller_member_counts: {
+        Args: { p_gym_id?: string };
+        Returns: {
+          active_members: number;
+          gym_id: string;
+          members: number;
+        }[];
+      };
       seller_new_recovery_codes: { Args: Record<PropertyKey, never>; Returns: string[] };
       seller_prepare_add_admin: { Args: { p_email: string }; Returns: undefined };
       seller_prepare_admin_change: {

@@ -21,8 +21,13 @@ export interface CardRead {
 
 export interface NfcReader {
   readonly kind: CardReaderKind;
-  /** Starts listening for cards; returns the function that stops it. */
+  /** Starts listening for cards placed on the reader; returns the function that stops it. */
   listen(onRead: (read: CardRead) => void): () => void;
+  /**
+   * While listening, reads a card already lying on the reader once (spec §1): a screen that waits
+   * for a card just opened. Missing on readers that only ever report new cards (keyboard-type).
+   */
+  readLying?(): void;
 }
 
 /** The readers this device can use. */

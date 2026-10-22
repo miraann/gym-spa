@@ -35,6 +35,9 @@ const bridge: DesktopBridge = {
       if (cardListeners === 0) ipcRenderer.send(DESKTOP_CHANNELS.cardListen, false);
     };
   },
+  readLyingCards: () => {
+    ipcRenderer.send(DESKTOP_CHANNELS.cardReadLying);
+  },
   watchCardReaders: (onChange) => {
     const listener = (_event: IpcRendererEvent, readers: readonly string[]) => {
       onChange(readers);

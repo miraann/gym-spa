@@ -63,7 +63,7 @@ export function serveCardReaders(fromApp: (event: IpcEvent) => boolean): void {
       readerWatchers.delete(contents);
       if (listener !== contents) return;
       listener = null;
-      log('the page reloaded or closed: no screen is waiting for cards');
+      log('the page reloaded or closed: not listening for cards');
       watcher?.setListening(false);
     };
     contents.on('did-navigate', forget);
@@ -77,8 +77,14 @@ export function serveCardReaders(fromApp: (event: IpcEvent) => boolean): void {
     if (listening) listener = event.sender;
     else if (listener === event.sender) listener = null;
     else return;
-    log(listening ? 'a screen is waiting for cards' : 'no screen is waiting for cards');
+    log(listening ? 'listening for cards' : 'not listening for cards');
     watcher?.setListening(listening);
+  });
+
+  ipcMain.on(DESKTOP_CHANNELS.cardReadLying, (event) => {
+    if (!fromApp(event) || listener !== event.sender) return;
+    log('a card screen opened: reading a card already on a reader');
+    watcher?.readLying();
   });
 
   ipcMain.on(DESKTOP_CHANNELS.cardReadersGet, (event) => {

@@ -28,6 +28,7 @@ import { z } from 'zod';
 import { useActiveAccount } from '@/features/auth/auth-context';
 import { useFormat } from '@/lib/format';
 import { usePreferences } from '@/lib/preferences';
+import { useUnsavedChanges } from '@/lib/unsaved-changes';
 import {
   useAdminBranches,
   useRenameStaff,
@@ -172,6 +173,7 @@ function AccessForm({ member }: { readonly member: StaffMember }) {
     },
   });
   const { errors, isDirty } = form.formState;
+  useUnsavedChanges(isDirty);
   const [allBranches, branchIds] = useWatch({
     control: form.control,
     name: ['allBranches', 'branchIds'],

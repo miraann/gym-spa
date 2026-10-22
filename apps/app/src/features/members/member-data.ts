@@ -200,6 +200,60 @@ export function useMemberPage(params: MemberListParams) {
   });
 }
 
+/** How many members the search (Ctrl+K) shows; the members list has the rest. */
+export const MEMBER_SEARCH_LIMIT = 6;
+
+export interface MemberSearchResult {
+  readonly members: readonly Member[];
+  /** More members match than are shown. */
+  readonly more: boolean;
+}
+
+/**
+ * The search's members (Ctrl+K): name, phone or member number, like the list's search box, archived
+ * members too. The member whose number it is comes first.
+ */
+export function useMemberSearch(query: string, enabled: boolean) {
+  const { client, actor } = useActingClient();
+  // PostgREST reads * as a wildcard too; names and phones never contain one.
+  const needle = memberSearchNeedle(query).replaceAll('*', '');
+  return useQuery({
+    queryKey: [MEMBERS_QUERY, actor, 'search', needle],
+    enabled: enabled && client !== undefined && needle !== '',
+    queryFn: async (): Promise<MemberSearchResult> => {
+      const db = requireClient(client);
+      const number = /^[0-9]{1,9}$/.test(needle) ? Number(needle) : null;
+      const [matching, byNumber] = await Promise.all([
+        db
+          .from('members')
+          .select(MEMBER_COLUMNS)
+          .is('deleted_at', null)
+          .ilike('search_text', `%${escapeLikePattern(needle)}%`)
+          .order('full_name')
+          .order('member_number')
+          .limit(MEMBER_SEARCH_LIMIT + 1),
+        number === null
+          ? null
+          : db
+              .from('members')
+              .select(MEMBER_COLUMNS)
+              .is('deleted_at', null)
+              .eq('member_number', number)
+              .maybeSingle(),
+      ]);
+      if (matching.error) throw matching.error;
+      if (byNumber?.error) throw byNumber.error;
+      const first = byNumber?.data ? [byNumber.data] : [];
+      const rows = [...first, ...matching.data.filter((row) => row.id !== byNumber?.data?.id)];
+      return {
+        members: rows.slice(0, MEMBER_SEARCH_LIMIT).map(toMember),
+        more: rows.length > MEMBER_SEARCH_LIMIT,
+      };
+    },
+    // No earlier results while typing: Enter must never open a member of an older search.
+  });
+}
+
 export interface MemberCounts {
   readonly active: number;
   /** Members registered since `since` (the start of this month, for the dashboard). */

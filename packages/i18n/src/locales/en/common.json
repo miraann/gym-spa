@@ -50,7 +50,13 @@
     "placeholder": "Search for a page...",
     "empty": "No results found",
     "pages": "Pages",
-    "shortcut": "Ctrl K"
+    "shortcut": "Ctrl K",
+    "placeholderMembers": "Search for a member or a page...",
+    "hint": "Type a name, phone number or member number, or hold the member's card to the card reader.",
+    "members": "Members",
+    "searching": "Searching...",
+    "failed": "Couldn't search the members. Check the connection and try again.",
+    "allMembers": "All results in the members list"
   },
   "sidebar": {
     "title": "Main menu",

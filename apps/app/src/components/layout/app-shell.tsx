@@ -8,6 +8,7 @@ import { PullToRefresh } from '@gym/ui/blocks/pull-to-refresh';
 import { SidebarInset, SidebarProvider } from '@gym/ui/components/sidebar';
 import { useGymAppearanceSync } from '@/features/appearance/use-gym-appearance';
 import { BillingBanner } from '@/features/billing/billing-banner';
+import { useOpenMemberOnScan } from '@/features/cards/use-open-member-on-scan';
 import { useLayout } from '@gym/ui/hooks/use-layout';
 import { usePreferences } from '@/lib/preferences';
 import { AppSidebar } from './app-sidebar';
@@ -38,7 +39,7 @@ function saveSidebarOpen(open: boolean): void {
  * The frame of every page. Navigation fits the width (CLAUDE.md → Design): the full sidebar on
  * desktops, an icon rail on tablets, a bottom tab bar on phones. Both side menus sit on the
  * reading-start side: right for Kurdish and Arabic. On phones, pulling down at the top of a page
- * reloads its data.
+ * reloads its data. A card held to a reader opens its member from any page.
  */
 export function AppShell() {
   const { t } = useTranslation();
@@ -48,6 +49,10 @@ export function AppShell() {
   const [searchOpen, setSearchOpen] = useState(false);
   const queryClient = useQueryClient();
   useGymAppearanceSync();
+  // A card held to a reader on a screen that doesn't wait for one opens its member.
+  useOpenMemberOnScan(() => {
+    setSearchOpen(false);
+  });
 
   const handleSidebarOpenChange = (open: boolean): void => {
     setSidebarOpen(open);

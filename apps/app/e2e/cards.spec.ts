@@ -1,5 +1,5 @@
-import { randomUUID } from 'node:crypto';
-import { admin, write, type TestData } from './support/backend';
+import { admin } from './support/backend';
+import { addCard, addMember } from './support/members';
 import { expect, lockFromMenu, scanCard, signIn, test, unlock } from './support/app';
 
 // NFC cards (step 2e): keyboard-type readers and the card screens on a member's page. A
@@ -7,34 +7,6 @@ import { expect, lockFromMenu, scanCard, signIn, test, unlock } from './support/
 
 const PHONE = { width: 390, height: 844 };
 const DESKTOP = { width: 1440, height: 900 };
-
-/** A member added straight in the database; returns its id. */
-async function addMember(data: TestData, branchId: string, fullName: string, phone: string) {
-  const gym = await data.gym();
-  const id = randomUUID();
-  await write(
-    admin().from('members').insert({
-      id,
-      gym_id: gym.id,
-      branch_id: branchId,
-      full_name: fullName,
-      gender: 'male',
-      phone,
-      member_number: 0,
-    }),
-  );
-  return id;
-}
-
-/** A card the member was given earlier. */
-async function addCard(data: TestData, memberId: string, uid: string) {
-  const gym = await data.gym();
-  await write(
-    admin()
-      .from('nfc_cards')
-      .insert({ id: randomUUID(), gym_id: gym.id, member_id: memberId, uid }),
-  );
-}
 
 async function cardsOf(memberId: string) {
   const { data } = await admin()

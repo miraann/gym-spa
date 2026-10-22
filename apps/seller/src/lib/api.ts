@@ -25,7 +25,11 @@ type Functions = Database['public']['Functions'];
 /** The generated types call every column a SQL function returns non-null; these can be null. */
 type WithNulls<Row, Key extends keyof Row> = Omit<Row, Key> & { [K in Key]: Row[K] | null };
 
-export type GymRow = WithNulls<
+/** A gym with its member counts (seller_member_counts: numbers only, never names). */
+export type GymRow = Omit<Functions['seller_member_counts']['Returns'][number], 'gym_id'> &
+  GymRowWithoutCounts;
+
+type GymRowWithoutCounts = WithNulls<
   Functions['seller_gyms']['Returns'][number],
   | 'name_en'
   | 'name_ar'
@@ -86,11 +90,26 @@ export async function fetchMe(client: SellerClient): Promise<MeRow | null> {
 
 // Reads -----------------------------------------------------------------------------------------
 
+/** The gyms (one, or all) with their member counts; a gym without a count row has 0 members. */
+async function fetchGyms(client: SellerClient, gymId?: string): Promise<GymRow[]> {
+  const args = gymId === undefined ? {} : { p_gym_id: gymId };
+  const [gyms, counts] = await Promise.all([
+    rows<GymRowWithoutCounts[]>(client.rpc('seller_gyms', args)),
+    rows(client.rpc('seller_member_counts', args)),
+  ]);
+  const byGym = new Map(counts.map((count) => [count.gym_id, count]));
+  return gyms.map((gym) => ({
+    ...gym,
+    members: byGym.get(gym.id)?.members ?? 0,
+    active_members: byGym.get(gym.id)?.active_members ?? 0,
+  }));
+}
+
 export function useGyms() {
   const client = useSellerClient();
   return useQuery({
     queryKey: ['gyms'],
-    queryFn: async (): Promise<GymRow[]> => rows(client.rpc('seller_gyms')),
+    queryFn: () => fetchGyms(client),
     refetchInterval: REFRESH_MS,
   });
 }
@@ -99,8 +118,7 @@ export function useGym(gymId: string) {
   const client = useSellerClient();
   return useQuery({
     queryKey: ['gyms', gymId],
-    queryFn: async (): Promise<GymRow | null> =>
-      (await rows(client.rpc('seller_gyms', { p_gym_id: gymId })))[0] ?? null,
+    queryFn: async (): Promise<GymRow | null> => (await fetchGyms(client, gymId))[0] ?? null,
     refetchInterval: REFRESH_MS,
   });
 }

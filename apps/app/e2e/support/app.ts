@@ -93,6 +93,9 @@ export async function signIn(page: Page, staff: TestStaff, path = '/'): Promise<
   await submitPasswordLogin(page, staff);
   // The login and lock screens are gone: the app itself is showing.
   await expect(page.locator('[data-auth-screen]')).toHaveCount(0);
+  // And its page (loaded on demand) with it, so keys and cards reach a page that listens: a page's
+  // title, or the message of a page that is closed or doesn't exist.
+  await expect(page.locator('#main h1, [data-slot="empty-title"]').first()).toBeVisible();
 }
 
 /** Types a PIN into the PIN pad's field, like a keyboard would. */

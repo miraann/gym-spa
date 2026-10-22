@@ -14,11 +14,12 @@ export interface DesktopBridge {
   readonly secureSet: (key: string, value: string) => Promise<void>;
   readonly secureDelete: (key: string) => Promise<void>;
   /**
-   * PC/SC card readers such as the ACR122U, read by the main process (step 2f). Cards are read
-   * only while a screen listens; a card already on a reader when it starts listening is read once.
-   * Returns the function that stops listening.
+   * PC/SC card readers such as the ACR122U, read by the main process (step 2f): cards placed on a
+   * reader while the page listens. Returns the function that stops listening.
    */
   readonly listenForCards: (onCard: (card: PcscCard) => void) => () => void;
+  /** Reads a card already lying on a reader once: a screen that waits for a card just opened. */
+  readonly readLyingCards: () => void;
   /** Calls `onChange` with the connected PC/SC readers now and whenever they change. */
   readonly watchCardReaders: (onChange: (readers: readonly string[]) => void) => () => void;
   /** Shows on a reader whether the app took the card it read: LED and beep, where it can. */
@@ -42,10 +43,12 @@ export const DESKTOP_CHANNELS = {
   secureGet: 'gym:secure-get',
   secureSet: 'gym:secure-set',
   secureDelete: 'gym:secure-delete',
-  /** Page → main: whether a screen listens for cards (a boolean). */
+  /** Page → main: whether the page listens for cards (a boolean). */
   cardListen: 'gym:card-listen',
   /** Main → page: a card read while listening (PcscCard). */
   card: 'gym:card',
+  /** Page → main: read a card already lying on a reader once. */
+  cardReadLying: 'gym:card-read-lying',
   /** Page → main: send the connected readers now. */
   cardReadersGet: 'gym:card-readers-get',
   /** Main → page: the connected readers' names. */

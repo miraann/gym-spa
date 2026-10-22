@@ -1,4 +1,5 @@
 import { addMonthsToDate, baghdadDateOf, paidUntilFromDate } from '@gym/core';
+import type { Database } from '@gym/db';
 import {
   TestGym,
   adminClient,
@@ -164,4 +165,55 @@ test('the list finds a gym by its name typed with Arabic letters', async ({ page
   await expect(page.getByRole('link', { name: gym.code })).toBeVisible();
   await page.getByLabel('گەڕان بە کۆد یان ناو').fill('no-such-gym-anywhere');
   await expect(page.getByText('هیچ جیمێک نەدۆزرایەوە.')).toBeVisible();
+});
+
+test("a gym's member counts: numbers only, archived members left out", async ({ page, made }) => {
+  const gym = await TestGym.create(backend, 'e2e-count');
+  made.gyms.push(gym);
+  const db = adminClient(backend);
+  const branchId = await gym.branchId('B1');
+  const member = (
+    fullName: string,
+    phone: string,
+    status: string,
+    reason: string | null,
+  ): Database['public']['Tables']['members']['Insert'] => ({
+    id: crypto.randomUUID(),
+    gym_id: gym.id,
+    branch_id: branchId,
+    full_name: fullName,
+    gender: 'male',
+    phone,
+    status,
+    status_reason: reason,
+    member_number: 0,
+  });
+  const inserted = await db
+    .from('members')
+    .insert([
+      member('ئارام کەریم', '+9647501239001', 'active', null),
+      member('هانا عومەر', '+9647501239002', 'active', null),
+      member('دانا سەلیم', '+9647501239003', 'suspended', 'تاقیکردنەوە'),
+      member('شوان ڕەشید', '+9647501239004', 'archived', 'تاقیکردنەوە'),
+    ]);
+  expect(inserted.error).toBeNull();
+  try {
+    const admin = await made.admin('e2e-count');
+    await admin.ready();
+    await signInReady(page, admin);
+    await page.getByLabel('گەڕان بە کۆد یان ناو').fill(gym.code);
+    await expect(page.getByText('3 ئەندام ·', { exact: false })).toBeVisible();
+
+    await page.getByRole('link', { name: gym.code }).click();
+    const fact = (label: string) => page.locator('dt', { hasText: label }).locator('xpath=..');
+    await expect(fact('ئەندامان')).toContainText('3');
+    await expect(fact('ئەندامە چالاکەکان')).toContainText('2');
+    await expect(
+      page.getByText('ئەندامە ئەرشیفکراوەکان ناژمێردرێن.', { exact: false }),
+    ).toBeVisible();
+    // Never a member's name.
+    await expect(page.getByText('ئارام کەریم')).toHaveCount(0);
+  } finally {
+    await db.from('members').delete().eq('gym_id', gym.id);
+  }
 });

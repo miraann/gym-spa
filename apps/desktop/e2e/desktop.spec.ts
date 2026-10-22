@@ -1,4 +1,3 @@
-import { randomUUID } from 'node:crypto';
 import { existsSync } from 'node:fs';
 import { cp, mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -13,7 +12,8 @@ import {
 } from '@playwright/test';
 // Test staff in local Supabase (`pnpm db:start`), shared with the web tests.
 import { autoRegisterDevices, lockFromMenu } from '../../app/e2e/support/app';
-import { admin, TestData, write, type TestStaff } from '../../app/e2e/support/backend';
+import { TestData, type TestStaff } from '../../app/e2e/support/backend';
+import { addCard, addMember } from '../../app/e2e/support/members';
 import type { FakePcsc } from '../src/pcsc-fake';
 
 // path.resolve drops the trailing backslash: on Windows, `"...\desktop\"` would escape the quote.
@@ -106,24 +106,6 @@ async function signIn(page: Page, staff: TestStaff): Promise<void> {
   await page.getByLabel('وشەی نهێنی', { exact: true }).fill(staff.password);
   await page.getByRole('button', { name: 'چوونەژوورەوە' }).click();
   await expect(page.getByRole('heading', HOME_HEADING)).toBeVisible();
-}
-
-/** A member added straight in the database; returns its id. */
-async function addMember(branchId: string, fullName: string, phone: string): Promise<string> {
-  const gym = await data.gym();
-  const id = randomUUID();
-  await write(
-    admin().from('members').insert({
-      id,
-      gym_id: gym.id,
-      branch_id: branchId,
-      full_name: fullName,
-      gender: 'male',
-      phone,
-      member_number: 0,
-    }),
-  );
-  return id;
 }
 
 async function unlock(page: Page, staff: TestStaff): Promise<void> {
@@ -480,8 +462,8 @@ test('reads a PC/SC reader (ACR122U) on the reader test page, and signals on it'
 test('a card dialog reads the card already on the reader, and the reader shows the result', async () => {
   const branchId = await data.branch();
   const staff = await data.staff({ branchIds: [branchId] });
-  const aram = await addMember(branchId, 'ئارام کەریم', '+9647501230101');
-  const shwan = await addMember(branchId, 'شوان ڕەشید', '+9647501230102');
+  const aram = await addMember(data, branchId, 'ئارام کەریم', '+9647501230101');
+  const shwan = await addMember(data, branchId, 'شوان ڕەشید', '+9647501230102');
   const page = await mainWindow();
   await pcsc.plugIn(READER);
   await pcsc.place(READER, '04A1C1334F6180');
@@ -531,4 +513,36 @@ test('a locked app reads no card, and reads the card on the reader once after un
   ).toBeVisible();
   await page.waitForTimeout(300);
   expect((await pcsc.seen()).reads).toBe(1);
+});
+
+test('a card placed on any screen opens its member; one left on the reader does not', async () => {
+  const branchId = await data.branch();
+  const staff = await data.staff({ branchIds: [branchId] });
+  const lana = await addMember(data, branchId, 'لانا ئەحمەد', '+9647501230111');
+  await addCard(data, lana, '04A1C1334F6180');
+  const page = await mainWindow();
+  await pcsc.plugIn(READER);
+  const pluggedIn = Date.now();
+  await signIn(page, staff);
+  await page.waitForTimeout(Math.max(0, pluggedIn + SETTLE_MS - Date.now()));
+
+  await pcsc.place(READER, '04A1C1334F6180');
+  await expect(page).toHaveURL(new RegExp(`/members/${lana}$`));
+  await expect
+    .poll(async () => (await pcsc.seen()).signals.at(-1))
+    .toEqual({ reader: READER, signal: 'ok', via: 'card' });
+
+  // Back home with the card left lying there: locking and unlocking doesn't read it again.
+  await page.getByRole('link', { name: 'سەرەکی' }).first().click();
+  await expect(page.getByRole('heading', HOME_HEADING)).toBeVisible();
+  await lockFromMenu(page);
+  await unlock(page, staff);
+  await expect(page.getByRole('heading', HOME_HEADING)).toBeVisible();
+  await page.waitForTimeout(300);
+  expect((await pcsc.seen()).reads).toBe(1);
+
+  // Lifted and placed again, it opens the member again.
+  await pcsc.lift(READER);
+  await pcsc.place(READER, '04A1C1334F6180');
+  await expect(page).toHaveURL(new RegExp(`/members/${lana}$`));
 });

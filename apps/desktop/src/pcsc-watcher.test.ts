@@ -81,23 +81,28 @@ describe('PcscWatcher', () => {
     expect(cards).toEqual([]);
   });
 
-  it('reads a card already on the reader once when a screen starts listening', async () => {
+  it('reads a card already on the reader only when a card screen asks, once each time', async () => {
     const { pcsc, watcher, cards } = setup();
     pcsc.plugIn(ACR);
     pcsc.place(ACR, CARD);
     watcher.start();
     await settle();
+    watcher.readLying();
+    await settle();
     expect(pcsc.uidReads).toEqual([]);
 
+    // Listening alone (the page listens on every screen) leaves it there.
     watcher.setListening(true);
+    await settle();
+    expect(pcsc.uidReads).toEqual([]);
+
+    watcher.readLying();
     await expect.poll(() => cards).toEqual([{ reader: ACR, uid: CARD }]);
-    watcher.setListening(true);
     await settle();
     expect(cards).toHaveLength(1);
 
-    // Another screen opened for it later reads it again.
-    watcher.setListening(false);
-    watcher.setListening(true);
+    // Another card screen opened later reads it again.
+    watcher.readLying();
     await expect.poll(() => cards).toHaveLength(2);
   });
 
@@ -155,6 +160,7 @@ describe('PcscWatcher', () => {
     watcher.start();
     await settle();
     watcher.setListening(true);
+    watcher.readLying();
     await expect.poll(() => cards).toHaveLength(1);
     const connections = pcsc.connections;
 

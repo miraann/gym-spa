@@ -37,6 +37,7 @@ import {
 } from '@/lib/appearance';
 import { useConnection } from '@/lib/connection';
 import { saveErrorKey, type SaveErrorKey } from '@/lib/save-error';
+import { useUnsavedChanges } from '@/lib/unsaved-changes';
 import { cn } from '@gym/ui/lib/utils';
 import { LogoField } from './logo-field';
 import { saveGymLook } from './save-appearance';
@@ -69,6 +70,7 @@ export function GymLookCard() {
   useEffect(() => restoreGymLook, []);
 
   const dirty = draft.brandColor !== saved.brandColor || draft.cornerStyle !== saved.cornerStyle;
+  useUnsavedChanges(dirty);
   const issues = checkBrandContrast(draft.brandColor);
   const statusLike = looksLikeStatusColor(draft.brandColor);
 

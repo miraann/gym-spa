@@ -42,6 +42,7 @@ import { useAdminWriteState } from '@/features/staff/write-state';
 import { WriteStateNotice } from '@/features/staff/write-state-notice';
 import { usePreferences } from '@/lib/preferences';
 import { useBaghdadToday } from '@/lib/use-today';
+import { useUnsavedChanges } from '@/lib/unsaved-changes';
 import {
   useCreateMember,
   useMember,
@@ -309,7 +310,8 @@ function MemberForm({
     resolver: zodResolver<MemberFormValues, unknown, MemberInput>(schema),
     defaultValues,
   });
-  const { errors } = form.formState;
+  const { errors, isDirty } = form.formState;
+  useUnsavedChanges(isDirty);
   const [fullName, phone, noOwnPhone] = useWatch({
     control: form.control,
     name: ['fullName', 'phone', 'noOwnPhone'],

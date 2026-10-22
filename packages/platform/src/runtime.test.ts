@@ -8,6 +8,7 @@ const bridge: DesktopBridge = {
   secureSet: () => Promise.resolve(),
   secureDelete: () => Promise.resolve(),
   listenForCards: () => () => undefined,
+  readLyingCards: () => undefined,
   watchCardReaders: () => () => undefined,
   signalCard: () => undefined,
 };

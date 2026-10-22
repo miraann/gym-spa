@@ -177,14 +177,17 @@ function GymDetails({ gym }: { readonly gym: GymRow }) {
           <CardHeader>
             <CardTitle>{t('gym.usageTitle')}</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="flex flex-col gap-3">
             <dl className="grid grid-cols-2 gap-3">
+              <Fact label={t('gym.members')}>{format.number(gym.members)}</Fact>
+              <Fact label={t('gym.activeMembers')}>{format.number(gym.active_members)}</Fact>
               <Fact label={t('gym.branches')}>{format.number(gym.active_branches)}</Fact>
               <Fact label={t('gym.staff')}>{format.number(gym.active_staff)}</Fact>
               <Fact label={t('gym.devices')}>{format.number(gym.active_devices)}</Fact>
               <Fact label={t('gym.lastLogin')}>{when(gym.last_login_at)}</Fact>
               <Fact label={t('gym.lastDevice')}>{when(gym.last_device_seen_at)}</Fact>
             </dl>
+            <p className="text-sm text-muted-foreground">{t('gym.membersNote')}</p>
           </CardContent>
         </Card>
 

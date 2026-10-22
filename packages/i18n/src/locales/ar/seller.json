@@ -101,7 +101,7 @@
     "paidUntil": "الاشتراك حتى",
     "noEnd": "دون نهاية",
     "usage": "الاستخدام",
-    "usageShort": "{{branches}} فروع · {{staff}} موظفين · {{devices}} أجهزة",
+    "usageShort": "{{members}} أعضاء · {{branches}} فروع · {{staff}} موظفين · {{devices}} أجهزة",
     "offline": "دون اتصال"
   },
   "gym": {
@@ -117,9 +117,12 @@
     "graceUntil": "فترة السماح حتى {{date}}",
     "changeSubscription": "تغيير تاريخ الاشتراك",
     "usageTitle": "الاستخدام",
+    "members": "الأعضاء",
+    "activeMembers": "الأعضاء النشطون",
     "branches": "الفروع النشطة",
     "staff": "الموظفون النشطون",
     "devices": "الأجهزة النشطة",
+    "membersNote": "لا يحسب الأعضاء المؤرشفون. تظهر الأعداد فقط، وليس أسماء الأعضاء أو بياناتهم.",
     "lastLogin": "آخر دخول لموظف",
     "lastDevice": "آخر ظهور لجهاز",
     "created": "تاريخ الإنشاء",

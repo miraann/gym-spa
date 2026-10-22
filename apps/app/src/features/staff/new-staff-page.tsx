@@ -19,6 +19,7 @@ import { useTranslation } from 'react-i18next';
 import type { z } from 'zod';
 import { RequirePermission } from '@/components/no-access';
 import { useActiveAccount, useAuthState } from '@/features/auth/auth-context';
+import { useUnsavedChanges } from '@/lib/unsaved-changes';
 import { useAdminBranches, useCreateStaff, useRoleOverview } from './admin-data';
 import { adminErrorKey, type AdminErrorKey } from './admin-errors';
 import { AdminError, BackToList } from './admin-error';
@@ -68,7 +69,8 @@ function NewStaffForm() {
       branchIds: deviceBranchId ? [deviceBranchId] : [],
     },
   });
-  const { errors } = form.formState;
+  const { errors, isDirty } = form.formState;
+  useUnsavedChanges(isDirty);
   const [allBranches, branchIds] = useWatch({
     control: form.control,
     name: ['allBranches', 'branchIds'],

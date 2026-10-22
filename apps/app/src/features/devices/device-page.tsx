@@ -28,6 +28,7 @@ import { useAdminWriteState } from '@/features/staff/write-state';
 import { WriteStateNotice } from '@/features/staff/write-state-notice';
 import { useFormat } from '@/lib/format';
 import { usePreferences } from '@/lib/preferences';
+import { useUnsavedChanges } from '@/lib/unsaved-changes';
 import {
   useDeviceOverview,
   useMoveDevice,
@@ -146,6 +147,7 @@ function DeviceForm({ device }: { readonly device: DeviceInfo }) {
   const nameValid = isCleanText(cleanName, DEVICE_NAME_MAX_LENGTH);
   const dirty =
     cleanName !== device.name || (language === 'none' ? null : language) !== device.defaultLanguage;
+  useUnsavedChanges(dirty);
 
   const submit = () => {
     if (!nameValid) return;

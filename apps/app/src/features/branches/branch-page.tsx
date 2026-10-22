@@ -24,6 +24,7 @@ import { AdminError, BackToList } from '@/features/staff/admin-error';
 import { useAdminWriteState } from '@/features/staff/write-state';
 import { WriteStateNotice } from '@/features/staff/write-state-notice';
 import { usePreferences } from '@/lib/preferences';
+import { useUnsavedChanges } from '@/lib/unsaved-changes';
 import {
   branchSchema,
   useBranchDetails,
@@ -91,6 +92,7 @@ function BranchEditor({ branch }: { readonly branch: BranchDetails | null }) {
     },
   });
   const { errors, isDirty } = form.formState;
+  useUnsavedChanges(isDirty);
 
   const submit = form.handleSubmit((values) => {
     setError(null);

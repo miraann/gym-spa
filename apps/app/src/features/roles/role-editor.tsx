@@ -34,6 +34,7 @@ import { useAdminWriteState } from '@/features/staff/write-state';
 import { WriteStateNotice } from '@/features/staff/write-state-notice';
 import { useFormat } from '@/lib/format';
 import { usePreferences } from '@/lib/preferences';
+import { useUnsavedChanges } from '@/lib/unsaved-changes';
 import { PermissionTable } from './permission-table';
 
 /** /roles/$roleId: one role. */
@@ -119,6 +120,7 @@ function RoleEditor({
   });
   const { errors, isDirty } = form.formState;
   const dirty = role === null || isDirty || permissionsChanged;
+  useUnsavedChanges(isDirty || permissionsChanged);
   const canSave = online && !readOnly && canEditNames && dirty && !save.isPending;
 
   const submit = form.handleSubmit((names) => {

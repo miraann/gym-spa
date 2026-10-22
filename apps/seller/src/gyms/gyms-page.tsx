@@ -36,6 +36,7 @@ function Usage({ gym }: { readonly gym: GymRow }) {
   return (
     <span className="tabular-nums">
       {t('gyms.usageShort', {
+        members: format.number(gym.members),
         branches: format.number(gym.active_branches),
         staff: format.number(gym.active_staff),
         devices: format.number(gym.active_devices),
@@ -44,7 +45,7 @@ function Usage({ gym }: { readonly gym: GymRow }) {
   );
 }
 
-/** Every gym: code, name, state, subscription and usage counts. Never any of its data. */
+/** Every gym: code, name, state, subscription and usage counts (members too). Never any of its data. */
 export function GymsPage() {
   const { t } = useTranslation('seller');
   const { language } = usePreferences();

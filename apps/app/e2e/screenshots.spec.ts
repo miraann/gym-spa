@@ -157,6 +157,15 @@ for (const [device, viewport] of Object.entries(VIEWPORTS)) {
       await scanCard(page, '04A23BC15D6E80');
       await expect(page.getByTestId('card-holder')).toBeVisible();
       await shot(page, `${prefix}-16-card-reader`);
+      await open(page, owner, '/');
+      await page.getByRole('button', { name: 'گەڕان' }).click();
+      await shot(page, `${prefix}-17-search`);
+      await page.getByRole('dialog').getByRole('combobox').fill('ئا');
+      await expect(
+        page.getByTestId('search-members').locator('[data-member]').first(),
+      ).toBeVisible();
+      await shot(page, `${prefix}-18-search-members`);
+      await page.keyboard.press('Escape');
 
       if (device === 'phone') {
         await open(page, owner, '/');

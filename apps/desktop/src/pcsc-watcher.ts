@@ -5,7 +5,7 @@ import type { CardSignal } from '@gym/platform/desktop-bridge';
 // with Get UID. Only UIDs and reader names leave this file.
 //
 // Rules (decided by the user on 2026-10-22):
-// - A card counts when it is placed on a reader while a screen listens. Holding it there longer
+// - A card counts when it is placed on a reader while the page listens. Holding it there longer
 //   sends nothing more; lifting it and placing it again is a new read.
 // - A card already on a reader after the app starts, the PC wakes, the reader is plugged in again or
 //   the service recovers is not new: the first state seen after (re)connecting only sets what is
@@ -13,8 +13,10 @@ import type { CardSignal } from '@gym/platform/desktop-bridge';
 //   on it about half a second later (seen with the ACR122U), so a card it finds within `settleMs`
 //   of appearing counts as already there too. On waking, the reader also finds the card lying on
 //   it again before Windows tells the app the PC woke, so from going to sleep (sleep()) until the
-//   new connection after waking (restart()) no card is new. When a screen starts listening, a card
-//   already on a reader is read once: staff opened that screen for it.
+//   new connection after waking (restart()) no card is new. When a screen that waits for a card
+//   opens, the page asks for a card already on a reader (readLying()): it is read once, because
+//   staff opened that screen for it. Listening alone never reads it: the page listens on every
+//   screen (a card opens its member, step 2h), and a card left on the reader must not.
 // - Any service error closes the connection and opens a new one after a short pause; waking from
 //   sleep does the same (restart). A reader in use by another connection, such as our own LED and
 //   beep, is "unavailable" for a moment: that is a pause, not a removed reader or a moved card.
@@ -182,11 +184,14 @@ export class PcscWatcher {
     return [...this.readers.keys()];
   }
 
-  /** Whether a screen listens. When one starts, a card already on a reader is read once. */
+  /** Whether the page listens for cards. */
   setListening(listening: boolean): void {
-    const started = listening && !this.listening;
     this.listening = listening;
-    if (!started) return;
+  }
+
+  /** While listening, reads a card already on a reader once: a card screen just opened. */
+  readLying(): void {
+    if (!this.listening) return;
     for (const [name, reader] of this.readers) {
       if (reader.card === true && reader.reads === 0) this.read(name, reader);
     }

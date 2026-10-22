@@ -127,5 +127,8 @@
     "invalid_request": "These details are not valid. Check them and try again.",
     "network": "Couldn't reach the server. Check your internet connection and try again.",
     "unexpected": "Something went wrong. Try again. If it keeps happening, contact Click Group."
+  },
+  "anywhere": {
+    "unsaved": "This page has changes that aren't saved yet, so the member's page wasn't opened."
   }
 }
