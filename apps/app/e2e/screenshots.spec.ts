@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { fileURLToPath } from 'node:url';
 import type { Page } from '@playwright/test';
 import { admin, write, type TestStaff } from './support/backend';
 import {
@@ -18,6 +19,9 @@ import {
 // Skipped in the normal run.
 
 const OUT = process.env.SCREENSHOTS;
+const SAMPLE = fileURLToPath(
+  new URL('../../../samples/sample-members-import.xlsx', import.meta.url),
+);
 test.skip(!OUT, 'Set SCREENSHOTS=<folder> to take design screenshots');
 
 const VIEWPORTS = {
@@ -166,6 +170,22 @@ for (const [device, viewport] of Object.entries(VIEWPORTS)) {
       ).toBeVisible();
       await shot(page, `${prefix}-18-search-members`);
       await page.keyboard.press('Escape');
+
+      // Importing members (step 2j): the sample list's columns, branches and preview.
+      await open(page, owner, '/members/import');
+      await page.getByTestId('import-file-input').setInputFiles(SAMPLE);
+      await page
+        .getByTestId('import-branches')
+        .getByRole('combobox', { name: 'سەرەکی' })
+        .selectOption(branchId);
+      await expect(page.getByTestId('import-preview')).toBeVisible();
+      await shot(page, `${prefix}-19-import`);
+      for (const part of ['import-columns', 'import-branches', 'import-preview'] as const) {
+        await page.getByTestId(part).evaluate((element) => {
+          element.scrollIntoView({ block: 'start' });
+        });
+        await shot(page, `${prefix}-19-${part}`);
+      }
 
       if (device === 'phone') {
         await open(page, owner, '/');

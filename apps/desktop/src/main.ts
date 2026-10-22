@@ -134,6 +134,24 @@ function lockDownWebContents(): void {
     },
   );
 
+  // Files the app's page saves itself (the import page's rows left out, step 2j) go through Windows'
+  // save dialog, in the Downloads folder and titled with the file's name (by default the title is
+  // the page's blob: address). The app downloads nothing else.
+  session.defaultSession.on('will-download', (_event, item) => {
+    const url = item.getURL();
+    if (!url.startsWith('blob:') || !isAppUrl(url.slice('blob:'.length), devServerUrl)) {
+      item.cancel();
+      return;
+    }
+    const name = item.getFilename();
+    const extension = path.extname(name).slice(1).toLowerCase();
+    item.setSaveDialogOptions({
+      title: name,
+      defaultPath: path.join(app.getPath('downloads'), name),
+      filters: extension === '' ? [] : [{ name: extension.toUpperCase(), extensions: [extension] }],
+    });
+  });
+
   app.on('web-contents-created', (_event, contents) => {
     // The window only ever shows the app. Web links open in the user's browser instead.
     contents.setWindowOpenHandler(({ url }) => {

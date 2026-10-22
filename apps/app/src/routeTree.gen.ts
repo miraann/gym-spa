@@ -22,6 +22,7 @@ import { Route as BranchesNewRouteImport } from './routes/branches/new'
 import { Route as DevicesIndexRouteImport } from './routes/devices/index'
 import { Route as DevicesDeviceIdRouteImport } from './routes/devices/$deviceId'
 import { Route as MembersIndexRouteImport } from './routes/members/index'
+import { Route as MembersImportRouteImport } from './routes/members/import'
 import { Route as MembersNewRouteImport } from './routes/members/new'
 import { Route as RolesIndexRouteImport } from './routes/roles/index'
 import { Route as RolesRoleIdRouteImport } from './routes/roles/$roleId'
@@ -101,6 +102,11 @@ const MembersIndexRoute = MembersIndexRouteImport.update({
   path: '/',
   getParentRoute: () => MembersRouteRoute,
 } as any)
+const MembersImportRoute = MembersImportRouteImport.update({
+  id: '/import',
+  path: '/import',
+  getParentRoute: () => MembersRouteRoute,
+} as any)
 const MembersNewRoute = MembersNewRouteImport.update({
   id: '/new',
   path: '/new',
@@ -178,6 +184,7 @@ export interface FileRoutesByFullPath {
   '/branches/$branchId': typeof BranchesBranchIdRoute
   '/branches/new': typeof BranchesNewRoute
   '/devices/$deviceId': typeof DevicesDeviceIdRoute
+  '/members/import': typeof MembersImportRoute
   '/members/new': typeof MembersNewRoute
   '/roles/$roleId': typeof RolesRoleIdRoute
   '/roles/new': typeof RolesNewRoute
@@ -200,6 +207,7 @@ export interface FileRoutesByTo {
   '/branches/$branchId': typeof BranchesBranchIdRoute
   '/branches/new': typeof BranchesNewRoute
   '/devices/$deviceId': typeof DevicesDeviceIdRoute
+  '/members/import': typeof MembersImportRoute
   '/members/new': typeof MembersNewRoute
   '/roles/$roleId': typeof RolesRoleIdRoute
   '/roles/new': typeof RolesNewRoute
@@ -229,6 +237,7 @@ export interface FileRoutesById {
   '/branches/$branchId': typeof BranchesBranchIdRoute
   '/branches/new': typeof BranchesNewRoute
   '/devices/$deviceId': typeof DevicesDeviceIdRoute
+  '/members/import': typeof MembersImportRoute
   '/members/new': typeof MembersNewRoute
   '/roles/$roleId': typeof RolesRoleIdRoute
   '/roles/new': typeof RolesNewRoute
@@ -259,6 +268,7 @@ export interface FileRouteTypes {
     | '/branches/$branchId'
     | '/branches/new'
     | '/devices/$deviceId'
+    | '/members/import'
     | '/members/new'
     | '/roles/$roleId'
     | '/roles/new'
@@ -281,6 +291,7 @@ export interface FileRouteTypes {
     | '/branches/$branchId'
     | '/branches/new'
     | '/devices/$deviceId'
+    | '/members/import'
     | '/members/new'
     | '/roles/$roleId'
     | '/roles/new'
@@ -309,6 +320,7 @@ export interface FileRouteTypes {
     | '/branches/$branchId'
     | '/branches/new'
     | '/devices/$deviceId'
+    | '/members/import'
     | '/members/new'
     | '/roles/$roleId'
     | '/roles/new'
@@ -428,6 +440,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/members/'
       preLoaderRoute: typeof MembersIndexRouteImport
+      parentRoute: typeof MembersRouteRoute
+    }
+    '/members/import': {
+      id: '/members/import'
+      path: '/import'
+      fullPath: '/members/import'
+      preLoaderRoute: typeof MembersImportRouteImport
       parentRoute: typeof MembersRouteRoute
     }
     '/members/new': {
@@ -555,6 +574,7 @@ const DevicesRouteRouteWithChildren = DevicesRouteRoute._addFileChildren(
 )
 
 interface MembersRouteRouteChildren {
+  MembersImportRoute: typeof MembersImportRoute
   MembersNewRoute: typeof MembersNewRoute
   MembersIndexRoute: typeof MembersIndexRoute
   MembersMemberIdEditRoute: typeof MembersMemberIdEditRoute
@@ -562,6 +582,7 @@ interface MembersRouteRouteChildren {
 }
 
 const MembersRouteRouteChildren: MembersRouteRouteChildren = {
+  MembersImportRoute: MembersImportRoute,
   MembersNewRoute: MembersNewRoute,
   MembersIndexRoute: MembersIndexRoute,
   MembersMemberIdEditRoute: MembersMemberIdEditRoute,

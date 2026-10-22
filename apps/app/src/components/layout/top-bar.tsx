@@ -64,11 +64,13 @@ export function TopBar({
         </div>
       )}
       {phone && (
+        // Between the gym's logo and the buttons at the end (search, connection, staff menu), so
+        // a long title is cut short instead of running under them.
         <span
           aria-hidden
           data-slot="compact-title"
           className={cn(
-            'pointer-events-none absolute inset-x-24 bottom-0 flex h-14 items-center justify-center truncate text-base font-bold transition-[opacity,translate] duration-200 ease-spring motion-reduce:transition-none',
+            'pointer-events-none absolute start-14 end-38 bottom-0 flex h-14 items-center justify-center truncate text-base font-bold transition-[opacity,translate] duration-200 ease-spring motion-reduce:transition-none',
             compactTitle === null ? 'translate-y-1 opacity-0' : 'translate-y-0 opacity-100',
           )}
         >

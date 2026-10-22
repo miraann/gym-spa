@@ -4,7 +4,7 @@ import { logError } from './logger';
 export type SaveErrorKey = 'network' | 'gym_read_only' | 'forbidden' | 'invalid' | 'unexpected';
 
 /** A field of an error object (PostgREST errors carry code and message). */
-export function errorField(error: unknown, name: 'code' | 'message'): unknown {
+export function errorField(error: unknown, name: 'code' | 'message' | 'details'): unknown {
   return typeof error === 'object' && error !== null && name in error
     ? (error as Record<string, unknown>)[name]
     : undefined;

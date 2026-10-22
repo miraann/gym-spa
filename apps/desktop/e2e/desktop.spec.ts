@@ -47,6 +47,7 @@ const READER = 'ACS ACR122 0';
 /** A card a reader finds this soon after it is plugged in was already lying there (pcsc-watcher.ts). */
 const SETTLE_MS = 2000;
 type WithFakePcsc = typeof globalThis & { gymFakePcsc: FakePcsc };
+type WithSaved = typeof globalThis & { gymSaved?: { url: string; options: unknown } };
 
 /** The app's fake PC/SC service: plug readers in and out, place and lift cards. */
 const pcsc = {
@@ -304,6 +305,41 @@ test('the window never leaves the app', async () => {
   await expect(page.getByRole('heading', LOGIN_HEADING)).toBeVisible();
   expect(await page.evaluate(() => location.origin)).toBe('app://gym-spa');
   expect(running().windows()).toHaveLength(1);
+});
+
+test('a file the app saves goes through the save dialog, titled with its name', async () => {
+  const page = await mainWindow();
+  const target = path.join(userData, 'saved.csv');
+  const content = 'ناو,هۆکار\n';
+  // Stands in for the person at the dialog: records what it would show, and saves without it.
+  await running().evaluate(({ session }, savePath) => {
+    session.defaultSession.on('will-download', (_event, item) => {
+      (globalThis as WithSaved).gymSaved = {
+        url: item.getURL(),
+        options: item.getSaveDialogOptions(),
+      };
+      item.setSavePath(savePath);
+    });
+  }, target);
+
+  await page.evaluate((text) => {
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(new Blob([text], { type: 'text/csv' }));
+    link.download = 'ڕیزەکان.csv';
+    link.click();
+  }, content);
+
+  await expect
+    .poll(() => running().evaluate(() => (globalThis as WithSaved).gymSaved))
+    .toMatchObject({
+      url: expect.stringMatching(/^blob:app:\/\/gym-spa\//),
+      options: {
+        title: 'ڕیزەکان.csv',
+        defaultPath: expect.stringMatching(/[\\/]Downloads[\\/]ڕیزەکان\.csv$/),
+        filters: [{ name: 'CSV', extensions: ['csv'] }],
+      },
+    });
+  await expect.poll(() => (existsSync(target) ? readFile(target, 'utf8') : '')).toBe(content);
 });
 
 test('the app may use the camera for photos, but never the microphone', async () => {

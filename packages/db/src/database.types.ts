@@ -302,6 +302,65 @@ export type Database = {
           },
         ];
       };
+      member_imports: {
+        Row: {
+          card_count: number;
+          created_at: string;
+          created_by: string | null;
+          deleted_at: string | null;
+          file_name: string;
+          gym_id: string;
+          id: string;
+          kept: NonNullable<Json>;
+          member_count: number;
+          undo_reason: string | null;
+          undone_at: string | null;
+          undone_by: string | null;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          card_count?: number;
+          created_at?: string;
+          created_by?: string | null;
+          deleted_at?: string | null;
+          file_name: string;
+          gym_id?: string;
+          id: string;
+          kept?: NonNullable<Json>;
+          member_count: number;
+          undo_reason?: string | null;
+          undone_at?: string | null;
+          undone_by?: string | null;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          card_count?: number;
+          created_at?: string;
+          created_by?: string | null;
+          deleted_at?: string | null;
+          file_name?: string;
+          gym_id?: string;
+          id?: string;
+          kept?: NonNullable<Json>;
+          member_count?: number;
+          undo_reason?: string | null;
+          undone_at?: string | null;
+          undone_by?: string | null;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'member_imports_gym_id_fkey';
+            columns: ['gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'gyms';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       member_photos: {
         Row: {
           created_at: string;
@@ -368,6 +427,7 @@ export type Database = {
           gym_id: string;
           has_health_notes: boolean;
           id: string;
+          import_id: string | null;
           member_number: number;
           notes: string | null;
           phone: string | null;
@@ -398,6 +458,7 @@ export type Database = {
           gym_id?: string;
           has_health_notes?: boolean;
           id: string;
+          import_id?: string | null;
           member_number: number;
           notes?: string | null;
           phone?: string | null;
@@ -428,6 +489,7 @@ export type Database = {
           gym_id?: string;
           has_health_notes?: boolean;
           id?: string;
+          import_id?: string | null;
           member_number?: number;
           notes?: string | null;
           phone?: string | null;
@@ -457,6 +519,13 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: 'gyms';
             referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'members_import_id_gym_id_fkey';
+            columns: ['import_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'member_imports';
+            referencedColumns: ['id', 'gym_id'];
           },
         ];
       };
@@ -973,6 +1042,17 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      check_member_import: {
+        Args: { p_rows: Json };
+        Returns: {
+          full_name: string;
+          match: string;
+          member_id: string;
+          member_number: number;
+          row: number;
+          status: string;
+        }[];
+      };
       clear_my_pin_lockout: { Args: Record<PropertyKey, never>; Returns: undefined };
       create_branch: {
         Args: {
@@ -1076,6 +1156,7 @@ export type Database = {
           gym_id: string;
           has_health_notes: boolean;
           id: string;
+          import_id: string | null;
           member_number: number;
           notes: string | null;
           phone: string | null;
@@ -1210,6 +1291,54 @@ export type Database = {
           active_devices: number;
           max_branches: number;
           max_devices: number;
+        }[];
+      };
+      import_members: {
+        Args: { p_file_name: string; p_import_id: string; p_rows: Json };
+        Returns: {
+          card_count: number;
+          created_at: string;
+          created_by: string | null;
+          deleted_at: string | null;
+          file_name: string;
+          gym_id: string;
+          id: string;
+          kept: NonNullable<Json>;
+          member_count: number;
+          undo_reason: string | null;
+          undone_at: string | null;
+          undone_by: string | null;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        SetofOptions: {
+          from: '*';
+          to: 'member_imports';
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
+      member_import_history: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          card_count: number;
+          created_at: string;
+          created_by_name: string;
+          file_name: string;
+          id: string;
+          member_count: number;
+          undo_reason: string;
+          undone_at: string;
+          undone_by_name: string;
+        }[];
+      };
+      member_import_undo_preview: {
+        Args: { p_import_id: string };
+        Returns: {
+          already_archived: number;
+          cards: number;
+          changed: number;
+          to_archive: number;
         }[];
       };
       member_tags: {
@@ -1406,6 +1535,7 @@ export type Database = {
           gym_id: string;
           has_health_notes: boolean;
           id: string;
+          import_id: string | null;
           member_number: number;
           notes: string | null;
           phone: string | null;
@@ -1584,6 +1714,7 @@ export type Database = {
           gym_id: string;
           has_health_notes: boolean;
           id: string;
+          import_id: string | null;
           member_number: number;
           notes: string | null;
           phone: string | null;
@@ -1678,6 +1809,15 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      undo_member_import: {
+        Args: { p_import_id: string; p_reason: string };
+        Returns: {
+          already_archived: number;
+          archived: number;
+          cards_ended: number;
+          changed: number;
+        }[];
+      };
       unlock_on_device: { Args: { p_device_id: string; p_pin: string }; Returns: Json };
       unlock_with_pin: { Args: { p_branch_id: string; p_pin: string }; Returns: Json };
       update_member: {
@@ -1716,6 +1856,7 @@ export type Database = {
           gym_id: string;
           has_health_notes: boolean;
           id: string;
+          import_id: string | null;
           member_number: number;
           notes: string | null;
           phone: string | null;

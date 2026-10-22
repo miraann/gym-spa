@@ -37,6 +37,10 @@ insert into public.member_photos (id, gym_id, photo_type, photo, thumbnail_type,
 insert into public.nfc_cards (id, gym_id, member_id, uid) values
   ('e0000000-0000-4000-8000-0000000000a1', tests.gym('pgtap-a'), 'e0000000-0000-4000-8000-0000000000a1', '04A23BC15D6E80'),
   ('e0000000-0000-4000-8000-0000000000b1', tests.gym('pgtap-b'), 'e0000000-0000-4000-8000-0000000000b1', '04A23BC15D6E80');
+-- An import in each gym (only server code and import_members() add them).
+insert into public.member_imports (id, gym_id, file_name, member_count) values
+  ('e0000000-0000-4000-8000-0000000000a9', tests.gym('pgtap-a'), 'members.xlsx', 1),
+  ('e0000000-0000-4000-8000-0000000000b9', tests.gym('pgtap-b'), 'members.xlsx', 1);
 
 select is_empty(
   $$ select t from tests.gym_tables() t
@@ -85,6 +89,8 @@ insert into insert_cases (table_name, statement) values
   ('nfc_cards', $$ insert into public.nfc_cards (gym_id, id, member_id, uid)
                    values (tests.gym('pgtap-b'), 'e0000000-0000-4000-8000-0000000000c5', 'e0000000-0000-4000-8000-0000000000b2', 'DEADBEEF') $$),
   ('nfc_cards', $$ select public.assign_card('e0000000-0000-4000-8000-0000000000c6', 'e0000000-0000-4000-8000-0000000000b2', 'DEADBEEF') $$),
+  ('member_imports', $$ insert into public.member_imports (gym_id, id, file_name, member_count)
+                        values (tests.gym('pgtap-b'), 'e0000000-0000-4000-8000-0000000000d1', 'members.xlsx', 1) $$),
   -- Their own gym (gym_id left to fill itself in), pointing at gym B's rows.
   ('role_permissions', $$ insert into public.role_permissions (role_id, permission_key) values (tests.role('trainer', 'pgtap-b'), 'payments.view') $$),
   ('staff_users', $$ insert into public.staff_users (id, username, full_name, role_id)

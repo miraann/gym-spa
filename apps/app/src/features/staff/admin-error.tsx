@@ -23,8 +23,17 @@ export function AdminError({ error }: { readonly error: AdminErrorKey | null }) 
  * Back to the list, when the list isn't beside the open item: a native app's back button, in the
  * brand color.
  */
-export function BackToList({ to, label }: { readonly to: AppPath; readonly label: string }) {
-  if (useSideBySide()) return null;
+export function BackToList({
+  to,
+  label,
+  always = false,
+}: {
+  readonly to: AppPath;
+  readonly label: string;
+  /** Also when the screen is wide: for a page that takes the list's place. */
+  readonly always?: boolean;
+}) {
+  if (useSideBySide() && !always) return null;
   return (
     <Button
       asChild

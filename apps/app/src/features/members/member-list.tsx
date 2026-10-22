@@ -30,6 +30,7 @@ import { Link, useNavigate, useRouterState, useSearch } from '@tanstack/react-ro
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
+  FileUpIcon,
   SearchIcon,
   UserPlusIcon,
   UsersIcon,
@@ -73,12 +74,14 @@ const SEARCH_DELAY_MS = 300;
  */
 export function MemberList({ layout }: { readonly layout: 'full' | 'compact' }) {
   const { t } = useTranslation('members');
+  const { t: tImport } = useTranslation('memberImport');
   const search = useSearch({ from: '/members' });
   const params = memberListParams(search);
   const navigate = useNavigate({ from: '/members' });
   const phone = useLayout() === 'phone';
   const sideBySide = useSideBySide();
   const canCreate = usePermission('members.create');
+  const canImport = usePermission('members.import') && canCreate;
   const result = useMemberPage(params);
   const showTable = layout === 'full' && sideBySide;
 
@@ -117,6 +120,14 @@ export function MemberList({ layout }: { readonly layout: 'full' | 'compact' }) 
               <span className="text-sm text-muted-foreground" data-testid="members-total">
                 {t('list.total', { count: total })}
               </span>
+            )}
+            {canImport && layout === 'full' && (
+              <Button asChild variant="outline" size={phone ? 'default' : 'lg'}>
+                <Link to="/members/import">
+                  <FileUpIcon data-icon="inline-start" />
+                  {tImport('open')}
+                </Link>
+              </Button>
             )}
             {!phone && addButton}
           </div>

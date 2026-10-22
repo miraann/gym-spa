@@ -298,6 +298,7 @@ export class TestData {
       'member_photos',
       'member_health',
       'members',
+      'member_imports',
       'device_status',
       'devices',
       'branches',

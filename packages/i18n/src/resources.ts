@@ -5,6 +5,7 @@ import arCommon from './locales/ar/common.json';
 import arDates from './locales/ar/dates.json';
 import arDevices from './locales/ar/devices.json';
 import arHome from './locales/ar/home.json';
+import arMemberImport from './locales/ar/member-import.json';
 import arMembers from './locales/ar/members.json';
 import arNav from './locales/ar/nav.json';
 import arPermissions from './locales/ar/permissions.json';
@@ -17,6 +18,7 @@ import ckbCommon from './locales/ckb/common.json';
 import ckbDates from './locales/ckb/dates.json';
 import ckbDevices from './locales/ckb/devices.json';
 import ckbHome from './locales/ckb/home.json';
+import ckbMemberImport from './locales/ckb/member-import.json';
 import ckbMembers from './locales/ckb/members.json';
 import ckbNav from './locales/ckb/nav.json';
 import ckbPermissions from './locales/ckb/permissions.json';
@@ -29,6 +31,7 @@ import enCommon from './locales/en/common.json';
 import enDates from './locales/en/dates.json';
 import enDevices from './locales/en/devices.json';
 import enHome from './locales/en/home.json';
+import enMemberImport from './locales/en/member-import.json';
 import enMembers from './locales/en/members.json';
 import enNav from './locales/en/nav.json';
 import enPermissions from './locales/en/permissions.json';
@@ -53,6 +56,7 @@ const ckb = {
   devices: ckbDevices,
   members: ckbMembers,
   cards: ckbCards,
+  memberImport: ckbMemberImport,
 };
 
 /** The gym app's texts (every namespace it loads). */
@@ -77,6 +81,7 @@ const en: GymResources = {
   devices: enDevices,
   members: enMembers,
   cards: enCards,
+  memberImport: enMemberImport,
 };
 
 const ar: GymResources = {
@@ -92,6 +97,7 @@ const ar: GymResources = {
   devices: arDevices,
   members: arMembers,
   cards: arCards,
+  memberImport: arMemberImport,
 };
 
 export const resources: Record<Language, GymResources> = { ckb, en, ar };
@@ -109,6 +115,7 @@ export const NAMESPACES = [
   'devices',
   'members',
   'cards',
+  'memberImport',
 ] as const satisfies readonly Namespace[];
 
 export const DEFAULT_NAMESPACE = 'common' satisfies Namespace;
