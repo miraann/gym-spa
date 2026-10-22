@@ -58,7 +58,7 @@ Decided by the user on 2026-10-10; the plan was approved the same day. Spec §2.
   - Android: Capacitor 8+.
   - Windows EXE: Electron (auto-update, kiosk mode, auto-start, silent 80mm thermal printing).
   - iOS: **not in scope.** Don't create `ios/`, but keep code iOS-ready (only Capacitor plugins that support iOS, no Android-only APIs in shared code).
-- **Platform code lives only in `packages/platform` adapters** (`nfc`, `printer`, `camera`, `storage`, `updater`). The React app never imports Capacitor or Electron directly.
+- **Platform code lives only in `packages/platform` adapters** (`nfc`, `printer`, `camera`, `storage`, `updater`, `save-file`). The React app never imports Capacitor or Electron directly.
 - **Data access:** supabase-js (PostgREST) + TanStack Query, directly against the backend. No local database.
 - **Backend:** Supabase (Postgres, Auth, RLS) online; the same migrations on the offline edition's server PC.
 - **Business rules:** the authority is Postgres (functions, triggers, RLS). `packages/core` (pure TS, tested) holds what the screens need: price previews, Zod validation, formatting, username mapping.
@@ -184,4 +184,4 @@ Soft, tonal, rounded, touch-first. The app looks like a modern phone/tablet app,
 - **Language rules are enforced by tooling:** the `gym/no-hardcoded-ui-text` and `gym/no-physical-direction-classes` lint rules (`tools/eslint-plugin-gym`), plus tests for translation parity, Sorani/Arabic spelling and font glyph coverage. Run `shadcn add` in `packages/ui` (its `components.json`), then `pnpm format`, and fix any hardcoded English the lint rule reports.
 - **Deploys:** Vercel Git integration for the web app; GitHub Actions for checks and APK/EXE artifacts. Signing waits for Phase 11.
 - **App ID:** `site.clickgroup.gymspa` on Android and Windows. Windows publisher: "Click Group". Permanent once published.
-- **Platform adapters** (`nfc`, `printer`, `camera`, `storage`, `updater`) are added when first used, not as empty stubs.
+- **Platform adapters** (`nfc`, `printer`, `camera`, `storage`, `updater`, `save-file`) are added when first used, not as empty stubs.

@@ -6,6 +6,7 @@ import { Field, FieldError, FieldLabel } from '@gym/ui/components/field';
 import { Skeleton } from '@gym/ui/components/skeleton';
 import { Spinner } from '@gym/ui/components/spinner';
 import { Textarea } from '@gym/ui/components/textarea';
+import { hasTouchScreen } from '@gym/ui/lib/touch';
 import { ArchiveIcon, TriangleAlertIcon } from 'lucide-react';
 import { useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -118,6 +119,8 @@ function UndoImportDialog({
       }}
       title={t('undo.title')}
       description={t('undo.description')}
+      // On touch screens the keyboard would cover the counts before staff have read them.
+      focusFirst={!hasTouchScreen()}
       footer={
         <>
           <Button

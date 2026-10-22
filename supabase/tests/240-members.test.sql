@@ -39,7 +39,10 @@ select results_eq(
 );
 select is(tests.visible_rows('member_health', tests.gym('pgtap-a')), 0,
   'staff without members.medical.view can''t read health info, not even what they just wrote');
-select is(current_setting('app.creating_member', true), '',
+select is(
+  app.has_transaction_mark('create_member', '10000000-0000-4000-8000-000000000001')
+    or app.has_transaction_mark('create_member', '10000000-0000-4000-8000-000000000002'),
+  false,
   'create_member() removes its mark again');
 select results_eq(
   $$ insert into public.members (id, branch_id, full_name, gender, phone, member_number)

@@ -21,3 +21,4 @@ export {
 } from './nfc';
 export { CARD_INPUT_ATTRIBUTE } from './keyboard-card-reader';
 export { haptic, type HapticKind } from './haptics';
+export { saveFile, type FileToSave, type SaveResult } from './save-file';

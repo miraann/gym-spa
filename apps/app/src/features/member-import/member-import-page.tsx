@@ -17,6 +17,7 @@ import {
   type ImportRow,
 } from '@gym/core';
 import { localizedName } from '@gym/i18n';
+import { saveFile } from '@gym/platform';
 import { PageHeader } from '@gym/ui/blocks/page-header';
 import { ResponsiveDialog } from '@gym/ui/blocks/responsive-dialog';
 import { StickyActionBar } from '@gym/ui/blocks/sticky-action-bar';
@@ -36,6 +37,7 @@ import {
 } from 'lucide-react';
 import { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'sonner';
 import { RequirePermission } from '@/components/no-access';
 import { useAuthState } from '@/features/auth/auth-context';
 import { usePermission } from '@/features/auth/use-permissions';
@@ -43,6 +45,7 @@ import { useAdminBranches } from '@/features/staff/admin-data';
 import { BackToList } from '@/features/staff/admin-error';
 import { WriteStateNotice } from '@/features/staff/write-state-notice';
 import { useAdminWriteState } from '@/features/staff/write-state';
+import { logError } from '@/lib/logger';
 import { usePreferences } from '@/lib/preferences';
 import { useUnsavedChanges } from '@/lib/unsaved-changes';
 import { useBaghdadToday } from '@/lib/use-today';
@@ -561,16 +564,15 @@ function ImportDone({
   const canUndo = usePermission('members.delete');
   const [undone, setUndone] = useState(false);
   const download = async () => {
-    const blob = await notImportedCsv(loaded.file.sheet, done.skipped, t('done.reasonColumn'));
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${t('done.fileName', { name: loaded.file.name.replace(/\.[^.]+$/, '') })}.csv`;
-    link.click();
-    // Some browsers start the download only after the click returns.
-    setTimeout(() => {
-      URL.revokeObjectURL(url);
-    }, 10_000);
+    try {
+      await saveFile({
+        name: `${t('done.fileName', { name: loaded.file.name.replace(/\.[^.]+$/, '') })}.csv`,
+        content: await notImportedCsv(loaded.file.sheet, done.skipped, t('done.reasonColumn')),
+      });
+    } catch (error) {
+      logError(error, { area: 'member_import', action: 'save_csv' });
+      toast.error(t('done.saveFailed'));
+    }
   };
 
   return (

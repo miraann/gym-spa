@@ -1,6 +1,7 @@
 import { ArrowDownIcon } from 'lucide-react';
 import { useEffect, useEffectEvent, useRef, useState, type ReactNode } from 'react';
 import { Spinner } from '../components/spinner';
+import { hasTouchScreen } from '../lib/touch';
 import { cn } from '../lib/utils';
 
 /** How far (px) a pull must go before letting go refreshes. */
@@ -66,7 +67,8 @@ export function PullToRefresh({
   });
 
   useEffect(() => {
-    if (!window.matchMedia('(pointer: coarse)').matches) return;
+    // Touch screens only (a mouse makes no touch events anyway).
+    if (!hasTouchScreen()) return;
     const onStart = (event: TouchEvent) => {
       begin(event);
     };
@@ -116,9 +118,11 @@ export function PullToRefresh({
           </span>
         )}
       </div>
+      {/* Moved with top, not a transform: a transform would carry the page's fixed bars (the sticky
+          action bar) away with it while pulling. */}
       <div
-        className="transition-transform duration-200 ease-spring motion-reduce:transition-none"
-        style={{ transform: pull > 0 ? `translateY(${String(pull * 0.6)}px)` : undefined }}
+        className="relative transition-[top] duration-200 ease-spring motion-reduce:transition-none"
+        style={{ top: pull > 0 ? `${String(pull * 0.6)}px` : undefined }}
       >
         {children}
       </div>

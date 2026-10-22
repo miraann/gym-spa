@@ -291,7 +291,7 @@ test('a branch manager takes a wrong import back from its result', async ({ page
   await page.getByTestId('undo-import').click();
   const dialog = page.getByTestId('undo-dialog');
   await expect(dialog.getByTestId('undo-summary')).toContainText('3 ئەندام ئەرشیف دەکرێن.');
-  await expect(dialog.getByTestId('undo-summary')).toContainText('1 کارتیان ئیتر کار ناکەن.');
+  await expect(dialog.getByTestId('undo-summary')).toContainText('1 کارت ئیتر کار ناکەن.');
   await expect(dialog.getByTestId('undo-changed')).toHaveCount(0);
   await page.getByTestId('undo-confirm').click();
   await expect(dialog.getByText('هۆکارێک بنووسە.')).toBeVisible();

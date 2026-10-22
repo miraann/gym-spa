@@ -79,6 +79,8 @@ export async function submitPasswordLogin(
   page: Page,
   staff: Pick<TestStaff, 'gymCode' | 'username' | 'password'>,
 ): Promise<void> {
+  // The form first: asked too early, the gym code field isn't there yet and gets skipped.
+  await expect(page.getByLabel('ناوی بەکارهێنەر')).toBeVisible();
   const gymCode = page.getByLabel(GYM_CODE_LABEL);
   if (await gymCode.isVisible()) await gymCode.fill(staff.gymCode);
   await page.getByLabel('ناوی بەکارهێنەر').fill(staff.username);
@@ -100,7 +102,7 @@ export async function signIn(page: Page, staff: TestStaff, path = '/'): Promise<
 
 /** Types a PIN into the PIN pad's field, like a keyboard would. */
 export async function typePin(page: Page, pin: string): Promise<void> {
-  const field = page.locator('input[inputmode="numeric"]');
+  const field = page.getByTestId('pin-field');
   await expect(field).toBeEnabled();
   await field.pressSequentially(pin);
 }

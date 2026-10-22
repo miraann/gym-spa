@@ -371,7 +371,8 @@ select throws_ok(
   $$ update public.devices set branch_id = tests.branch('B901') where id = 'd0000000-0000-4000-8000-000000000001' $$,
   '42501', 'read_only_column', 'a device moves only through move_device()'
 );
-select is(current_setting('app.moving_device', true), '', 'move_device() leaves no flag behind');
+select is(app.has_transaction_mark('move_device', 'd0000000-0000-4000-8000-000000000001'), false,
+  'move_device() leaves no mark behind');
 
 -- unlock_on_device()
 select tests.authenticate_as(tests.staff('reception_a'));

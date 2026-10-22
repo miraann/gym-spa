@@ -154,7 +154,8 @@
     "reasonColumn": "Reason",
     "notTicked": "Not ticked.",
     "fileName": "{{name}} - not imported",
-    "undone": "The members of this import were archived."
+    "undone": "The members of this import were archived.",
+    "saveFailed": "The file couldn't be saved. Try again."
   },
   "history": {
     "title": "Earlier imports",

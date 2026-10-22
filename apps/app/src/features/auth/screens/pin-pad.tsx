@@ -58,13 +58,16 @@ export function PinPad({
           ref={input}
           // Not type=number: it drops leading zeros. Masked like a password, Latin digits, LTR.
           type="password"
-          inputMode="numeric"
+          // The pad below is the touch keyboard: a phone's own keyboard would cover it. Physical
+          // keyboards still type into the field, which keeps the focus.
+          inputMode="none"
           autoComplete="off"
           dir="ltr"
           maxLength={PIN_LENGTH * 2}
           value={pin}
           disabled={locked}
           aria-label={label}
+          data-testid="pin-field"
           onChange={(event) => {
             update(event.target.value);
           }}

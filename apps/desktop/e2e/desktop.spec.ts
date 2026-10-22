@@ -112,7 +112,7 @@ async function signIn(page: Page, staff: TestStaff): Promise<void> {
 async function unlock(page: Page, staff: TestStaff): Promise<void> {
   await expect(page.getByRole('heading', { level: 1, name: 'کێ کار دەکات؟' })).toBeVisible();
   await page.getByRole('button', { name: staff.fullName }).click();
-  await page.locator('input[inputmode="numeric"]').pressSequentially(staff.pin ?? '');
+  await page.getByTestId('pin-field').pressSequentially(staff.pin ?? '');
 }
 
 test.beforeAll(async () => {
