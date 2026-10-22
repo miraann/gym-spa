@@ -19,7 +19,7 @@ Multi-branch gym & spa system with NFC check-in. One codebase for Web/PWA, Andro
   ```
 - The project folder path must not contain `&`. Windows batch scripts (like Gradle's `gradlew.bat`, used for Android builds) break on it.
 - **Android builds:** JDK 21 and the Android SDK (install Android Studio). The build finds the SDK through `ANDROID_HOME`, or in Android Studio's default folder (`%LOCALAPPDATA%\Android\Sdk` on Windows).
-- **Windows builds:** nothing extra. Electron and the installer tools download on first use.
+- **Windows builds:** Electron and the installer tools download on first use. PC/SC card readers (ACR122U) need `smartcard`, which is compiled during `pnpm install`, so a PC that builds the Windows app also needs **Visual Studio 2022 Build Tools** with the "Desktop development with C++" workload, and **Python 3.12** on the PATH (see [Windows app](#windows-app)). Without them `pnpm install` still works, and the Windows app is built without PC/SC readers.
 - **Local database:** [Docker Desktop](https://www.docker.com/products/docker-desktop/), which runs Supabase in containers. On Windows it needs WSL 2: the installer turns it on, which needs a restart and virtualization enabled in the BIOS. The Supabase CLI comes with `pnpm install`.
 
 ## Getting started
@@ -380,7 +380,7 @@ The app always needs its server. `apps/app/src/lib/connection.ts` checks `GET /a
 
 ## NFC cards and readers
 
-Decided with the user on 2026-10-19 (spec §1). Card reading is built in Phase 2, steps 2e (keyboard-type readers, done), 2f (PC/SC readers in the Windows app) and 2g (Android phones and tablets); this section grows with them. Every reader is an `NfcReader` in `packages/platform/src/nfc.ts`; the screens get normalized UIDs through `useCardScans()` (`apps/app/src/features/cards/card-reader.ts`) and never know which reader read a card.
+Decided with the user on 2026-10-19 (spec §1). Card reading is built in Phase 2, steps 2e (keyboard-type readers, done), 2f (PC/SC readers in the Windows app, done) and 2g (Android phones and tablets); this section grows with them. Every reader is an `NfcReader` in `packages/platform/src/nfc.ts`; the screens get normalized UIDs through `useCardScans()` (`apps/app/src/features/cards/card-reader.ts`) and never know which reader read a card.
 
 - **Cards:** a card is known by its UID, stored as uppercase hex with no separators. 7-byte UIDs (NTAG cards) and 4-byte UIDs both work. For a real gym, buy **genuine NXP NTAG213 or NTAG215** cards: NFC Tools (Android or iPhone) shows their NXP signature as "Valid". Cheaper compatible clones read the same, but their UID may be changeable, so such a card can be copied. The app never relies on the NXP signature. The check-in screen (Phase 4) shows the member's photo on every scan, so staff can spot a copied card.
 - **Readers at the desk:**
@@ -389,6 +389,23 @@ Decided with the user on 2026-10-19 (spec §1). Card reading is built in Phase 2
   - **The web app in a browser can't use PC/SC readers.** It says so, and points to the Windows app, a keyboard-type reader, or an NFC phone.
   - **What readers type differs.** Some keyboard-type readers type the UID's bytes in reverse order, or a 4-byte UID as a 10-digit number; the app reads both as the same card ([NFC cards](#nfc-cards)). A reader that types 10 digits gives only 4 bytes of a 7-byte card, though, so use the same kind of reader for giving cards and for check-in.
 - **How a keyboard-type reader is told from typing:** a burst of at least 8 hex keys less than 50 ms apart, ended by Enter, is a card. People never type that fast, so their typing is left alone. The keys are read by their place on the keyboard (`KeyboardEvent.code`), so a Kurdish or Arabic keyboard layout doesn't matter. The app listens only while a screen waits for a card (a card dialog, the reader test), and the newest such screen gets the card. Keys typed in other text fields (a search box) are never a card; the card number fields are marked `data-card-input`, so a reader typing into them still counts as a scan. The Enter that ends a card is kept from the page, so it presses no button.
+- **PC/SC readers in the Windows app** (step 2f): the main process reads them with [`smartcard`](https://github.com/tomkp/smartcard) 3.7.2 (MIT, Node-API, so it keeps working across Electron upgrades) and our own watcher, `apps/desktop/src/pcsc-watcher.ts`. It reads a card with Get UID (`FF CA 00 00 00`).
+  - **The page gets only UIDs and reader names** (`gymDesktop.listenForCards`, `gymDesktop.watchCardReaders`). It sends back only "ok" or "error" for a reader (`gymDesktop.signalCard`). The main process checks every argument (`apps/desktop/src/card-readers.ts`).
+  - **When a card counts** (decided 2026-10-22, spec §1):
+    - A card placed on the reader while a screen waits for one (a card dialog, the reader test) is read once. Holding it there sends nothing more.
+    - A card already on the reader after the app starts, the PC wakes, the reader is plugged in again or Windows' smart card service recovers is **not** a new scan; staff lift it and place it again. A reader just plugged in reports itself empty at first and finds a card lying on it about half a second later (seen with the ACR122U), so a card it finds within 2 seconds of appearing counts as already lying there.
+    - Opening a card dialog or the reader test reads a card already on the reader once, because staff opened it for that card.
+    - Phase 4 check-in counts only a newly placed card.
+  - **Light and beep** (ACR122U only): green with one beep when the app accepts the card, red twice with two beeps when it refuses it (not a card number, someone else's card, a blocked card). The reader's own beep when a card arrives stays. The signal goes through the card while it is on the reader, and straight to the reader otherwise; the second way needs ACS's driver. If the reader refuses either, nothing else is affected.
+  - **What it survives:**
+    - The reader unplugged and plugged in again. Windows stops its smart card service when the last reader goes; the watcher connects again by itself.
+    - Two readers: each is watched and read on its own.
+    - Sleep: on waking, the reader finds a card lying on it again, before Windows tells the app the PC woke. So from Windows' sleep notice until the new connection after waking, no card counts as new.
+    - A card pulled away mid-read: the read is dropped and logged.
+    - Problems are logged as `[card readers] …` in the main process's console, which is visible when the app is run from source.
+  - **Setting up an ACR122U:** install ACS's **Unified PC/SC Driver** (acs.com.hk → ACR122U → Downloads), plug the reader in (straight into the PC rather than through a hub), and open Settings → خوێنەری کارت. Under «خوێنەرە بەستراوەکان» it shows the reader as connected; then test it with a card.
+  - **"Device driver software was not successfully installed" for a card:** Windows looks for a smart card driver for each NFC card placed on the reader. The message is harmless. To turn it off, set the policy *Computer Configuration → Administrative Templates → Windows Components → Smart Card → Turn on Smart Card Plug and Play service* to Disabled (registry: `HKLM\SOFTWARE\Policies\Microsoft\Windows\ScPnP`, DWORD `EnableScPnP` = 0).
+  - **Tests:** `apps/desktop/src/pcsc-watcher.test.ts` runs the watcher against a fake PC/SC service (`pcsc-fake.ts`). The desktop e2e tests start the app with that fake (`GYM_FAKE_PCSC=1`, only when run from source, never in the installed app), so a reader plugged into the test PC doesn't get in the way.
 - **Setting up a reader** (Settings → خوێنەری کارت, this device only): plug it in, open the page and hold a card that someone already has to the reader. The page shows the number it read and whose card it is. If a card's number differs from the one another reader (or NFC Tools) shows, with the bytes the other way round, choose «پێچەوانە» (reversed). Only staff with `devices.manage` change that, because a wrong byte order would give members cards under the wrong UID. It applies to keyboard-type readers only.
 - **Phones and tablets:** the Android app reads cards with the device's own NFC. Later, the iOS app will use Core NFC.
 
@@ -490,6 +507,11 @@ Other changes:
 - No menu bar. Shortcuts: Ctrl and `=` / `-` / `0` zoom (by key position, so they also work with a Kurdish or Arabic keyboard layout), F11 full screen. When run from source (`pnpm desktop:dev`, `pnpm desktop:start`) there are also Ctrl+R (reload) and F12 or Ctrl+Shift+I (DevTools).
 - Security: the page has no Node or Electron access, only `window.gymDesktop`; the window can't navigate away from the app (https links open in the default browser); permissions such as camera or location are refused; Electron's security fuses are burned into the installed exe.
 - The secure store (`gymDesktop.secureGet/secureSet/secureDelete`) accepts calls only from the app's own pages, checks every key and value, and refuses to write when Windows encryption isn't available.
+- **PC/SC card readers** ([NFC cards and readers](#nfc-cards-and-readers)):
+  - `smartcard` is an optional dependency of `apps/desktop`, compiled by node-gyp during `pnpm install` (allowed in `pnpm-workspace.yaml`). That needs Visual Studio 2022 Build Tools ("Desktop development with C++") and Python 3.12.
+  - Where it can't be compiled (Vercel's Linux build, a PC without the tools), `pnpm install` skips it with a warning, and the Windows app is built without PC/SC readers: `pnpm --filter @gym/desktop build` prints "No PC/SC card readers in this build".
+  - The build copies the compiled `smartcard_napi.node` into `apps/desktop/dist/native/`, and the installer keeps it outside `app.asar` (in `app.asar.unpacked`), because Windows can't load it from inside the archive.
+  - It uses Node-API, so an Electron upgrade needs no rebuild. The machine that builds the release installer (Phase 11) needs the same tools.
 - Kiosk mode, start with Windows, silent receipt printing and auto-update are built in later phases. The offline edition (server PC on the gym's network) is planned for the offline packaging phase (spec §8, before Phase 11), which starts with step 1f.
 
 ## Deploying the web app (Vercel)

@@ -9,3 +9,5 @@ allowBuilds:
   esbuild: true
   # Downloads the Supabase CLI binary.
   supabase: true
+  # The ACR122U (PC/SC) reader in the Windows app (step 2f): compiles its native part with node-gyp.
+  smartcard: true

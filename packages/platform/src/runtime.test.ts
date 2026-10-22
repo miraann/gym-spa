@@ -7,6 +7,9 @@ const bridge: DesktopBridge = {
   secureGet: () => Promise.resolve(null),
   secureSet: () => Promise.resolve(),
   secureDelete: () => Promise.resolve(),
+  listenForCards: () => () => undefined,
+  watchCardReaders: () => () => undefined,
+  signalCard: () => undefined,
 };
 
 describe('detectPlatform', () => {

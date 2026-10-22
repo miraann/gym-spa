@@ -99,7 +99,15 @@
       "normal": "Normal",
       "reversed": "Reversed"
     },
-    "managerOnly": "Only staff who can manage devices can change this."
+    "managerOnly": "Only staff who can manage devices can change this.",
+    "pcsc": {
+      "title": "Connected readers",
+      "description": "Readers like the ACR122U, connected to this device by USB.",
+      "connected": "Connected",
+      "none": "No reader is connected.",
+      "noneHint": "Connect the reader by USB. If it doesn't appear, install its driver.",
+      "liftHint": "A card left on the reader isn't read again. Lift it and put it back."
+    }
   },
   "errors": {
     "invalid_card_uid": "This isn't a card number.",

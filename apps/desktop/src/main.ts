@@ -21,6 +21,7 @@ import {
   isExternalWebLink,
   resolveAppFile,
 } from './app-protocol';
+import { serveCardReaders } from './card-readers';
 import { createSecureStore } from './secure-store';
 import { nextZoomLevel, shortcutFor } from './shortcuts';
 
@@ -169,6 +170,9 @@ function lockDownWebContents(): void {
     if (!fromApp(event)) throw new Error('Not allowed');
     return secureStore.delete(key);
   });
+
+  // PC/SC card readers such as the ACR122U (see card-readers.ts).
+  serveCardReaders(fromApp);
 }
 
 /** Only the app's own pages may use the bridge. */

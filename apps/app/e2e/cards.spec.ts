@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { admin, write, type TestData } from './support/backend';
-import { expect, scanCard, signIn, test } from './support/app';
+import { expect, lockFromMenu, scanCard, signIn, test, unlock } from './support/app';
 
 // NFC cards (step 2e): keyboard-type readers and the card screens on a member's page. A
 // keyboard-type reader is played by typing the UID and Enter as fast as a reader does.
@@ -260,4 +260,22 @@ test('only staff who manage devices change the reader', async ({ page, staff }) 
   await expect(
     page.getByText('تەنها کارمەندێک کە دەسەڵاتی بەڕێوەبردنی ئامێرەکانی هەیە دەتوانێت ئەمە بگۆڕێت.'),
   ).toBeVisible();
+});
+
+test('a card held to the reader while the app is locked is ignored', async ({ page, staff }) => {
+  await page.setViewportSize(DESKTOP);
+  await signIn(page, staff, '/settings/card-reader');
+  const tester = page.getByTestId('reader-test');
+  await scanCard(page, '04A23BC15D6E80');
+  await expect(tester.locator('[data-card-uid="04A23BC15D6E80"]')).toBeVisible();
+
+  // The lock screen only covers the page: a card then is not for it.
+  await lockFromMenu(page);
+  await scanCard(page, '04112233445566');
+  await unlock(page, staff);
+  await expect(tester.locator('[data-card-uid="04A23BC15D6E80"]')).toBeVisible();
+  await expect(tester.locator('[data-card-uid="04112233445566"]')).toHaveCount(0);
+
+  await scanCard(page, '04112233445566');
+  await expect(tester.locator('[data-card-uid="04112233445566"]')).toBeVisible();
 });

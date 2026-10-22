@@ -19,5 +19,8 @@
     "electron": "^44.5.1",
     "electron-builder": "^26.15.3",
     "esbuild": "^0.28.2"
+  },
+  "optionalDependencies": {
+    "smartcard": "3.7.2"
   }
 }

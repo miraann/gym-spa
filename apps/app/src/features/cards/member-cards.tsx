@@ -54,7 +54,7 @@ import {
   CardUid,
   ScanPrompt,
 } from './card-scan';
-import { useCardNumber } from './use-card-number';
+import { useCardNumber, type SignalCard } from './use-card-number';
 
 type CardDialog =
   | { readonly kind: 'give' }
@@ -316,7 +316,7 @@ function GiveCardDialog({
   const [error, setError] = useState<CardErrorKey | null>(null);
   const [refusedUid, setRefusedUid] = useState<string | null>(null);
 
-  const give = (uid: string) => {
+  const give = (uid: string, signal?: SignalCard) => {
     if (assign.isPending) return;
     setError(null);
     setRefusedUid(null);
@@ -325,11 +325,13 @@ function GiveCardDialog({
       {
         onSuccess: () => {
           haptic('success');
+          signal?.('ok');
           toast.success(t('done.given', { name: member.fullName }));
           onClose();
         },
         onError: (thrown) => {
           haptic('error');
+          signal?.('error');
           setError(cardErrorKey(thrown, 'give'));
           setRefusedUid(uid);
         },
@@ -364,7 +366,7 @@ function GiveCardDialog({
         onSubmit={(event) => {
           event.preventDefault();
           const uid = number.readTyped();
-          if (uid !== null) give(uid);
+          if (uid !== null) give(uid, number.signalFor(uid));
         }}
       >
         <ScanPrompt />
@@ -399,7 +401,7 @@ function ReplaceCardDialog({
   // Reporting a card stolen blocks it: only for staff with cards.blacklist.
   const reasons = CARD_REPLACE_REASONS.filter((each) => each !== 'stolen' || canBlock);
 
-  const send = (newUid: string | null) => {
+  const send = (newUid: string | null, signal?: SignalCard) => {
     if (replace.isPending) return;
     if (reason === null) {
       setReasonMissing(true);
@@ -412,6 +414,7 @@ function ReplaceCardDialog({
       {
         onSuccess: () => {
           haptic('success');
+          signal?.('ok');
           toast.success(
             t(newUid === null ? 'done.stopped' : 'done.replaced', { name: member.fullName }),
           );
@@ -419,6 +422,7 @@ function ReplaceCardDialog({
         },
         onError: (thrown) => {
           haptic('error');
+          signal?.('error');
           setError(cardErrorKey(thrown, 'replace'));
           setRefusedUid(newUid);
         },
@@ -462,7 +466,7 @@ function ReplaceCardDialog({
         onSubmit={(event) => {
           event.preventDefault();
           const uid = number.readTyped();
-          if (uid !== null) send(uid);
+          if (uid !== null) send(uid, number.signalFor(uid));
         }}
       >
         <p className="text-sm">

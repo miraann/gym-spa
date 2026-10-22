@@ -1,17 +1,22 @@
+import type { CardSignal } from './desktop-bridge';
 import { keyboardCardReader } from './keyboard-card-reader';
+import { pcscCardReader } from './pcsc-card-reader';
+import { desktopBridge } from './runtime';
 
 // Card readers (spec §1): every kind of reader is an NfcReader, so the screens never know which one
-// read a card. Step 2e has the keyboard-type readers (they type the UID and Enter), which work in
-// every target. The PC/SC readers in the Windows app (ACR122U, step 2f) and the phone's own NFC
-// (step 2g) are added here as more readers.
+// read a card. Keyboard-type readers (they type the UID and Enter, step 2e) work in every target;
+// PC/SC readers such as the ACR122U (step 2f) only in the Windows app. The phone's own NFC (step
+// 2g) is added here as another reader.
 
 /** Which kind of reader read a card. */
-export type CardReaderKind = 'keyboard';
+export type CardReaderKind = 'keyboard' | 'pcsc';
 
 /** A card a reader read: its UID as the reader gave it (the app normalizes it). */
 export interface CardRead {
   readonly uid: string;
   readonly reader: CardReaderKind;
+  /** Shows on the reader whether the app took the card (LED, beep); missing where it can't. */
+  readonly signal?: (signal: CardSignal) => void;
 }
 
 export interface NfcReader {
@@ -22,5 +27,17 @@ export interface NfcReader {
 
 /** The readers this device can use. */
 export function cardReaders(): readonly NfcReader[] {
-  return [keyboardCardReader(window)];
+  const readers = [keyboardCardReader(window)];
+  return desktopBridge ? [...readers, pcscCardReader(desktopBridge)] : readers;
+}
+
+/** Whether this app can use PC/SC readers: only the Windows app can. */
+export const canUsePcscReaders = desktopBridge !== undefined;
+
+/**
+ * Calls `onChange` with the PC/SC readers plugged into this PC, now and whenever they change (never
+ * where they can't be used). Returns the function that stops watching.
+ */
+export function watchPcscReaders(onChange: (readers: readonly string[]) => void): () => void {
+  return desktopBridge ? desktopBridge.watchCardReaders(onChange) : () => undefined;
 }

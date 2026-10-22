@@ -15,8 +15,12 @@ export default {
     author: { name: 'Click Group' },
   },
   directories: { output: 'release' },
-  // Main and preload are bundled by esbuild, so the app ships without node_modules.
-  files: ['dist/**/*', 'package.json'],
+  // Main and preload are bundled by esbuild, so the app ships without node_modules. electron-builder
+  // would otherwise add the production dependencies (smartcard, with its build files) by itself.
+  files: ['dist/**/*', 'package.json', '!node_modules/**/*'],
+  // Windows can't load a native module from inside app.asar: smartcard's (PC/SC card readers) is
+  // kept beside it, in app.asar.unpacked.
+  asarUnpack: ['dist/native/**'],
   // The same production web build as the PWA, served over app:// (see src/main.ts).
   extraResources: [{ from: '../app/dist', to: 'web' }],
   npmRebuild: false,
