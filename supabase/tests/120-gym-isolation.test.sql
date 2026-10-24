@@ -48,6 +48,31 @@ insert into public.plans (id, gym_id, name_ckb, kind, price, all_branches) value
 insert into public.plan_branches (gym_id, plan_id, branch_id) values
   (tests.gym('pgtap-a'), 'e0000000-0000-4000-8000-0000000000a3', tests.branch('B901')),
   (tests.gym('pgtap-b'), 'e0000000-0000-4000-8000-0000000000b3', tests.branch('B901', 'pgtap-b'));
+-- A sale in each gym: the subscription, its invoice and item, a payment and an installment.
+insert into public.subscriptions (id, gym_id, member_id, plan_id, branch_id, name_ckb, kind, price, gender,
+                                  max_freeze_days, start_date) values
+  ('e0000000-0000-4000-8000-0000000000a4', tests.gym('pgtap-a'), 'e0000000-0000-4000-8000-0000000000a1',
+   'e0000000-0000-4000-8000-0000000000a3', tests.branch('B901'), 'VIP', 'unlimited', 0, 'any', 0, current_date),
+  ('e0000000-0000-4000-8000-0000000000b4', tests.gym('pgtap-b'), 'e0000000-0000-4000-8000-0000000000b1',
+   'e0000000-0000-4000-8000-0000000000b3', tests.branch('B901', 'pgtap-b'), 'VIP', 'unlimited', 0, 'any', 0, current_date);
+insert into public.invoices (id, gym_id, branch_id, member_id, number, subtotal, discount, total) values
+  ('e0000000-0000-4000-8000-0000000000a5', tests.gym('pgtap-a'), tests.branch('B901'), 'e0000000-0000-4000-8000-0000000000a1',
+   'B901-000001', 1000, 0, 1000),
+  ('e0000000-0000-4000-8000-0000000000b5', tests.gym('pgtap-b'), tests.branch('B901', 'pgtap-b'), 'e0000000-0000-4000-8000-0000000000b1',
+   'B901-000001', 1000, 0, 1000);
+insert into public.invoice_items (id, gym_id, invoice_id, kind, subscription_id, description_ckb, unit_price, total) values
+  ('e0000000-0000-4000-8000-0000000000a6', tests.gym('pgtap-a'), 'e0000000-0000-4000-8000-0000000000a5', 'subscription',
+   'e0000000-0000-4000-8000-0000000000a4', 'VIP', 1000, 1000),
+  ('e0000000-0000-4000-8000-0000000000b6', tests.gym('pgtap-b'), 'e0000000-0000-4000-8000-0000000000b5', 'subscription',
+   'e0000000-0000-4000-8000-0000000000b4', 'VIP', 1000, 1000);
+insert into public.payments (id, gym_id, branch_id, member_id, invoice_id, number, method, amount) values
+  ('e0000000-0000-4000-8000-0000000000a7', tests.gym('pgtap-a'), tests.branch('B901'), 'e0000000-0000-4000-8000-0000000000a1',
+   'e0000000-0000-4000-8000-0000000000a5', 'B901-R000001', 'cash', 500),
+  ('e0000000-0000-4000-8000-0000000000b7', tests.gym('pgtap-b'), tests.branch('B901', 'pgtap-b'), 'e0000000-0000-4000-8000-0000000000b1',
+   'e0000000-0000-4000-8000-0000000000b5', 'B901-R000001', 'cash', 500);
+insert into public.installments (id, gym_id, invoice_id, due_date, amount) values
+  ('e0000000-0000-4000-8000-0000000000a8', tests.gym('pgtap-a'), 'e0000000-0000-4000-8000-0000000000a5', current_date + 30, 500),
+  ('e0000000-0000-4000-8000-0000000000b8', tests.gym('pgtap-b'), 'e0000000-0000-4000-8000-0000000000b5', current_date + 30, 500);
 
 select is_empty(
   $$ select t from tests.gym_tables() t
@@ -104,6 +129,21 @@ insert into insert_cases (table_name, statement) values
                  p_kind => 'unlimited', p_price => 0) $$),
   ('plan_branches', $$ insert into public.plan_branches (gym_id, plan_id, branch_id)
                        values (tests.gym('pgtap-b'), 'e0000000-0000-4000-8000-0000000000b3', tests.branch('B902', 'pgtap-b')) $$),
+  -- Money rows only the server writes: no client role may add one, in any gym.
+  ('subscriptions', $$ insert into public.subscriptions (gym_id, id, member_id, plan_id, branch_id, name_ckb, kind, price, gender, max_freeze_days, start_date)
+                       values (tests.gym('pgtap-b'), gen_random_uuid(), 'e0000000-0000-4000-8000-0000000000b1', 'e0000000-0000-4000-8000-0000000000b3',
+                               tests.branch('B901', 'pgtap-b'), 'VIP', 'unlimited', 0, 'any', 0, current_date) $$),
+  ('subscriptions', $$ select public.sell_subscription(gen_random_uuid(), gen_random_uuid(), 'e0000000-0000-4000-8000-0000000000b1',
+                         'e0000000-0000-4000-8000-0000000000b3', tests.branch('B901', 'pgtap-b'), current_date, 0) $$),
+  ('invoices', $$ insert into public.invoices (gym_id, id, branch_id, member_id, number, subtotal, total)
+                  values (tests.gym('pgtap-b'), gen_random_uuid(), tests.branch('B901', 'pgtap-b'), 'e0000000-0000-4000-8000-0000000000b1', 'B901-000002', 0, 0) $$),
+  ('invoice_items', $$ insert into public.invoice_items (gym_id, invoice_id, kind, description_ckb, unit_price, total)
+                       values (tests.gym('pgtap-b'), 'e0000000-0000-4000-8000-0000000000b5', 'other', 'هیتر', 0, 0) $$),
+  ('payments', $$ insert into public.payments (gym_id, id, branch_id, member_id, invoice_id, number, method, amount)
+                  values (tests.gym('pgtap-b'), gen_random_uuid(), tests.branch('B901', 'pgtap-b'), 'e0000000-0000-4000-8000-0000000000b1',
+                          'e0000000-0000-4000-8000-0000000000b5', 'B901-R000002', 'cash', 100) $$),
+  ('installments', $$ insert into public.installments (gym_id, id, invoice_id, due_date, amount)
+                      values (tests.gym('pgtap-b'), gen_random_uuid(), 'e0000000-0000-4000-8000-0000000000b5', current_date + 60, 100) $$),
   -- Their own gym (gym_id left to fill itself in), pointing at gym B's rows.
   ('role_permissions', $$ insert into public.role_permissions (role_id, permission_key) values (tests.role('trainer', 'pgtap-b'), 'payments.view') $$),
   ('staff_users', $$ insert into public.staff_users (id, username, full_name, role_id)

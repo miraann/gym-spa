@@ -253,6 +253,17 @@ export {
   type Weekday,
 } from './plans.ts';
 export {
+  DISCOUNT_PERMISSIONS,
+  installmentProblem,
+  isDiscountAllowed,
+  isValidUsdAmount,
+  maxDiscountPercent,
+  splitInstallments,
+  usdToIqd,
+  type InstallmentDraft,
+  type InstallmentProblem,
+} from './pricing.ts';
+export {
   SEARCH_IGNORED,
   SEARCH_LOOK_ALIKES,
   matchesSearch,
