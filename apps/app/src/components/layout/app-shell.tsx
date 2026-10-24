@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { PullToRefresh } from '@gym/ui/blocks/pull-to-refresh';
 import { SidebarInset, SidebarProvider } from '@gym/ui/components/sidebar';
 import { useGymAppearanceSync } from '@/features/appearance/use-gym-appearance';
+import { UpdateNotice } from '@/components/update-notice';
 import { BillingBanner } from '@/features/billing/billing-banner';
 import { useOpenMemberOnScan } from '@/features/cards/use-open-member-on-scan';
 import { useLayout } from '@gym/ui/hooks/use-layout';
@@ -84,6 +85,7 @@ export function AppShell() {
           className="flex-1 px-4 pt-3 pb-6 outline-none md:px-8 md:pt-6"
         >
           <div className="mx-auto flex w-full max-w-6xl flex-col gap-4">
+            <UpdateNotice />
             <BillingBanner />
             {layout === 'phone' ? (
               <PullToRefresh

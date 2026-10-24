@@ -6,6 +6,7 @@ import { STRONG_BRAND_TOKENS } from '@/components/brand-surface';
 import { GymMark } from '@/components/layout/gym-mark';
 import { LanguageMenu } from '@/components/layout/language-menu';
 import { ThemeMenu } from '@/components/layout/theme-menu';
+import { UpdateNotice } from '@/components/update-notice';
 import { usePreferences } from '@/lib/preferences';
 import { useDeviceGym } from '../auth-context';
 
@@ -41,6 +42,8 @@ export function AuthLayout({
         <main className="flex flex-1 justify-center px-5 pb-10 sm:items-center">
           <div className="flex w-full max-w-sm flex-col gap-7">
             {!wide && <GymIdentity />}
+            {/* Nobody is working here, so the reload loses nothing and needs no hint. */}
+            <UpdateNotice hint={false} />
             <div className={wide ? 'flex flex-col gap-1.5' : 'flex flex-col gap-1.5 text-center'}>
               <h1 className="text-title font-bold">{title}</h1>
               {description && <p className="text-muted-foreground">{description}</p>}

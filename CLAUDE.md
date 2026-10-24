@@ -6,6 +6,21 @@ Multi-branch gym & spa system with NFC check-in, sold in **two editions** (see b
 
 **Full spec: [gym-spa-system-prompt.md](gym-spa-system-prompt.md).** It is the source of truth. This file is only a summary; if the two disagree, the spec wins. Read the relevant spec section before starting any phase or module.
 
+## Working rules (decided by the user on 2026-10-24, replacing "never push to main")
+
+**Work fully automatically.** Don't stop for the user's review between sub-steps. Claude may merge to `main` and push cloud migrations itself, but **only through the release flow below**.
+
+**Release flow (every time):**
+1. Work on a feature branch (e.g. `3a`). Commit and push the branch (`git push origin 3a`; check `git branch --show-current` right before every commit and push).
+2. **All checks must pass:** `pnpm check`, `pnpm db:test`, `pnpm db:lint` and the full `pnpm test:e2e` (with `pnpm db:functions` running). If something fails and Claude can't fix it, stop and tell the user.
+3. **Cloud migrations before merging:** run a dry run. Push automatically only if every pending migration is purely additive: no `DROP`, no column or type change that loses data, no `RENAME`, no data deletes. Rehearse first on a local copy of the cloud's schema (reset the local database to the cloud's last migration, add sample data, apply the pending ones). Anything destructive: stop and ask the user. README → Releasing has the commands.
+4. **Open a pull request to `main` with `gh pr create` and merge it with `gh pr merge`.** Never `git push` to `main` directly. Then confirm, read-only, that Vercel serves the new build and the live site works.
+5. **Write a short report for the user after each release:** what shipped, migrations pushed, checks.
+
+**Still always ask the user first:** `supabase config push`, any destructive migration, rotating secrets or keys, locking or suspending a real gym, deleting real data, spending money, or giving any build to a real gym.
+
+Decisions that belong to the user (prices, business rules): follow the spec; where the spec is silent, choose the safest sensible default, write it in the report and in the spec, and keep going.
+
 The two-edition design below was decided by the user on 2026-10-09 and replaced the earlier offline-first / PowerSync design (spec §2.5).
 
 ## Two editions
@@ -40,11 +55,11 @@ Decided by the user on 2026-10-10; the plan was approved the same day. Spec §2.
 
 ## How to work
 
-- Build in the phases from spec §8, in order. **Stop for the user's review after each phase.**
+- Build in the phases from spec §8, in order, and release each sub-step with the release flow (Working rules above).
 - **Phase 2 (members + NFC, plan approved 2026-10-19; decisions in spec §1 and §4.1):** sub-steps 2a members database (done), 2b members screens (done), 2c photos (done), 2d NFC cards database (done), 2e keyboard-type readers + card screens (done), 2f ACR122U (PC/SC) reader in the Windows EXE (done), 2g Android NFC + Web NFC (postponed 2026-10-22: needs a real NFC Android device to test; must be done before the first gym uses phones for cards), 2h global search + seller member counts + docs and build check (web + Windows installer) (done), 2j Excel/CSV import, with taking an import back (done). All on branch `2a`, one commit per sub-step, each stopping for review; the cloud gets the migrations only after the user's OK.
-- **When a phase is split into sub-steps (Phase 1: 1a–1d, then 1d-R (PowerSync removed), the auth spike (Supabase Auth on the offline edition's Windows server PC), MT-1 (gyms and isolation, split into MT-1a database and MT-1b app; see Many gyms below), the design step (Calm Bento theme, adaptive navigation and Appearance settings, see Design below; split into D-1 look and navigation, and D-2 Appearance settings), MT-2 and MT-3 (staff module, seller panel; MT-3 is split into MT-3a database, MT-3b seller-admin module and scripts, MT-3c gym-app warnings, MT-3d packages/ui, MT-3e apps/seller), 1e; later MT-4 (support access, after Phase 4), MT-5 (license format and signing, just before the offline packaging phase) and 1f (offline-edition server test, which opens that phase)), stop for review after each sub-step** and say how to test it and what to commit.
-- **Commits (decided by the user on 2026-10-10):** Claude may commit and push on feature branches (e.g. `d-2`, `mt-2`), when the user asks for it or a step is approved. Claude never commits to `main` and never merges into it: **the user always does the merge into `main` themself.** **Never push to `main`, ever.** Check `git branch --show-current` right before every commit and push, and push with an explicit refspec (`git push origin mt-3`). If `main` requires pull requests, open one from the feature branch with `gh pr create` and the user merges it on GitHub.
-- Before writing code for a phase, present the plan (tables, files, assumptions) and **wait for approval**.
+- **When a phase is split into sub-steps (Phase 1: 1a–1d, then 1d-R (PowerSync removed), the auth spike (Supabase Auth on the offline edition's Windows server PC), MT-1 (gyms and isolation, split into MT-1a database and MT-1b app; see Many gyms below), the design step (Calm Bento theme, adaptive navigation and Appearance settings, see Design below; split into D-1 look and navigation, and D-2 Appearance settings), MT-2 and MT-3 (staff module, seller panel; MT-3 is split into MT-3a database, MT-3b seller-admin module and scripts, MT-3c gym-app warnings, MT-3d packages/ui, MT-3e apps/seller), 1e; later MT-4 (support access, after Phase 4), MT-5 (license format and signing, just before the offline packaging phase) and 1f (offline-edition server test, which opens that phase)), each sub-step is released on its own** with the release flow, and its report says how to test it.
+- **Commits:** on feature branches only, pushed with an explicit refspec (`git push origin 3a`). `main` changes only through a pull request merged with `gh pr merge` in the release flow; never `git push` to `main`.
+- Before writing code for a phase, write the plan (tables, files, assumptions) into the spec's phase section; the release report repeats the decisions taken.
 - At the end of each phase (and sub-step), report: what was built, migrations added, how to test manually, and known limitations.
 - §4.7 Staff & HR is built in Phase 7 (together with classes and personal training).
 - Ask only when a decision is truly blocking. Otherwise pick a sensible default and say so.

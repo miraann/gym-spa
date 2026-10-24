@@ -37,7 +37,9 @@
     "bootstrap:platform-admin": "pnpm --filter @gym/supabase bootstrap:platform-admin",
     "platform-admin:reset-2fa": "pnpm --filter @gym/supabase platform-admin:reset-2fa",
     "staff-logins:move": "pnpm --filter @gym/supabase staff-logins:move",
-    "smoke:staff-admin": "pnpm --filter @gym/supabase smoke:staff-admin"
+    "smoke:staff-admin": "pnpm --filter @gym/supabase smoke:staff-admin",
+    "release:migrations": "pnpm --filter @gym/supabase release:migrations",
+    "release:check-live": "pnpm --filter @gym/app check-live"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

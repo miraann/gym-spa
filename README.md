@@ -67,6 +67,8 @@ Run from the repository root:
 | `pnpm platform-admin:reset-2fa` | Last resort of the [recovery procedure](#recovery-procedure): removes a platform admin's two-step devices (`--email`), and with `--password` gives a new temporary password. `--remote` for the cloud project |
 | `pnpm smoke:staff-admin` | Smoke test of the staff module as a gym's Owner: creates `smoke.test`, checks that its temporary password logs in and must be changed, deactivates it and checks that its login is refused. Prints only the staff id, never a password. `--remote` for the cloud project (needs the publishable key: `SUPABASE_PUBLISHABLE_KEY` in `supabase/.env.local`, or the app's `apps/app/.env.local` for the same project); local needs `pnpm db:functions` |
 | `pnpm staff-logins:move` | Once, after the MT-1 migrations, on a project that already had staff: moves their logins to their gym's address. Only shows what it would change; `--apply` changes it. `--remote` for a cloud project |
+| `pnpm release:migrations` | The release flow's cloud migrations ([Releasing](#releasing)): lists the migrations the cloud lacks and whether each is purely additive. `--rehearse` also applies them to a local copy of the cloud's schema; `--push` then runs the cloud dry run and pushes |
+| `pnpm release:check-live` | After a merge: waits until Vercel serves the merged commit, then loads the live gym app and seller panel in a fresh browser (read-only). `--commit <sha>`, `--site <url>` |
 
 First-time setup for the browser tests: `pnpm --filter @gym/app exec playwright install chromium`.
 
@@ -548,3 +550,15 @@ Other changes:
 Setting up the Vercel project: [A cloud project](#a-cloud-project), step 7. `apps/app/vercel.json` sets the install and build commands (`pnpm build:web`: the gym app plus the seller panel under `/seller/`, see [Deployed with the gym app at `/seller/`](#deployed-with-the-gym-app-at-seller)), the SPA rewrites and the headers. Every push to `main` deploys to production and other branches get preview deploys; Vercel skips the build when a push changes nothing the app uses (for example only `supabase/`).
 
 **Content-Security-Policy:** every production build (web, Windows and Android) carries a CSP `<meta>` tag made by `vite.config.ts`. The app may only connect to itself and the Supabase address in the build's `VITE_*` variables, and only run its own scripts (the inline start-up script by its hash). Changing the address needs a new build. `pnpm dev` has no CSP, because Vite injects inline scripts there.
+
+**Updates:** the build carries its commit (`<meta name="gym-build">`). An open web app looks for a new version every hour, and when it comes back to the front or back online. When the service worker has downloaded one, a notice stays at the top of every screen, the login and lock screens too, until staff press «نوێکردنەوە». The page then reloads into the new version, which locks the app (the PIN opens it again); a form with changes not saved asks first. It never reloads on its own.
+
+## Releasing
+
+Every release follows the working rules in `CLAUDE.md`: a feature branch, all checks green, cloud migrations before the merge, then a pull request merged with `gh pr merge` (never a push to `main`).
+
+1. Push the branch: `git push origin <branch>`.
+2. Checks: `pnpm check`, `pnpm db:test`, `pnpm db:lint`, and the full `pnpm test:e2e` with `pnpm db:functions` running (for staff- or seller-module changes also `pnpm test:int` and `pnpm test:deno`).
+3. Cloud migrations (needs `SUPABASE_DB_URL` in `supabase/.env.local` and Docker): `pnpm release:migrations --push`. It stops without pushing anything when the cloud has a migration this branch doesn't, when a pending one is older than the cloud's last, or when one isn't purely additive (any `drop`, `rename`, `delete`, `truncate`, `update`, changed column type, or `revoke` on something older; `supabase/scripts/migration-safety.ts`). Otherwise it rehearses them on a local copy of the cloud's schema (the local database reset to the cloud's last migration, with a gym and its Owner), resets the local database again, runs the cloud dry run, and pushes only when the dry run lists exactly the pending migrations. Destructive migrations wait for the user.
+4. `gh pr create --base main --head <branch>`, then `gh pr merge <number> --merge`.
+5. `pnpm release:check-live`: Vercel serves the merged commit, and the gym app and the seller panel load, reach Auth (health 200) and log no errors. Read-only.
