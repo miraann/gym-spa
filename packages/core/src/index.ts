@@ -259,6 +259,7 @@ export {
   isValidUsdAmount,
   maxDiscountPercent,
   splitInstallments,
+  usdPayment,
   usdToIqd,
   type InstallmentDraft,
   type InstallmentProblem,

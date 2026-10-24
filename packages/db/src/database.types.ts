@@ -825,6 +825,7 @@ export type Database = {
         Row: {
           amount: number;
           branch_id: string;
+          change_given: number | null;
           created_at: string;
           created_by: string | null;
           currency: string;
@@ -849,6 +850,7 @@ export type Database = {
         Insert: {
           amount: number;
           branch_id: string;
+          change_given?: number | null;
           created_at?: string;
           created_by?: string | null;
           currency?: string;
@@ -873,6 +875,7 @@ export type Database = {
         Update: {
           amount?: number;
           branch_id?: string;
+          change_given?: number | null;
           created_at?: string;
           created_by?: string | null;
           currency?: string;

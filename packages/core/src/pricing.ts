@@ -38,6 +38,20 @@ export function usdToIqd(amount: number, rate: number): number {
   return Math.floor((product + 5000) / 10000);
 }
 
+/**
+ * Dollars handed over against what is owed, like the sale: their value in dinars, what they pay
+ * (at most what is owed) and the change, given back in dinars.
+ */
+export function usdPayment(
+  amount: number,
+  rate: number,
+  owed: number,
+): { readonly value: number; readonly counts: number; readonly change: number } {
+  const value = usdToIqd(amount, rate);
+  const counts = Math.min(value, owed);
+  return { value, counts, change: value - counts };
+}
+
 /** Whether a dollar amount or a rate has at most 2 decimals and is above 0. */
 export function isValidUsdAmount(value: number): boolean {
   return (

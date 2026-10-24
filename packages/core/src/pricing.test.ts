@@ -6,6 +6,7 @@ import {
   isValidUsdAmount,
   maxDiscountPercent,
   splitInstallments,
+  usdPayment,
   usdToIqd,
 } from './pricing.ts';
 import { databaseTestSql, latestFunctionBody } from './sql-functions.test-helper.ts';
@@ -76,6 +77,13 @@ describe('maxDiscountPercent', () => {
     for (const [key, percent] of DISCOUNT_PERMISSIONS) {
       expect(body).toContain(`when app.has_permission('${key}') then ${String(percent)}`);
     }
+  });
+});
+
+describe('usdPayment', () => {
+  it('pays what is owed and gives the rest back in dinars', () => {
+    expect(usdPayment(25, 1310, 30_000)).toEqual({ value: 32_750, counts: 30_000, change: 2_750 });
+    expect(usdPayment(20, 1310, 30_000)).toEqual({ value: 26_200, counts: 26_200, change: 0 });
   });
 });
 

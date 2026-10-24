@@ -11,8 +11,9 @@
 --   * Discounts are whole dinars, at most the share the seller's permission allows
 --     (discount.apply.max_10/25/50/any, the highest one counts), with a reason.
 --   * Every amount is in IQD. A payment in USD keeps the dollars and that day's rate (dinars for one
---     dollar), and its value in dinars is worked out here (app.usd_to_iqd). A payment is never more
---     than the invoice still owes, so nobody has credit.
+--     dollar); its value in dinars is worked out here (app.usd_to_iqd). Dollars are whole bills, so
+--     what is more than the invoice owes is change, given back in dinars (change_given). A payment
+--     never counts for more than the invoice still owes, so nobody has credit.
 --   * Installments add up to what wasn't paid at the sale, due today or later, each after the one
 --     before. Payments pay them oldest first (installment_balances).
 --   * Numbers come from the branch's counters, in order and without gaps (a sale that fails gives
@@ -264,6 +265,8 @@ create table public.payments (
   currency text not null default 'IQD' check (currency in ('IQD', 'USD')),
   foreign_amount numeric(14,2) check (foreign_amount > 0),
   exchange_rate numeric(10,2) check (exchange_rate > 0),
+  -- Dollars only: what was given back in dinars, when the dollars were worth more than was owed.
+  change_given numeric(14,2) check (change_given >= 0 and change_given = trunc(change_given)),
   -- The card slip's or transfer's number (card, FIB, FastPay, ZainCash, bank transfer).
   reference text check (app.is_clean_text(reference, 100)),
   -- Why money was given back (a refund needs one).
@@ -289,7 +292,8 @@ create table public.payments (
   constraint payments_currency check (
     (currency = 'USD') = (foreign_amount is not null)
     and (currency = 'USD') = (exchange_rate is not null)
-    and (currency = 'IQD' or amount = app.usd_to_iqd(foreign_amount, exchange_rate))
+    and (currency = 'USD') = (change_given is not null)
+    and (currency = 'IQD' or amount + change_given = app.usd_to_iqd(foreign_amount, exchange_rate))
   ),
   constraint payments_reason check (kind = 'payment' or reason is not null),
   constraint payments_voided check ((voided_at is null) = (void_reason is null)),
@@ -366,7 +370,7 @@ create trigger check_writable before insert or update or delete on public.paymen
 create trigger read_only before update on public.payments
   for each row execute function app.read_only_columns(
     'id', 'gym_id', 'branch_id', 'member_id', 'invoice_id', 'number', 'kind', 'method', 'amount', 'currency',
-    'foreign_amount', 'exchange_rate', 'reference', 'reason', 'created_at', 'created_by'
+    'foreign_amount', 'exchange_rate', 'change_given', 'reference', 'reason', 'created_at', 'created_by'
   );
 create trigger stamp before insert or update on public.payments
   for each row execute function app.stamp_row();
@@ -490,6 +494,7 @@ as $$
     'payment_id', p.id,
     'receipt_number', p.number,
     'paid', coalesce(p.amount, 0),
+    'change_given', coalesce(p.change_given, 0),
     'start_date', s.start_date,
     'end_date', s.end_date
   )
@@ -497,7 +502,7 @@ as $$
     join public.invoice_items it on it.subscription_id = s.id and it.gym_id = s.gym_id
     join public.invoices v on v.id = it.invoice_id and v.gym_id = s.gym_id
     left join lateral (
-      select p.id, p.number, p.amount from public.payments p
+      select p.id, p.number, p.amount, p.change_given from public.payments p
        where p.invoice_id = v.id and p.gym_id = v.gym_id and p.kind = 'payment'
        order by p.created_at
        limit 1
@@ -516,7 +521,8 @@ revoke execute on function app.sale_result(uuid) from public, anon, authenticate
 --   plan_not_found; plan_not_on_sale; price_changed (p_price is the price the screen showed);
 --   plan_gender_mismatch; invalid_start_date (30 days back to a year ahead, Baghdad time);
 --   invalid_discount; discount_too_large (the seller's permission); reason_required;
---   invalid_payment; payment_too_large (more than the invoice);
+--   invalid_payment; payment_too_large (dinars beyond what the invoice owes; dollars beyond it are
+--   change, given back in dinars);
 --   invalid_installments (amounts, dates today or later and in order); installments_mismatch
 --   (they don't add up to what is left).
 -- p_payment: {"id", "method", "amount"} in dinars, or {"id", "method", "currency": "USD",
@@ -551,6 +557,7 @@ declare
   total numeric(14,2);
   paid numeric(14,2) := 0;
   payment_id uuid;
+  change numeric(14,2);
   currency text;
   foreign_amount numeric;
   rate numeric;
@@ -647,7 +654,9 @@ begin
         if foreign_amount <= 0 or rate <= 0 or foreign_amount <> round(foreign_amount, 2) or rate <> round(rate, 2) then
           raise exception using errcode = '22023', message = 'invalid_payment';
         end if;
-        paid := app.usd_to_iqd(foreign_amount, rate);
+        -- Dollars worth more than the invoice: the rest is change, in dinars.
+        paid := least(app.usd_to_iqd(foreign_amount, rate), total);
+        change := app.usd_to_iqd(foreign_amount, rate) - paid;
       elsif currency = 'IQD' then
         paid := (p_payment ->> 'amount')::numeric;
       else
@@ -729,12 +738,13 @@ begin
   if p_payment is not null then
     insert into public.payments (
       id, gym_id, branch_id, member_id, invoice_id, number, method, amount, currency, foreign_amount,
-      exchange_rate, reference
+      exchange_rate, change_given, reference
     )
     values (
       payment_id, gym, p_branch_id, p_member_id, p_invoice_id,
       app.next_document_number(p_branch_id, 'receipt'), p_payment ->> 'method', paid, currency,
       case when currency = 'USD' then foreign_amount end, case when currency = 'USD' then rate end,
+      case when currency = 'USD' then change end,
       nullif(btrim(coalesce(p_payment ->> 'reference', '')), '')
     );
   end if;

@@ -3,7 +3,7 @@
 -- dinars and dollars, installments, balances, who sees money, money rows only the server writes,
 -- read-only gyms, other gyms, and taking an import back.
 begin;
-select plan(66);
+select plan(68);
 select tests.create_fixture();
 
 select tests.create_role('فرۆشتن بە قەرز', array['members.view', 'subscriptions.sell']);
@@ -86,7 +86,7 @@ select is(
     p_payment => '{"id": "54000000-0000-4000-8000-000000000001", "method": "cash", "amount": 35000}') - 'start_date' - 'end_date',
   jsonb_build_object('subscription_id', '52000000-0000-4000-8000-000000000001', 'invoice_id', '53000000-0000-4000-8000-000000000001',
     'invoice_number', 'B901-000001', 'total', 35000.00, 'payment_id', '54000000-0000-4000-8000-000000000001',
-    'receipt_number', 'B901-R000001', 'paid', 35000.00),
+    'receipt_number', 'B901-R000001', 'paid', 35000.00, 'change_given', 0),
   'a receptionist sells a monthly plan paid in cash: the branch''s first invoice and receipt'
 );
 select results_eq(
@@ -168,12 +168,23 @@ select is(
   '26200.00', 'twenty dollars at 1,310 count for 26,200 dinars'
 );
 select results_eq(
-  $$ select amount, currency, foreign_amount, exchange_rate from public.payments where id = '54000000-0000-4000-8000-000000000003' $$,
-  $$ values (26200::numeric(14,2), 'USD'::text, 20::numeric(14,2), 1310::numeric(10,2)) $$,
+  $$ select amount, currency, foreign_amount, exchange_rate, change_given from public.payments where id = '54000000-0000-4000-8000-000000000003' $$,
+  $$ values (26200::numeric(14,2), 'USD'::text, 20::numeric(14,2), 1310::numeric(10,2), 0::numeric(14,2)) $$,
   'the payment keeps the dollars and the rate'
 );
 select is((select end_date from public.subscriptions where id = '52000000-0000-4000-8000-000000000003'), null::date,
   'a plan of visits has no end date');
+select is(
+  public.sell_subscription('52000000-0000-4000-8000-000000000006', '53000000-0000-4000-8000-000000000006',
+    '50000000-0000-4000-8000-000000000002', '51000000-0000-4000-8000-000000000004', tests.branch('B901'),
+    (now() at time zone 'Asia/Baghdad')::date, 30000,
+    p_payment => '{"id": "54000000-0000-4000-8000-000000000006", "method": "cash", "currency": "USD", "foreign_amount": 25, "exchange_rate": 1310}')
+    - array['subscription_id', 'invoice_id', 'invoice_number', 'payment_id', 'receipt_number', 'start_date', 'end_date'],
+  '{"total": 30000.00, "paid": 30000.00, "change_given": 2750.00}'::jsonb,
+  'twenty-five dollars for 30,000 pay it all, with 2,750 dinars given back'
+);
+select is((select due from public.invoice_balances where invoice_id = '53000000-0000-4000-8000-000000000006'),
+  0::numeric(14,2), 'and nothing is owed');
 select is((select due from public.invoice_balances where invoice_id = '53000000-0000-4000-8000-000000000003'),
   3800::numeric(14,2), 'the rest is owed, with no installments');
 
@@ -317,7 +328,7 @@ select throws_ok((select statement from sale_cases where label = 'an installment
 select throws_ok((select statement from sale_cases where label = 'two installments on one day'), '22023', 'invalid_installments', 'each after the one before');
 select throws_ok((select statement from sale_cases where label = 'an installment that isn''t a date'), '22023', 'invalid_installments', 'on a real date');
 select throws_ok((select statement from sale_cases where label = 'another sale''s id'), '23505', 'sale_exists', 'and a sale''s id is its own');
-select is((select count(*)::integer from public.invoices), 4, 'no refused sale left anything behind');
+select is((select count(*)::integer from public.invoices), 5, 'no refused sale left anything behind');
 
 -- A manager may give more off, and each branch counts its own numbers.
 select tests.authenticate_as(tests.staff('owner'));
@@ -355,7 +366,7 @@ select results_eq(
 select tests.authenticate_as(tests.staff('reception_b'));
 select is((select count(*)::integer from public.invoices), 1, 'staff of another branch see only their branch''s invoices');
 select is((select count(*)::integer from public.payments), 0, 'and payments');
-select is((select count(*)::integer from public.subscriptions), 5, 'but every subscription, like every member');
+select is((select count(*)::integer from public.subscriptions), 6, 'but every subscription, like every member');
 
 select tests.authenticate_as(tests.staff('viewer_a'));
 select is((select count(*)::integer from public.invoices) + (select count(*)::integer from public.payments)
