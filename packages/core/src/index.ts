@@ -89,7 +89,7 @@ export {
   type CardReplaceReason,
   type CardStatus,
 } from './cards.ts';
-export { toLatinDigits } from './digits.ts';
+export { parseWholeNumber, toLatinDigits } from './digits.ts';
 export {
   IMPORT_FIELDS,
   IMPORT_MAX_BYTES,
@@ -236,6 +236,22 @@ export {
   normalizeAdminEmail,
   normalizeRecoveryCode,
 } from './platform.ts';
+export {
+  DURATION_UNITS,
+  PLAN_GENDERS,
+  PLAN_KINDS,
+  PLAN_LIMITS,
+  WEEK_ORDER,
+  isValidPlanPrice,
+  normalizeWeekdays,
+  planEndDate,
+  planHasDuration,
+  planHasVisits,
+  type DurationUnit,
+  type PlanGender,
+  type PlanKind,
+  type Weekday,
+} from './plans.ts';
 export {
   SEARCH_IGNORED,
   SEARCH_LOOK_ALIKES,

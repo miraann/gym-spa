@@ -126,3 +126,39 @@ select md5('demo-card-' || p.i)::uuid, m.gym_id, m.id,
   join public.members m on m.id = md5('demo-member-' || p.i)::uuid
   left join public.nfc_cards old on old.id = md5('demo-old-card-' || p.i)::uuid
  where p.i % 10 <> 4;
+
+-- Plans (step 3b), ids md5('demo-plan-<name>'): what a gym in Sulaymaniyah might sell. The women's
+-- mornings plan works in Bakhtiari only; the old six-month price is off sale.
+insert into public.plans (
+  id, gym_id, name_ckb, name_en, name_ar, kind, duration_unit, duration_count, visit_count, price,
+  gender, all_branches, allowed_days, allowed_from, allowed_until, daily_visit_limit, max_freeze_days, is_active
+)
+select md5('demo-plan-' || p.key)::uuid, g.id, p.name_ckb, p.name_en, p.name_ar, p.kind, p.unit, p.count,
+       p.visits, p.price, p.gender, p.all_branches, p.days, p.from_time, p.until_time, p.daily, p.freeze_days, p.active
+  from public.gyms g
+ cross join (values
+   ('monthly', 'مانگانە', 'Monthly', 'شهري', 'time', 'month', 1, null::integer, 35000, 'any', true,
+    null::smallint[], null::time, null::time, null::smallint, 7, true),
+   ('three-months', 'سێ مانگ', 'Three months', 'ثلاثة أشهر', 'time', 'month', 3, null, 90000, 'any', true,
+    null, null, null, null, 15, true),
+   ('year', 'ساڵانە', 'Yearly', 'سنوي', 'time', 'month', 12, null, 300000, 'any', true,
+    null, null, null, null, 30, true),
+   ('twelve-visits', 'دوانزە جار', 'Twelve visits', 'اثنتا عشرة زيارة', 'visits', null, null, 12, 30000, 'any', true,
+    null, null, null, 1::smallint, 0, true),
+   ('women-mornings', 'بەیانیانی ئافرەتان', 'Women''s mornings', 'صباحات النساء', 'hybrid', 'month', 1, 12, 25000,
+    'female', false, array[1, 3, 6]::smallint[], '08:00'::time, '12:00'::time, 1::smallint, 5, true),
+   ('day-pass', 'یەک ڕۆژ', 'Day pass', 'يوم واحد', 'time', 'day', 1, null, 5000, 'any', true,
+    null, null, null, 1::smallint, 0, true),
+   ('vip', 'VIP', 'VIP', 'VIP', 'unlimited', null, null, null, 0, 'any', true,
+    null, null, null, null, 0, true),
+   ('six-months-old', 'شەش مانگ (نرخی کۆن)', 'Six months (old price)', 'ستة أشهر (السعر القديم)', 'time', 'month', 6,
+    null, 150000, 'any', true, null, null, null, null, 20, false)
+ ) as p (key, name_ckb, name_en, name_ar, kind, unit, count, visits, price, gender, all_branches, days,
+         from_time, until_time, daily, freeze_days, active)
+ where g.code = 'demo';
+
+insert into public.plan_branches (gym_id, plan_id, branch_id)
+select b.gym_id, md5('demo-plan-women-mornings')::uuid, b.id
+  from public.branches b
+  join public.gyms g on g.id = b.gym_id
+ where g.code = 'demo' and b.code = 'B2';

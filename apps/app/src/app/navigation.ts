@@ -58,7 +58,7 @@ export const NAV_GROUPS: readonly NavGroup[] = [
     key: 'members',
     items: [
       { key: 'members', icon: UsersIcon, to: '/members', permission: 'members.view' },
-      { key: 'plans', icon: ClipboardListIcon, permission: 'plans.manage' },
+      { key: 'plans', icon: ClipboardListIcon, to: '/plans', permission: 'plans.manage' },
       { key: 'subscriptions', icon: IdCardIcon, permission: 'members.view' },
     ],
   },

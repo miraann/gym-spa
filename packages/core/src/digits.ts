@@ -10,3 +10,16 @@ function toLatinDigit(digit: string): string {
 export function toLatinDigits(input: string): string {
   return input.replace(EASTERN_DIGITS, toLatinDigit);
 }
+
+/** Thousands separators people type or paste in an amount: commas, spaces, the Arabic ٬. */
+const THOUSANDS_SEPARATORS = /[,\s\u066C\u00A0\u202F]/g;
+
+/**
+ * A whole number as typed (25,000 or ٢٥٬٠٠٠), or null when it isn't one (empty, a fraction, a
+ * sign, letters).
+ */
+export function parseWholeNumber(input: string): number | null {
+  const digits = toLatinDigits(input).replace(THOUSANDS_SEPARATORS, '');
+  if (!/^[0-9]{1,15}$/.test(digits)) return null;
+  return Number(digits);
+}

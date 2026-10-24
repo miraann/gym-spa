@@ -1,0 +1,115 @@
+{
+  "list": {
+    "title": "Plans",
+    "description": "The kinds of subscription the gym sells. Changing a plan doesn't change subscriptions already sold.",
+    "add": "New plan",
+    "choose": "Choose a plan from the list.",
+    "back": "Back to plans",
+    "empty": "There are no plans yet. Add one to start selling subscriptions.",
+    "offSale": "Not on sale"
+  },
+  "status": {
+    "offSale": "Not on sale"
+  },
+  "kinds": {
+    "time": "By time",
+    "visits": "By visits",
+    "hybrid": "Time and visits",
+    "unlimited": "Unlimited"
+  },
+  "kindHints": {
+    "time": "For a period, like one month or three months.",
+    "visits": "A number of visits, with no end date.",
+    "hybrid": "A number of visits within a period, like twenty visits in two months.",
+    "unlimited": "No end date and no visit count, like VIP."
+  },
+  "summary": {
+    "oneMonth": "1 month",
+    "months": "{{count}} months",
+    "oneDay": "1 day",
+    "days": "{{count}} days",
+    "oneVisit": "1 visit",
+    "visits": "{{count}} visits",
+    "visitsWithin": "{{visits}} in {{duration}}",
+    "unlimited": "Unlimited",
+    "free": "Free",
+    "forMen": "For men",
+    "forWomen": "For women",
+    "branchCount": "Branches: {{count}}"
+  },
+  "form": {
+    "nameCkb": "Name in Kurdish",
+    "nameEn": "Name in English (optional)",
+    "nameAr": "Name in Arabic (optional)",
+    "nameHint": "For example: Monthly, Three months, Twelve visits.",
+    "kind": "Type",
+    "duration": "Duration",
+    "durationCount": "Number",
+    "durationUnit": "Unit",
+    "units": {
+      "month": "Months",
+      "day": "Days"
+    },
+    "endsPreview": "Starting today, its last day is {{date}}",
+    "visitCount": "Number of visits",
+    "price": "Price (IQD)",
+    "gender": "Who it's for",
+    "genders": {
+      "any": "Everyone",
+      "male": "Men",
+      "female": "Women"
+    },
+    "branches": "Branches",
+    "allBranches": "All branches",
+    "someBranches": "Only these branches",
+    "days": "Days of the week",
+    "allDays": "Every day",
+    "someDays": "Only these days",
+    "hours": "Visiting hours",
+    "allDay": "Any time",
+    "someHours": "Only during these hours",
+    "from": "From",
+    "until": "Until",
+    "rules": "Rules",
+    "rulesHint": "Check-in applies these rules.",
+    "dailyLimit": "Most visits a day (optional)",
+    "dailyLimitHint": "Leave empty for no limit. For visit plans, empty means once a day.",
+    "freezeDays": "Most freeze days",
+    "freezeDaysHint": "At zero, the subscription can't be frozen.",
+    "onSale": "This plan is on sale",
+    "onSaleHint": "If you stop selling it, subscriptions already sold keep working.",
+    "errors": {
+      "nameRequired": "Write the plan's name in Kurdish.",
+      "name": "This name is too long.",
+      "durationCount": "The duration must be from {{min}} to {{max}}.",
+      "visitCount": "The number of visits must be from {{min}} to {{max}}.",
+      "price": "Write a valid price in whole dinars.",
+      "branches": "Choose at least one branch.",
+      "days": "Choose at least one day.",
+      "hours": "The start time must be before the end time.",
+      "dailyLimit": "The number must be from {{min}} to {{max}}, or empty.",
+      "freezeDays": "The number must be from {{min}} to {{max}}."
+    }
+  },
+  "detail": {
+    "newTitle": "New plan",
+    "newDescription": "Once it's saved, it can be sold.",
+    "save": "Save",
+    "create": "Add plan",
+    "saved": "Plan saved",
+    "created": "New plan added",
+    "notFound": "This plan was not found.",
+    "readOnly": "You can't change this plan."
+  },
+  "errors": {
+    "permission_denied": "You don't have permission to do this.",
+    "no_branch_access": "You can't reach every branch this plan works in.",
+    "branch_required": "Choose at least one branch.",
+    "branch_not_found": "One of the branches was not found. Reload the page and try again.",
+    "plan_all_branches": "This plan is for all branches. Reload the page and try again.",
+    "gym_read_only": "This gym is view-only, so no plans can be added or changed.",
+    "invalid_request": "These details are not valid. Check them and try again.",
+    "network": "Couldn't reach the server. Check your internet connection and try again.",
+    "unexpected": "Something went wrong. Try again. If it keeps happening, contact Click Group."
+  }
+}

@@ -41,6 +41,13 @@ insert into public.nfc_cards (id, gym_id, member_id, uid) values
 insert into public.member_imports (id, gym_id, file_name, member_count) values
   ('e0000000-0000-4000-8000-0000000000a9', tests.gym('pgtap-a'), 'members.xlsx', 1),
   ('e0000000-0000-4000-8000-0000000000b9', tests.gym('pgtap-b'), 'members.xlsx', 1);
+-- A plan in each gym, for one branch.
+insert into public.plans (id, gym_id, name_ckb, kind, price, all_branches) values
+  ('e0000000-0000-4000-8000-0000000000a3', tests.gym('pgtap-a'), 'VIP', 'unlimited', 0, false),
+  ('e0000000-0000-4000-8000-0000000000b3', tests.gym('pgtap-b'), 'VIP', 'unlimited', 0, false);
+insert into public.plan_branches (gym_id, plan_id, branch_id) values
+  (tests.gym('pgtap-a'), 'e0000000-0000-4000-8000-0000000000a3', tests.branch('B901')),
+  (tests.gym('pgtap-b'), 'e0000000-0000-4000-8000-0000000000b3', tests.branch('B901', 'pgtap-b'));
 
 select is_empty(
   $$ select t from tests.gym_tables() t
@@ -91,6 +98,12 @@ insert into insert_cases (table_name, statement) values
   ('nfc_cards', $$ select public.assign_card('e0000000-0000-4000-8000-0000000000c6', 'e0000000-0000-4000-8000-0000000000b2', 'DEADBEEF') $$),
   ('member_imports', $$ insert into public.member_imports (gym_id, id, file_name, member_count)
                         values (tests.gym('pgtap-b'), 'e0000000-0000-4000-8000-0000000000d1', 'members.xlsx', 1) $$),
+  ('plans', $$ insert into public.plans (gym_id, id, name_ckb, kind, price)
+               values (tests.gym('pgtap-b'), 'e0000000-0000-4000-8000-0000000000c8', 'پلان', 'unlimited', 0) $$),
+  ('plans', $$ select public.save_plan(p_id => 'e0000000-0000-4000-8000-0000000000b3', p_name_ckb => 'پلان',
+                 p_kind => 'unlimited', p_price => 0) $$),
+  ('plan_branches', $$ insert into public.plan_branches (gym_id, plan_id, branch_id)
+                       values (tests.gym('pgtap-b'), 'e0000000-0000-4000-8000-0000000000b3', tests.branch('B902', 'pgtap-b')) $$),
   -- Their own gym (gym_id left to fill itself in), pointing at gym B's rows.
   ('role_permissions', $$ insert into public.role_permissions (role_id, permission_key) values (tests.role('trainer', 'pgtap-b'), 'payments.view') $$),
   ('staff_users', $$ insert into public.staff_users (id, username, full_name, role_id)
@@ -103,7 +116,9 @@ insert into insert_cases (table_name, statement) values
   ('member_health', $$ insert into public.member_health (id, injuries) values ('e0000000-0000-4000-8000-0000000000b2', 'ئازاری پشت') $$),
   ('member_photos', $$ insert into public.member_photos (id, photo_type, photo, thumbnail_type, thumbnail)
                        values ('e0000000-0000-4000-8000-0000000000b2', 'image/jpeg', '/9j/4AAQSkZJRg==', 'image/jpeg', '/9j/4AAQSkZJRg==') $$),
-  ('nfc_cards', $$ insert into public.nfc_cards (id, member_id, uid) values ('e0000000-0000-4000-8000-0000000000c7', 'e0000000-0000-4000-8000-0000000000b2', 'DEADBEEF') $$);
+  ('nfc_cards', $$ insert into public.nfc_cards (id, member_id, uid) values ('e0000000-0000-4000-8000-0000000000c7', 'e0000000-0000-4000-8000-0000000000b2', 'DEADBEEF') $$),
+  ('plan_branches', $$ insert into public.plan_branches (plan_id, branch_id) values ('e0000000-0000-4000-8000-0000000000b3', tests.branch('B902')) $$),
+  ('plan_branches', $$ insert into public.plan_branches (plan_id, branch_id) values ('e0000000-0000-4000-8000-0000000000a3', tests.branch('B902', 'pgtap-b')) $$);
 
 select is_empty(
   $$ select t from tests.gym_tables() t where t not in (select c.table_name from insert_cases c) $$,

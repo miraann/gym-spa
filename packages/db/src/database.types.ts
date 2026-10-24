@@ -631,6 +631,134 @@ export type Database = {
         };
         Relationships: [];
       };
+      plan_branches: {
+        Row: {
+          branch_id: string;
+          created_at: string;
+          created_by: string | null;
+          gym_id: string;
+          id: string;
+          plan_id: string;
+        };
+        Insert: {
+          branch_id: string;
+          created_at?: string;
+          created_by?: string | null;
+          gym_id?: string;
+          id?: string;
+          plan_id: string;
+        };
+        Update: {
+          branch_id?: string;
+          created_at?: string;
+          created_by?: string | null;
+          gym_id?: string;
+          id?: string;
+          plan_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'plan_branches_branch_id_gym_id_fkey';
+            columns: ['branch_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'branches';
+            referencedColumns: ['id', 'gym_id'];
+          },
+          {
+            foreignKeyName: 'plan_branches_plan_id_gym_id_fkey';
+            columns: ['plan_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'plans';
+            referencedColumns: ['id', 'gym_id'];
+          },
+        ];
+      };
+      plans: {
+        Row: {
+          all_branches: boolean;
+          allowed_days: number[] | null;
+          allowed_from: string | null;
+          allowed_until: string | null;
+          created_at: string;
+          created_by: string | null;
+          daily_visit_limit: number | null;
+          deleted_at: string | null;
+          duration_count: number | null;
+          duration_unit: string | null;
+          gender: string;
+          gym_id: string;
+          id: string;
+          is_active: boolean;
+          kind: string;
+          max_freeze_days: number;
+          name_ar: string | null;
+          name_ckb: string;
+          name_en: string | null;
+          price: number;
+          updated_at: string;
+          updated_by: string | null;
+          visit_count: number | null;
+        };
+        Insert: {
+          all_branches?: boolean;
+          allowed_days?: number[] | null;
+          allowed_from?: string | null;
+          allowed_until?: string | null;
+          created_at?: string;
+          created_by?: string | null;
+          daily_visit_limit?: number | null;
+          deleted_at?: string | null;
+          duration_count?: number | null;
+          duration_unit?: string | null;
+          gender?: string;
+          gym_id?: string;
+          id: string;
+          is_active?: boolean;
+          kind: string;
+          max_freeze_days?: number;
+          name_ar?: string | null;
+          name_ckb: string;
+          name_en?: string | null;
+          price: number;
+          updated_at?: string;
+          updated_by?: string | null;
+          visit_count?: number | null;
+        };
+        Update: {
+          all_branches?: boolean;
+          allowed_days?: number[] | null;
+          allowed_from?: string | null;
+          allowed_until?: string | null;
+          created_at?: string;
+          created_by?: string | null;
+          daily_visit_limit?: number | null;
+          deleted_at?: string | null;
+          duration_count?: number | null;
+          duration_unit?: string | null;
+          gender?: string;
+          gym_id?: string;
+          id?: string;
+          is_active?: boolean;
+          kind?: string;
+          max_freeze_days?: number;
+          name_ar?: string | null;
+          name_ckb?: string;
+          name_en?: string | null;
+          price?: number;
+          updated_at?: string;
+          updated_by?: string | null;
+          visit_count?: number | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'plans_gym_id_fkey';
+            columns: ['gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'gyms';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       role_permissions: {
         Row: {
           created_at: string;
@@ -1496,6 +1624,58 @@ export type Database = {
           permission_keys: string[];
           staff_count: number;
         }[];
+      };
+      save_plan: {
+        Args: {
+          p_allowed_days?: number[];
+          p_allowed_from?: string;
+          p_allowed_until?: string;
+          p_branch_ids?: string[];
+          p_daily_visit_limit?: number;
+          p_duration_count?: number;
+          p_duration_unit?: string;
+          p_gender?: string;
+          p_id: string;
+          p_is_active?: boolean;
+          p_kind: string;
+          p_max_freeze_days?: number;
+          p_name_ar?: string;
+          p_name_ckb: string;
+          p_name_en?: string;
+          p_price: number;
+          p_visit_count?: number;
+        };
+        Returns: {
+          all_branches: boolean;
+          allowed_days: number[] | null;
+          allowed_from: string | null;
+          allowed_until: string | null;
+          created_at: string;
+          created_by: string | null;
+          daily_visit_limit: number | null;
+          deleted_at: string | null;
+          duration_count: number | null;
+          duration_unit: string | null;
+          gender: string;
+          gym_id: string;
+          id: string;
+          is_active: boolean;
+          kind: string;
+          max_freeze_days: number;
+          name_ar: string | null;
+          name_ckb: string;
+          name_en: string | null;
+          price: number;
+          updated_at: string;
+          updated_by: string | null;
+          visit_count: number | null;
+        };
+        SetofOptions: {
+          from: '*';
+          to: 'plans';
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
       };
       save_role: {
         Args: {

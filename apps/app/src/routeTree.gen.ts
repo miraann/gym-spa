@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as BranchesRouteRouteImport } from './routes/branches/route'
 import { Route as DevicesRouteRouteImport } from './routes/devices/route'
 import { Route as MembersRouteRouteImport } from './routes/members/route'
+import { Route as PlansRouteRouteImport } from './routes/plans/route'
 import { Route as RolesRouteRouteImport } from './routes/roles/route'
 import { Route as SettingsRouteRouteImport } from './routes/settings/route'
 import { Route as StaffRouteRouteImport } from './routes/staff/route'
@@ -24,6 +25,9 @@ import { Route as DevicesDeviceIdRouteImport } from './routes/devices/$deviceId'
 import { Route as MembersIndexRouteImport } from './routes/members/index'
 import { Route as MembersImportRouteImport } from './routes/members/import'
 import { Route as MembersNewRouteImport } from './routes/members/new'
+import { Route as PlansIndexRouteImport } from './routes/plans/index'
+import { Route as PlansPlanIdRouteImport } from './routes/plans/$planId'
+import { Route as PlansNewRouteImport } from './routes/plans/new'
 import { Route as RolesIndexRouteImport } from './routes/roles/index'
 import { Route as RolesRoleIdRouteImport } from './routes/roles/$roleId'
 import { Route as RolesNewRouteImport } from './routes/roles/new'
@@ -55,6 +59,11 @@ const DevicesRouteRoute = DevicesRouteRouteImport.update({
 const MembersRouteRoute = MembersRouteRouteImport.update({
   id: '/members',
   path: '/members',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PlansRouteRoute = PlansRouteRouteImport.update({
+  id: '/plans',
+  path: '/plans',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RolesRouteRoute = RolesRouteRouteImport.update({
@@ -111,6 +120,21 @@ const MembersNewRoute = MembersNewRouteImport.update({
   id: '/new',
   path: '/new',
   getParentRoute: () => MembersRouteRoute,
+} as any)
+const PlansIndexRoute = PlansIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => PlansRouteRoute,
+} as any)
+const PlansPlanIdRoute = PlansPlanIdRouteImport.update({
+  id: '/$planId',
+  path: '/$planId',
+  getParentRoute: () => PlansRouteRoute,
+} as any)
+const PlansNewRoute = PlansNewRouteImport.update({
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => PlansRouteRoute,
 } as any)
 const RolesIndexRoute = RolesIndexRouteImport.update({
   id: '/',
@@ -178,6 +202,7 @@ export interface FileRoutesByFullPath {
   '/branches': typeof BranchesRouteRouteWithChildren
   '/devices': typeof DevicesRouteRouteWithChildren
   '/members': typeof MembersRouteRouteWithChildren
+  '/plans': typeof PlansRouteRouteWithChildren
   '/roles': typeof RolesRouteRouteWithChildren
   '/settings': typeof SettingsRouteRouteWithChildren
   '/staff': typeof StaffRouteRouteWithChildren
@@ -186,6 +211,8 @@ export interface FileRoutesByFullPath {
   '/devices/$deviceId': typeof DevicesDeviceIdRoute
   '/members/import': typeof MembersImportRoute
   '/members/new': typeof MembersNewRoute
+  '/plans/$planId': typeof PlansPlanIdRoute
+  '/plans/new': typeof PlansNewRoute
   '/roles/$roleId': typeof RolesRoleIdRoute
   '/roles/new': typeof RolesNewRoute
   '/settings/appearance': typeof SettingsAppearanceRoute
@@ -196,6 +223,7 @@ export interface FileRoutesByFullPath {
   '/branches/': typeof BranchesIndexRoute
   '/devices/': typeof DevicesIndexRoute
   '/members/': typeof MembersIndexRoute
+  '/plans/': typeof PlansIndexRoute
   '/roles/': typeof RolesIndexRoute
   '/settings/': typeof SettingsIndexRoute
   '/staff/': typeof StaffIndexRoute
@@ -209,6 +237,8 @@ export interface FileRoutesByTo {
   '/devices/$deviceId': typeof DevicesDeviceIdRoute
   '/members/import': typeof MembersImportRoute
   '/members/new': typeof MembersNewRoute
+  '/plans/$planId': typeof PlansPlanIdRoute
+  '/plans/new': typeof PlansNewRoute
   '/roles/$roleId': typeof RolesRoleIdRoute
   '/roles/new': typeof RolesNewRoute
   '/settings/appearance': typeof SettingsAppearanceRoute
@@ -219,6 +249,7 @@ export interface FileRoutesByTo {
   '/branches': typeof BranchesIndexRoute
   '/devices': typeof DevicesIndexRoute
   '/members': typeof MembersIndexRoute
+  '/plans': typeof PlansIndexRoute
   '/roles': typeof RolesIndexRoute
   '/settings': typeof SettingsIndexRoute
   '/staff': typeof StaffIndexRoute
@@ -231,6 +262,7 @@ export interface FileRoutesById {
   '/branches': typeof BranchesRouteRouteWithChildren
   '/devices': typeof DevicesRouteRouteWithChildren
   '/members': typeof MembersRouteRouteWithChildren
+  '/plans': typeof PlansRouteRouteWithChildren
   '/roles': typeof RolesRouteRouteWithChildren
   '/settings': typeof SettingsRouteRouteWithChildren
   '/staff': typeof StaffRouteRouteWithChildren
@@ -239,6 +271,8 @@ export interface FileRoutesById {
   '/devices/$deviceId': typeof DevicesDeviceIdRoute
   '/members/import': typeof MembersImportRoute
   '/members/new': typeof MembersNewRoute
+  '/plans/$planId': typeof PlansPlanIdRoute
+  '/plans/new': typeof PlansNewRoute
   '/roles/$roleId': typeof RolesRoleIdRoute
   '/roles/new': typeof RolesNewRoute
   '/settings/appearance': typeof SettingsAppearanceRoute
@@ -249,6 +283,7 @@ export interface FileRoutesById {
   '/branches/': typeof BranchesIndexRoute
   '/devices/': typeof DevicesIndexRoute
   '/members/': typeof MembersIndexRoute
+  '/plans/': typeof PlansIndexRoute
   '/roles/': typeof RolesIndexRoute
   '/settings/': typeof SettingsIndexRoute
   '/staff/': typeof StaffIndexRoute
@@ -262,6 +297,7 @@ export interface FileRouteTypes {
     | '/branches'
     | '/devices'
     | '/members'
+    | '/plans'
     | '/roles'
     | '/settings'
     | '/staff'
@@ -270,6 +306,8 @@ export interface FileRouteTypes {
     | '/devices/$deviceId'
     | '/members/import'
     | '/members/new'
+    | '/plans/$planId'
+    | '/plans/new'
     | '/roles/$roleId'
     | '/roles/new'
     | '/settings/appearance'
@@ -280,6 +318,7 @@ export interface FileRouteTypes {
     | '/branches/'
     | '/devices/'
     | '/members/'
+    | '/plans/'
     | '/roles/'
     | '/settings/'
     | '/staff/'
@@ -293,6 +332,8 @@ export interface FileRouteTypes {
     | '/devices/$deviceId'
     | '/members/import'
     | '/members/new'
+    | '/plans/$planId'
+    | '/plans/new'
     | '/roles/$roleId'
     | '/roles/new'
     | '/settings/appearance'
@@ -303,6 +344,7 @@ export interface FileRouteTypes {
     | '/branches'
     | '/devices'
     | '/members'
+    | '/plans'
     | '/roles'
     | '/settings'
     | '/staff'
@@ -314,6 +356,7 @@ export interface FileRouteTypes {
     | '/branches'
     | '/devices'
     | '/members'
+    | '/plans'
     | '/roles'
     | '/settings'
     | '/staff'
@@ -322,6 +365,8 @@ export interface FileRouteTypes {
     | '/devices/$deviceId'
     | '/members/import'
     | '/members/new'
+    | '/plans/$planId'
+    | '/plans/new'
     | '/roles/$roleId'
     | '/roles/new'
     | '/settings/appearance'
@@ -332,6 +377,7 @@ export interface FileRouteTypes {
     | '/branches/'
     | '/devices/'
     | '/members/'
+    | '/plans/'
     | '/roles/'
     | '/settings/'
     | '/staff/'
@@ -344,6 +390,7 @@ export interface RootRouteChildren {
   BranchesRouteRoute: typeof BranchesRouteRouteWithChildren
   DevicesRouteRoute: typeof DevicesRouteRouteWithChildren
   MembersRouteRoute: typeof MembersRouteRouteWithChildren
+  PlansRouteRoute: typeof PlansRouteRouteWithChildren
   RolesRouteRoute: typeof RolesRouteRouteWithChildren
   SettingsRouteRoute: typeof SettingsRouteRouteWithChildren
   StaffRouteRoute: typeof StaffRouteRouteWithChildren
@@ -377,6 +424,13 @@ declare module '@tanstack/react-router' {
       path: '/members'
       fullPath: '/members'
       preLoaderRoute: typeof MembersRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/plans': {
+      id: '/plans'
+      path: '/plans'
+      fullPath: '/plans'
+      preLoaderRoute: typeof PlansRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/roles': {
@@ -455,6 +509,27 @@ declare module '@tanstack/react-router' {
       fullPath: '/members/new'
       preLoaderRoute: typeof MembersNewRouteImport
       parentRoute: typeof MembersRouteRoute
+    }
+    '/plans/': {
+      id: '/plans/'
+      path: '/'
+      fullPath: '/plans/'
+      preLoaderRoute: typeof PlansIndexRouteImport
+      parentRoute: typeof PlansRouteRoute
+    }
+    '/plans/$planId': {
+      id: '/plans/$planId'
+      path: '/$planId'
+      fullPath: '/plans/$planId'
+      preLoaderRoute: typeof PlansPlanIdRouteImport
+      parentRoute: typeof PlansRouteRoute
+    }
+    '/plans/new': {
+      id: '/plans/new'
+      path: '/new'
+      fullPath: '/plans/new'
+      preLoaderRoute: typeof PlansNewRouteImport
+      parentRoute: typeof PlansRouteRoute
     }
     '/roles/': {
       id: '/roles/'
@@ -593,6 +668,22 @@ const MembersRouteRouteWithChildren = MembersRouteRoute._addFileChildren(
   MembersRouteRouteChildren,
 )
 
+interface PlansRouteRouteChildren {
+  PlansPlanIdRoute: typeof PlansPlanIdRoute
+  PlansNewRoute: typeof PlansNewRoute
+  PlansIndexRoute: typeof PlansIndexRoute
+}
+
+const PlansRouteRouteChildren: PlansRouteRouteChildren = {
+  PlansPlanIdRoute: PlansPlanIdRoute,
+  PlansNewRoute: PlansNewRoute,
+  PlansIndexRoute: PlansIndexRoute,
+}
+
+const PlansRouteRouteWithChildren = PlansRouteRoute._addFileChildren(
+  PlansRouteRouteChildren,
+)
+
 interface RolesRouteRouteChildren {
   RolesRoleIdRoute: typeof RolesRoleIdRoute
   RolesNewRoute: typeof RolesNewRoute
@@ -648,6 +739,7 @@ const rootRouteChildren: RootRouteChildren = {
   BranchesRouteRoute: BranchesRouteRouteWithChildren,
   DevicesRouteRoute: DevicesRouteRouteWithChildren,
   MembersRouteRoute: MembersRouteRouteWithChildren,
+  PlansRouteRoute: PlansRouteRouteWithChildren,
   RolesRouteRoute: RolesRouteRouteWithChildren,
   SettingsRouteRoute: SettingsRouteRouteWithChildren,
   StaffRouteRoute: StaffRouteRouteWithChildren,
