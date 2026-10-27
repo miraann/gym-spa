@@ -46,6 +46,9 @@
     "billing": {
       "view": "See the gym's subscription notices"
     },
+    "support": {
+      "grant": "Let Click Group see the gym's data"
+    },
     "members": {
       "view": "View members",
       "create": "Add members",

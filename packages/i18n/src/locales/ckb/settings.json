@@ -16,7 +16,8 @@
     "label": "بەشەکانی ڕێکخستن",
     "display": "پیشاندان",
     "appearance": "ڕووکار",
-    "cardReader": "خوێنەری کارت"
+    "cardReader": "خوێنەری کارت",
+    "support": "کلیک گرووپ"
   },
   "appearance": {
     "title": "ڕووکار",

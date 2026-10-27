@@ -21,6 +21,7 @@ import { useFormat } from '@/lib/format';
 import { usePreferences } from '@/lib/preferences';
 import { FormError } from '@/shell/form-error';
 import { LogList } from '@/log/log-list';
+import { SupportCard } from '@/support/support-pages';
 import { GymStateDialog, LimitsDialog, RenameDialog, SubscriptionDialog } from './gym-dialogs';
 import { GymStateBadge, gymState } from './gym-state';
 import { gymNames } from './gyms-page';
@@ -217,6 +218,8 @@ function GymDetails({ gym }: { readonly gym: GymRow }) {
             </dl>
           </CardContent>
         </Card>
+
+        <SupportCard gymId={gym.id} online={online} />
 
         <Card>
           <CardHeader>

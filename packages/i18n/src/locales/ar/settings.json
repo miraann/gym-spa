@@ -16,7 +16,8 @@
     "label": "أقسام الإعدادات",
     "display": "العرض",
     "appearance": "المظهر",
-    "cardReader": "قارئ البطاقات"
+    "cardReader": "قارئ البطاقات",
+    "support": "Click Group"
   },
   "appearance": {
     "title": "المظهر",

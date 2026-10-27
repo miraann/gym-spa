@@ -86,6 +86,12 @@ insert into public.attendance (id, gym_id, branch_id, member_id, subscription_id
    'e0000000-0000-4000-8000-0000000000a4', 'card', 'e0000000-0000-4000-8000-0000000000a1'),
   ('e0000000-0000-4000-8000-0000000000bc', tests.gym('pgtap-b'), tests.branch('B901', 'pgtap-b'), 'e0000000-0000-4000-8000-0000000000b1',
    'e0000000-0000-4000-8000-0000000000b4', 'card', 'e0000000-0000-4000-8000-0000000000b1');
+insert into public.support_grants (id, gym_id, reason, ends_at) values
+  ('e0000000-0000-4000-8000-0000000000ad', tests.gym('pgtap-a'), 'تاقیکردنەوە', now() + interval '2 hours'),
+  ('e0000000-0000-4000-8000-0000000000bd', tests.gym('pgtap-b'), 'تاقیکردنەوە', now() + interval '2 hours');
+insert into public.support_reads (gym_id, grant_id, admin_id, what) values
+  (tests.gym('pgtap-a'), 'e0000000-0000-4000-8000-0000000000ad', gen_random_uuid(), 'members'),
+  (tests.gym('pgtap-b'), 'e0000000-0000-4000-8000-0000000000bd', gen_random_uuid(), 'members');
 
 select is_empty(
   $$ select t from tests.gym_tables() t
@@ -172,6 +178,11 @@ insert into insert_cases (table_name, statement) values
                       p_member_id => 'e0000000-0000-4000-8000-0000000000b1') $$),
   ('attendance', $$ select public.check_in(gen_random_uuid(), tests.branch('B901'),
                       p_member_id => 'e0000000-0000-4000-8000-0000000000b1') $$),
+  ('support_grants', $$ insert into public.support_grants (gym_id, id, reason, ends_at)
+                        values (tests.gym('pgtap-b'), gen_random_uuid(), 'x', now() + interval '2 hours') $$),
+  ('support_grants', $$ select public.revoke_support_access('e0000000-0000-4000-8000-0000000000bd') $$),
+  ('support_reads', $$ insert into public.support_reads (gym_id, grant_id, admin_id, what)
+                       values (tests.gym('pgtap-b'), 'e0000000-0000-4000-8000-0000000000bd', gen_random_uuid(), 'members') $$),
   -- Their own gym (gym_id left to fill itself in), pointing at gym B's rows.
   ('role_permissions', $$ insert into public.role_permissions (role_id, permission_key) values (tests.role('trainer', 'pgtap-b'), 'payments.view') $$),
   ('staff_users', $$ insert into public.staff_users (id, username, full_name, role_id)

@@ -39,6 +39,7 @@ import { Route as SettingsIndexRouteImport } from './routes/settings/index'
 import { Route as SettingsAppearanceRouteImport } from './routes/settings/appearance'
 import { Route as SettingsCardReaderRouteImport } from './routes/settings/card-reader'
 import { Route as SettingsDisplayRouteImport } from './routes/settings/display'
+import { Route as SettingsSupportRouteImport } from './routes/settings/support'
 import { Route as StaffIndexRouteImport } from './routes/staff/index'
 import { Route as StaffStaffIdRouteImport } from './routes/staff/$staffId'
 import { Route as StaffNewRouteImport } from './routes/staff/new'
@@ -196,6 +197,11 @@ const SettingsDisplayRoute = SettingsDisplayRouteImport.update({
   path: '/display',
   getParentRoute: () => SettingsRouteRoute,
 } as any)
+const SettingsSupportRoute = SettingsSupportRouteImport.update({
+  id: '/support',
+  path: '/support',
+  getParentRoute: () => SettingsRouteRoute,
+} as any)
 const StaffIndexRoute = StaffIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -250,6 +256,7 @@ export interface FileRoutesByFullPath {
   '/settings/appearance': typeof SettingsAppearanceRoute
   '/settings/card-reader': typeof SettingsCardReaderRoute
   '/settings/display': typeof SettingsDisplayRoute
+  '/settings/support': typeof SettingsSupportRoute
   '/staff/$staffId': typeof StaffStaffIdRoute
   '/staff/new': typeof StaffNewRoute
   '/branches/': typeof BranchesIndexRoute
@@ -281,6 +288,7 @@ export interface FileRoutesByTo {
   '/settings/appearance': typeof SettingsAppearanceRoute
   '/settings/card-reader': typeof SettingsCardReaderRoute
   '/settings/display': typeof SettingsDisplayRoute
+  '/settings/support': typeof SettingsSupportRoute
   '/staff/$staffId': typeof StaffStaffIdRoute
   '/staff/new': typeof StaffNewRoute
   '/branches': typeof BranchesIndexRoute
@@ -320,6 +328,7 @@ export interface FileRoutesById {
   '/settings/appearance': typeof SettingsAppearanceRoute
   '/settings/card-reader': typeof SettingsCardReaderRoute
   '/settings/display': typeof SettingsDisplayRoute
+  '/settings/support': typeof SettingsSupportRoute
   '/staff/$staffId': typeof StaffStaffIdRoute
   '/staff/new': typeof StaffNewRoute
   '/branches/': typeof BranchesIndexRoute
@@ -360,6 +369,7 @@ export interface FileRouteTypes {
     | '/settings/appearance'
     | '/settings/card-reader'
     | '/settings/display'
+    | '/settings/support'
     | '/staff/$staffId'
     | '/staff/new'
     | '/branches/'
@@ -391,6 +401,7 @@ export interface FileRouteTypes {
     | '/settings/appearance'
     | '/settings/card-reader'
     | '/settings/display'
+    | '/settings/support'
     | '/staff/$staffId'
     | '/staff/new'
     | '/branches'
@@ -429,6 +440,7 @@ export interface FileRouteTypes {
     | '/settings/appearance'
     | '/settings/card-reader'
     | '/settings/display'
+    | '/settings/support'
     | '/staff/$staffId'
     | '/staff/new'
     | '/branches/'
@@ -672,6 +684,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsDisplayRouteImport
       parentRoute: typeof SettingsRouteRoute
     }
+    '/settings/support': {
+      id: '/settings/support'
+      path: '/support'
+      fullPath: '/settings/support'
+      preLoaderRoute: typeof SettingsSupportRouteImport
+      parentRoute: typeof SettingsRouteRoute
+    }
     '/staff/': {
       id: '/staff/'
       path: '/'
@@ -805,6 +824,7 @@ interface SettingsRouteRouteChildren {
   SettingsAppearanceRoute: typeof SettingsAppearanceRoute
   SettingsCardReaderRoute: typeof SettingsCardReaderRoute
   SettingsDisplayRoute: typeof SettingsDisplayRoute
+  SettingsSupportRoute: typeof SettingsSupportRoute
   SettingsIndexRoute: typeof SettingsIndexRoute
 }
 
@@ -812,6 +832,7 @@ const SettingsRouteRouteChildren: SettingsRouteRouteChildren = {
   SettingsAppearanceRoute: SettingsAppearanceRoute,
   SettingsCardReaderRoute: SettingsCardReaderRoute,
   SettingsDisplayRoute: SettingsDisplayRoute,
+  SettingsSupportRoute: SettingsSupportRoute,
   SettingsIndexRoute: SettingsIndexRoute,
 }
 

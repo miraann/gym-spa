@@ -12,6 +12,7 @@ import { GymPage } from '@/gyms/gym-page';
 import { GymsPage } from '@/gyms/gyms-page';
 import { LogPage } from '@/log/log-page';
 import { PanelShell } from '@/shell/panel-shell';
+import { SupportMemberPage, SupportMembersPage } from '@/support/support-pages';
 
 // The panel's pages, under /seller/ (its base path on the gym app's domain).
 
@@ -49,6 +50,28 @@ const gymRoute = createRoute({
   component: GymRoute,
 });
 
+function SupportMembersRoute() {
+  const { gymId } = useParams({ from: '/gyms/$gymId/support' });
+  return <SupportMembersPage gymId={gymId} />;
+}
+
+const supportMembersRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/gyms/$gymId/support',
+  component: SupportMembersRoute,
+});
+
+function SupportMemberRoute() {
+  const { gymId, memberId } = useParams({ from: '/gyms/$gymId/support/$memberId' });
+  return <SupportMemberPage gymId={gymId} memberId={memberId} />;
+}
+
+const supportMemberRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/gyms/$gymId/support/$memberId',
+  component: SupportMemberRoute,
+});
+
 const adminsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/admins',
@@ -68,6 +91,8 @@ const routeTree = rootRoute.addChildren([
   gymsRoute,
   newGymRoute,
   gymRoute,
+  supportMembersRoute,
+  supportMemberRoute,
   adminsRoute,
   logRoute,
   accountRoute,

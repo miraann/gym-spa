@@ -9,6 +9,7 @@ import { SidebarInset, SidebarProvider } from '@gym/ui/components/sidebar';
 import { useGymAppearanceSync } from '@/features/appearance/use-gym-appearance';
 import { UpdateNotice } from '@/components/update-notice';
 import { BillingBanner } from '@/features/billing/billing-banner';
+import { SupportBanner } from '@/features/support/support-banner';
 import { useOpenMemberOnScan } from '@/features/cards/use-open-member-on-scan';
 import { useLayout } from '@gym/ui/hooks/use-layout';
 import { usePreferences } from '@/lib/preferences';
@@ -87,6 +88,7 @@ export function AppShell() {
           <div className="mx-auto flex w-full max-w-6xl flex-col gap-4">
             <UpdateNotice />
             <BillingBanner />
+            <SupportBanner />
             {layout === 'phone' ? (
               <PullToRefresh
                 label={t('refreshing')}

@@ -308,7 +308,86 @@
     "invalid_limit": "A limit is at least 1, or empty.",
     "offline_gym": "An offline gym follows its license.",
     "gym_not_found": "This gym was not found.",
+    "support_not_granted": "This gym hasn't let you see its data, or the time is over.",
+    "member_not_found": "This member wasn't found.",
     "network": "The server could not be reached. Check your internet and try again.",
     "unexpected": "Something went wrong. Try again."
+  },
+  "support": {
+    "title": "Support access",
+    "granted": "This gym lets you see its data until {{date}}.",
+    "reason": "The gym's reason: {{reason}}",
+    "notGranted": "This gym hasn't let you see its data. Only the gym's Owner can allow it, in the app's settings.",
+    "offline": "An offline gym never sends its data.",
+    "open": "See members",
+    "recorded": "Everything you look at here is recorded for the gym, and they see it.",
+    "search": "Name, member number or phone",
+    "searchButton": "Search",
+    "all": "All members",
+    "noMembers": "No member found.",
+    "limit": "Only the first 50 members are shown. Search more narrowly.",
+    "back": "Back to the gym",
+    "backToMembers": "Back to members",
+    "number": "Member number",
+    "phone": "Phone",
+    "branch": "Branch",
+    "status": "Status",
+    "membership": "Subscription",
+    "joined": "Registered on",
+    "birthDate": "Date of birth",
+    "subscriptions": "Subscriptions",
+    "invoices": "Invoices",
+    "payments": "Payments",
+    "cards": "Cards",
+    "visits": "Last visits",
+    "none": "None.",
+    "visitsUsed": "{{used}} of {{count}} visits",
+    "invoiceLine": "Total {{total}} · paid {{paid}} · owed {{due}}",
+    "voided": "Voided",
+    "refund": "Refund",
+    "period": "{{from}} to {{to}}",
+    "noEnd": "No end",
+    "reads": "What was looked at",
+    "readsNone": "Nothing has been looked at yet.",
+    "readMembers": "The member list",
+    "readSearch": "Searched for “{{search}}”",
+    "readMember": "A member's details",
+    "memberStatus": {
+      "active": "Active",
+      "suspended": "Suspended",
+      "banned": "Banned",
+      "archived": "Archived"
+    },
+    "memberships": {
+      "current": "Has a subscription",
+      "frozen": "Frozen",
+      "upcoming": "Not started yet",
+      "expired": "Expired",
+      "none": "No subscription"
+    },
+    "subscriptionStatus": {
+      "active": "Active",
+      "cancelled": "Cancelled",
+      "voided": "Voided",
+      "replaced": "Replaced",
+      "transferred": "Transferred"
+    },
+    "cardStatus": {
+      "active": "Active",
+      "ended": "Ended",
+      "blocked": "Blocked"
+    },
+    "methods": {
+      "cash": "Cash",
+      "card": "Bank card",
+      "fib": "FIB",
+      "fastpay": "FastPay",
+      "zaincash": "ZainCash",
+      "bank_transfer": "Bank transfer"
+    },
+    "visitMethods": {
+      "card": "By card",
+      "manual": "By hand"
+    }
   }
 }

@@ -1,0 +1,47 @@
+{
+  "page": {
+    "title": "Click Group access",
+    "description": "Normally Click Group can't see your members' data. If you need their help, let them in for a set time. You can end it whenever you want.",
+    "none": "Click Group can't see your data now.",
+    "for": "For",
+    "reasonLabel": "Reason",
+    "allow": "Allow",
+    "granted": "Click Group can now see your data.",
+    "reason": "Reason: {{reason}}",
+    "end": "End now",
+    "ended": "Click Group can no longer see your data."
+  },
+  "durations": {
+    "1": "One hour",
+    "24": "One day",
+    "72": "Three days",
+    "168": "Seven days"
+  },
+  "notice": {
+    "text": "Click Group can see this gym's data until {{date}}.",
+    "manage": "See or end it"
+  },
+  "reads": {
+    "title": "What Click Group looked at",
+    "description": "Every time Click Group looks at something, it is recorded here.",
+    "none": "Nothing yet.",
+    "list": "The member list",
+    "search": "Searched for “{{search}}”",
+    "member": "Member details:"
+  },
+  "earlier": {
+    "title": "Earlier access",
+    "period": "{{from}} to {{to}}",
+    "endedEarly": "ended early"
+  },
+  "errors": {
+    "permission_denied": "You don't have permission for this.",
+    "support_offline": "This gym works without the internet, so its data never reaches Click Group.",
+    "invalid_request": "Something in the request isn't right. Try again.",
+    "reason_required": "Write a reason.",
+    "support_already_granted": "Click Group can already see your data. Refresh the page.",
+    "grant_not_found": "This access wasn't found. Refresh the page.",
+    "network": "No internet connection. Nothing was changed.",
+    "unexpected": "Something went wrong. Try again."
+  }
+}

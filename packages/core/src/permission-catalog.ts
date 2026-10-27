@@ -17,6 +17,7 @@ export const PERMISSIONS = [
   { key: 'backups.export', module: 'settings' },
   { key: 'audit.view', module: 'settings' },
   { key: 'billing.view', module: 'settings' },
+  { key: 'support.grant', module: 'settings' },
   { key: 'members.view', module: 'members' },
   { key: 'members.create', module: 'members' },
   { key: 'members.edit', module: 'members' },
