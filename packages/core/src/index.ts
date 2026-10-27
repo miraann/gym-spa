@@ -89,7 +89,7 @@ export {
   type CardReplaceReason,
   type CardStatus,
 } from './cards.ts';
-export { parseWholeNumber, toLatinDigits } from './digits.ts';
+export { parseDecimal, parseWholeNumber, toLatinDigits } from './digits.ts';
 export {
   IMPORT_FIELDS,
   IMPORT_MAX_BYTES,
@@ -254,6 +254,7 @@ export {
 } from './plans.ts';
 export {
   DISCOUNT_PERMISSIONS,
+  PAYMENT_METHODS,
   installmentProblem,
   isDiscountAllowed,
   isValidUsdAmount,
@@ -263,7 +264,19 @@ export {
   usdToIqd,
   type InstallmentDraft,
   type InstallmentProblem,
+  type PaymentMethod,
 } from './pricing.ts';
+export {
+  SUBSCRIPTION_STATUSES,
+  addMonths,
+  daysBetween,
+  nextDay,
+  renewalStart,
+  subscriptionState,
+  type SubscriptionDates,
+  type SubscriptionState,
+  type SubscriptionStatus,
+} from './subscriptions.ts';
 export {
   SEARCH_IGNORED,
   SEARCH_LOOK_ALIKES,

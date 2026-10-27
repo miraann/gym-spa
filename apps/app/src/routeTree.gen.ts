@@ -40,6 +40,7 @@ import { Route as StaffStaffIdRouteImport } from './routes/staff/$staffId'
 import { Route as StaffNewRouteImport } from './routes/staff/new'
 import { Route as MembersMemberIdIndexRouteImport } from './routes/members/$memberId/index'
 import { Route as MembersMemberIdEditRouteImport } from './routes/members/$memberId/edit'
+import { Route as MembersMemberIdSellRouteImport } from './routes/members/$memberId/sell'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -196,6 +197,11 @@ const MembersMemberIdEditRoute = MembersMemberIdEditRouteImport.update({
   path: '/$memberId/edit',
   getParentRoute: () => MembersRouteRoute,
 } as any)
+const MembersMemberIdSellRoute = MembersMemberIdSellRouteImport.update({
+  id: '/$memberId/sell',
+  path: '/$memberId/sell',
+  getParentRoute: () => MembersRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -228,6 +234,7 @@ export interface FileRoutesByFullPath {
   '/settings/': typeof SettingsIndexRoute
   '/staff/': typeof StaffIndexRoute
   '/members/$memberId/edit': typeof MembersMemberIdEditRoute
+  '/members/$memberId/sell': typeof MembersMemberIdSellRoute
   '/members/$memberId/': typeof MembersMemberIdIndexRoute
 }
 export interface FileRoutesByTo {
@@ -254,6 +261,7 @@ export interface FileRoutesByTo {
   '/settings': typeof SettingsIndexRoute
   '/staff': typeof StaffIndexRoute
   '/members/$memberId/edit': typeof MembersMemberIdEditRoute
+  '/members/$memberId/sell': typeof MembersMemberIdSellRoute
   '/members/$memberId': typeof MembersMemberIdIndexRoute
 }
 export interface FileRoutesById {
@@ -288,6 +296,7 @@ export interface FileRoutesById {
   '/settings/': typeof SettingsIndexRoute
   '/staff/': typeof StaffIndexRoute
   '/members/$memberId/edit': typeof MembersMemberIdEditRoute
+  '/members/$memberId/sell': typeof MembersMemberIdSellRoute
   '/members/$memberId/': typeof MembersMemberIdIndexRoute
 }
 export interface FileRouteTypes {
@@ -323,6 +332,7 @@ export interface FileRouteTypes {
     | '/settings/'
     | '/staff/'
     | '/members/$memberId/edit'
+    | '/members/$memberId/sell'
     | '/members/$memberId/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -349,6 +359,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/staff'
     | '/members/$memberId/edit'
+    | '/members/$memberId/sell'
     | '/members/$memberId'
   id:
     | '__root__'
@@ -382,6 +393,7 @@ export interface FileRouteTypes {
     | '/settings/'
     | '/staff/'
     | '/members/$memberId/edit'
+    | '/members/$memberId/sell'
     | '/members/$memberId/'
   fileRoutesById: FileRoutesById
 }
@@ -615,6 +627,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MembersMemberIdEditRouteImport
       parentRoute: typeof MembersRouteRoute
     }
+    '/members/$memberId/sell': {
+      id: '/members/$memberId/sell'
+      path: '/$memberId/sell'
+      fullPath: '/members/$memberId/sell'
+      preLoaderRoute: typeof MembersMemberIdSellRouteImport
+      parentRoute: typeof MembersRouteRoute
+    }
   }
 }
 
@@ -653,6 +672,7 @@ interface MembersRouteRouteChildren {
   MembersNewRoute: typeof MembersNewRoute
   MembersIndexRoute: typeof MembersIndexRoute
   MembersMemberIdEditRoute: typeof MembersMemberIdEditRoute
+  MembersMemberIdSellRoute: typeof MembersMemberIdSellRoute
   MembersMemberIdIndexRoute: typeof MembersMemberIdIndexRoute
 }
 
@@ -661,6 +681,7 @@ const MembersRouteRouteChildren: MembersRouteRouteChildren = {
   MembersNewRoute: MembersNewRoute,
   MembersIndexRoute: MembersIndexRoute,
   MembersMemberIdEditRoute: MembersMemberIdEditRoute,
+  MembersMemberIdSellRoute: MembersMemberIdSellRoute,
   MembersMemberIdIndexRoute: MembersMemberIdIndexRoute,
 }
 

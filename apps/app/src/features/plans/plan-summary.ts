@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { useFormat } from '@/lib/format';
-import type { Plan, PlanDraft } from './plan-data';
+import type { PlanDraft } from './plan-data';
 
 /**
  * A plan in a few words, for lists and the sell flow: how long or how many visits ("3 months",
@@ -30,7 +30,7 @@ export function usePlanSummary() {
 
   return {
     /** How long, or how many visits, or both. */
-    length: (plan: PlanDraft | Plan): string => {
+    length: (plan: Pick<PlanDraft, 'durationUnit' | 'durationCount' | 'visitCount'>): string => {
       const time = duration(plan);
       const times = visits(plan.visitCount);
       if (time !== null && times !== null) {
@@ -38,10 +38,10 @@ export function usePlanSummary() {
       }
       return time ?? times ?? t('summary.unlimited');
     },
-    price: (plan: PlanDraft | Plan): string =>
+    price: (plan: Pick<PlanDraft, 'price'>): string =>
       plan.price === 0 ? t('summary.free') : format.money(plan.price),
     /** Who it is for and in how many branches, when it is limited. */
-    limits: (plan: PlanDraft | Plan): string[] => [
+    limits: (plan: Pick<PlanDraft, 'gender' | 'branchIds'>): string[] => [
       ...(plan.gender === 'male' ? [t('summary.forMen')] : []),
       ...(plan.gender === 'female' ? [t('summary.forWomen')] : []),
       ...(plan.branchIds === null

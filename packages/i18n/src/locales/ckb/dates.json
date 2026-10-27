@@ -24,5 +24,10 @@
     "full": "{{weekday}}، {{date}}",
     "time": "{{hour}}:{{minute}} {{period}}",
     "dateTime": "{{date}}، {{time}}"
+  },
+  "parts": {
+    "day": "ڕۆژ",
+    "month": "مانگ",
+    "year": "ساڵ"
   }
 }

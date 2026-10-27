@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseWholeNumber, toLatinDigits } from './digits.ts';
+import { parseDecimal, parseWholeNumber, toLatinDigits } from './digits.ts';
 
 describe('toLatinDigits', () => {
   it('reads Arabic-Indic and Extended Arabic-Indic digits', () => {
@@ -26,4 +26,20 @@ describe('parseWholeNumber', () => {
       expect(parseWholeNumber(input)).toBeNull();
     },
   );
+});
+
+describe('parseDecimal', () => {
+  it.each([
+    ['1310', 1310],
+    ['1,310.5', 1310.5],
+    ['١٣١٠٫٥', 1310.5],
+    ['12.35', 12.35],
+    ['0.01', 0.01],
+  ])('reads "%s" as %d', (input, value) => {
+    expect(parseDecimal(input)).toBe(value);
+  });
+
+  it.each(['', '.5', '1.', '1.234', '-1', '1e3', 'abc'])('refuses "%s"', (input) => {
+    expect(parseDecimal(input)).toBeNull();
+  });
 });

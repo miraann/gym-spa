@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   DISCOUNT_PERMISSIONS,
+  PAYMENT_METHODS,
   installmentProblem,
   isDiscountAllowed,
   isValidUsdAmount,
@@ -9,7 +10,7 @@ import {
   usdPayment,
   usdToIqd,
 } from './pricing.ts';
-import { databaseTestSql, latestFunctionBody } from './sql-functions.test-helper.ts';
+import { databaseTestSql, latestFunctionBody, migrationsSql } from './sql-functions.test-helper.ts';
 
 /** The rows of `insert into <table> (...) values` in supabase/tests/330-selling.test.sql. */
 function sharedCases(table: string): string[][] {
@@ -77,6 +78,16 @@ describe('maxDiscountPercent', () => {
     for (const [key, percent] of DISCOUNT_PERMISSIONS) {
       expect(body).toContain(`when app.has_permission('${key}') then ${String(percent)}`);
     }
+  });
+});
+
+describe('PAYMENT_METHODS', () => {
+  it("are the database's", () => {
+    const sql =
+      migrationsSql().find((each) => each.includes('create table public.payments (')) ?? '';
+    expect(sql).toContain(
+      `method in (${PAYMENT_METHODS.map((method) => `'${method}'`).join(', ')})`,
+    );
   });
 });
 

@@ -2,6 +2,17 @@
 // (supabase/migrations/…_selling.sql; tests run one list of cases through both), so the sell
 // screen shows what the server will save before anything is sent. The database decides.
 
+/** How a payment is made (payments.method). */
+export const PAYMENT_METHODS = [
+  'cash',
+  'card',
+  'fib',
+  'fastpay',
+  'zaincash',
+  'bank_transfer',
+] as const;
+export type PaymentMethod = (typeof PAYMENT_METHODS)[number];
+
 /** The discount permissions, highest first, with the largest share of the price each allows. */
 export const DISCOUNT_PERMISSIONS = [
   ['discount.apply.any', 100],

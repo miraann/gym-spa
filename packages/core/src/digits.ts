@@ -23,3 +23,13 @@ export function parseWholeNumber(input: string): number | null {
   if (!/^[0-9]{1,15}$/.test(digits)) return null;
   return Number(digits);
 }
+
+/**
+ * A number with up to `maxDecimals` decimals as typed (1,310.5 or ١٣١٠٫٥: the decimal point may be
+ * . or the Arabic ٫), or null when it isn't one.
+ */
+export function parseDecimal(input: string, maxDecimals = 2): number | null {
+  const text = toLatinDigits(input).replace(THOUSANDS_SEPARATORS, '').replace('٫', '.');
+  if (!new RegExp(`^[0-9]{1,12}([.][0-9]{1,${String(maxDecimals)}})?$`).test(text)) return null;
+  return Number(text);
+}
