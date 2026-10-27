@@ -16,7 +16,8 @@
     "label": "Settings sections",
     "display": "Display",
     "appearance": "Appearance",
-    "cardReader": "Card reader"
+    "cardReader": "Card reader",
+    "support": "Click Group"
   },
   "appearance": {
     "title": "Appearance",

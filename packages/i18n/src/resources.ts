@@ -15,6 +15,7 @@ import arPlans from './locales/ar/plans.json';
 import arSettings from './locales/ar/settings.json';
 import arStaff from './locales/ar/staff.json';
 import arSubscriptions from './locales/ar/subscriptions.json';
+import arSupport from './locales/ar/support.json';
 import ckbAuth from './locales/ckb/auth.json';
 import ckbBranches from './locales/ckb/branches.json';
 import ckbCards from './locales/ckb/cards.json';
@@ -32,6 +33,7 @@ import ckbPlans from './locales/ckb/plans.json';
 import ckbSettings from './locales/ckb/settings.json';
 import ckbStaff from './locales/ckb/staff.json';
 import ckbSubscriptions from './locales/ckb/subscriptions.json';
+import ckbSupport from './locales/ckb/support.json';
 import enAuth from './locales/en/auth.json';
 import enBranches from './locales/en/branches.json';
 import enCards from './locales/en/cards.json';
@@ -49,6 +51,7 @@ import enPlans from './locales/en/plans.json';
 import enSettings from './locales/en/settings.json';
 import enStaff from './locales/en/staff.json';
 import enSubscriptions from './locales/en/subscriptions.json';
+import enSupport from './locales/en/support.json';
 import type { Language } from './languages';
 // Types only (erased from every bundle): the seller panel's texts load from ./seller.ts, which the
 // gym app never imports, so its bundle never contains them.
@@ -73,6 +76,7 @@ const ckb = {
   plans: ckbPlans,
   subscriptions: ckbSubscriptions,
   payments: ckbPayments,
+  support: ckbSupport,
 };
 
 /** The gym app's texts (every namespace it loads). */
@@ -102,6 +106,7 @@ const en: GymResources = {
   plans: enPlans,
   subscriptions: enSubscriptions,
   payments: enPayments,
+  support: enSupport,
 };
 
 const ar: GymResources = {
@@ -122,6 +127,7 @@ const ar: GymResources = {
   plans: arPlans,
   subscriptions: arSubscriptions,
   payments: arPayments,
+  support: arSupport,
 };
 
 export const resources: Record<Language, GymResources> = { ckb, en, ar };
@@ -144,6 +150,7 @@ export const NAMESPACES = [
   'plans',
   'subscriptions',
   'payments',
+  'support',
 ] as const satisfies readonly Namespace[];
 
 export const DEFAULT_NAMESPACE = 'common' satisfies Namespace;
