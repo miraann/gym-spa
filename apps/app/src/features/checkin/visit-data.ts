@@ -30,6 +30,79 @@ export interface Visit {
     readonly photoUpdatedAt: string | null;
   };
   readonly subscription: LocalizedNames | null;
+  /** Null: a branch the staff member has no access to (a member's visit elsewhere). */
+  readonly branch: (LocalizedNames & { readonly code: string }) | null;
+}
+
+const VISIT_COLUMNS =
+  'id, checked_in_at, checked_out_at, method, override_reason, override_note, voided_at, void_reason, inside, members (id, full_name, member_number, photo_updated_at), subscriptions (name_ckb, name_en, name_ar), branches (code, name_ckb, name_en, name_ar)';
+
+interface VisitRow {
+  readonly id: string;
+  readonly checked_in_at: string;
+  readonly checked_out_at: string | null;
+  readonly method: string;
+  readonly override_reason: string | null;
+  readonly override_note: string | null;
+  readonly voided_at: string | null;
+  readonly void_reason: string | null;
+  readonly inside: boolean | null;
+  readonly members: {
+    readonly id: string;
+    readonly full_name: string;
+    readonly member_number: number;
+    readonly photo_updated_at: string | null;
+  } | null;
+  readonly subscriptions: {
+    readonly name_ckb: string;
+    readonly name_en: string | null;
+    readonly name_ar: string | null;
+  } | null;
+  readonly branches: {
+    readonly code: string;
+    readonly name_ckb: string;
+    readonly name_en: string | null;
+    readonly name_ar: string | null;
+  } | null;
+}
+
+/** A visit as the screens show it; none without the member (staff who can't see members). */
+function toVisits(row: VisitRow): Visit[] {
+  if (row.members === null) return [];
+  return [
+    {
+      id: row.id,
+      checkedInAt: row.checked_in_at,
+      checkedOutAt: row.checked_out_at,
+      method: row.method === 'card' ? 'card' : 'manual',
+      overrideReason: row.override_reason as OverridableReason | null,
+      overrideNote: row.override_note,
+      voidedAt: row.voided_at,
+      voidReason: row.void_reason,
+      inside: row.inside === true,
+      member: {
+        id: row.members.id,
+        fullName: row.members.full_name,
+        memberNumber: row.members.member_number,
+        photoUpdatedAt: row.members.photo_updated_at,
+      },
+      subscription: row.subscriptions
+        ? {
+            nameCkb: row.subscriptions.name_ckb,
+            nameEn: row.subscriptions.name_en,
+            nameAr: row.subscriptions.name_ar,
+          }
+        : null,
+      branch: row.branches
+        ? {
+            code: row.branches.code,
+            nameCkb: row.branches.name_ckb,
+            nameEn: row.branches.name_en,
+            nameAr: row.branches.name_ar,
+          }
+        : null,
+    },
+  ];
 }
 
 export function useVisits(branchId: string, date: string, insideOnly: boolean) {
@@ -41,9 +114,7 @@ export function useVisits(branchId: string, date: string, insideOnly: boolean) {
     queryFn: async (): Promise<Visit[]> => {
       let query = requireClient(client)
         .from('attendance')
-        .select(
-          'id, checked_in_at, checked_out_at, method, override_reason, override_note, voided_at, void_reason, inside, members (id, full_name, member_number, photo_updated_at), subscriptions (name_ckb, name_en, name_ar)',
-        )
+        .select(VISIT_COLUMNS)
         .eq('branch_id', branchId)
         .eq('visit_date', date);
       if (insideOnly) query = query.is('inside', true);
@@ -51,30 +122,28 @@ export function useVisits(branchId: string, date: string, insideOnly: boolean) {
         .order('checked_in_at', { ascending: false })
         .limit(VISITS_LIMIT);
       if (error) throw error;
-      return data.map((row) => ({
-        id: row.id,
-        checkedInAt: row.checked_in_at,
-        checkedOutAt: row.checked_out_at,
-        method: row.method === 'card' ? 'card' : 'manual',
-        overrideReason: row.override_reason as OverridableReason | null,
-        overrideNote: row.override_note,
-        voidedAt: row.voided_at,
-        voidReason: row.void_reason,
-        inside: row.inside === true,
-        member: {
-          id: row.members.id,
-          fullName: row.members.full_name,
-          memberNumber: row.members.member_number,
-          photoUpdatedAt: row.members.photo_updated_at,
-        },
-        subscription: row.subscriptions
-          ? {
-              nameCkb: row.subscriptions.name_ckb,
-              nameEn: row.subscriptions.name_en,
-              nameAr: row.subscriptions.name_ar,
-            }
-          : null,
-      }));
+      return data.flatMap(toVisits);
+    },
+  });
+}
+
+/** A member's last visits, in every branch. */
+export const MEMBER_VISITS_SHOWN = 10;
+
+export function useMemberVisits(memberId: string, enabled: boolean) {
+  const { client, actor } = useActingClient();
+  return useQuery({
+    queryKey: [ATTENDANCE_QUERY, actor, 'member', memberId],
+    enabled: enabled && client !== undefined,
+    queryFn: async (): Promise<Visit[]> => {
+      const { data, error } = await requireClient(client)
+        .from('attendance')
+        .select(VISIT_COLUMNS)
+        .eq('member_id', memberId)
+        .order('checked_in_at', { ascending: false })
+        .limit(MEMBER_VISITS_SHOWN);
+      if (error) throw error;
+      return data.flatMap(toVisits);
     },
   });
 }

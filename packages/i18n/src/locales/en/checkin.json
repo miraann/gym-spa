@@ -109,5 +109,10 @@
     "voidDone": "The visit was voided.",
     "cancel": "Cancel",
     "actions": "Actions for the visit of {{name}}"
+  },
+  "memberVisits": {
+    "title": "Visits",
+    "none": "No visits yet.",
+    "last": "Only the last {{count}} visits are shown."
   }
 }

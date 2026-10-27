@@ -210,3 +210,38 @@ test('a manager sees who is inside, checks a member out and voids a mistaken vis
   await page.getByRole('button', { name: 'لە ژوورەوە', exact: true }).click();
   await expect(page.getByText('هیچ هاتنێک نییە.')).toBeVisible();
 });
+
+test("a member's page lists their last visits", async ({ page, data, staff }) => {
+  const branchId = await data.branch();
+  const gym = await data.gym();
+  const memberId = await addMember(data, branchId, 'سۆزان کامەران', '+9647501280007');
+  await write(
+    admin().from('attendance').insert({
+      id: randomUUID(),
+      gym_id: gym.id,
+      branch_id: branchId,
+      member_id: memberId,
+      method: 'manual',
+      override_reason: 'NO_SUBSCRIPTION',
+      override_note: 'ڕۆژی تاقیکردنەوە',
+    }),
+  );
+  await page.setViewportSize(DESKTOP);
+  await signIn(page, staff, `/members/${memberId}`);
+
+  const visits = page.getByTestId('member-visits');
+  await expect(visits.locator('[data-member-visit]')).toHaveCount(1);
+  await expect(visits).toContainText('کارمەند ڕێگەی پێدا: ڕۆژی تاقیکردنەوە');
+  await expect(visits).toContainText('بە دەست');
+});
+
+test("staff without attendance.view see no visits on a member's page", async ({ page, data }) => {
+  const branchId = await data.branch();
+  const roleId = await data.role('بێ هاتن', ['members.view']);
+  const viewer = await data.staff({ roleId, branchIds: [branchId] });
+  const memberId = await addMember(data, branchId, 'نەسرین عومەر', '+9647501280008');
+  await page.setViewportSize(DESKTOP);
+  await signIn(page, viewer, `/members/${memberId}`);
+  await expect(page.getByRole('heading', { name: 'نەسرین عومەر' })).toBeVisible();
+  await expect(page.getByTestId('member-visits')).toHaveCount(0);
+});

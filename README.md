@@ -321,6 +321,7 @@ Phase 4, step 4c: `apps/app/src/features/checkin/visits-page.tsx` and `visit-dat
 
 - **`/checkin/visits`** (`attendance.view`): a day's visits in the working branch (today by default, any day of this year or last), newest first, with the photo, time, card or by hand, the subscription used, when they left, and any override note or void. A chip shows only who is inside. At most 500 visits a day are shown (the page says so).
 - **Who is inside** (`branch_occupancy()`, the tile on `/checkin` and on the visits page) is read again every 30 seconds and after every check-in, check-out and void (TanStack Query, no Realtime).
+- **A member's own page** (step 4d, `member-visits.tsx`) lists their last 10 visits in every branch, for staff with `attendance.view`: when, where (a branch the staff member can't see is left unnamed), card or by hand, the subscription, and any override or void.
 - **Checking out** (`checkin.perform`) and **voiding** (`attendance.void`, a reason: the visit counts for nothing and goes back to its subscription) are buttons on each visit.
 
 ### Adding a table
