@@ -111,6 +111,9 @@ test('a receptionist replaces a lost card and takes a card back', async ({ page,
   await dialog.getByRole('radio', { name: 'ونبوو' }).click();
   await dialog.getByRole('button', { name: 'گۆڕینی کارت' }).click();
   await expect(page.getByText('کارتی ژیلا عەلی گۆڕدرا')).toBeVisible();
+  // The new card's fee is offered next (step 3e); not this time.
+  await expect(page.getByTestId('charge-dialog')).toBeVisible();
+  await page.getByRole('dialog').getByRole('button', { name: 'پاشگەزبوونەوە' }).click();
   await expect(cards.getByTestId('member-card')).toContainText('04 B1 B2 B3 B4 B5 B6');
   const lost = cards.locator('[data-card="04A23BC15D6E80"]');
   await expect(lost.locator('[data-card-reason="lost"]')).toHaveText('ونبوو');
@@ -154,6 +157,8 @@ test('a manager reports a card stolen, and blocks and unblocks cards', async ({ 
   await expect(dialog.getByText(/کارتی دزراو بلۆک دەکرێت/)).toBeVisible();
   await scanCard(page, 'CAFEBABE');
   await expect(page.getByText('کارتی سەردار جەلال گۆڕدرا')).toBeVisible();
+  await page.getByTestId('charge-dialog').waitFor();
+  await dialog.getByRole('button', { name: 'پاشگەزبوونەوە' }).click();
   const stolen = cards.locator('[data-card="DEADBEEF"]');
   await expect(stolen.locator('[data-card-reason="stolen"]')).toHaveText('دزراو');
   await expect(stolen.locator('[data-card-state="blocked"]')).toHaveText('بلۆککراو');

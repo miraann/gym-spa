@@ -31,6 +31,7 @@ import {
 import { useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
+import { ChargeDialog } from '@/features/payments/money-dialogs';
 import { usePermission } from '@/features/auth/use-permissions';
 import type { Member } from '@/features/members/member-data';
 import { useAdminWriteState } from '@/features/staff/write-state';
@@ -58,7 +59,9 @@ import { useCardNumber, type SignalCard } from './use-card-number';
 
 type CardDialog =
   | { readonly kind: 'give' }
-  | { readonly kind: 'replace' | 'return' | 'block' | 'unblock'; readonly card: MemberCard };
+  | { readonly kind: 'replace' | 'return' | 'block' | 'unblock'; readonly card: MemberCard }
+  // After a lost or damaged card is replaced: its fee (step 3e), for staff who take money.
+  | { readonly kind: 'fee' };
 
 const REASON_BADGES: Readonly<
   Record<CardEndReason, { variant: 'secondary' | 'warning' | 'destructive'; icon: LucideIcon }>
@@ -121,6 +124,7 @@ export function MemberCardsCard({ member }: { readonly member: Member }) {
   const { online, readOnly } = useAdminWriteState();
   const writable = online && !readOnly;
   const [dialog, setDialog] = useState<CardDialog | null>(null);
+  const canCharge = usePermission('payments.create');
   const close = () => {
     setDialog(null);
   };
@@ -272,13 +276,31 @@ export function MemberCardsCard({ member }: { readonly member: Member }) {
 
       {dialog?.kind === 'give' && <GiveCardDialog member={member} onClose={close} />}
       {dialog?.kind === 'replace' && (
-        <ReplaceCardDialog member={member} card={dialog.card} canBlock={canBlock} onClose={close} />
+        <ReplaceCardDialog
+          member={member}
+          card={dialog.card}
+          canBlock={canBlock}
+          onClose={close}
+          onReplaced={() => {
+            setDialog(canCharge ? { kind: 'fee' } : null);
+          }}
+        />
       )}
       {dialog?.kind === 'return' && (
         <ReturnCardDialog member={member} card={dialog.card} onClose={close} />
       )}
       {dialog?.kind === 'block' && <BlockCardDialog card={dialog.card} onClose={close} />}
       {dialog?.kind === 'unblock' && <UnblockCardDialog card={dialog.card} onClose={close} />}
+      {dialog?.kind === 'fee' && (
+        <ChargeDialog
+          memberId={member.id}
+          initialKind="card_replacement"
+          open
+          onOpenChange={(open) => {
+            if (!open) close();
+          }}
+        />
+      )}
     </Card>
   );
 }
@@ -383,11 +405,14 @@ function ReplaceCardDialog({
   card,
   canBlock,
   onClose,
+  onReplaced,
 }: {
   readonly member: Member;
   readonly card: MemberCard;
   readonly canBlock: boolean;
   readonly onClose: () => void;
+  /** The member got a new card in its place: its fee may be next. */
+  readonly onReplaced: () => void;
 }) {
   const { t } = useTranslation('cards');
   const formId = useId();
@@ -418,7 +443,8 @@ function ReplaceCardDialog({
           toast.success(
             t(newUid === null ? 'done.stopped' : 'done.replaced', { name: member.fullName }),
           );
-          onClose();
+          if (newUid === null) onClose();
+          else onReplaced();
         },
         onError: (thrown) => {
           haptic('error');

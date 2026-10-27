@@ -436,8 +436,10 @@ create policy "staff see the installments of invoices they see" on public.instal
 -- Computed from the rows, never stored (CLAUDE.md → Data rules). As the caller (security_invoker),
 -- so they show only what the caller may see.
 
--- Each invoice: what was paid (payments minus refunds, voided ones not counted) and what is still
--- owed. A voided invoice owes nothing.
+-- Each invoice: what was paid in (voided payments not counted), what was given back (refunds, step
+-- 3e), and what is still owed. A refund gives money back and lowers the charge by as much, so it
+-- never makes the member owe more: due is the total less what was paid in. A voided invoice owes
+-- nothing.
 create view public.invoice_balances with (security_invoker = true) as
 select v.id as invoice_id,
        v.gym_id,
@@ -448,10 +450,12 @@ select v.id as invoice_id,
        v.created_at,
        v.voided_at,
        coalesce(p.paid, 0)::numeric(14,2) as paid,
-       case when v.voided_at is null then v.total - coalesce(p.paid, 0) else 0 end::numeric(14,2) as due
+       case when v.voided_at is null then v.total - coalesce(p.paid, 0) else 0 end::numeric(14,2) as due,
+       coalesce(p.refunded, 0)::numeric(14,2) as refunded
   from public.invoices v
   left join lateral (
-    select sum(case p.kind when 'payment' then p.amount else -p.amount end) as paid
+    select sum(p.amount) filter (where p.kind = 'payment') as paid,
+           sum(p.amount) filter (where p.kind = 'refund') as refunded
       from public.payments p
      where p.invoice_id = v.id and p.gym_id = v.gym_id and p.voided_at is null
   ) p on true;
@@ -477,6 +481,106 @@ select o.id as installment_id,
 
 revoke all on table public.invoice_balances, public.installment_balances from anon, authenticated;
 grant select on table public.invoice_balances, public.installment_balances to authenticated, service_role;
+
+-- Payments -----------------------------------------------------------------------------------------------
+
+-- A payment as the screens send it, checked against what is owed (in dinars): {"id", "method",
+-- "amount"} in dinars, or {"id", "method", "currency": "USD", "foreign_amount", "exchange_rate"};
+-- with an optional "reference". Dollars count for at most what is owed; the rest of their value is
+-- change, given back in dinars. invalid_payment; payment_too_large (dinars beyond what is owed).
+create function app.read_payment(
+  p_payment jsonb,
+  p_owed numeric,
+  out id uuid,
+  out method text,
+  out currency text,
+  out amount numeric,
+  out foreign_amount numeric,
+  out exchange_rate numeric,
+  out change_given numeric,
+  out reference text
+)
+language plpgsql
+stable
+set search_path = ''
+as $$
+begin
+  currency := coalesce(p_payment ->> 'currency', 'IQD');
+  method := p_payment ->> 'method';
+  reference := nullif(btrim(coalesce(p_payment ->> 'reference', '')), '');
+  begin
+    id := (p_payment ->> 'id')::uuid;
+    if currency = 'USD' then
+      foreign_amount := (p_payment ->> 'foreign_amount')::numeric;
+      exchange_rate := (p_payment ->> 'exchange_rate')::numeric;
+      if foreign_amount <= 0 or exchange_rate <= 0
+         or foreign_amount <> round(foreign_amount, 2) or exchange_rate <> round(exchange_rate, 2) then
+        raise exception using errcode = '22023', message = 'invalid_payment',
+          detail = 'Dollars and the rate are above 0, with cents at most';
+      end if;
+      amount := least(app.usd_to_iqd(foreign_amount, exchange_rate), p_owed);
+      change_given := app.usd_to_iqd(foreign_amount, exchange_rate) - amount;
+    elsif currency = 'IQD' then
+      amount := (p_payment ->> 'amount')::numeric;
+    else
+      raise exception using errcode = '22023', message = 'invalid_payment',
+        detail = 'A payment is in IQD or USD';
+    end if;
+  exception
+    when invalid_text_representation or numeric_value_out_of_range then
+      raise exception using errcode = '22023', message = 'invalid_payment',
+        detail = 'A payment''s id and amounts are an id and numbers';
+  end;
+  if amount is null or amount <= 0 or amount <> trunc(amount) or id is null
+     or coalesce(method, '') not in ('cash', 'card', 'fib', 'fastpay', 'zaincash', 'bank_transfer')
+     or not app.is_clean_text(reference, 100) then
+    raise exception using errcode = '22023', message = 'invalid_payment',
+      detail = 'A payment has an id, a method and an amount of whole dinars above 0';
+  end if;
+  if amount > p_owed then
+    raise exception using errcode = '23514', message = 'payment_too_large',
+      detail = format('%s is owed', p_owed);
+  end if;
+end
+$$;
+
+revoke execute on function app.read_payment(jsonb, numeric) from public, anon, authenticated;
+
+-- Saves a payment read by app.read_payment(), with the next receipt number of the branch where the
+-- money was taken. For the server's functions only.
+create function app.record_payment(
+  p_payment jsonb,
+  p_owed numeric,
+  p_gym_id uuid,
+  p_branch_id uuid,
+  p_member_id uuid,
+  p_invoice_id uuid
+)
+returns public.payments
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  given record;
+  saved public.payments;
+begin
+  select * into given from app.read_payment(p_payment, p_owed);
+  insert into public.payments (
+    id, gym_id, branch_id, member_id, invoice_id, number, method, amount, currency, foreign_amount,
+    exchange_rate, change_given, reference
+  )
+  values (
+    given.id, p_gym_id, p_branch_id, p_member_id, p_invoice_id,
+    app.next_document_number(p_branch_id, 'receipt'), given.method, given.amount, given.currency,
+    given.foreign_amount, given.exchange_rate, given.change_given, given.reference
+  )
+  returning * into saved;
+  return saved;
+end
+$$;
+
+revoke execute on function app.record_payment(jsonb, numeric, uuid, uuid, uuid, uuid) from public, anon, authenticated;
 
 -- Selling ---------------------------------------------------------------------------------------------------
 
@@ -558,11 +662,6 @@ declare
   existing public.subscriptions;
   total numeric(14,2);
   paid numeric(14,2) := 0;
-  payment_id uuid;
-  change numeric(14,2);
-  currency text;
-  foreign_amount numeric;
-  rate numeric;
   installment record;
   installments_total numeric(14,2) := 0;
   last_due date;
@@ -647,37 +746,7 @@ begin
   total := plan.price - p_discount;
 
   if p_payment is not null then
-    currency := coalesce(p_payment ->> 'currency', 'IQD');
-    begin
-      payment_id := (p_payment ->> 'id')::uuid;
-      if currency = 'USD' then
-        foreign_amount := (p_payment ->> 'foreign_amount')::numeric;
-        rate := (p_payment ->> 'exchange_rate')::numeric;
-        if foreign_amount <= 0 or rate <= 0 or foreign_amount <> round(foreign_amount, 2) or rate <> round(rate, 2) then
-          raise exception using errcode = '22023', message = 'invalid_payment';
-        end if;
-        -- Dollars worth more than the invoice: the rest is change, in dinars.
-        paid := least(app.usd_to_iqd(foreign_amount, rate), total);
-        change := app.usd_to_iqd(foreign_amount, rate) - paid;
-      elsif currency = 'IQD' then
-        paid := (p_payment ->> 'amount')::numeric;
-      else
-        raise exception using errcode = '22023', message = 'invalid_payment';
-      end if;
-    exception
-      when invalid_text_representation or numeric_value_out_of_range then
-        raise exception using errcode = '22023', message = 'invalid_payment',
-          detail = 'A payment''s amounts are numbers';
-    end;
-    if paid is null or paid <= 0 or paid <> trunc(paid) or payment_id is null
-       or coalesce(p_payment ->> 'method', '') not in ('cash', 'card', 'fib', 'fastpay', 'zaincash', 'bank_transfer') then
-      raise exception using errcode = '22023', message = 'invalid_payment',
-        detail = 'A payment has an id, a method and an amount of whole dinars above 0';
-    end if;
-    if paid > total then
-      raise exception using errcode = '23514', message = 'payment_too_large',
-        detail = format('The invoice is %s', total);
-    end if;
+    paid := (select r.amount from app.read_payment(p_payment, total) as r);
   end if;
 
   if p_installments is not null and jsonb_typeof(p_installments) <> 'array' then
@@ -738,17 +807,7 @@ begin
   );
 
   if p_payment is not null then
-    insert into public.payments (
-      id, gym_id, branch_id, member_id, invoice_id, number, method, amount, currency, foreign_amount,
-      exchange_rate, change_given, reference
-    )
-    values (
-      payment_id, gym, p_branch_id, p_member_id, p_invoice_id,
-      app.next_document_number(p_branch_id, 'receipt'), p_payment ->> 'method', paid, currency,
-      case when currency = 'USD' then foreign_amount end, case when currency = 'USD' then rate end,
-      case when currency = 'USD' then change end,
-      nullif(btrim(coalesce(p_payment ->> 'reference', '')), '')
-    );
+    perform app.record_payment(p_payment, total, gym, p_branch_id, p_member_id, p_invoice_id);
   end if;
 
   insert into public.installments (id, gym_id, invoice_id, due_date, amount)

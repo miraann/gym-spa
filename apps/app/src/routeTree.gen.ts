@@ -25,6 +25,7 @@ import { Route as DevicesDeviceIdRouteImport } from './routes/devices/$deviceId'
 import { Route as MembersIndexRouteImport } from './routes/members/index'
 import { Route as MembersImportRouteImport } from './routes/members/import'
 import { Route as MembersNewRouteImport } from './routes/members/new'
+import { Route as PaymentsIndexRouteImport } from './routes/payments/index'
 import { Route as PlansIndexRouteImport } from './routes/plans/index'
 import { Route as PlansPlanIdRouteImport } from './routes/plans/$planId'
 import { Route as PlansNewRouteImport } from './routes/plans/new'
@@ -121,6 +122,11 @@ const MembersNewRoute = MembersNewRouteImport.update({
   id: '/new',
   path: '/new',
   getParentRoute: () => MembersRouteRoute,
+} as any)
+const PaymentsIndexRoute = PaymentsIndexRouteImport.update({
+  id: '/payments/',
+  path: '/payments/',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const PlansIndexRoute = PlansIndexRouteImport.update({
   id: '/',
@@ -229,6 +235,7 @@ export interface FileRoutesByFullPath {
   '/branches/': typeof BranchesIndexRoute
   '/devices/': typeof DevicesIndexRoute
   '/members/': typeof MembersIndexRoute
+  '/payments/': typeof PaymentsIndexRoute
   '/plans/': typeof PlansIndexRoute
   '/roles/': typeof RolesIndexRoute
   '/settings/': typeof SettingsIndexRoute
@@ -256,6 +263,7 @@ export interface FileRoutesByTo {
   '/branches': typeof BranchesIndexRoute
   '/devices': typeof DevicesIndexRoute
   '/members': typeof MembersIndexRoute
+  '/payments': typeof PaymentsIndexRoute
   '/plans': typeof PlansIndexRoute
   '/roles': typeof RolesIndexRoute
   '/settings': typeof SettingsIndexRoute
@@ -291,6 +299,7 @@ export interface FileRoutesById {
   '/branches/': typeof BranchesIndexRoute
   '/devices/': typeof DevicesIndexRoute
   '/members/': typeof MembersIndexRoute
+  '/payments/': typeof PaymentsIndexRoute
   '/plans/': typeof PlansIndexRoute
   '/roles/': typeof RolesIndexRoute
   '/settings/': typeof SettingsIndexRoute
@@ -327,6 +336,7 @@ export interface FileRouteTypes {
     | '/branches/'
     | '/devices/'
     | '/members/'
+    | '/payments/'
     | '/plans/'
     | '/roles/'
     | '/settings/'
@@ -354,6 +364,7 @@ export interface FileRouteTypes {
     | '/branches'
     | '/devices'
     | '/members'
+    | '/payments'
     | '/plans'
     | '/roles'
     | '/settings'
@@ -388,6 +399,7 @@ export interface FileRouteTypes {
     | '/branches/'
     | '/devices/'
     | '/members/'
+    | '/payments/'
     | '/plans/'
     | '/roles/'
     | '/settings/'
@@ -406,6 +418,7 @@ export interface RootRouteChildren {
   RolesRouteRoute: typeof RolesRouteRouteWithChildren
   SettingsRouteRoute: typeof SettingsRouteRouteWithChildren
   StaffRouteRoute: typeof StaffRouteRouteWithChildren
+  PaymentsIndexRoute: typeof PaymentsIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -521,6 +534,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/members/new'
       preLoaderRoute: typeof MembersNewRouteImport
       parentRoute: typeof MembersRouteRoute
+    }
+    '/payments/': {
+      id: '/payments/'
+      path: '/payments'
+      fullPath: '/payments/'
+      preLoaderRoute: typeof PaymentsIndexRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/plans/': {
       id: '/plans/'
@@ -764,6 +784,7 @@ const rootRouteChildren: RootRouteChildren = {
   RolesRouteRoute: RolesRouteRouteWithChildren,
   SettingsRouteRoute: SettingsRouteRouteWithChildren,
   StaffRouteRoute: StaffRouteRouteWithChildren,
+  PaymentsIndexRoute: PaymentsIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

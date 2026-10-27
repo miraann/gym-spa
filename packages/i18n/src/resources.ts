@@ -8,6 +8,7 @@ import arHome from './locales/ar/home.json';
 import arMemberImport from './locales/ar/member-import.json';
 import arMembers from './locales/ar/members.json';
 import arNav from './locales/ar/nav.json';
+import arPayments from './locales/ar/payments.json';
 import arPermissions from './locales/ar/permissions.json';
 import arPlans from './locales/ar/plans.json';
 import arSettings from './locales/ar/settings.json';
@@ -23,6 +24,7 @@ import ckbHome from './locales/ckb/home.json';
 import ckbMemberImport from './locales/ckb/member-import.json';
 import ckbMembers from './locales/ckb/members.json';
 import ckbNav from './locales/ckb/nav.json';
+import ckbPayments from './locales/ckb/payments.json';
 import ckbPermissions from './locales/ckb/permissions.json';
 import ckbPlans from './locales/ckb/plans.json';
 import ckbSettings from './locales/ckb/settings.json';
@@ -38,6 +40,7 @@ import enHome from './locales/en/home.json';
 import enMemberImport from './locales/en/member-import.json';
 import enMembers from './locales/en/members.json';
 import enNav from './locales/en/nav.json';
+import enPayments from './locales/en/payments.json';
 import enPermissions from './locales/en/permissions.json';
 import enPlans from './locales/en/plans.json';
 import enSettings from './locales/en/settings.json';
@@ -65,6 +68,7 @@ const ckb = {
   memberImport: ckbMemberImport,
   plans: ckbPlans,
   subscriptions: ckbSubscriptions,
+  payments: ckbPayments,
 };
 
 /** The gym app's texts (every namespace it loads). */
@@ -92,6 +96,7 @@ const en: GymResources = {
   memberImport: enMemberImport,
   plans: enPlans,
   subscriptions: enSubscriptions,
+  payments: enPayments,
 };
 
 const ar: GymResources = {
@@ -110,6 +115,7 @@ const ar: GymResources = {
   memberImport: arMemberImport,
   plans: arPlans,
   subscriptions: arSubscriptions,
+  payments: arPayments,
 };
 
 export const resources: Record<Language, GymResources> = { ckb, en, ar };
@@ -130,6 +136,7 @@ export const NAMESPACES = [
   'memberImport',
   'plans',
   'subscriptions',
+  'payments',
 ] as const satisfies readonly Namespace[];
 
 export const DEFAULT_NAMESPACE = 'common' satisfies Namespace;

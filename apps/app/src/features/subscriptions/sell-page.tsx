@@ -27,13 +27,13 @@ import { Controller, useForm, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { RequirePermission } from '@/components/no-access';
 import { DateSelectField } from '@/components/date-select-field';
-import { useAuthState } from '@/features/auth/auth-context';
 import { usePermissions } from '@/features/auth/use-permissions';
 import { MemberCardsCard } from '@/features/cards/member-cards';
 import { useMember, type Member } from '@/features/members/member-data';
 import { memberErrorKey } from '@/features/members/member-errors';
 import { MemberError } from '@/features/members/member-error';
 import { MemberNotFound } from '@/features/members/member-page';
+import { useMoneyBranch } from '@/features/payments/money-branch';
 import { usePlans, type Plan } from '@/features/plans/plan-data';
 import { usePlanSummary } from '@/features/plans/plan-summary';
 import { useAdminBranches, type AdminBranch } from '@/features/staff/admin-data';
@@ -129,7 +129,6 @@ function SellForm({
   const today = useBaghdadToday();
   const permissions = usePermissions();
   const { online, readOnly } = useAdminWriteState();
-  const { branchId: deviceBranchId } = useAuthState();
   const sell = useSellSubscription();
   const [ids] = useState(newSaleIds);
   const [result, setResult] = useState<SaleResult | null>(null);
@@ -154,11 +153,8 @@ function SellForm({
     [plans, member.gender, subscriptions, today, permissions],
   );
   const activeBranches = branches.filter((branch) => branch.isActive);
-  const [branchId, setBranchId] = useState(
-    activeBranches.some((branch) => branch.id === deviceBranchId)
-      ? (deviceBranchId ?? '')
-      : (activeBranches[0]?.id ?? ''),
-  );
+  const moneyBranch = useMoneyBranch(branches);
+  const [branchId, setBranchId] = useState(moneyBranch);
 
   const form = useForm<SellFormValues>({
     resolver: zodResolver(sellFormSchema(context)),

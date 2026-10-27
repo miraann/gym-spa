@@ -3,13 +3,13 @@ import {
   PLAN_KINDS,
   SUBSCRIPTION_STATUSES,
   type DurationUnit,
-  type PaymentMethod,
   type PlanKind,
   type SubscriptionStatus,
 } from '@gym/core';
 import type { LocalizedNames } from '@gym/i18n';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
+import { paymentJson, type PaymentInput } from '@/features/payments/payment-input';
 import { requireClient, useActingClient } from '@/features/staff/admin-data';
 
 // A member's subscriptions and what they owe (step 3d), and selling a subscription with
@@ -104,20 +104,7 @@ export interface Sale {
   readonly price: number;
   readonly discount: number;
   readonly discountReason: string | null;
-  readonly payment:
-    | ({
-        readonly id: string;
-        readonly method: PaymentMethod;
-        readonly reference: string | null;
-      } & (
-        | { readonly currency: 'IQD'; readonly amount: number }
-        | {
-            readonly currency: 'USD';
-            readonly foreignAmount: number;
-            readonly exchangeRate: number;
-          }
-      ))
-    | null;
+  readonly payment: PaymentInput | null;
   readonly installments: readonly {
     readonly id: string;
     readonly dueDate: string;
@@ -152,22 +139,7 @@ export function useSellSubscription() {
         p_price: sale.price,
         p_discount: sale.discount,
         ...(sale.discountReason ? { p_discount_reason: sale.discountReason } : {}),
-        ...(payment
-          ? {
-              p_payment: {
-                id: payment.id,
-                method: payment.method,
-                ...(payment.reference ? { reference: payment.reference } : {}),
-                ...(payment.currency === 'USD'
-                  ? {
-                      currency: 'USD',
-                      foreign_amount: payment.foreignAmount,
-                      exchange_rate: payment.exchangeRate,
-                    }
-                  : { amount: payment.amount }),
-              },
-            }
-          : {}),
+        ...(payment ? { p_payment: paymentJson(payment) } : {}),
         ...(sale.installments.length > 0
           ? {
               p_installments: sale.installments.map((each) => ({

@@ -1586,6 +1586,7 @@ export type Database = {
           member_id: string | null;
           number: string | null;
           paid: number | null;
+          refunded: number | null;
           total: number | null;
           voided_at: string | null;
         };
@@ -1597,6 +1598,29 @@ export type Database = {
             referencedRelation: 'branches';
             referencedColumns: ['id', 'gym_id'];
           },
+          {
+            foreignKeyName: 'invoices_member_id_gym_id_fkey';
+            columns: ['member_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'members';
+            referencedColumns: ['id', 'gym_id'];
+          },
+        ];
+      };
+      member_debts: {
+        Row: {
+          due: number | null;
+          full_name: string | null;
+          gym_id: string | null;
+          invoice_count: number | null;
+          member_id: string | null;
+          member_number: number | null;
+          next_due_date: string | null;
+          owed_now: number | null;
+          phone: string | null;
+          status: string | null;
+        };
+        Relationships: [
           {
             foreignKeyName: 'invoices_member_id_gym_id_fkey';
             columns: ['member_id', 'gym_id'];
@@ -1667,6 +1691,18 @@ export type Database = {
           isOneToOne: true;
           isSetofReturn: false;
         };
+      };
+      charge_member: {
+        Args: {
+          p_amount: number;
+          p_branch_id: string;
+          p_description: string;
+          p_invoice_id: string;
+          p_kind: string;
+          p_member_id: string;
+          p_payment?: Json;
+        };
+        Returns: Json;
       };
       check_member_import: {
         Args: { p_rows: Json };
@@ -2030,6 +2066,10 @@ export type Database = {
           suspended: boolean;
         }[];
       };
+      pay_invoice: {
+        Args: { p_branch_id: string; p_invoice_id: string; p_payment: Json };
+        Returns: Json;
+      };
       platform_admin_orphan: { Args: { p_email: string }; Returns: string };
       platform_script_add_admin: {
         Args: { p_full_name: string; p_user_id: string };
@@ -2044,6 +2084,18 @@ export type Database = {
         }[];
       };
       platform_script_record: { Args: { p_action: string; p_user_id: string }; Returns: undefined };
+      refund_invoice: {
+        Args: {
+          p_amount: number;
+          p_branch_id: string;
+          p_invoice_id: string;
+          p_method: string;
+          p_reason: string;
+          p_reference?: string;
+          p_refund_id: string;
+        };
+        Returns: Json;
+      };
       register_device: {
         Args: {
           p_branch_id: string;
@@ -2573,6 +2625,8 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      void_invoice: { Args: { p_invoice_id: string; p_reason: string }; Returns: undefined };
+      void_payment: { Args: { p_payment_id: string; p_reason: string }; Returns: Json };
     };
     Enums: {
       language_code: 'ckb' | 'en' | 'ar';

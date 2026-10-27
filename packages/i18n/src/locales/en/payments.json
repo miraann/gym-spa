@@ -1,0 +1,120 @@
+{
+  "page": {
+    "title": "Payments",
+    "description": "What members owe, and the money taken today, in your branches.",
+    "debts": "Debts",
+    "noDebts": "No member owes anything.",
+    "today": "Today's payments",
+    "noPayments": "No money has been taken today.",
+    "owedNow": "Now: {{amount}}",
+    "owedLater": "Later: {{amount}}",
+    "nextDue": "Next installment: {{date}}",
+    "totalToday": "Today's total: {{amount}}"
+  },
+  "member": {
+    "title": "Money and invoices",
+    "empty": "No invoices.",
+    "newInvoice": "New invoice",
+    "invoice": "Invoice",
+    "receipt": "Receipt",
+    "total": "Total",
+    "paid": "Paid",
+    "refunded": "Given back",
+    "due": "Owed",
+    "payments": "Payments",
+    "installments": "Installments",
+    "installmentPaid": "Paid",
+    "installmentPart": "{{paid}} of {{amount}} paid",
+    "change": "Change given: {{amount}}",
+    "usd": "{{amount}} dollars at {{rate}}",
+    "voidedBecause": "Voided: {{reason}}",
+    "refundBecause": "Refund: {{reason}}"
+  },
+  "states": {
+    "paid": "Paid",
+    "partly": "Partly paid",
+    "unpaid": "Unpaid",
+    "voided": "Voided",
+    "overdue": "Overdue",
+    "refund": "Refund"
+  },
+  "actions": {
+    "pay": "Take payment",
+    "refund": "Give money back",
+    "void": "Void",
+    "cancel": "Cancel"
+  },
+  "pay": {
+    "title": "Payment for invoice {{number}}",
+    "description": "Owed: {{amount}}",
+    "amount": "Amount (IQD)",
+    "nextInstallment": "Next installment: {{amount}}",
+    "all": "All of it: {{amount}}",
+    "confirm": "Take payment",
+    "done": "Payment taken, receipt {{number}}"
+  },
+  "refund": {
+    "title": "Give money back on invoice {{number}}",
+    "description": "Up to {{amount}} can be given back. The member won't owe more.",
+    "amount": "Amount (IQD)",
+    "reason": "Reason",
+    "confirm": "Give back",
+    "done": "Money given back, receipt {{number}}"
+  },
+  "void": {
+    "invoiceTitle": "Void invoice {{number}}?",
+    "invoiceDescription": "The invoice and its payments count for nothing, and its subscription is voided. Only possible today.",
+    "paymentTitle": "Void receipt {{number}}?",
+    "paymentDescription": "This payment counts for nothing. Only possible today; later, give money back instead.",
+    "reason": "Reason",
+    "confirm": "Void",
+    "invoiceDone": "Invoice voided",
+    "paymentDone": "Receipt voided"
+  },
+  "charge": {
+    "title": "New invoice",
+    "description": "For something other than a subscription, like the card replacement fee.",
+    "kind": "What for",
+    "kinds": {
+      "card_replacement": "Card replacement",
+      "other": "Something else"
+    },
+    "cardReplacement": "Card replacement fee",
+    "text": "Text on the invoice",
+    "amount": "Price (IQD)",
+    "payNow": "Paid now",
+    "confirm": "Make invoice",
+    "done": "Invoice made, {{number}}"
+  },
+  "errors": {
+    "amount": "Write a valid amount in whole dinars, not more than {{amount}}.",
+    "reason": "Write a reason.",
+    "text": "Write a text, shorter than two hundred characters.",
+    "price": "Write a valid price in whole dinars."
+  },
+  "serverErrors": {
+    "permission_denied": "You don't have permission to do this.",
+    "invoice_not_found": "This invoice was not found, or you can't see it.",
+    "payment_not_found": "This receipt was not found, or you can't see it.",
+    "invoice_voided": "This invoice is voided.",
+    "nothing_owed": "This invoice is fully paid.",
+    "no_branch_access": "You can only take money in your own branches.",
+    "branch_inactive": "This branch is deactivated.",
+    "invalid_payment": "The payment details are not valid. Check them and try again.",
+    "payment_too_large": "That amount is more than what is owed.",
+    "payment_exists": "This payment was already saved. Reload the page.",
+    "already_voided": "This is already voided.",
+    "void_too_late": "Only today's can be voided. Give money back instead.",
+    "reason_required": "Write a reason.",
+    "invalid_refund": "The refund details are not valid.",
+    "refund_too_large": "That amount is more than was paid.",
+    "member_not_found": "This member was not found, or you can't see them.",
+    "member_archived": "This member is archived, so no invoice can be made for them.",
+    "invalid_charge": "The invoice details are not valid.",
+    "charge_exists": "This invoice was already made. Reload the page.",
+    "gym_read_only": "This gym is view-only, so no money can be taken and nothing can change.",
+    "invalid_request": "These details are not valid. Check them and try again.",
+    "network": "Couldn't reach the server. Check your internet connection and try again; the same payment is never saved twice.",
+    "unexpected": "Something went wrong. Try again. If it keeps happening, contact Click Group."
+  }
+}

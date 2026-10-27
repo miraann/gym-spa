@@ -107,7 +107,9 @@ test("phones get a bottom tab bar with the role's tabs, and pages end above it",
 
   // A receptionist's default tabs (home, members, check-in, cash register): pages not built yet
   // have no tab, and the free slot gets the next page they may open.
-  await expect.poll(() => tabNames(page)).toEqual(['سەرەکی', 'ئەندامان', 'ڕێکخستنەکان', 'زیاتر']);
+  await expect
+    .poll(() => tabNames(page))
+    .toEqual(['سەرەکی', 'ئەندامان', 'پارەدانەکان', 'ڕێکخستنەکان', 'زیاتر']);
   await expect(page.getByText('بەم زووانە')).toHaveCount(0);
 
   // The last card of a long page scrolls clear of the bar.
@@ -125,7 +127,12 @@ test("phones get a bottom tab bar with the role's tabs, and pages end above it",
   const more = page.getByRole('dialog', { name: 'هەموو بەشەکان' });
   // Every page they may open is a tab already: nothing to choose.
   await expect(more.getByRole('button', { name: 'گۆڕینی تابەکانم' })).toHaveCount(0);
-  await expect(more.getByRole('link')).toHaveText(['سەرەکی', 'ئەندامان', 'ڕێکخستنەکان']);
+  await expect(more.getByRole('link')).toHaveText([
+    'سەرەکی',
+    'ئەندامان',
+    'پارەدانەکان',
+    'ڕێکخستنەکان',
+  ]);
   await more.getByRole('link', { name: 'ڕێکخستنەکان' }).click();
   await expect(more).toBeHidden();
   await expect(page).toHaveURL(/\/settings\/display$/);
