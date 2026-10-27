@@ -1802,6 +1802,125 @@ export type Database = {
           },
         ];
       };
+      support_grants: {
+        Row: {
+          created_at: string;
+          created_by: string | null;
+          deleted_at: string | null;
+          ends_at: string;
+          gym_id: string;
+          id: string;
+          reason: string;
+          revoked_at: string | null;
+          revoked_by: string | null;
+          starts_at: string;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          created_at?: string;
+          created_by?: string | null;
+          deleted_at?: string | null;
+          ends_at: string;
+          gym_id?: string;
+          id: string;
+          reason: string;
+          revoked_at?: string | null;
+          revoked_by?: string | null;
+          starts_at?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          created_at?: string;
+          created_by?: string | null;
+          deleted_at?: string | null;
+          ends_at?: string;
+          gym_id?: string;
+          id?: string;
+          reason?: string;
+          revoked_at?: string | null;
+          revoked_by?: string | null;
+          starts_at?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'support_grants_gym_id_fkey';
+            columns: ['gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'gyms';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      support_reads: {
+        Row: {
+          admin_email: string | null;
+          admin_id: string;
+          created_at: string;
+          created_by: string | null;
+          deleted_at: string | null;
+          details: NonNullable<Json>;
+          grant_id: string;
+          gym_id: string;
+          id: string;
+          member_id: string | null;
+          read_at: string;
+          updated_at: string;
+          updated_by: string | null;
+          what: string;
+        };
+        Insert: {
+          admin_email?: string | null;
+          admin_id: string;
+          created_at?: string;
+          created_by?: string | null;
+          deleted_at?: string | null;
+          details?: NonNullable<Json>;
+          grant_id: string;
+          gym_id: string;
+          id?: string;
+          member_id?: string | null;
+          read_at?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+          what: string;
+        };
+        Update: {
+          admin_email?: string | null;
+          admin_id?: string;
+          created_at?: string;
+          created_by?: string | null;
+          deleted_at?: string | null;
+          details?: NonNullable<Json>;
+          grant_id?: string;
+          gym_id?: string;
+          id?: string;
+          member_id?: string | null;
+          read_at?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+          what?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'support_reads_grant_id_gym_id_fkey';
+            columns: ['grant_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'support_grants';
+            referencedColumns: ['id', 'gym_id'];
+          },
+          {
+            foreignKeyName: 'support_reads_member_id_gym_id_fkey';
+            columns: ['member_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'members';
+            referencedColumns: ['id', 'gym_id'];
+          },
+        ];
+      };
     };
     Views: {
       installment_balances: {
@@ -2247,6 +2366,10 @@ export type Database = {
         };
         Returns: Json;
       };
+      grant_support_access: {
+        Args: { p_hours: number; p_id: string; p_reason: string };
+        Returns: Json;
+      };
       gym_limits: {
         Args: Record<PropertyKey, never>;
         Returns: {
@@ -2471,6 +2594,7 @@ export type Database = {
         };
       };
       reset_staff_pin: { Args: { p_staff_id: string }; Returns: undefined };
+      revoke_support_access: { Args: { p_id: string }; Returns: Json };
       role_overview: {
         Args: Record<PropertyKey, never>;
         Returns: {
@@ -2743,6 +2867,30 @@ export type Database = {
       seller_set_paid_until: {
         Args: { p_gym_id: string; p_paid_until: string };
         Returns: undefined;
+      };
+      seller_support_gyms: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          code: string;
+          ends_at: string;
+          grant_id: string;
+          gym_id: string;
+          name_ckb: string;
+          reason: string;
+          starts_at: string;
+        }[];
+      };
+      seller_support_member: { Args: { p_gym_id: string; p_member_id: string }; Returns: Json };
+      seller_support_members: { Args: { p_gym_id: string; p_search?: string }; Returns: Json };
+      seller_support_reads: {
+        Args: { p_gym_id: string };
+        Returns: {
+          admin_email: string;
+          details: Json;
+          member_id: string;
+          read_at: string;
+          what: string;
+        }[];
       };
       seller_suspend_gym: { Args: { p_gym_id: string; p_reason?: string }; Returns: undefined };
       seller_use_recovery_code: { Args: { p_code: string }; Returns: Json };
