@@ -3,6 +3,118 @@ export type Json = string | number | boolean | null | { [key: string]: Json | un
 export type Database = {
   public: {
     Tables: {
+      attendance: {
+        Row: {
+          branch_id: string;
+          card_id: string | null;
+          checked_in_at: string;
+          checked_out_at: string | null;
+          checked_out_by: string | null;
+          created_at: string;
+          created_by: string | null;
+          deleted_at: string | null;
+          device_id: string | null;
+          gym_id: string;
+          id: string;
+          member_id: string;
+          method: string;
+          override_note: string | null;
+          override_reason: string | null;
+          subscription_id: string | null;
+          updated_at: string;
+          updated_by: string | null;
+          visit_date: string;
+          void_reason: string | null;
+          voided_at: string | null;
+          voided_by: string | null;
+          inside: boolean | null;
+        };
+        Insert: {
+          branch_id: string;
+          card_id?: string | null;
+          checked_in_at?: string;
+          checked_out_at?: string | null;
+          checked_out_by?: string | null;
+          created_at?: string;
+          created_by?: string | null;
+          deleted_at?: string | null;
+          device_id?: string | null;
+          gym_id?: string;
+          id: string;
+          member_id: string;
+          method: string;
+          override_note?: string | null;
+          override_reason?: string | null;
+          subscription_id?: string | null;
+          updated_at?: string;
+          updated_by?: string | null;
+          visit_date?: never;
+          void_reason?: string | null;
+          voided_at?: string | null;
+          voided_by?: string | null;
+        };
+        Update: {
+          branch_id?: string;
+          card_id?: string | null;
+          checked_in_at?: string;
+          checked_out_at?: string | null;
+          checked_out_by?: string | null;
+          created_at?: string;
+          created_by?: string | null;
+          deleted_at?: string | null;
+          device_id?: string | null;
+          gym_id?: string;
+          id?: string;
+          member_id?: string;
+          method?: string;
+          override_note?: string | null;
+          override_reason?: string | null;
+          subscription_id?: string | null;
+          updated_at?: string;
+          updated_by?: string | null;
+          visit_date?: never;
+          void_reason?: string | null;
+          voided_at?: string | null;
+          voided_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'attendance_branch_id_gym_id_fkey';
+            columns: ['branch_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'branches';
+            referencedColumns: ['id', 'gym_id'];
+          },
+          {
+            foreignKeyName: 'attendance_card_id_gym_id_fkey';
+            columns: ['card_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'nfc_cards';
+            referencedColumns: ['id', 'gym_id'];
+          },
+          {
+            foreignKeyName: 'attendance_device_id_gym_id_fkey';
+            columns: ['device_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'devices';
+            referencedColumns: ['id', 'gym_id'];
+          },
+          {
+            foreignKeyName: 'attendance_member_id_gym_id_fkey';
+            columns: ['member_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'members';
+            referencedColumns: ['id', 'gym_id'];
+          },
+          {
+            foreignKeyName: 'attendance_subscription_id_gym_id_fkey';
+            columns: ['subscription_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'subscriptions';
+            referencedColumns: ['id', 'gym_id'];
+          },
+        ];
+      };
       audit_logs: {
         Row: {
           action: string;
@@ -1580,6 +1692,7 @@ export type Database = {
           updated_at: string;
           updated_by: string | null;
           visit_count: number | null;
+          used_visits: number | null;
         };
         Insert: {
           allowed_days?: number[] | null;
@@ -1835,6 +1948,7 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      branch_occupancy: { Args: { p_branch_id: string }; Returns: number };
       cancel_subscription: {
         Args: {
           p_branch_id?: string;
@@ -1869,6 +1983,17 @@ export type Database = {
         };
         Returns: Json;
       };
+      check_in: {
+        Args: {
+          p_branch_id: string;
+          p_card_uid?: string;
+          p_device_id?: string;
+          p_id: string;
+          p_member_id?: string;
+          p_override_note?: string;
+        };
+        Returns: Json;
+      };
       check_member_import: {
         Args: { p_rows: Json };
         Returns: {
@@ -1880,6 +2005,7 @@ export type Database = {
           status: string;
         }[];
       };
+      check_out: { Args: { p_attendance_id: string }; Returns: Json };
       clear_my_pin_lockout: { Args: Record<PropertyKey, never>; Returns: undefined };
       create_branch: {
         Args: {
@@ -2154,6 +2280,10 @@ export type Database = {
           isOneToOne: true;
           isSetofReturn: false;
         };
+      };
+      inside: {
+        Args: { p_visit: Database['public']['Tables']['attendance']['Row'] };
+        Returns: boolean;
       };
       member_import_history: {
         Args: Record<PropertyKey, never>;
@@ -2819,8 +2949,13 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      used_visits: {
+        Args: { p_subscription: Database['public']['Tables']['subscriptions']['Row'] };
+        Returns: number;
+      };
       void_invoice: { Args: { p_invoice_id: string; p_reason: string }; Returns: undefined };
       void_payment: { Args: { p_payment_id: string; p_reason: string }; Returns: Json };
+      void_visit: { Args: { p_attendance_id: string; p_reason: string }; Returns: Json };
     };
     Enums: {
       language_code: 'ckb' | 'en' | 'ar';

@@ -289,6 +289,21 @@ export {
   normalizeSearchText,
 } from './search.ts';
 export {
+  CHECKIN_REASONS,
+  CHECKIN_RESULTS,
+  CHECKIN_STEPS,
+  CHECKIN_WARNINGS,
+  OVERRIDABLE_REASONS,
+  canOverride,
+  type CheckinAnswer,
+  type CheckinMember,
+  type CheckinReason,
+  type CheckinResult,
+  type CheckinSubscription,
+  type CheckinWarning,
+  type OverridableReason,
+} from './checkin.ts';
+export {
   SETTINGS,
   isSettingKey,
   parseSettingValue,

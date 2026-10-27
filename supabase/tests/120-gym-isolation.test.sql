@@ -81,6 +81,11 @@ insert into public.invoice_credits (id, gym_id, invoice_id, subscription_id, kin
    'e0000000-0000-4000-8000-0000000000a4', 'cancellation', 100),
   ('e0000000-0000-4000-8000-0000000000ba', tests.gym('pgtap-b'), 'e0000000-0000-4000-8000-0000000000b5',
    'e0000000-0000-4000-8000-0000000000b4', 'cancellation', 100);
+insert into public.attendance (id, gym_id, branch_id, member_id, subscription_id, method, card_id) values
+  ('e0000000-0000-4000-8000-0000000000ac', tests.gym('pgtap-a'), tests.branch('B901'), 'e0000000-0000-4000-8000-0000000000a1',
+   'e0000000-0000-4000-8000-0000000000a4', 'card', 'e0000000-0000-4000-8000-0000000000a1'),
+  ('e0000000-0000-4000-8000-0000000000bc', tests.gym('pgtap-b'), tests.branch('B901', 'pgtap-b'), 'e0000000-0000-4000-8000-0000000000b1',
+   'e0000000-0000-4000-8000-0000000000b4', 'card', 'e0000000-0000-4000-8000-0000000000b1');
 
 select is_empty(
   $$ select t from tests.gym_tables() t
@@ -160,6 +165,13 @@ insert into insert_cases (table_name, statement) values
                                  'e0000000-0000-4000-8000-0000000000b4', 'cancellation', 100) $$),
   ('installments', $$ insert into public.installments (gym_id, id, invoice_id, due_date, amount)
                       values (tests.gym('pgtap-b'), gen_random_uuid(), 'e0000000-0000-4000-8000-0000000000b5', current_date + 60, 100) $$),
+  ('attendance', $$ insert into public.attendance (gym_id, id, branch_id, member_id, subscription_id, method)
+                    values (tests.gym('pgtap-b'), gen_random_uuid(), tests.branch('B901', 'pgtap-b'),
+                            'e0000000-0000-4000-8000-0000000000b1', 'e0000000-0000-4000-8000-0000000000b4', 'manual') $$),
+  ('attendance', $$ select public.check_in(gen_random_uuid(), tests.branch('B901', 'pgtap-b'),
+                      p_member_id => 'e0000000-0000-4000-8000-0000000000b1') $$),
+  ('attendance', $$ select public.check_in(gen_random_uuid(), tests.branch('B901'),
+                      p_member_id => 'e0000000-0000-4000-8000-0000000000b1') $$),
   -- Their own gym (gym_id left to fill itself in), pointing at gym B's rows.
   ('role_permissions', $$ insert into public.role_permissions (role_id, permission_key) values (tests.role('trainer', 'pgtap-b'), 'payments.view') $$),
   ('staff_users', $$ insert into public.staff_users (id, username, full_name, role_id)
