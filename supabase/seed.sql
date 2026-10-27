@@ -126,3 +126,97 @@ select md5('demo-card-' || p.i)::uuid, m.gym_id, m.id,
   join public.members m on m.id = md5('demo-member-' || p.i)::uuid
   left join public.nfc_cards old on old.id = md5('demo-old-card-' || p.i)::uuid
  where p.i % 10 <> 4;
+
+-- Plans (step 3b), ids md5('demo-plan-<name>'): what a gym in Sulaymaniyah might sell. The women's
+-- mornings plan works in Bakhtiari only; the old six-month price is off sale.
+insert into public.plans (
+  id, gym_id, name_ckb, name_en, name_ar, kind, duration_unit, duration_count, visit_count, price,
+  gender, all_branches, allowed_days, allowed_from, allowed_until, daily_visit_limit, max_freeze_days, is_active
+)
+select md5('demo-plan-' || p.key)::uuid, g.id, p.name_ckb, p.name_en, p.name_ar, p.kind, p.unit, p.count,
+       p.visits, p.price, p.gender, p.all_branches, p.days, p.from_time, p.until_time, p.daily, p.freeze_days, p.active
+  from public.gyms g
+ cross join (values
+   ('monthly', 'مانگانە', 'Monthly', 'شهري', 'time', 'month', 1, null::integer, 35000, 'any', true,
+    null::smallint[], null::time, null::time, null::smallint, 7, true),
+   ('three-months', 'سێ مانگ', 'Three months', 'ثلاثة أشهر', 'time', 'month', 3, null, 90000, 'any', true,
+    null, null, null, null, 15, true),
+   ('year', 'ساڵانە', 'Yearly', 'سنوي', 'time', 'month', 12, null, 300000, 'any', true,
+    null, null, null, null, 30, true),
+   ('twelve-visits', 'دوانزە جار', 'Twelve visits', 'اثنتا عشرة زيارة', 'visits', null, null, 12, 30000, 'any', true,
+    null, null, null, 1::smallint, 0, true),
+   ('women-mornings', 'بەیانیانی ئافرەتان', 'Women''s mornings', 'صباحات النساء', 'hybrid', 'month', 1, 12, 25000,
+    'female', false, array[1, 3, 6]::smallint[], '08:00'::time, '12:00'::time, 1::smallint, 5, true),
+   ('day-pass', 'یەک ڕۆژ', 'Day pass', 'يوم واحد', 'time', 'day', 1, null, 5000, 'any', true,
+    null, null, null, 1::smallint, 0, true),
+   ('vip', 'VIP', 'VIP', 'VIP', 'unlimited', null, null, null, 0, 'any', true,
+    null, null, null, null, 0, true),
+   ('six-months-old', 'شەش مانگ (نرخی کۆن)', 'Six months (old price)', 'ستة أشهر (السعر القديم)', 'time', 'month', 6,
+    null, 150000, 'any', true, null, null, null, null, 20, false)
+ ) as p (key, name_ckb, name_en, name_ar, kind, unit, count, visits, price, gender, all_branches, days,
+         from_time, until_time, daily, freeze_days, active)
+ where g.code = 'demo';
+
+insert into public.plan_branches (gym_id, plan_id, branch_id)
+select b.gym_id, md5('demo-plan-women-mornings')::uuid, b.id
+  from public.branches b
+  join public.gyms g on g.id = b.gym_id
+ where g.code = 'demo' and b.code = 'B2';
+
+-- Sales (steps 3c and 3d), ids md5('demo-sale-<n>'), for members 1 to 150 who are active: a
+-- monthly plan started up to 44 days ago (so some have expired), three months for every 9th
+-- member, twelve visits for every 23rd. Every 13th member paid half, with the rest in two monthly
+-- installments; every 17th paid nothing yet. The rest paid in full, in cash, or by FIB for every
+-- 5th. Numbers come from each branch's counter, as for a real sale.
+create temporary table demo_sales on commit drop as
+select p.i, m.id as member_id, m.gym_id, m.branch_id, pl.id, pl.name_ckb, pl.name_en, pl.name_ar, pl.kind,
+       pl.duration_unit, pl.duration_count, pl.visit_count, pl.price, pl.gender, pl.allowed_days, pl.allowed_from,
+       pl.allowed_until, pl.daily_visit_limit, pl.max_freeze_days,
+       (current_date - (p.i % 45))::date as sold_on
+  from generate_series(1, 150) as p (i)
+  join public.members m on m.id = md5('demo-member-' || p.i)::uuid and m.status = 'active'
+  join public.plans pl on pl.id = md5('demo-plan-' || case
+         when p.i % 23 = 0 then 'twelve-visits'
+         when p.i % 9 = 0 then 'three-months'
+         else 'monthly' end)::uuid;
+
+insert into public.subscriptions (
+  id, gym_id, member_id, plan_id, branch_id, name_ckb, name_en, name_ar, kind, duration_unit,
+  duration_count, visit_count, price, gender, allowed_days, allowed_from, allowed_until,
+  daily_visit_limit, max_freeze_days, start_date, end_date, created_at
+)
+select md5('demo-sale-' || s.i)::uuid, s.gym_id, s.member_id, s.id, s.branch_id, s.name_ckb, s.name_en,
+       s.name_ar, s.kind, s.duration_unit, s.duration_count, s.visit_count, s.price, s.gender,
+       s.allowed_days, s.allowed_from, s.allowed_until, s.daily_visit_limit, s.max_freeze_days, s.sold_on,
+       case when s.duration_count is not null then app.plan_end_date(s.sold_on, s.duration_unit, s.duration_count) end,
+       (s.sold_on + time '10:00') at time zone 'Asia/Baghdad'
+  from demo_sales s;
+
+insert into public.invoices (id, gym_id, branch_id, member_id, number, subtotal, discount, total, created_at)
+select md5('demo-invoice-' || s.i)::uuid, s.gym_id, s.branch_id, s.member_id,
+       app.next_document_number(s.branch_id, 'invoice'), s.price, 0, s.price,
+       (s.sold_on + time '10:00') at time zone 'Asia/Baghdad'
+  from (select * from demo_sales order by sold_on, i) s;
+
+insert into public.invoice_items (gym_id, invoice_id, kind, subscription_id, description_ckb, description_en,
+                                  description_ar, unit_price, total)
+select s.gym_id, md5('demo-invoice-' || s.i)::uuid, 'subscription', md5('demo-sale-' || s.i)::uuid,
+       s.name_ckb, s.name_en, s.name_ar, s.price, s.price
+  from demo_sales s;
+
+insert into public.payments (id, gym_id, branch_id, member_id, invoice_id, number, method, amount, reference, created_at)
+select md5('demo-payment-' || s.i)::uuid, s.gym_id, s.branch_id, s.member_id, md5('demo-invoice-' || s.i)::uuid,
+       app.next_document_number(s.branch_id, 'receipt'),
+       case when s.i % 5 = 0 then 'fib' else 'cash' end,
+       case when s.i % 13 = 0 then s.price / 2 else s.price end,
+       case when s.i % 5 = 0 then 'FIB-' || (100000 + s.i) end,
+       (s.sold_on + time '10:05') at time zone 'Asia/Baghdad'
+  from (select * from demo_sales order by sold_on, i) s
+ where s.i % 17 <> 0;
+
+insert into public.installments (id, gym_id, invoice_id, due_date, amount)
+select md5('demo-installment-' || s.i || '-' || n)::uuid, s.gym_id, md5('demo-invoice-' || s.i)::uuid,
+       (s.sold_on + make_interval(months => n))::date, s.price / 4
+  from demo_sales s
+ cross join generate_series(1, 2) as n
+ where s.i % 13 = 0 and s.i % 17 <> 0;

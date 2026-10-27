@@ -121,6 +121,16 @@ describe('CardScanDispatcher', () => {
     expect(state.lyingRequests).toBe(2);
   });
 
+  it('leaves a lying card alone for a screen that counts only newly placed cards', () => {
+    const { reader, state } = fakeReader('pcsc');
+    const dispatcher = new CardScanDispatcher(
+      () => [reader],
+      () => 'normal',
+    );
+    dispatcher.addScreen(collector().ref, false);
+    expect(state.lyingRequests).toBe(0);
+  });
+
   it('listens while anyone takes cards, and stops when nobody does', () => {
     const { reader, state } = fakeReader('keyboard');
     const dispatcher = new CardScanDispatcher(

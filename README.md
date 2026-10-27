@@ -67,6 +67,8 @@ Run from the repository root:
 | `pnpm platform-admin:reset-2fa` | Last resort of the [recovery procedure](#recovery-procedure): removes a platform admin's two-step devices (`--email`), and with `--password` gives a new temporary password. `--remote` for the cloud project |
 | `pnpm smoke:staff-admin` | Smoke test of the staff module as a gym's Owner: creates `smoke.test`, checks that its temporary password logs in and must be changed, deactivates it and checks that its login is refused. Prints only the staff id, never a password. `--remote` for the cloud project (needs the publishable key: `SUPABASE_PUBLISHABLE_KEY` in `supabase/.env.local`, or the app's `apps/app/.env.local` for the same project); local needs `pnpm db:functions` |
 | `pnpm staff-logins:move` | Once, after the MT-1 migrations, on a project that already had staff: moves their logins to their gym's address. Only shows what it would change; `--apply` changes it. `--remote` for a cloud project |
+| `pnpm release:migrations` | The release flow's cloud migrations ([Releasing](#releasing)): lists the migrations the cloud lacks and whether each is purely additive. `--rehearse` also applies them to a local copy of the cloud's schema; `--push` then runs the cloud dry run and pushes |
+| `pnpm release:check-live` | After a merge: waits until Vercel serves the merged commit, then loads the live gym app and seller panel in a fresh browser (read-only). `--commit <sha>`, `--site <url>` |
 
 First-time setup for the browser tests: `pnpm --filter @gym/app exec playwright install chromium`.
 
@@ -231,6 +233,96 @@ Phase 2, step 2j, migrations `20261023100000_member_import.sql` and `20261023110
 - **Afterwards** the page counts what was imported and offers the rows left out, with the reason, as a CSV file staff can fix and import again (an unticked row also says why it started unticked). Files are saved with `saveFile()` (`packages/platform/src/save-file.ts`): the web app downloads them; in the Windows app they go through Windows' save dialog, in the Downloads folder and titled with the file's name (`will-download` in `apps/desktop/src/main.ts`; the app cancels any other download); Android's WebView can't download what a page makes, so the Android app writes the file to its cache and opens the share sheet (Drive, Files, WhatsApp, ...) with the official Capacitor plugins `@capacitor/filesystem` and `@capacitor/share` (MIT; iOS later works the same).
 - **Taking an import back** (staff with `members.delete`, decided 2026-10-22): the result screen, and the list of earlier imports on the import page (who, when, which file, how many members and cards), offer "archive all members from this import". `member_import_undo_preview()` counts what it would do: the members to archive, those archived already, those changed since the import (their profile, status, photo, health info or cards changed after it) and their working cards. `undo_member_import()` archives them with the reason and ends their cards, all or nothing, and records who took the import back, when and why (`member_imports.undone_at`, `undone_by`, `undo_reason`; once per import, `import_undone`). Members changed since are archived too. Nobody is deleted, so each member can still be reactivated. `member_import_history()` lists the gym's last 50 imports for staff with `members.view` and `members.import` or `members.delete`. 5,000 members are archived in 3.3–4.1 s (the 300 test does it under `statement_timeout = 8s`).
 - **In the browser** (`IMPORT_TIMING=1 pnpm exec playwright test import-timing` in `apps/app`, skipped otherwise): a 5,000-row `.xlsx` (176 KB) is read and its rows prepared in 0.3 s, 1.6 s with the CPU slowed down 4 times; ticking rows takes under 0.5 s.
+
+### Plans
+
+Phase 3, step 3b, migration `20261024200000_plans.sql`, tests `supabase/tests/320-plans.test.sql`. The rules the screens need are in `packages/core/src/plans.ts`; the page is `apps/app/src/features/plans` (`/plans`, for `plans.manage`). The decisions are in spec §4.2.
+
+- **Four kinds**, the combinations of an end date and a visit count: `time` (a duration in months or days), `visits` (a number of visits, no end date), `hybrid` (both) and `unlimited` (neither). Check constraints keep the columns to the kind; only a plan with an end date can be frozen (`max_freeze_days`).
+- **End dates:** `app.plan_end_date()` (and `planEndDate()` in the app): in months, the day before the same date n months later, or that month's last day when it has no such date (31 Mar + 1 month ends 30 Apr); in days, n − 1 days after the start. One list of cases in the 320 test, run by `plans.test.ts` too.
+- **Rules** the check-in engine (Phase 4) will apply: gender, branches (`all_branches`, or rows in `plan_branches`), days of the week (ISO 1–7, `app.is_valid_weekdays()`), one time window a day, the most visits a day. Prices are whole dinars.
+- **`save_plan()`** adds or changes a plan with its branches, all or nothing (`branch_required`, `branch_not_found`). Everyone in the gym sees plans; changing one needs `plans.manage` and access to every branch it works in, before and after the change (`no_branch_access`; a plan for all branches needs access to all). Plans are never deleted; `is_active` false takes one off sale. A read-only gym changes none.
+
+### Subscriptions, invoices and payments
+
+Phase 3, step 3c, migration `20261024300000_selling.sql`, tests `supabase/tests/330-selling.test.sql`. The price rules the screens need are in `packages/core/src/pricing.ts`. The decisions are in spec §4.2.
+
+- **Only the server writes money.** `subscriptions`, `invoices`, `invoice_items`, `payments` and `installments` have no insert, update or delete grant for staff: security-definer functions write them after making every check RLS would (gym, permissions, branch). `read_only` triggers keep what a document says from ever changing, even for server code; only void and status columns change, in later steps. Nothing is ever deleted.
+- **`sell_subscription()`** saves the subscription (with its own copy of the plan, so changing the plan never changes it), the invoice and its item, the first payment and the installments, all or nothing. The same ids again return what was saved (a retry after a lost answer). Its error keys, in order, are in the function's comment; the screen sends the price it showed, and a plan that changed meanwhile gives `price_changed`.
+- **Discounts** are whole dinars, at most the share the seller's discount permission allows (`app.max_discount_percent()`, the highest counts; `isDiscountAllowed()` in the app), with a reason.
+- **Payments** are in dinars. A payment in dollars keeps the dollars and the rate, and its dinar value is `app.usd_to_iqd()` (half up; `usdToIqd()` works in whole cents so it never differs). Dollars are whole bills: what they are worth beyond what the invoice owes is change given back in dinars (`change_given`, `usdPayment()` in the app). A payment never counts for more than the invoice owes, so nobody has credit. Methods: cash, card, FIB, FastPay, ZainCash, bank transfer, each with an optional reference.
+- **Installments** add up to what wasn't paid at the sale, due from today on, each after the one before. `installment_balances` shows how much of each is paid: payments go first to the part without an installment, then to the installments oldest first.
+- **Balances** are computed, never stored: `invoice_balances` (paid, due; a voided invoice owes nothing). Both views run as the caller (`security_invoker`).
+- **Numbers** come from `app.branch_counters` in the same transaction, so they are in order without gaps: invoices `B1-000457`, receipts `B1-R000123`.
+- **Who sees what:** subscriptions with `members.view` (gym-wide, like members); invoices with `payments.view` and access to their branch, and an invoice's items, payments and installments with the invoice.
+- **Taking an import back** counts a member who bought something since the import as changed (spec §4.1).
+
+### Selling screens
+
+Phase 3, step 3d: `apps/app/src/features/subscriptions`. The form's rules are `sell-form.ts` (`saleDraft()` works out the sale for the summary and the checks alike; `sell-form.test.ts`), with `packages/core/src/subscriptions.ts` (what a subscription is today, renewals, months) and `pricing.ts`. Tests: `apps/app/e2e/subscriptions.spec.ts`.
+
+- **The member's page** has a subscriptions section: the current and upcoming ones (state as icon and word: چالاک, هێشتا دەستی پێ نەکردووە, بەسەرچووە, …, with the days left), the earlier ones folded away, the invoice number for staff who see money, and what the member owes (`payments.view`). Expired and not started yet come from the dates and are never stored.
+- **Selling** (`/members/$memberId/sell`, `subscriptions.sell`, an active member): the plans for the member's gender with their length and price; the start (today, after the current subscription when there is one, or another date; a warning when a current one would overlap); a discount up to the seller's share, with a reason; the payment (all now, part now, or on credit; dinars, or dollars with the rate, showing their value and the change to give back; method and transaction number); installments for what is left (2 to 12, a month apart, split as evenly as whole dinars allow); a summary; and the branch when the staff member has several. Without `payments.create` everything is sold on credit. The sale's ids are made once, so sending it again after a lost answer saves it once.
+- **After the sale** the screen shows the invoice and receipt numbers, what was paid and what is owed, and the member's card section, to give a card now if they have none.
+- **Seed:** the demo members 1 to 150 who are active have bought a plan (some expired, some unpaid, some in installments), ids `md5('demo-sale-<n>')`.
+
+### Payments and debts
+
+Phase 3, step 3e, migration `20261024400000_payments.sql`, tests `supabase/tests/340-payments.test.sql`; the screens are `apps/app/src/features/payments` (the member's money section, `/payments`), tests `apps/app/e2e/payments.spec.ts`.
+
+- **`pay_invoice()`** takes a payment on an invoice that is owed, in the branch where the money is taken (dinars, or dollars with change, through the same `app.read_payment()` as a sale). `nothing_owed`, `invoice_voided`, `payment_too_large`. The same payment id again returns what was saved.
+- **Voids** (`payments.void`, a reason, only on the day it was made in Baghdad, `void_too_late` after that): `void_payment()` for one payment or refund; `void_invoice()` for an invoice with its payments, and its subscription becomes `voided`. A voided row counts for nothing; nothing is deleted.
+- **Refunds** (`refund_invoice()`, `payments.refund`, a reason, with a receipt number): money given back, at most what was paid in and not given back yet (`refund_too_large`). A refund lowers the charge by as much, so it never makes the member owe more: `invoice_balances.due` is the total less what was paid in, with `refunded` beside it.
+- **Other invoices** (`charge_member()`, `payments.create`): the card replacement fee (`card_replacement`, spec §1) or another charge, with an optional payment. After a lost or damaged card is replaced with a new one, the fee dialog opens for staff who take money.
+- **`member_debts`** (a view, as the caller): what each member owes on the invoices the staff member sees, what is owed now (the rest is installments not due yet) and the next installment's date. The payments page lists it, most owed now first, with today's payments and refunds and their total.
+- **The member's page** shows their invoices (state as icon and word: paid, partly paid, unpaid, voided), each with its payments (method, dollars and change, refunds, voids and their reasons) and installments (overdue ones marked), and the actions the staff member may take.
+
+### Changing subscriptions
+
+Phase 3, step 3f, migration `20261024500000_subscription_changes.sql`, tests `supabase/tests/350-subscription-changes.test.sql`; the screens are the actions menu of each running subscription on the member's page (`apps/app/src/features/subscriptions/subscription-change-dialogs.tsx`), tests `apps/app/e2e/subscription-changes.spec.ts`.
+
+- **What the unused part is worth** (`app.unused_value()`): its share of what was charged for the subscription (its invoice item after the discount): days left of the days sold (frozen days aren't used), visits left of the visits sold (counted from check-in since Phase 4, `app.subscription_used_visits()`), the smaller for hybrid, in whole dinars. It first clears what is still owed on the invoice (an `invoice_credits` row, a lowering of what is owed with no money moving), and the rest was paid and not used. `subscription_change_preview()` shows both before staff confirm.
+- **Freezing** (`freeze_subscription()`, `subscriptions.freeze`): a number of days from today or a later date within the subscription, up to the plan's freeze days in all, one freeze at a time; the end date moves at once. `unfreeze_subscription()` ends it today (or takes a planned one back whole) and moves the end date back by the days not frozen. The `subscription_freezes` rows are the history; a subscription is frozen on a day a freeze covers (`app.is_frozen()`, `isFrozenOn()`).
+- **Changing the plan** (`change_plan()`, `subscriptions.change` and `subscriptions.sell`): from today, for a subscription that runs today and isn't frozen. The old one becomes `replaced`; the rest of its unused part comes off the new price as a discount naming the old invoice (`credit_exceeds_price` when it is worth more than the new plan: cancel with a refund and sell instead), and the new one is sold through the same `app.save_sale()` as any sale, with `replaces_id`. Unlimited plans have nothing to share out (`cannot_change_plan`).
+- **Transferring** (`transfer_subscription()`, `subscriptions.transfer`, a reason): a new subscription for another active member, from today to the same end, with the freeze days left and `transferred_from_id`; the old one becomes `transferred`, and the invoice stays with the first member.
+- **Cancelling** (`cancel_subscription()`, `subscriptions.cancel`, a reason): the unused part clears what is owed, and up to the rest can be given back at once (`payments.refund`), with a receipt.
+- **Renewing** is a sale: the menu opens the sell page with the plan chosen and the start after the current subscription.
+
+### Receipts and memberships
+
+Phase 3, step 3g, migration `20261024600000_memberships.sql`, tests `supabase/tests/360-memberships.test.sql` and `apps/app/e2e/receipts.spec.ts`.
+
+- **Receipts** (`apps/app/src/features/payments/receipt-print.tsx`): every invoice on the member's page, and the screen after a sale, has a print button for an 80mm roll or an A4 page. The receipt is drawn into `#print-root`, which the print styles show alone (`apps/app/src/styles.css`), with its `@page` size, in the member's own language and digits; then the print dialog opens, where a PDF can be saved too. `canPrint()` and `printPage()` in `packages/platform/src/printer.ts`: the browser and the Windows app; the Android app has no print dialog, so it shows no button.
+- **A member's membership** (`public.membership(members)`, a computed column PostgREST can select and filter: `select=…,membership&membership=eq.expired`): frozen, current, upcoming, expired (they had subscriptions, none runs) or none. Voided sales don't count. `membership_ends_on` is the last day of what runs. Both run as the caller, so RLS on subscriptions applies. The member list filters by it, and the list and the member's page show it as a badge when it isn't a current one.
+
+### Check-in
+
+Phase 4, step 4a, migration `20261027100000_check_in.sql`, tests `supabase/tests/370-check-in.test.sql`; the result's shape and codes are in `packages/core/src/checkin.ts`.
+
+- **`check_in(p_id, p_branch_id, p_card_uid | p_member_id, p_device_id, p_override_note)`** decides and stores in one transaction, with the member's row locked so two scans at once never use one visit twice. By card needs `checkin.perform`, by hand `checkin.manual`, in one of the staff member's active branches. `p_id` is the visit's id from the app: the same id again returns the stored visit.
+- **The answer:** `allowed`; `warning` (allowed, with `ENDS_SOON`, `FEW_VISITS`, `DEBT`, `BIRTHDAY`); `already` (scanned again within `checkin.cooldown_minutes` of the last visit, nothing counted); `denied` with a reason: `CARD_INVALID`, `CARD_BLOCKED` (`card_status` stolen or blocked), `MEMBER_NOT_ACTIVE`, `NO_SUBSCRIPTION`, the subscription reasons in the order they are checked (`app.checkin_steps()`: `PLAN_EXPIRED`, `NOT_STARTED`, `PLAN_FROZEN`, `NO_VISITS_LEFT`, `WRONG_BRANCH`, `WRONG_DAY`, `WRONG_TIME`, `DAILY_LIMIT`), or `DEBT`. It carries the member (name, number, `photo_updated_at` for the photo) and the subscription (visits left, frozen until), so the screen needs no second request.
+- **Which subscription:** of those that may be used now, the one that ends first (visits-only and unlimited ones last); when none may, the reason is the one of the subscription that got furthest through the checks. Visits plans have one visit a day unless the plan sets a daily limit.
+- **Visits** (`attendance`) are stored only when someone comes in; refused tries aren't. Visits used are counted from them (`app.subscription_used_visits()`, `used_visits` on subscriptions), so a visits plan with none left is expired and can't be transferred. `void_visit()` (`attendance.void`, a reason) gives a visit back; nothing is deleted. `check_out()` ends a visit; `inside` on a visit and `branch_occupancy()` count who is in (not checked out, within `checkin.visit_hours`).
+- **Overrides** (`checkin.override`, a note): a refused member comes in anyway; the visit keeps what was passed over and uses no subscription, except for `DEBT`. A blocked card, an unknown card and a member who isn't active are never passed over.
+- **Settings** (per gym, a branch may differ): `checkin.cooldown_minutes` (60), `checkin.visit_hours` (3), `checkin.deny_for_debt` (0: owing money is a warning; 1: refused above `checkin.debt_limit` dinars, 0).
+
+### Check-in screens
+
+Phase 4, step 4b: `apps/app/src/features/checkin/`, tests `apps/app/e2e/checkin.spec.ts`.
+
+- **`/checkin`** (`checkin.perform`): reception holds a member's card to any reader and the result fills the screen (`checkin-result.tsx`): the status color with an icon and a word (green allowed, amber allowed with a note or already in, red refused), the member's photo, the name in large text, the reason or notes, and a ring counting down 5 seconds before it closes by itself (a tap closes it sooner). Each result has its own tone (`checkin-sound.ts`, Web Audio), a vibration on Android, and green or red twice on an ACR122U. Members are found by name, number or phone and checked in by hand with `checkin.manual`. Staff with `checkin.override` let a refused member in with a reason, from the result.
+- **Only a newly placed card counts:** the screen takes cards with `useCardScans(…, readLying = false)`, so a card left lying on the reader is never read for it. A card read while the last one is still being checked is left alone (red on the reader).
+- **The branch** is this device's when the staff member works there, else their first active branch (`checkin-branch.ts`).
+- **The door screen** (`/checkin/door`, "شاشەی دەرگا"): dark and full screen, readable from two meters, for members holding their own card. It has nothing for staff (no search, no overrides). It stands unattended, so the idle lock waits while it is open (`usePauseIdleLock()`); **Exit locks the app**, so nobody walks from the door into the app without a PIN. Overlays render on `<body>` only while the app is unlocked (`screen-overlay.tsx`), so they never cover the lock screen.
+
+### Visits and occupancy
+
+Phase 4, step 4c: `apps/app/src/features/checkin/visits-page.tsx` and `visit-data.ts`, tests in `apps/app/e2e/checkin.spec.ts`.
+
+- **`/checkin/visits`** (`attendance.view`): a day's visits in the working branch (today by default, any day of this year or last), newest first, with the photo, time, card or by hand, the subscription used, when they left, and any override note or void. A chip shows only who is inside. At most 500 visits a day are shown (the page says so).
+- **Who is inside** (`branch_occupancy()`, the tile on `/checkin` and on the visits page) is read again every 30 seconds and after every check-in, check-out and void (TanStack Query, no Realtime).
+- **A member's own page** (step 4d, `member-visits.tsx`) lists their last 10 visits in every branch, for staff with `attendance.view`: when, where (a branch the staff member can't see is left unnamed), card or by hand, the subscription, and any override or void.
+- **Checking out** (`checkin.perform`) and **voiding** (`attendance.void`, a reason: the visit counts for nothing and goes back to its subscription) are buttons on each visit.
 
 ### Adding a table
 
@@ -548,3 +640,17 @@ Other changes:
 Setting up the Vercel project: [A cloud project](#a-cloud-project), step 7. `apps/app/vercel.json` sets the install and build commands (`pnpm build:web`: the gym app plus the seller panel under `/seller/`, see [Deployed with the gym app at `/seller/`](#deployed-with-the-gym-app-at-seller)), the SPA rewrites and the headers. Every push to `main` deploys to production and other branches get preview deploys; Vercel skips the build when a push changes nothing the app uses (for example only `supabase/`).
 
 **Content-Security-Policy:** every production build (web, Windows and Android) carries a CSP `<meta>` tag made by `vite.config.ts`. The app may only connect to itself and the Supabase address in the build's `VITE_*` variables, and only run its own scripts (the inline start-up script by its hash). Changing the address needs a new build. `pnpm dev` has no CSP, because Vite injects inline scripts there.
+
+**Updates:** the build carries its commit (`<meta name="gym-build">`). An open web app looks for a new version every hour, and when it comes back to the front or back online. When the service worker has downloaded one, a notice stays at the top of every screen, the login and lock screens too, until staff press «نوێکردنەوە». The page then reloads into the new version, which locks the app (the PIN opens it again); a form with changes not saved asks first. It never reloads on its own.
+
+## Releasing
+
+Every release follows the working rules in `CLAUDE.md`: one release per phase, its sub-steps on stacked feature branches; the full suite once; cloud migrations before the merge; then one pull request from the phase's last branch, merged with `gh pr merge` (never a push to `main`).
+
+**On every push**, GitHub Actions runs `pnpm check`, `pnpm db:test` and `pnpm db:lint` (`.github/workflows/checks.yml`; the database jobs start a local Supabase in the runner with only Postgres, Auth and the API). The end-to-end tests run on the PC. Between releases each sub-step runs only the tests its change touches.
+
+1. Push the phase's last branch: `git push origin <branch>`.
+2. Checks: `pnpm check`, `pnpm db:test`, `pnpm db:lint`, and the full `pnpm test:e2e` with `pnpm db:functions` running (for staff- or seller-module changes also `pnpm test:int` and `pnpm test:deno`).
+3. Cloud migrations (needs `SUPABASE_DB_URL` in `supabase/.env.local` and Docker): `pnpm release:migrations --push`. It stops without pushing anything when the cloud has a migration this branch doesn't, when a pending one is older than the cloud's last, or when one isn't purely additive (any `drop`, `rename`, `delete`, `truncate`, `update`, changed column type, or `revoke` on something older; `supabase/scripts/migration-safety.ts`). Otherwise it rehearses them on a local copy of the cloud's schema (the local database reset to the cloud's last migration, with a gym and its Owner), resets the local database again, runs the cloud dry run, and pushes only when the dry run lists exactly the pending migrations. Destructive migrations wait for the user.
+4. `gh pr create --base main --head <branch>`, then `gh pr merge <number> --merge`.
+5. `pnpm release:check-live`: Vercel serves the merged commit, and the gym app and the seller panel load, reach Auth (health 200) and log no errors. Read-only.

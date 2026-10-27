@@ -1,4 +1,11 @@
-import { GENDERS, MEMBER_STATUSES, type Gender, type MemberStatus } from '@gym/core';
+import {
+  GENDERS,
+  MEMBERSHIPS,
+  MEMBER_STATUSES,
+  type Gender,
+  type Membership,
+  type MemberStatus,
+} from '@gym/core';
 
 // The members list's search, filters, sorting and page live in the address (/members?q=…), so the
 // list keeps them while a member is open beside it, and Back returns to the same list.
@@ -17,6 +24,7 @@ export interface MemberListSearch {
   readonly gender?: Gender;
   readonly branch?: string;
   readonly tag?: string;
+  readonly membership?: Membership;
   readonly sort?: Exclude<MemberSort, 'name'>;
   readonly page?: number;
 }
@@ -28,6 +36,7 @@ export interface MemberListParams {
   readonly gender: Gender | null;
   readonly branch: string | null;
   readonly tag: string | null;
+  readonly membership: Membership | null;
   readonly sort: MemberSort;
   readonly page: number;
 }
@@ -55,6 +64,9 @@ export function parseMemberListSearch(search: Record<string, unknown>): MemberLi
       : { gender: oneOf(GENDERS, search.gender) }),
     ...(text(search.branch, 64) === undefined ? {} : { branch: text(search.branch, 64) }),
     ...(text(search.tag, 30) === undefined ? {} : { tag: text(search.tag, 30) }),
+    ...(oneOf(MEMBERSHIPS, search.membership) === undefined
+      ? {}
+      : { membership: oneOf(MEMBERSHIPS, search.membership) }),
     ...(sort === undefined || sort === 'name' ? {} : { sort }),
     ...(Number.isInteger(page) && page > 1 && page <= 100_000 ? { page } : {}),
   };
@@ -67,6 +79,7 @@ export function memberListParams(search: MemberListSearch): MemberListParams {
     gender: search.gender ?? null,
     branch: search.branch ?? null,
     tag: search.tag ?? null,
+    membership: search.membership ?? null,
     sort: search.sort ?? 'name',
     page: search.page ?? 1,
   };
@@ -79,7 +92,8 @@ export function isUnfiltered(params: MemberListParams): boolean {
     params.status === 'current' &&
     params.gender === null &&
     params.branch === null &&
-    params.tag === null
+    params.tag === null &&
+    params.membership === null
   );
 }
 

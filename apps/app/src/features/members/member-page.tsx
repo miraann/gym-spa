@@ -15,10 +15,18 @@ import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { usePermission } from '@/features/auth/use-permissions';
 import { MemberCardsCard } from '@/features/cards/member-cards';
+import { MemberVisitsCard } from '@/features/checkin/member-visits';
+import { MemberMoneyCard } from '@/features/payments/member-money';
+import { MemberSubscriptionsCard } from '@/features/subscriptions/member-subscriptions';
 import { BackToList } from '@/features/staff/admin-error';
 import { useFormat } from '@/lib/format';
 import { useBaghdadToday } from '@/lib/use-today';
-import { HealthNotesBadge, MemberAvatar, MemberStatusBadge } from './member-badges';
+import {
+  HealthNotesBadge,
+  MemberAvatar,
+  MemberStatusBadge,
+  MembershipBadge,
+} from './member-badges';
 import { useBranchName } from './member-branch-name';
 import { useMember, useMemberHealth, useMemberPhoto, type Member } from './member-data';
 import { memberErrorKey } from './member-errors';
@@ -92,6 +100,7 @@ function MemberProfile({ member }: { readonly member: Member }) {
               {formatMemberNumber(member.memberNumber)}
             </span>
             <MemberStatusBadge status={member.status} />
+            <MembershipBadge membership={member.membership} />
             {member.hasHealthNotes && <HealthNotesBadge />}
           </p>
         </div>
@@ -106,6 +115,9 @@ function MemberProfile({ member }: { readonly member: Member }) {
       )}
 
       <MemberPhotoCard member={member} />
+      <MemberSubscriptionsCard member={member} />
+      <MemberMoneyCard member={member} />
+      <MemberVisitsCard member={member} />
       <MemberCardsCard member={member} />
       <MemberDetails member={member} />
       <HealthCard member={member} />

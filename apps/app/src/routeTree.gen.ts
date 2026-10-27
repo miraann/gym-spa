@@ -13,17 +13,25 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as BranchesRouteRouteImport } from './routes/branches/route'
 import { Route as DevicesRouteRouteImport } from './routes/devices/route'
 import { Route as MembersRouteRouteImport } from './routes/members/route'
+import { Route as PlansRouteRouteImport } from './routes/plans/route'
 import { Route as RolesRouteRouteImport } from './routes/roles/route'
 import { Route as SettingsRouteRouteImport } from './routes/settings/route'
 import { Route as StaffRouteRouteImport } from './routes/staff/route'
 import { Route as BranchesIndexRouteImport } from './routes/branches/index'
 import { Route as BranchesBranchIdRouteImport } from './routes/branches/$branchId'
 import { Route as BranchesNewRouteImport } from './routes/branches/new'
+import { Route as CheckinIndexRouteImport } from './routes/checkin/index'
+import { Route as CheckinDoorRouteImport } from './routes/checkin/door'
+import { Route as CheckinVisitsRouteImport } from './routes/checkin/visits'
 import { Route as DevicesIndexRouteImport } from './routes/devices/index'
 import { Route as DevicesDeviceIdRouteImport } from './routes/devices/$deviceId'
 import { Route as MembersIndexRouteImport } from './routes/members/index'
 import { Route as MembersImportRouteImport } from './routes/members/import'
 import { Route as MembersNewRouteImport } from './routes/members/new'
+import { Route as PaymentsIndexRouteImport } from './routes/payments/index'
+import { Route as PlansIndexRouteImport } from './routes/plans/index'
+import { Route as PlansPlanIdRouteImport } from './routes/plans/$planId'
+import { Route as PlansNewRouteImport } from './routes/plans/new'
 import { Route as RolesIndexRouteImport } from './routes/roles/index'
 import { Route as RolesRoleIdRouteImport } from './routes/roles/$roleId'
 import { Route as RolesNewRouteImport } from './routes/roles/new'
@@ -36,6 +44,7 @@ import { Route as StaffStaffIdRouteImport } from './routes/staff/$staffId'
 import { Route as StaffNewRouteImport } from './routes/staff/new'
 import { Route as MembersMemberIdIndexRouteImport } from './routes/members/$memberId/index'
 import { Route as MembersMemberIdEditRouteImport } from './routes/members/$memberId/edit'
+import { Route as MembersMemberIdSellRouteImport } from './routes/members/$memberId/sell'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -55,6 +64,11 @@ const DevicesRouteRoute = DevicesRouteRouteImport.update({
 const MembersRouteRoute = MembersRouteRouteImport.update({
   id: '/members',
   path: '/members',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PlansRouteRoute = PlansRouteRouteImport.update({
+  id: '/plans',
+  path: '/plans',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RolesRouteRoute = RolesRouteRouteImport.update({
@@ -87,6 +101,21 @@ const BranchesNewRoute = BranchesNewRouteImport.update({
   path: '/new',
   getParentRoute: () => BranchesRouteRoute,
 } as any)
+const CheckinIndexRoute = CheckinIndexRouteImport.update({
+  id: '/checkin/',
+  path: '/checkin/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CheckinDoorRoute = CheckinDoorRouteImport.update({
+  id: '/checkin/door',
+  path: '/checkin/door',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CheckinVisitsRoute = CheckinVisitsRouteImport.update({
+  id: '/checkin/visits',
+  path: '/checkin/visits',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DevicesIndexRoute = DevicesIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -111,6 +140,26 @@ const MembersNewRoute = MembersNewRouteImport.update({
   id: '/new',
   path: '/new',
   getParentRoute: () => MembersRouteRoute,
+} as any)
+const PaymentsIndexRoute = PaymentsIndexRouteImport.update({
+  id: '/payments/',
+  path: '/payments/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PlansIndexRoute = PlansIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => PlansRouteRoute,
+} as any)
+const PlansPlanIdRoute = PlansPlanIdRouteImport.update({
+  id: '/$planId',
+  path: '/$planId',
+  getParentRoute: () => PlansRouteRoute,
+} as any)
+const PlansNewRoute = PlansNewRouteImport.update({
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => PlansRouteRoute,
 } as any)
 const RolesIndexRoute = RolesIndexRouteImport.update({
   id: '/',
@@ -172,20 +221,30 @@ const MembersMemberIdEditRoute = MembersMemberIdEditRouteImport.update({
   path: '/$memberId/edit',
   getParentRoute: () => MembersRouteRoute,
 } as any)
+const MembersMemberIdSellRoute = MembersMemberIdSellRouteImport.update({
+  id: '/$memberId/sell',
+  path: '/$memberId/sell',
+  getParentRoute: () => MembersRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/branches': typeof BranchesRouteRouteWithChildren
   '/devices': typeof DevicesRouteRouteWithChildren
   '/members': typeof MembersRouteRouteWithChildren
+  '/plans': typeof PlansRouteRouteWithChildren
   '/roles': typeof RolesRouteRouteWithChildren
   '/settings': typeof SettingsRouteRouteWithChildren
   '/staff': typeof StaffRouteRouteWithChildren
   '/branches/$branchId': typeof BranchesBranchIdRoute
   '/branches/new': typeof BranchesNewRoute
+  '/checkin/door': typeof CheckinDoorRoute
+  '/checkin/visits': typeof CheckinVisitsRoute
   '/devices/$deviceId': typeof DevicesDeviceIdRoute
   '/members/import': typeof MembersImportRoute
   '/members/new': typeof MembersNewRoute
+  '/plans/$planId': typeof PlansPlanIdRoute
+  '/plans/new': typeof PlansNewRoute
   '/roles/$roleId': typeof RolesRoleIdRoute
   '/roles/new': typeof RolesNewRoute
   '/settings/appearance': typeof SettingsAppearanceRoute
@@ -194,21 +253,29 @@ export interface FileRoutesByFullPath {
   '/staff/$staffId': typeof StaffStaffIdRoute
   '/staff/new': typeof StaffNewRoute
   '/branches/': typeof BranchesIndexRoute
+  '/checkin/': typeof CheckinIndexRoute
   '/devices/': typeof DevicesIndexRoute
   '/members/': typeof MembersIndexRoute
+  '/payments/': typeof PaymentsIndexRoute
+  '/plans/': typeof PlansIndexRoute
   '/roles/': typeof RolesIndexRoute
   '/settings/': typeof SettingsIndexRoute
   '/staff/': typeof StaffIndexRoute
   '/members/$memberId/edit': typeof MembersMemberIdEditRoute
+  '/members/$memberId/sell': typeof MembersMemberIdSellRoute
   '/members/$memberId/': typeof MembersMemberIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/branches/$branchId': typeof BranchesBranchIdRoute
   '/branches/new': typeof BranchesNewRoute
+  '/checkin/door': typeof CheckinDoorRoute
+  '/checkin/visits': typeof CheckinVisitsRoute
   '/devices/$deviceId': typeof DevicesDeviceIdRoute
   '/members/import': typeof MembersImportRoute
   '/members/new': typeof MembersNewRoute
+  '/plans/$planId': typeof PlansPlanIdRoute
+  '/plans/new': typeof PlansNewRoute
   '/roles/$roleId': typeof RolesRoleIdRoute
   '/roles/new': typeof RolesNewRoute
   '/settings/appearance': typeof SettingsAppearanceRoute
@@ -217,12 +284,16 @@ export interface FileRoutesByTo {
   '/staff/$staffId': typeof StaffStaffIdRoute
   '/staff/new': typeof StaffNewRoute
   '/branches': typeof BranchesIndexRoute
+  '/checkin': typeof CheckinIndexRoute
   '/devices': typeof DevicesIndexRoute
   '/members': typeof MembersIndexRoute
+  '/payments': typeof PaymentsIndexRoute
+  '/plans': typeof PlansIndexRoute
   '/roles': typeof RolesIndexRoute
   '/settings': typeof SettingsIndexRoute
   '/staff': typeof StaffIndexRoute
   '/members/$memberId/edit': typeof MembersMemberIdEditRoute
+  '/members/$memberId/sell': typeof MembersMemberIdSellRoute
   '/members/$memberId': typeof MembersMemberIdIndexRoute
 }
 export interface FileRoutesById {
@@ -231,14 +302,19 @@ export interface FileRoutesById {
   '/branches': typeof BranchesRouteRouteWithChildren
   '/devices': typeof DevicesRouteRouteWithChildren
   '/members': typeof MembersRouteRouteWithChildren
+  '/plans': typeof PlansRouteRouteWithChildren
   '/roles': typeof RolesRouteRouteWithChildren
   '/settings': typeof SettingsRouteRouteWithChildren
   '/staff': typeof StaffRouteRouteWithChildren
   '/branches/$branchId': typeof BranchesBranchIdRoute
   '/branches/new': typeof BranchesNewRoute
+  '/checkin/door': typeof CheckinDoorRoute
+  '/checkin/visits': typeof CheckinVisitsRoute
   '/devices/$deviceId': typeof DevicesDeviceIdRoute
   '/members/import': typeof MembersImportRoute
   '/members/new': typeof MembersNewRoute
+  '/plans/$planId': typeof PlansPlanIdRoute
+  '/plans/new': typeof PlansNewRoute
   '/roles/$roleId': typeof RolesRoleIdRoute
   '/roles/new': typeof RolesNewRoute
   '/settings/appearance': typeof SettingsAppearanceRoute
@@ -247,12 +323,16 @@ export interface FileRoutesById {
   '/staff/$staffId': typeof StaffStaffIdRoute
   '/staff/new': typeof StaffNewRoute
   '/branches/': typeof BranchesIndexRoute
+  '/checkin/': typeof CheckinIndexRoute
   '/devices/': typeof DevicesIndexRoute
   '/members/': typeof MembersIndexRoute
+  '/payments/': typeof PaymentsIndexRoute
+  '/plans/': typeof PlansIndexRoute
   '/roles/': typeof RolesIndexRoute
   '/settings/': typeof SettingsIndexRoute
   '/staff/': typeof StaffIndexRoute
   '/members/$memberId/edit': typeof MembersMemberIdEditRoute
+  '/members/$memberId/sell': typeof MembersMemberIdSellRoute
   '/members/$memberId/': typeof MembersMemberIdIndexRoute
 }
 export interface FileRouteTypes {
@@ -262,14 +342,19 @@ export interface FileRouteTypes {
     | '/branches'
     | '/devices'
     | '/members'
+    | '/plans'
     | '/roles'
     | '/settings'
     | '/staff'
     | '/branches/$branchId'
     | '/branches/new'
+    | '/checkin/door'
+    | '/checkin/visits'
     | '/devices/$deviceId'
     | '/members/import'
     | '/members/new'
+    | '/plans/$planId'
+    | '/plans/new'
     | '/roles/$roleId'
     | '/roles/new'
     | '/settings/appearance'
@@ -278,21 +363,29 @@ export interface FileRouteTypes {
     | '/staff/$staffId'
     | '/staff/new'
     | '/branches/'
+    | '/checkin/'
     | '/devices/'
     | '/members/'
+    | '/payments/'
+    | '/plans/'
     | '/roles/'
     | '/settings/'
     | '/staff/'
     | '/members/$memberId/edit'
+    | '/members/$memberId/sell'
     | '/members/$memberId/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/branches/$branchId'
     | '/branches/new'
+    | '/checkin/door'
+    | '/checkin/visits'
     | '/devices/$deviceId'
     | '/members/import'
     | '/members/new'
+    | '/plans/$planId'
+    | '/plans/new'
     | '/roles/$roleId'
     | '/roles/new'
     | '/settings/appearance'
@@ -301,12 +394,16 @@ export interface FileRouteTypes {
     | '/staff/$staffId'
     | '/staff/new'
     | '/branches'
+    | '/checkin'
     | '/devices'
     | '/members'
+    | '/payments'
+    | '/plans'
     | '/roles'
     | '/settings'
     | '/staff'
     | '/members/$memberId/edit'
+    | '/members/$memberId/sell'
     | '/members/$memberId'
   id:
     | '__root__'
@@ -314,14 +411,19 @@ export interface FileRouteTypes {
     | '/branches'
     | '/devices'
     | '/members'
+    | '/plans'
     | '/roles'
     | '/settings'
     | '/staff'
     | '/branches/$branchId'
     | '/branches/new'
+    | '/checkin/door'
+    | '/checkin/visits'
     | '/devices/$deviceId'
     | '/members/import'
     | '/members/new'
+    | '/plans/$planId'
+    | '/plans/new'
     | '/roles/$roleId'
     | '/roles/new'
     | '/settings/appearance'
@@ -330,12 +432,16 @@ export interface FileRouteTypes {
     | '/staff/$staffId'
     | '/staff/new'
     | '/branches/'
+    | '/checkin/'
     | '/devices/'
     | '/members/'
+    | '/payments/'
+    | '/plans/'
     | '/roles/'
     | '/settings/'
     | '/staff/'
     | '/members/$memberId/edit'
+    | '/members/$memberId/sell'
     | '/members/$memberId/'
   fileRoutesById: FileRoutesById
 }
@@ -344,9 +450,14 @@ export interface RootRouteChildren {
   BranchesRouteRoute: typeof BranchesRouteRouteWithChildren
   DevicesRouteRoute: typeof DevicesRouteRouteWithChildren
   MembersRouteRoute: typeof MembersRouteRouteWithChildren
+  PlansRouteRoute: typeof PlansRouteRouteWithChildren
   RolesRouteRoute: typeof RolesRouteRouteWithChildren
   SettingsRouteRoute: typeof SettingsRouteRouteWithChildren
   StaffRouteRoute: typeof StaffRouteRouteWithChildren
+  CheckinDoorRoute: typeof CheckinDoorRoute
+  CheckinVisitsRoute: typeof CheckinVisitsRoute
+  CheckinIndexRoute: typeof CheckinIndexRoute
+  PaymentsIndexRoute: typeof PaymentsIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -377,6 +488,13 @@ declare module '@tanstack/react-router' {
       path: '/members'
       fullPath: '/members'
       preLoaderRoute: typeof MembersRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/plans': {
+      id: '/plans'
+      path: '/plans'
+      fullPath: '/plans'
+      preLoaderRoute: typeof PlansRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/roles': {
@@ -421,6 +539,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BranchesNewRouteImport
       parentRoute: typeof BranchesRouteRoute
     }
+    '/checkin/': {
+      id: '/checkin/'
+      path: '/checkin'
+      fullPath: '/checkin/'
+      preLoaderRoute: typeof CheckinIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/checkin/door': {
+      id: '/checkin/door'
+      path: '/checkin/door'
+      fullPath: '/checkin/door'
+      preLoaderRoute: typeof CheckinDoorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/checkin/visits': {
+      id: '/checkin/visits'
+      path: '/checkin/visits'
+      fullPath: '/checkin/visits'
+      preLoaderRoute: typeof CheckinVisitsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/devices/': {
       id: '/devices/'
       path: '/'
@@ -455,6 +594,34 @@ declare module '@tanstack/react-router' {
       fullPath: '/members/new'
       preLoaderRoute: typeof MembersNewRouteImport
       parentRoute: typeof MembersRouteRoute
+    }
+    '/payments/': {
+      id: '/payments/'
+      path: '/payments'
+      fullPath: '/payments/'
+      preLoaderRoute: typeof PaymentsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/plans/': {
+      id: '/plans/'
+      path: '/'
+      fullPath: '/plans/'
+      preLoaderRoute: typeof PlansIndexRouteImport
+      parentRoute: typeof PlansRouteRoute
+    }
+    '/plans/$planId': {
+      id: '/plans/$planId'
+      path: '/$planId'
+      fullPath: '/plans/$planId'
+      preLoaderRoute: typeof PlansPlanIdRouteImport
+      parentRoute: typeof PlansRouteRoute
+    }
+    '/plans/new': {
+      id: '/plans/new'
+      path: '/new'
+      fullPath: '/plans/new'
+      preLoaderRoute: typeof PlansNewRouteImport
+      parentRoute: typeof PlansRouteRoute
     }
     '/roles/': {
       id: '/roles/'
@@ -540,6 +707,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MembersMemberIdEditRouteImport
       parentRoute: typeof MembersRouteRoute
     }
+    '/members/$memberId/sell': {
+      id: '/members/$memberId/sell'
+      path: '/$memberId/sell'
+      fullPath: '/members/$memberId/sell'
+      preLoaderRoute: typeof MembersMemberIdSellRouteImport
+      parentRoute: typeof MembersRouteRoute
+    }
   }
 }
 
@@ -578,6 +752,7 @@ interface MembersRouteRouteChildren {
   MembersNewRoute: typeof MembersNewRoute
   MembersIndexRoute: typeof MembersIndexRoute
   MembersMemberIdEditRoute: typeof MembersMemberIdEditRoute
+  MembersMemberIdSellRoute: typeof MembersMemberIdSellRoute
   MembersMemberIdIndexRoute: typeof MembersMemberIdIndexRoute
 }
 
@@ -586,11 +761,28 @@ const MembersRouteRouteChildren: MembersRouteRouteChildren = {
   MembersNewRoute: MembersNewRoute,
   MembersIndexRoute: MembersIndexRoute,
   MembersMemberIdEditRoute: MembersMemberIdEditRoute,
+  MembersMemberIdSellRoute: MembersMemberIdSellRoute,
   MembersMemberIdIndexRoute: MembersMemberIdIndexRoute,
 }
 
 const MembersRouteRouteWithChildren = MembersRouteRoute._addFileChildren(
   MembersRouteRouteChildren,
+)
+
+interface PlansRouteRouteChildren {
+  PlansPlanIdRoute: typeof PlansPlanIdRoute
+  PlansNewRoute: typeof PlansNewRoute
+  PlansIndexRoute: typeof PlansIndexRoute
+}
+
+const PlansRouteRouteChildren: PlansRouteRouteChildren = {
+  PlansPlanIdRoute: PlansPlanIdRoute,
+  PlansNewRoute: PlansNewRoute,
+  PlansIndexRoute: PlansIndexRoute,
+}
+
+const PlansRouteRouteWithChildren = PlansRouteRoute._addFileChildren(
+  PlansRouteRouteChildren,
 )
 
 interface RolesRouteRouteChildren {
@@ -648,9 +840,14 @@ const rootRouteChildren: RootRouteChildren = {
   BranchesRouteRoute: BranchesRouteRouteWithChildren,
   DevicesRouteRoute: DevicesRouteRouteWithChildren,
   MembersRouteRoute: MembersRouteRouteWithChildren,
+  PlansRouteRoute: PlansRouteRouteWithChildren,
   RolesRouteRoute: RolesRouteRouteWithChildren,
   SettingsRouteRoute: SettingsRouteRouteWithChildren,
   StaffRouteRoute: StaffRouteRouteWithChildren,
+  CheckinDoorRoute: CheckinDoorRoute,
+  CheckinVisitsRoute: CheckinVisitsRoute,
+  CheckinIndexRoute: CheckinIndexRoute,
+  PaymentsIndexRoute: PaymentsIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

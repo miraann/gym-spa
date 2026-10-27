@@ -13,6 +13,14 @@ export const SETTINGS = {
   'security.pin_max_attempts': { min: 3, max: 10, default: 5 },
   /** Minutes without activity before the app locks. */
   'security.idle_lock_minutes': { min: 1, max: 240, default: 10 },
+  /** Minutes after a visit in which another scan counts nothing ("already in"). */
+  'checkin.cooldown_minutes': { min: 1, max: 720, default: 60 },
+  /** Hours a visit counts as inside when nobody checks the member out. */
+  'checkin.visit_hours': { min: 1, max: 24, default: 3 },
+  /** 1: money owed now above checkin.debt_limit refuses entry; 0: it is only a warning. */
+  'checkin.deny_for_debt': { min: 0, max: 1, default: 0 },
+  /** Dinars a member may owe now and still come in, when checkin.deny_for_debt is 1. */
+  'checkin.debt_limit': { min: 0, max: 1_000_000_000, default: 0 },
 } as const satisfies Record<string, IntegerSetting>;
 
 export type SettingKey = keyof typeof SETTINGS;

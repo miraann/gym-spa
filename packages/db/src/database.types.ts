@@ -3,6 +3,118 @@ export type Json = string | number | boolean | null | { [key: string]: Json | un
 export type Database = {
   public: {
     Tables: {
+      attendance: {
+        Row: {
+          branch_id: string;
+          card_id: string | null;
+          checked_in_at: string;
+          checked_out_at: string | null;
+          checked_out_by: string | null;
+          created_at: string;
+          created_by: string | null;
+          deleted_at: string | null;
+          device_id: string | null;
+          gym_id: string;
+          id: string;
+          member_id: string;
+          method: string;
+          override_note: string | null;
+          override_reason: string | null;
+          subscription_id: string | null;
+          updated_at: string;
+          updated_by: string | null;
+          visit_date: string;
+          void_reason: string | null;
+          voided_at: string | null;
+          voided_by: string | null;
+          inside: boolean | null;
+        };
+        Insert: {
+          branch_id: string;
+          card_id?: string | null;
+          checked_in_at?: string;
+          checked_out_at?: string | null;
+          checked_out_by?: string | null;
+          created_at?: string;
+          created_by?: string | null;
+          deleted_at?: string | null;
+          device_id?: string | null;
+          gym_id?: string;
+          id: string;
+          member_id: string;
+          method: string;
+          override_note?: string | null;
+          override_reason?: string | null;
+          subscription_id?: string | null;
+          updated_at?: string;
+          updated_by?: string | null;
+          visit_date?: never;
+          void_reason?: string | null;
+          voided_at?: string | null;
+          voided_by?: string | null;
+        };
+        Update: {
+          branch_id?: string;
+          card_id?: string | null;
+          checked_in_at?: string;
+          checked_out_at?: string | null;
+          checked_out_by?: string | null;
+          created_at?: string;
+          created_by?: string | null;
+          deleted_at?: string | null;
+          device_id?: string | null;
+          gym_id?: string;
+          id?: string;
+          member_id?: string;
+          method?: string;
+          override_note?: string | null;
+          override_reason?: string | null;
+          subscription_id?: string | null;
+          updated_at?: string;
+          updated_by?: string | null;
+          visit_date?: never;
+          void_reason?: string | null;
+          voided_at?: string | null;
+          voided_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'attendance_branch_id_gym_id_fkey';
+            columns: ['branch_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'branches';
+            referencedColumns: ['id', 'gym_id'];
+          },
+          {
+            foreignKeyName: 'attendance_card_id_gym_id_fkey';
+            columns: ['card_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'nfc_cards';
+            referencedColumns: ['id', 'gym_id'];
+          },
+          {
+            foreignKeyName: 'attendance_device_id_gym_id_fkey';
+            columns: ['device_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'devices';
+            referencedColumns: ['id', 'gym_id'];
+          },
+          {
+            foreignKeyName: 'attendance_member_id_gym_id_fkey';
+            columns: ['member_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'members';
+            referencedColumns: ['id', 'gym_id'];
+          },
+          {
+            foreignKeyName: 'attendance_subscription_id_gym_id_fkey';
+            columns: ['subscription_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'subscriptions';
+            referencedColumns: ['id', 'gym_id'];
+          },
+        ];
+      };
       audit_logs: {
         Row: {
           action: string;
@@ -255,6 +367,284 @@ export type Database = {
         };
         Relationships: [];
       };
+      installments: {
+        Row: {
+          amount: number;
+          created_at: string;
+          created_by: string | null;
+          deleted_at: string | null;
+          due_date: string;
+          gym_id: string;
+          id: string;
+          invoice_id: string;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          amount: number;
+          created_at?: string;
+          created_by?: string | null;
+          deleted_at?: string | null;
+          due_date: string;
+          gym_id?: string;
+          id: string;
+          invoice_id: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          amount?: number;
+          created_at?: string;
+          created_by?: string | null;
+          deleted_at?: string | null;
+          due_date?: string;
+          gym_id?: string;
+          id?: string;
+          invoice_id?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'installments_invoice_id_gym_id_fkey';
+            columns: ['invoice_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'invoice_balances';
+            referencedColumns: ['invoice_id', 'gym_id'];
+          },
+          {
+            foreignKeyName: 'installments_invoice_id_gym_id_fkey';
+            columns: ['invoice_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'invoices';
+            referencedColumns: ['id', 'gym_id'];
+          },
+        ];
+      };
+      invoice_credits: {
+        Row: {
+          amount: number;
+          created_at: string;
+          created_by: string | null;
+          deleted_at: string | null;
+          gym_id: string;
+          id: string;
+          invoice_id: string;
+          kind: string;
+          reason: string | null;
+          subscription_id: string;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          amount: number;
+          created_at?: string;
+          created_by?: string | null;
+          deleted_at?: string | null;
+          gym_id?: string;
+          id?: string;
+          invoice_id: string;
+          kind: string;
+          reason?: string | null;
+          subscription_id: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          amount?: number;
+          created_at?: string;
+          created_by?: string | null;
+          deleted_at?: string | null;
+          gym_id?: string;
+          id?: string;
+          invoice_id?: string;
+          kind?: string;
+          reason?: string | null;
+          subscription_id?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'invoice_credits_invoice_id_gym_id_fkey';
+            columns: ['invoice_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'invoice_balances';
+            referencedColumns: ['invoice_id', 'gym_id'];
+          },
+          {
+            foreignKeyName: 'invoice_credits_invoice_id_gym_id_fkey';
+            columns: ['invoice_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'invoices';
+            referencedColumns: ['id', 'gym_id'];
+          },
+          {
+            foreignKeyName: 'invoice_credits_subscription_id_gym_id_fkey';
+            columns: ['subscription_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'subscriptions';
+            referencedColumns: ['id', 'gym_id'];
+          },
+        ];
+      };
+      invoice_items: {
+        Row: {
+          created_at: string;
+          created_by: string | null;
+          deleted_at: string | null;
+          description_ar: string | null;
+          description_ckb: string;
+          description_en: string | null;
+          discount: number;
+          discount_reason: string | null;
+          gym_id: string;
+          id: string;
+          invoice_id: string;
+          kind: string;
+          quantity: number;
+          subscription_id: string | null;
+          total: number;
+          unit_price: number;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          created_at?: string;
+          created_by?: string | null;
+          deleted_at?: string | null;
+          description_ar?: string | null;
+          description_ckb: string;
+          description_en?: string | null;
+          discount?: number;
+          discount_reason?: string | null;
+          gym_id?: string;
+          id?: string;
+          invoice_id: string;
+          kind: string;
+          quantity?: number;
+          subscription_id?: string | null;
+          total: number;
+          unit_price: number;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          created_at?: string;
+          created_by?: string | null;
+          deleted_at?: string | null;
+          description_ar?: string | null;
+          description_ckb?: string;
+          description_en?: string | null;
+          discount?: number;
+          discount_reason?: string | null;
+          gym_id?: string;
+          id?: string;
+          invoice_id?: string;
+          kind?: string;
+          quantity?: number;
+          subscription_id?: string | null;
+          total?: number;
+          unit_price?: number;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'invoice_items_invoice_id_gym_id_fkey';
+            columns: ['invoice_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'invoice_balances';
+            referencedColumns: ['invoice_id', 'gym_id'];
+          },
+          {
+            foreignKeyName: 'invoice_items_invoice_id_gym_id_fkey';
+            columns: ['invoice_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'invoices';
+            referencedColumns: ['id', 'gym_id'];
+          },
+          {
+            foreignKeyName: 'invoice_items_subscription_id_gym_id_fkey';
+            columns: ['subscription_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'subscriptions';
+            referencedColumns: ['id', 'gym_id'];
+          },
+        ];
+      };
+      invoices: {
+        Row: {
+          branch_id: string;
+          created_at: string;
+          created_by: string | null;
+          deleted_at: string | null;
+          discount: number;
+          gym_id: string;
+          id: string;
+          member_id: string;
+          number: string;
+          subtotal: number;
+          total: number;
+          updated_at: string;
+          updated_by: string | null;
+          void_reason: string | null;
+          voided_at: string | null;
+          voided_by: string | null;
+        };
+        Insert: {
+          branch_id: string;
+          created_at?: string;
+          created_by?: string | null;
+          deleted_at?: string | null;
+          discount?: number;
+          gym_id?: string;
+          id: string;
+          member_id: string;
+          number: string;
+          subtotal: number;
+          total: number;
+          updated_at?: string;
+          updated_by?: string | null;
+          void_reason?: string | null;
+          voided_at?: string | null;
+          voided_by?: string | null;
+        };
+        Update: {
+          branch_id?: string;
+          created_at?: string;
+          created_by?: string | null;
+          deleted_at?: string | null;
+          discount?: number;
+          gym_id?: string;
+          id?: string;
+          member_id?: string;
+          number?: string;
+          subtotal?: number;
+          total?: number;
+          updated_at?: string;
+          updated_by?: string | null;
+          void_reason?: string | null;
+          voided_at?: string | null;
+          voided_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'invoices_branch_id_gym_id_fkey';
+            columns: ['branch_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'branches';
+            referencedColumns: ['id', 'gym_id'];
+          },
+          {
+            foreignKeyName: 'invoices_member_id_gym_id_fkey';
+            columns: ['member_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'members';
+            referencedColumns: ['id', 'gym_id'];
+          },
+        ];
+      };
       member_health: {
         Row: {
           blood_type: string | null;
@@ -442,6 +832,8 @@ export type Database = {
           tags: string[];
           updated_at: string;
           updated_by: string | null;
+          membership: string | null;
+          membership_ends_on: string | null;
         };
         Insert: {
           address?: string | null;
@@ -610,6 +1002,113 @@ export type Database = {
           },
         ];
       };
+      payments: {
+        Row: {
+          amount: number;
+          branch_id: string;
+          change_given: number | null;
+          created_at: string;
+          created_by: string | null;
+          currency: string;
+          deleted_at: string | null;
+          exchange_rate: number | null;
+          foreign_amount: number | null;
+          gym_id: string;
+          id: string;
+          invoice_id: string;
+          kind: string;
+          member_id: string;
+          method: string;
+          number: string;
+          reason: string | null;
+          reference: string | null;
+          updated_at: string;
+          updated_by: string | null;
+          void_reason: string | null;
+          voided_at: string | null;
+          voided_by: string | null;
+        };
+        Insert: {
+          amount: number;
+          branch_id: string;
+          change_given?: number | null;
+          created_at?: string;
+          created_by?: string | null;
+          currency?: string;
+          deleted_at?: string | null;
+          exchange_rate?: number | null;
+          foreign_amount?: number | null;
+          gym_id?: string;
+          id: string;
+          invoice_id: string;
+          kind?: string;
+          member_id: string;
+          method: string;
+          number: string;
+          reason?: string | null;
+          reference?: string | null;
+          updated_at?: string;
+          updated_by?: string | null;
+          void_reason?: string | null;
+          voided_at?: string | null;
+          voided_by?: string | null;
+        };
+        Update: {
+          amount?: number;
+          branch_id?: string;
+          change_given?: number | null;
+          created_at?: string;
+          created_by?: string | null;
+          currency?: string;
+          deleted_at?: string | null;
+          exchange_rate?: number | null;
+          foreign_amount?: number | null;
+          gym_id?: string;
+          id?: string;
+          invoice_id?: string;
+          kind?: string;
+          member_id?: string;
+          method?: string;
+          number?: string;
+          reason?: string | null;
+          reference?: string | null;
+          updated_at?: string;
+          updated_by?: string | null;
+          void_reason?: string | null;
+          voided_at?: string | null;
+          voided_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'payments_branch_id_gym_id_fkey';
+            columns: ['branch_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'branches';
+            referencedColumns: ['id', 'gym_id'];
+          },
+          {
+            foreignKeyName: 'payments_invoice_id_member_id_gym_id_fkey';
+            columns: ['invoice_id', 'member_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'invoice_balances';
+            referencedColumns: ['invoice_id', 'member_id', 'gym_id'];
+          },
+          {
+            foreignKeyName: 'payments_invoice_id_member_id_gym_id_fkey';
+            columns: ['invoice_id', 'member_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'invoices';
+            referencedColumns: ['id', 'member_id', 'gym_id'];
+          },
+          {
+            foreignKeyName: 'payments_member_id_gym_id_fkey';
+            columns: ['member_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'members';
+            referencedColumns: ['id', 'gym_id'];
+          },
+        ];
+      };
       permissions: {
         Row: {
           created_at: string;
@@ -630,6 +1129,134 @@ export type Database = {
           sort_order?: number;
         };
         Relationships: [];
+      };
+      plan_branches: {
+        Row: {
+          branch_id: string;
+          created_at: string;
+          created_by: string | null;
+          gym_id: string;
+          id: string;
+          plan_id: string;
+        };
+        Insert: {
+          branch_id: string;
+          created_at?: string;
+          created_by?: string | null;
+          gym_id?: string;
+          id?: string;
+          plan_id: string;
+        };
+        Update: {
+          branch_id?: string;
+          created_at?: string;
+          created_by?: string | null;
+          gym_id?: string;
+          id?: string;
+          plan_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'plan_branches_branch_id_gym_id_fkey';
+            columns: ['branch_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'branches';
+            referencedColumns: ['id', 'gym_id'];
+          },
+          {
+            foreignKeyName: 'plan_branches_plan_id_gym_id_fkey';
+            columns: ['plan_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'plans';
+            referencedColumns: ['id', 'gym_id'];
+          },
+        ];
+      };
+      plans: {
+        Row: {
+          all_branches: boolean;
+          allowed_days: number[] | null;
+          allowed_from: string | null;
+          allowed_until: string | null;
+          created_at: string;
+          created_by: string | null;
+          daily_visit_limit: number | null;
+          deleted_at: string | null;
+          duration_count: number | null;
+          duration_unit: string | null;
+          gender: string;
+          gym_id: string;
+          id: string;
+          is_active: boolean;
+          kind: string;
+          max_freeze_days: number;
+          name_ar: string | null;
+          name_ckb: string;
+          name_en: string | null;
+          price: number;
+          updated_at: string;
+          updated_by: string | null;
+          visit_count: number | null;
+        };
+        Insert: {
+          all_branches?: boolean;
+          allowed_days?: number[] | null;
+          allowed_from?: string | null;
+          allowed_until?: string | null;
+          created_at?: string;
+          created_by?: string | null;
+          daily_visit_limit?: number | null;
+          deleted_at?: string | null;
+          duration_count?: number | null;
+          duration_unit?: string | null;
+          gender?: string;
+          gym_id?: string;
+          id: string;
+          is_active?: boolean;
+          kind: string;
+          max_freeze_days?: number;
+          name_ar?: string | null;
+          name_ckb: string;
+          name_en?: string | null;
+          price: number;
+          updated_at?: string;
+          updated_by?: string | null;
+          visit_count?: number | null;
+        };
+        Update: {
+          all_branches?: boolean;
+          allowed_days?: number[] | null;
+          allowed_from?: string | null;
+          allowed_until?: string | null;
+          created_at?: string;
+          created_by?: string | null;
+          daily_visit_limit?: number | null;
+          deleted_at?: string | null;
+          duration_count?: number | null;
+          duration_unit?: string | null;
+          gender?: string;
+          gym_id?: string;
+          id?: string;
+          is_active?: boolean;
+          kind?: string;
+          max_freeze_days?: number;
+          name_ar?: string | null;
+          name_ckb?: string;
+          name_en?: string | null;
+          price?: number;
+          updated_at?: string;
+          updated_by?: string | null;
+          visit_count?: number | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'plans_gym_id_fkey';
+            columns: ['gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'gyms';
+            referencedColumns: ['id'];
+          },
+        ];
       };
       role_permissions: {
         Row: {
@@ -977,9 +1604,288 @@ export type Database = {
           },
         ];
       };
+      subscription_freezes: {
+        Row: {
+          created_at: string;
+          created_by: string | null;
+          deleted_at: string | null;
+          end_date: string;
+          ended_on: string | null;
+          gym_id: string;
+          id: string;
+          reason: string | null;
+          start_date: string;
+          subscription_id: string;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          created_at?: string;
+          created_by?: string | null;
+          deleted_at?: string | null;
+          end_date: string;
+          ended_on?: string | null;
+          gym_id?: string;
+          id: string;
+          reason?: string | null;
+          start_date: string;
+          subscription_id: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          created_at?: string;
+          created_by?: string | null;
+          deleted_at?: string | null;
+          end_date?: string;
+          ended_on?: string | null;
+          gym_id?: string;
+          id?: string;
+          reason?: string | null;
+          start_date?: string;
+          subscription_id?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'subscription_freezes_subscription_id_gym_id_fkey';
+            columns: ['subscription_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'subscriptions';
+            referencedColumns: ['id', 'gym_id'];
+          },
+        ];
+      };
+      subscriptions: {
+        Row: {
+          allowed_days: number[] | null;
+          allowed_from: string | null;
+          allowed_until: string | null;
+          branch_id: string;
+          branch_ids: string[] | null;
+          created_at: string;
+          created_by: string | null;
+          daily_visit_limit: number | null;
+          deleted_at: string | null;
+          duration_count: number | null;
+          duration_unit: string | null;
+          end_date: string | null;
+          gender: string;
+          gym_id: string;
+          id: string;
+          kind: string;
+          max_freeze_days: number;
+          member_id: string;
+          name_ar: string | null;
+          name_ckb: string;
+          name_en: string | null;
+          plan_id: string;
+          price: number;
+          replaces_id: string | null;
+          start_date: string;
+          status: string;
+          status_changed_at: string | null;
+          status_changed_by: string | null;
+          status_reason: string | null;
+          transferred_from_id: string | null;
+          updated_at: string;
+          updated_by: string | null;
+          visit_count: number | null;
+          used_visits: number | null;
+        };
+        Insert: {
+          allowed_days?: number[] | null;
+          allowed_from?: string | null;
+          allowed_until?: string | null;
+          branch_id: string;
+          branch_ids?: string[] | null;
+          created_at?: string;
+          created_by?: string | null;
+          daily_visit_limit?: number | null;
+          deleted_at?: string | null;
+          duration_count?: number | null;
+          duration_unit?: string | null;
+          end_date?: string | null;
+          gender: string;
+          gym_id?: string;
+          id: string;
+          kind: string;
+          max_freeze_days: number;
+          member_id: string;
+          name_ar?: string | null;
+          name_ckb: string;
+          name_en?: string | null;
+          plan_id: string;
+          price: number;
+          replaces_id?: string | null;
+          start_date: string;
+          status?: string;
+          status_changed_at?: string | null;
+          status_changed_by?: string | null;
+          status_reason?: string | null;
+          transferred_from_id?: string | null;
+          updated_at?: string;
+          updated_by?: string | null;
+          visit_count?: number | null;
+        };
+        Update: {
+          allowed_days?: number[] | null;
+          allowed_from?: string | null;
+          allowed_until?: string | null;
+          branch_id?: string;
+          branch_ids?: string[] | null;
+          created_at?: string;
+          created_by?: string | null;
+          daily_visit_limit?: number | null;
+          deleted_at?: string | null;
+          duration_count?: number | null;
+          duration_unit?: string | null;
+          end_date?: string | null;
+          gender?: string;
+          gym_id?: string;
+          id?: string;
+          kind?: string;
+          max_freeze_days?: number;
+          member_id?: string;
+          name_ar?: string | null;
+          name_ckb?: string;
+          name_en?: string | null;
+          plan_id?: string;
+          price?: number;
+          replaces_id?: string | null;
+          start_date?: string;
+          status?: string;
+          status_changed_at?: string | null;
+          status_changed_by?: string | null;
+          status_reason?: string | null;
+          transferred_from_id?: string | null;
+          updated_at?: string;
+          updated_by?: string | null;
+          visit_count?: number | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'subscriptions_branch_id_gym_id_fkey';
+            columns: ['branch_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'branches';
+            referencedColumns: ['id', 'gym_id'];
+          },
+          {
+            foreignKeyName: 'subscriptions_member_id_gym_id_fkey';
+            columns: ['member_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'members';
+            referencedColumns: ['id', 'gym_id'];
+          },
+          {
+            foreignKeyName: 'subscriptions_plan_id_gym_id_fkey';
+            columns: ['plan_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'plans';
+            referencedColumns: ['id', 'gym_id'];
+          },
+          {
+            foreignKeyName: 'subscriptions_replaces_id_gym_id_fkey';
+            columns: ['replaces_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'subscriptions';
+            referencedColumns: ['id', 'gym_id'];
+          },
+          {
+            foreignKeyName: 'subscriptions_transferred_from_id_gym_id_fkey';
+            columns: ['transferred_from_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'subscriptions';
+            referencedColumns: ['id', 'gym_id'];
+          },
+        ];
+      };
     };
     Views: {
-      [_ in never]: never;
+      installment_balances: {
+        Row: {
+          amount: number | null;
+          due_date: string | null;
+          gym_id: string | null;
+          installment_id: string | null;
+          invoice_id: string | null;
+          paid: number | null;
+          voided: boolean | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'installments_invoice_id_gym_id_fkey';
+            columns: ['invoice_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'invoice_balances';
+            referencedColumns: ['invoice_id', 'gym_id'];
+          },
+          {
+            foreignKeyName: 'installments_invoice_id_gym_id_fkey';
+            columns: ['invoice_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'invoices';
+            referencedColumns: ['id', 'gym_id'];
+          },
+        ];
+      };
+      invoice_balances: {
+        Row: {
+          branch_id: string | null;
+          created_at: string | null;
+          credited: number | null;
+          due: number | null;
+          gym_id: string | null;
+          invoice_id: string | null;
+          member_id: string | null;
+          number: string | null;
+          paid: number | null;
+          refunded: number | null;
+          total: number | null;
+          voided_at: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'invoices_branch_id_gym_id_fkey';
+            columns: ['branch_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'branches';
+            referencedColumns: ['id', 'gym_id'];
+          },
+          {
+            foreignKeyName: 'invoices_member_id_gym_id_fkey';
+            columns: ['member_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'members';
+            referencedColumns: ['id', 'gym_id'];
+          },
+        ];
+      };
+      member_debts: {
+        Row: {
+          due: number | null;
+          full_name: string | null;
+          gym_id: string | null;
+          invoice_count: number | null;
+          member_id: string | null;
+          member_number: number | null;
+          next_due_date: string | null;
+          owed_now: number | null;
+          phone: string | null;
+          status: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'invoices_member_id_gym_id_fkey';
+            columns: ['member_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'members';
+            referencedColumns: ['id', 'gym_id'];
+          },
+        ];
+      };
     };
     Functions: {
       assign_card: {
@@ -1042,6 +1948,52 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      branch_occupancy: { Args: { p_branch_id: string }; Returns: number };
+      cancel_subscription: {
+        Args: {
+          p_branch_id?: string;
+          p_reason: string;
+          p_refund?: Json;
+          p_subscription_id: string;
+        };
+        Returns: Json;
+      };
+      change_plan: {
+        Args: {
+          p_branch_id: string;
+          p_installments?: Json;
+          p_invoice_id: string;
+          p_new_subscription_id: string;
+          p_payment?: Json;
+          p_plan_id: string;
+          p_price: number;
+          p_subscription_id: string;
+        };
+        Returns: Json;
+      };
+      charge_member: {
+        Args: {
+          p_amount: number;
+          p_branch_id: string;
+          p_description: string;
+          p_invoice_id: string;
+          p_kind: string;
+          p_member_id: string;
+          p_payment?: Json;
+        };
+        Returns: Json;
+      };
+      check_in: {
+        Args: {
+          p_branch_id: string;
+          p_card_uid?: string;
+          p_device_id?: string;
+          p_id: string;
+          p_member_id?: string;
+          p_override_note?: string;
+        };
+        Returns: Json;
+      };
       check_member_import: {
         Args: { p_rows: Json };
         Returns: {
@@ -1053,6 +2005,7 @@ export type Database = {
           status: string;
         }[];
       };
+      check_out: { Args: { p_attendance_id: string }; Returns: Json };
       clear_my_pin_lockout: { Args: Record<PropertyKey, never>; Returns: undefined };
       create_branch: {
         Args: {
@@ -1284,6 +2237,16 @@ export type Database = {
           status: string;
         }[];
       };
+      freeze_subscription: {
+        Args: {
+          p_days: number;
+          p_freeze_id: string;
+          p_reason?: string;
+          p_start_date: string;
+          p_subscription_id: string;
+        };
+        Returns: Json;
+      };
       gym_limits: {
         Args: Record<PropertyKey, never>;
         Returns: {
@@ -1318,6 +2281,10 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      inside: {
+        Args: { p_visit: Database['public']['Tables']['attendance']['Row'] };
+        Returns: boolean;
+      };
       member_import_history: {
         Args: Record<PropertyKey, never>;
         Returns: {
@@ -1347,6 +2314,14 @@ export type Database = {
           member_count: number;
           tag: string;
         }[];
+      };
+      membership: {
+        Args: { p_member: Database['public']['Tables']['members']['Row'] };
+        Returns: string;
+      };
+      membership_ends_on: {
+        Args: { p_member: Database['public']['Tables']['members']['Row'] };
+        Returns: string;
       };
       move_device: {
         Args: { p_branch_id: string; p_device_id: string };
@@ -1404,6 +2379,10 @@ export type Database = {
           suspended: boolean;
         }[];
       };
+      pay_invoice: {
+        Args: { p_branch_id: string; p_invoice_id: string; p_payment: Json };
+        Returns: Json;
+      };
       platform_admin_orphan: { Args: { p_email: string }; Returns: string };
       platform_script_add_admin: {
         Args: { p_full_name: string; p_user_id: string };
@@ -1418,6 +2397,18 @@ export type Database = {
         }[];
       };
       platform_script_record: { Args: { p_action: string; p_user_id: string }; Returns: undefined };
+      refund_invoice: {
+        Args: {
+          p_amount: number;
+          p_branch_id: string;
+          p_invoice_id: string;
+          p_method: string;
+          p_reason: string;
+          p_reference?: string;
+          p_refund_id: string;
+        };
+        Returns: Json;
+      };
       register_device: {
         Args: {
           p_branch_id: string;
@@ -1497,6 +2488,58 @@ export type Database = {
           staff_count: number;
         }[];
       };
+      save_plan: {
+        Args: {
+          p_allowed_days?: number[];
+          p_allowed_from?: string;
+          p_allowed_until?: string;
+          p_branch_ids?: string[];
+          p_daily_visit_limit?: number;
+          p_duration_count?: number;
+          p_duration_unit?: string;
+          p_gender?: string;
+          p_id: string;
+          p_is_active?: boolean;
+          p_kind: string;
+          p_max_freeze_days?: number;
+          p_name_ar?: string;
+          p_name_ckb: string;
+          p_name_en?: string;
+          p_price: number;
+          p_visit_count?: number;
+        };
+        Returns: {
+          all_branches: boolean;
+          allowed_days: number[] | null;
+          allowed_from: string | null;
+          allowed_until: string | null;
+          created_at: string;
+          created_by: string | null;
+          daily_visit_limit: number | null;
+          deleted_at: string | null;
+          duration_count: number | null;
+          duration_unit: string | null;
+          gender: string;
+          gym_id: string;
+          id: string;
+          is_active: boolean;
+          kind: string;
+          max_freeze_days: number;
+          name_ar: string | null;
+          name_ckb: string;
+          name_en: string | null;
+          price: number;
+          updated_at: string;
+          updated_by: string | null;
+          visit_count: number | null;
+        };
+        SetofOptions: {
+          from: '*';
+          to: 'plans';
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
       save_role: {
         Args: {
           p_name_ar?: string;
@@ -1557,6 +2600,22 @@ export type Database = {
           isOneToOne: false;
           isSetofReturn: true;
         };
+      };
+      sell_subscription: {
+        Args: {
+          p_branch_id: string;
+          p_discount?: number;
+          p_discount_reason?: string;
+          p_installments?: Json;
+          p_invoice_id: string;
+          p_member_id: string;
+          p_payment?: Json;
+          p_plan_id: string;
+          p_price: number;
+          p_start_date: string;
+          p_subscription_id: string;
+        };
+        Returns: Json;
       };
       seller_add_admin: { Args: { p_full_name: string; p_user_id: string }; Returns: undefined };
       seller_admins: {
@@ -1779,6 +2838,16 @@ export type Database = {
           username: string;
         }[];
       };
+      subscription_change_preview: { Args: { p_subscription_id: string }; Returns: Json };
+      transfer_subscription: {
+        Args: {
+          p_member_id: string;
+          p_new_subscription_id: string;
+          p_reason: string;
+          p_subscription_id: string;
+        };
+        Returns: Json;
+      };
       unblock_card: {
         Args: { p_card_id: string };
         Returns: {
@@ -1818,6 +2887,7 @@ export type Database = {
           changed: number;
         }[];
       };
+      unfreeze_subscription: { Args: { p_freeze_id: string }; Returns: Json };
       unlock_on_device: { Args: { p_device_id: string; p_pin: string }; Returns: Json };
       unlock_with_pin: { Args: { p_branch_id: string; p_pin: string }; Returns: Json };
       update_member: {
@@ -1879,6 +2949,13 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      used_visits: {
+        Args: { p_subscription: Database['public']['Tables']['subscriptions']['Row'] };
+        Returns: number;
+      };
+      void_invoice: { Args: { p_invoice_id: string; p_reason: string }; Returns: undefined };
+      void_payment: { Args: { p_payment_id: string; p_reason: string }; Returns: Json };
+      void_visit: { Args: { p_attendance_id: string; p_reason: string }; Returns: Json };
     };
     Enums: {
       language_code: 'ckb' | 'en' | 'ar';

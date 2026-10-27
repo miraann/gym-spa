@@ -33,7 +33,9 @@
     "otherBranch": "Another branch",
     "page": "Page {{page}} of {{pages}}",
     "previous": "Previous",
-    "next": "Next"
+    "next": "Next",
+    "membership": "Subscription",
+    "anyMembership": "Any subscription"
   },
   "columns": {
     "number": "Number",
@@ -72,9 +74,6 @@
     "noOwnPhone": "Has no mobile number of their own (e.g. a child)",
     "branch": "Joined at branch",
     "birthDate": "Date of birth",
-    "day": "Day",
-    "month": "Month",
-    "year": "Year",
     "emergency": "Emergency contact",
     "emergencyHint": "This member has no number of their own, so a close person's number is needed.",
     "emergencyName": "Contact's name",
@@ -226,5 +225,12 @@
     "invalid_request": "These details are not valid. Check them and try again.",
     "network": "Couldn't reach the server. Check your internet connection and try again.",
     "unexpected": "Something went wrong. Try again. If it keeps happening, contact Click Group."
+  },
+  "memberships": {
+    "current": "Has a subscription",
+    "frozen": "Subscription frozen",
+    "upcoming": "Subscription not started yet",
+    "expired": "Subscription expired",
+    "none": "No subscription"
   }
 }

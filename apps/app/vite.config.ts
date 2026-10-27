@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process';
 import { fileURLToPath, URL } from 'node:url';
 import tailwindcss from '@tailwindcss/vite';
 import { tanstackRouter } from '@tanstack/router-plugin/vite';
@@ -19,6 +20,27 @@ function appNameInHtml(): Plugin {
   };
 }
 
+/**
+ * Puts the commit the build was made from into index.html (`<meta name="gym-build">`), so the
+ * release flow can check which build Vercel serves (README → Releasing).
+ */
+function buildCommitInHtml(): Plugin {
+  let commit = process.env.VERCEL_GIT_COMMIT_SHA ?? '';
+  if (commit === '') {
+    try {
+      commit = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
+    } catch {
+      commit = 'unknown';
+    }
+  }
+  return {
+    name: 'gym:build-commit-in-html',
+    transformIndexHtml: () => [
+      { tag: 'meta', attrs: { name: 'gym-build', content: commit }, injectTo: 'head' },
+    ],
+  };
+}
+
 export default defineConfig(({ mode }) => ({
   plugins: [
     // The router plugin must run before the React plugin.
@@ -26,6 +48,7 @@ export default defineConfig(({ mode }) => ({
     react(),
     tailwindcss(),
     appNameInHtml(),
+    buildCommitInHtml(),
     contentSecurityPolicy(loadEnv(mode, fileURLToPath(new URL('.', import.meta.url)), 'VITE_')),
     VitePWA({
       // Ask before reloading into a new version, so nobody loses a half-filled form.

@@ -51,21 +51,21 @@ export const NAV_GROUPS: readonly NavGroup[] = [
     key: 'main',
     items: [
       { key: 'home', icon: HouseIcon, to: '/' },
-      { key: 'checkin', icon: NfcIcon, permission: 'checkin.perform' },
+      { key: 'checkin', icon: NfcIcon, to: '/checkin', permission: 'checkin.perform' },
     ],
   },
   {
     key: 'members',
     items: [
       { key: 'members', icon: UsersIcon, to: '/members', permission: 'members.view' },
-      { key: 'plans', icon: ClipboardListIcon, permission: 'plans.manage' },
+      { key: 'plans', icon: ClipboardListIcon, to: '/plans', permission: 'plans.manage' },
       { key: 'subscriptions', icon: IdCardIcon, permission: 'members.view' },
     ],
   },
   {
     key: 'finance',
     items: [
-      { key: 'payments', icon: WalletIcon, permission: 'payments.view' },
+      { key: 'payments', icon: WalletIcon, to: '/payments', permission: 'payments.view' },
       { key: 'shop', icon: ShoppingBagIcon, permission: 'pos.sell' },
       { key: 'cashRegister', icon: BanknoteIcon, permission: 'cash_register.operate' },
     ],

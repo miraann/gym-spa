@@ -19,7 +19,8 @@
     "smoke:staff-admin": "tsx scripts/smoke-staff-admin.ts",
     "functions": "supabase functions serve --workdir ..",
     "test:deno": "tsx scripts/test-deno.ts",
-    "typecheck": "tsc -p tsconfig.json"
+    "typecheck": "tsc -p tsconfig.json",
+    "release:migrations": "tsx scripts/release-migrations.ts"
   },
   "dependencies": {
     "@gym/core": "workspace:*",

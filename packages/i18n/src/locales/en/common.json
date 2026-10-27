@@ -43,7 +43,10 @@
   "pwa": {
     "offlineReady": "The app is ready and will open faster",
     "updateAvailable": "A new version of the app is ready",
-    "updateHint": "Reload to start using the new version"
+    "updateHint": "The page reloads and the app locks. Unlock it with your PIN.",
+    "unsavedTitle": "Changes aren't saved yet",
+    "unsavedText": "If you update now, what you typed and haven't saved is lost.",
+    "updateAnyway": "Update anyway"
   },
   "search": {
     "open": "Search",

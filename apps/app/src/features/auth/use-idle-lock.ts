@@ -25,10 +25,31 @@ export function useSetting(key: SettingKey): number {
 }
 
 const ACTIVITY_EVENTS = ['pointerdown', 'keydown', 'wheel', 'touchstart'] as const;
+
+/** Screens that keep the app open while nobody touches it (the check-in kiosk). */
+const pausedBy = new Set<symbol>();
+
+/**
+ * Keeps the idle lock from locking while the screen is shown and `enabled`: the check-in kiosk
+ * stands unattended at the door, and leaving it locks the app instead.
+ */
+export function usePauseIdleLock(enabled = true): void {
+  useEffect(() => {
+    if (!enabled) return;
+    const pause = Symbol('pause');
+    pausedBy.add(pause);
+    return () => {
+      pausedBy.delete(pause);
+    };
+  }, [enabled]);
+}
 /** How often the idle timer checks; also limits how precise the lock time is. */
 const CHECK_EVERY_MS = 15_000;
 
-/** Locks the app after `security.idle_lock_minutes` without a tap, click or key press. */
+/**
+ * Locks the app after `security.idle_lock_minutes` without a tap, click or key press, except while
+ * a screen pauses it (usePauseIdleLock).
+ */
 export function useIdleLock(): void {
   const controller = useAuthController();
   const { activeId } = useAuthState();
@@ -55,6 +76,7 @@ export function useIdleLock(): void {
   useEffect(() => {
     if (!activeId) return;
     const check = () => {
+      if (pausedBy.size > 0) lastActivity.current = Date.now();
       if (Date.now() - lastActivity.current >= minutes * 60_000) controller.lock();
     };
     // At once too: a shorter limit that just arrived may already have passed.

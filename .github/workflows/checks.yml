@@ -1,0 +1,54 @@
+# The checks on every push (CLAUDE.md → Working rules): typecheck, lint, format and unit tests, and
+# the database tests and SQL lint against a local Supabase in the runner. The end-to-end tests stay
+# on the developer's PC for now. No secrets are used: the local Supabase has fixed demo keys.
+name: Checks
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+
+# A newer push to the same branch cancels the run still going.
+concurrency:
+  group: checks-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: pnpm check
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      # The PC/SC reader's native part (smartcard, apps/desktop) builds against libpcsclite.
+      - run: sudo apt-get update -qq && sudo apt-get install -y -qq libpcsclite-dev
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm check
+
+  database:
+    name: pnpm db:test and db:lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update -qq && sudo apt-get install -y -qq libpcsclite-dev
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # Only what the database tests need: Postgres, Auth (it finishes the auth schema) and the API.
+      - run: >-
+          pnpm --filter @gym/supabase exec supabase start --workdir ..
+          -x studio,imgproxy,mailpit,logflare,vector,realtime,storage-api,edge-runtime,supavisor,postgres-meta
+      - run: pnpm db:test
+      - run: pnpm db:lint

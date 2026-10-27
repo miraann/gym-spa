@@ -1,0 +1,118 @@
+{
+  "page": {
+    "title": "Check-in",
+    "description": "Hold a member's card to the reader, or find them by name.",
+    "branch": "{{name}} branch",
+    "noBranch": "You have no active branch, so you can't check members in.",
+    "hold": "Hold the card to the reader",
+    "holdHint": "The result shows here at once.",
+    "checking": "Checking…",
+    "kiosk": "Door screen",
+    "kioskHint": "A dark screen for the door, where members hold their own card to the reader.",
+    "insideNow": "Inside now",
+    "visits": "Today's visits"
+  },
+  "manual": {
+    "title": "Find a member",
+    "search": "Name, member number or phone",
+    "checkIn": "Check in",
+    "none": "No member found.",
+    "more": "More members match; type more."
+  },
+  "result": {
+    "allowed": "Welcome",
+    "warning": "Welcome",
+    "already": "Already in",
+    "denied": "Not allowed",
+    "alreadyAt": "Checked in at {{time}}.",
+    "number": "Member number {{number}}",
+    "visitsLeft": "Visits left: {{count}}",
+    "endsOn": "Subscription until {{date}}",
+    "overridden": "Let in by staff.",
+    "close": "Close",
+    "closing": "Closes by itself"
+  },
+  "reasons": {
+    "CARD_INVALID": "This card isn't known.",
+    "CARD_BLOCKED": "This card is blocked.",
+    "CARD_STOLEN": "This card was reported stolen. Check their face.",
+    "MEMBER_suspended": "This member is suspended.",
+    "MEMBER_banned": "This member is banned.",
+    "MEMBER_archived": "This member is archived.",
+    "MEMBER_active": "This member isn't active.",
+    "NO_SUBSCRIPTION": "No subscription.",
+    "NOT_STARTED": "The subscription starts on {{date}}.",
+    "PLAN_EXPIRED": "The subscription ended on {{date}}.",
+    "PLAN_FROZEN": "The subscription is frozen until {{date}}.",
+    "NO_VISITS_LEFT": "No visits left.",
+    "WRONG_BRANCH": "The subscription isn't for this branch.",
+    "WRONG_DAY": "The subscription isn't for today.",
+    "WRONG_TIME": "The subscription is only from {{from}} to {{until}}.",
+    "DAILY_LIMIT": "No more visits today.",
+    "DEBT": "Owes: {{amount}}"
+  },
+  "warnings": {
+    "ENDS_SOON": "The subscription ends on {{date}}.",
+    "FEW_VISITS": "Only {{count}} visits left.",
+    "LAST_VISIT": "This was the last visit.",
+    "DEBT": "Owes: {{amount}}",
+    "BIRTHDAY": "It's their birthday today."
+  },
+  "override": {
+    "action": "Let in anyway",
+    "title": "Let in anyway",
+    "note": "Reason",
+    "confirm": "Let them in",
+    "cancel": "Cancel",
+    "noteRequired": "Write a reason."
+  },
+  "kiosk": {
+    "hold": "Hold your card to the reader",
+    "exit": "Exit",
+    "exitHint": "The app locks. Open it with your PIN."
+  },
+  "errors": {
+    "permission_denied": "You don't have permission for this.",
+    "no_branch_access": "You can check members in only in your own branches.",
+    "branch_inactive": "This branch is deactivated.",
+    "member_not_found": "This member wasn't found, or you can't see them.",
+    "device_not_found": "This device isn't registered in this gym.",
+    "invalid_request": "Something in the request isn't right. Try again.",
+    "gym_read_only": "This gym is view-only, so no check-in is saved.",
+    "network": "No internet connection. Nothing was checked in.",
+    "unexpected": "Something went wrong. Try again.",
+    "visit_not_found": "This visit wasn't found, or isn't in your branches.",
+    "visit_voided": "This visit was voided.",
+    "already_voided": "This visit was voided already.",
+    "reason_required": "Write a reason."
+  },
+  "visits": {
+    "title": "Visits",
+    "description": "Who came in, and who is inside now.",
+    "day": "Day",
+    "show": "Show",
+    "all": "All",
+    "inside": "Inside",
+    "none": "No visits.",
+    "limit": "Only the last {{count}} visits are shown.",
+    "card": "By card",
+    "manual": "By hand",
+    "left": "Left at {{time}}",
+    "overridden": "Let in by staff: {{note}}",
+    "voided": "Voided: {{reason}}",
+    "checkOut": "Check out",
+    "checkedOut": "{{name}} checked out.",
+    "void": "Void",
+    "voidTitle": "Void the visit of {{name}}",
+    "voidDescription": "The visit counts for nothing, and goes back to the subscription it used.",
+    "voidReason": "Reason",
+    "voidDone": "The visit was voided.",
+    "cancel": "Cancel",
+    "actions": "Actions for the visit of {{name}}"
+  },
+  "memberVisits": {
+    "title": "Visits",
+    "none": "No visits yet.",
+    "last": "Only the last {{count}} visits are shown."
+  }
+}

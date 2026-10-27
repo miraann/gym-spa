@@ -27,20 +27,21 @@ describe('isNavItemActive', () => {
 
 describe('visibleNavGroups', () => {
   it('hides pages that are not built yet, even with the permission', () => {
-    const keys = visibleNavGroups(new Set(['checkin.perform', 'members.view'])).flatMap((group) =>
-      group.items.map((item) => item.key),
-    );
-    expect(keys).toEqual(['home', 'members', 'settings']);
+    const keys = visibleNavGroups(
+      new Set(['checkin.perform', 'members.view', 'cash_register.operate']),
+    ).flatMap((group) => group.items.map((item) => item.key));
+    expect(keys).toEqual(['home', 'checkin', 'members', 'settings']);
   });
 });
 
 describe('navTabItems', () => {
   it("gives a receptionist their role's tabs that are built, filling free slots", () => {
     const permissions = new Set(['checkin.perform', 'members.view', 'cash_register.operate']);
-    // Check-in and the cash register come back by themselves once their pages exist.
+    // The cash register comes back by itself once its page exists.
     expect(navTabItems(null, 'receptionist', permissions).map((item) => item.key)).toEqual([
       'home',
       'members',
+      'checkin',
       'settings',
     ]);
   });

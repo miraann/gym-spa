@@ -89,7 +89,7 @@ export {
   type CardReplaceReason,
   type CardStatus,
 } from './cards.ts';
-export { toLatinDigits } from './digits.ts';
+export { parseDecimal, parseWholeNumber, toLatinDigits } from './digits.ts';
 export {
   IMPORT_FIELDS,
   IMPORT_MAX_BYTES,
@@ -237,11 +237,72 @@ export {
   normalizeRecoveryCode,
 } from './platform.ts';
 export {
+  DURATION_UNITS,
+  PLAN_GENDERS,
+  PLAN_KINDS,
+  PLAN_LIMITS,
+  WEEK_ORDER,
+  isValidPlanPrice,
+  normalizeWeekdays,
+  planEndDate,
+  planHasDuration,
+  planHasVisits,
+  type DurationUnit,
+  type PlanGender,
+  type PlanKind,
+  type Weekday,
+} from './plans.ts';
+export {
+  DISCOUNT_PERMISSIONS,
+  PAYMENT_METHODS,
+  installmentProblem,
+  isDiscountAllowed,
+  isValidUsdAmount,
+  maxDiscountPercent,
+  splitInstallments,
+  usdPayment,
+  usdToIqd,
+  type InstallmentDraft,
+  type InstallmentProblem,
+  type PaymentMethod,
+} from './pricing.ts';
+export {
+  MEMBERSHIPS,
+  SUBSCRIPTION_STATUSES,
+  addMonths,
+  daysBetween,
+  frozenDays,
+  isFrozenOn,
+  nextDay,
+  renewalStart,
+  subscriptionState,
+  type FreezeDates,
+  type Membership,
+  type SubscriptionDates,
+  type SubscriptionState,
+  type SubscriptionStatus,
+} from './subscriptions.ts';
+export {
   SEARCH_IGNORED,
   SEARCH_LOOK_ALIKES,
   matchesSearch,
   normalizeSearchText,
 } from './search.ts';
+export {
+  CHECKIN_REASONS,
+  CHECKIN_RESULTS,
+  CHECKIN_STEPS,
+  CHECKIN_WARNINGS,
+  OVERRIDABLE_REASONS,
+  canOverride,
+  type CheckinAnswer,
+  type CheckinMember,
+  type CheckinReason,
+  type CheckinResult,
+  type CheckinSubscription,
+  type CheckinWarning,
+  type OverridableReason,
+} from './checkin.ts';
 export {
   SETTINGS,
   isSettingKey,

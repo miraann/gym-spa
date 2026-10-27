@@ -6,3 +6,25 @@
    Tailwind must see too. */
 @import '@gym/ui/theme.css';
 @source '../../../packages/ui/src';
+
+/* Printing (step 3g): only the receipt in #print-root is printed; its page size is set with it. */
+#print-root {
+  display: none;
+}
+
+@media print {
+  body > *:not(#print-root) {
+    display: none !important;
+  }
+
+  #print-root {
+    display: block;
+  }
+}
+
+/* The check-in result's ring (step 4b): it empties over the seconds the result stays. */
+@keyframes checkin-countdown {
+  to {
+    stroke-dashoffset: var(--checkin-length);
+  }
+}

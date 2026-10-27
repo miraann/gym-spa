@@ -70,12 +70,13 @@ export class CardScanDispatcher {
 
   /**
    * A screen that waits for a card: it gets every card until it closes or a newer one opens. A card
-   * already lying on a reader is read for it once.
+   * already lying on a reader is read for it once, unless `readLying` is false (check-in counts
+   * only a newly placed card).
    */
-  addScreen(handler: ScanHandlerRef): () => void {
+  addScreen(handler: ScanHandlerRef, readLying = true): () => void {
     this.screens.push(handler);
     this.update();
-    for (const reader of this.readers) reader.readLying?.();
+    if (readLying) for (const reader of this.readers) reader.readLying?.();
     return () => {
       const index = this.screens.lastIndexOf(handler);
       if (index >= 0) this.screens.splice(index, 1);
@@ -118,17 +119,17 @@ const dispatcher = new CardScanDispatcher(
 
 /**
  * Calls `onScan` for every card read while the screen is shown, `enabled` and the app unlocked.
- * When it starts, a card already lying on a PC/SC reader is read once.
+ * When it starts, a card already lying on a PC/SC reader is read once, unless `readLying` is false.
  */
-export function useCardScans(onScan: ScanHandler, enabled = true): void {
+export function useCardScans(onScan: ScanHandler, enabled = true, readLying = true): void {
   const handler = useRef(onScan);
   const unlocked = useAuthState().activeId !== null;
   useEffect(() => {
     handler.current = onScan;
   });
   useEffect(
-    () => (enabled && unlocked ? dispatcher.addScreen(handler) : undefined),
-    [enabled, unlocked],
+    () => (enabled && unlocked ? dispatcher.addScreen(handler, readLying) : undefined),
+    [enabled, unlocked, readLying],
   );
 }
 

@@ -5,6 +5,7 @@ import {
   parseStoredImage,
   type StoredImage,
   GENDERS,
+  MEMBERSHIPS,
   MEMBER_STATUSES,
   REFERRAL_SOURCES,
   escapeLikePattern,
@@ -12,6 +13,7 @@ import {
   normalizeName,
   type BloodType,
   type Gender,
+  type Membership,
   type MemberStatus,
   type ReferralSource,
 } from '@gym/core';
@@ -29,7 +31,7 @@ import type { PreparedPhoto } from './member-photo-image';
 // database functions decide what they see and may change (README → Members). The query keys
 // include who is acting, so a PIN switch never shows another staff member's view from the cache.
 
-const MEMBERS_QUERY = 'members';
+export const MEMBERS_QUERY = 'members';
 const MEMBER_TAGS_QUERY = 'member-tags';
 export const MEMBER_PAGE_SIZE = 25;
 
@@ -61,6 +63,10 @@ export interface Member {
   /** When the photo last changed; null: no photo. */
   readonly photoUpdatedAt: string | null;
   readonly createdAt: string;
+  /** What their subscriptions make them today (step 3g); null when not read with the row. */
+  readonly membership: Membership | null;
+  /** The last day of what runs; null: no end, or nothing runs. */
+  readonly membershipEndsOn: string | null;
 }
 
 /** Health info (public.member_health), for staff with members.medical.view only. */
@@ -86,7 +92,7 @@ export interface MemberPage {
 }
 
 const MEMBER_COLUMNS =
-  'id, member_number, branch_id, full_name, gender, phone, emergency_contact_name, emergency_phone, birth_date, preferred_language, address, referral_source, goals, notes, tags, status, status_reason, status_changed_at, has_health_notes, photo_updated_at, created_at';
+  'id, member_number, branch_id, full_name, gender, phone, emergency_contact_name, emergency_phone, birth_date, preferred_language, address, referral_source, goals, notes, tags, status, status_reason, status_changed_at, has_health_notes, photo_updated_at, created_at, membership, membership_ends_on';
 
 /** The database's checks keep these columns to their lists; this only narrows the types. */
 function oneOf<T extends string>(values: readonly T[], value: string | null, fallback: T): T {
@@ -120,7 +126,9 @@ type MemberColumns = Pick<
   | 'has_health_notes'
   | 'photo_updated_at'
   | 'created_at'
->;
+> &
+  // Computed from the subscriptions (public.membership); not in what the member functions return.
+  Partial<Pick<MemberRow, 'membership' | 'membership_ends_on'>>;
 
 export function toMember(row: MemberColumns): Member {
   return {
@@ -145,6 +153,8 @@ export function toMember(row: MemberColumns): Member {
     hasHealthNotes: row.has_health_notes,
     photoUpdatedAt: row.photo_updated_at,
     createdAt: row.created_at,
+    membership: optionalOneOf(MEMBERSHIPS, row.membership ?? null),
+    membershipEndsOn: row.membership_ends_on ?? null,
   };
 }
 
@@ -175,6 +185,7 @@ async function fetchMemberPage(
   if (params.gender !== null) query = query.eq('gender', params.gender);
   if (params.branch !== null) query = query.eq('branch_id', params.branch);
   if (params.tag !== null) query = query.contains('tags', [params.tag]);
+  if (params.membership !== null) query = query.eq('membership', params.membership);
   query =
     params.sort === 'newest'
       ? query.order('created_at', { ascending: false }).order('member_number', { ascending: false })

@@ -1,11 +1,15 @@
-import { imageDataUrl, type MemberStatus, type StoredImage } from '@gym/core';
+import { imageDataUrl, type Membership, type MemberStatus, type StoredImage } from '@gym/core';
 import { Badge } from '@gym/ui/components/badge';
 import { cn } from '@gym/ui/lib/utils';
 import {
   ArchiveIcon,
   BanIcon,
+  CalendarXIcon,
+  CircleDashedIcon,
   CirclePauseIcon,
+  ClockIcon,
   HeartPulseIcon,
+  SnowflakeIcon,
   type LucideIcon,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -30,6 +34,34 @@ export function MemberStatusBadge({ status }: { readonly status: MemberStatus })
     <Badge variant={variant} data-member-status={status}>
       <Icon aria-hidden="true" />
       {t(`status.${status}`)}
+    </Badge>
+  );
+}
+
+const MEMBERSHIP_BADGES: Readonly<
+  Record<
+    Exclude<Membership, 'current'>,
+    { variant: 'warning' | 'destructive' | 'secondary' | 'outline'; icon: LucideIcon }
+  >
+> = {
+  frozen: { variant: 'warning', icon: SnowflakeIcon },
+  upcoming: { variant: 'outline', icon: ClockIcon },
+  expired: { variant: 'destructive', icon: CalendarXIcon },
+  none: { variant: 'secondary', icon: CircleDashedIcon },
+};
+
+/**
+ * What the member's subscriptions make them today (step 3g), when it isn't a current one: frozen,
+ * not started yet, expired or none. Always an icon and a word.
+ */
+export function MembershipBadge({ membership }: { readonly membership: Membership | null }) {
+  const { t } = useTranslation('members');
+  if (membership === null || membership === 'current') return null;
+  const { variant, icon: Icon } = MEMBERSHIP_BADGES[membership];
+  return (
+    <Badge variant={variant} data-membership={membership}>
+      <Icon aria-hidden="true" />
+      {t(`memberships.${membership}`)}
     </Badge>
   );
 }
