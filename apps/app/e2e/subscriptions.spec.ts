@@ -1,30 +1,12 @@
-import { randomUUID } from 'node:crypto';
-import { admin, write, type TestData } from './support/backend';
+import { admin } from './support/backend';
 import { addMember } from './support/members';
+import { addPlan } from './support/sales';
 import { expect, signIn, test } from './support/app';
 
 // Selling a subscription (step 3d): paid in full, in part with a discount and installments, and in
 // dollars with change; the member's page shows the subscription and what they owe.
 
 const DESKTOP = { width: 1440, height: 900 };
-
-async function addPlan(data: TestData, nameCkb: string, price: number): Promise<string> {
-  const gym = await data.gym();
-  const id = randomUUID();
-  await write(
-    admin().from('plans').insert({
-      id,
-      gym_id: gym.id,
-      name_ckb: nameCkb,
-      kind: 'time',
-      duration_unit: 'month',
-      duration_count: 1,
-      price,
-      max_freeze_days: 7,
-    }),
-  );
-  return id;
-}
 
 async function salesOf(memberId: string) {
   const { data } = await admin()

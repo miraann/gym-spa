@@ -21,6 +21,7 @@ import { useFormat } from '@/lib/format';
 import { useBaghdadToday } from '@/lib/use-today';
 import { ChargeDialog, PayDialog, RefundDialog, VoidDialog } from './money-dialogs';
 import { useMemberInvoices, type InvoicePayment, type MemberInvoice } from './payment-data';
+import { PrintReceiptButton } from './print-receipt-button';
 import { PaymentError } from './payment-error';
 import { paymentErrorKey } from './payment-errors';
 
@@ -287,7 +288,10 @@ function InvoiceRow({
             </ul>
           </section>
         )}
-        {actions.length > 0 && <div className="flex flex-wrap gap-2">{actions}</div>}
+        <div className="flex flex-wrap gap-2">
+          {actions}
+          <PrintReceiptButton invoiceId={invoice.id} />
+        </div>
       </div>
     </details>
   );

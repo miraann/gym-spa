@@ -129,6 +129,7 @@ export interface Sale {
 }
 
 const saleResultSchema = z.object({
+  invoice_id: z.string(),
   invoice_number: z.string(),
   receipt_number: z.string().nullable(),
   total: z.number(),

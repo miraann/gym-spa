@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  MEMBERSHIPS,
   SUBSCRIPTION_STATUSES,
   addMonths,
   frozenDays,
@@ -50,6 +51,14 @@ describe('subscriptionState', () => {
     expect(sql).toContain(
       `status in (${SUBSCRIPTION_STATUSES.map((status) => `'${status}'`).join(', ')})`,
     );
+  });
+});
+
+describe('MEMBERSHIPS', () => {
+  it("are the database's", () => {
+    const sql =
+      migrationsSql().find((each) => each.includes('create function public.membership(')) ?? '';
+    for (const membership of MEMBERSHIPS) expect(sql).toContain(`'${membership}'`);
   });
 });
 

@@ -1,7 +1,6 @@
-import { randomUUID } from 'node:crypto';
-import { planEndDate } from '@gym/core';
-import { admin, write, type TestData } from './support/backend';
+import { admin, type TestData } from './support/backend';
 import { addMember } from './support/members';
+import { addPlan, addSale } from './support/sales';
 import { expect, signIn, test } from './support/app';
 
 // Changing subscriptions (step 3f): freezing and unfreezing, renewing, changing the plan with the
@@ -9,27 +8,8 @@ import { expect, signIn, test } from './support/app';
 
 const DESKTOP = { width: 1440, height: 900 };
 const DAY = 86_400_000;
-const dateIn = (days: number) => new Date(Date.now() + days * DAY).toISOString().slice(0, 10);
 
-async function addPlan(data: TestData, nameCkb: string, price: number, months: number) {
-  const gym = await data.gym();
-  const id = randomUUID();
-  await write(
-    admin().from('plans').insert({
-      id,
-      gym_id: gym.id,
-      name_ckb: nameCkb,
-      kind: 'time',
-      duration_unit: 'month',
-      duration_count: months,
-      price,
-      max_freeze_days: 10,
-    }),
-  );
-  return id;
-}
-
-/** A month of `planId` from `startedDaysAgo` days ago, paid in full in cash, as a sale leaves it. */
+/** A month of `planId` from `startedDaysAgo` days ago, paid in full in cash. */
 async function addPaidMonth(
   data: TestData,
   memberId: string,
@@ -38,66 +18,16 @@ async function addPaidMonth(
   number: string,
   startedDaysAgo: number,
 ) {
-  const gym = await data.gym();
-  const subscriptionId = randomUUID();
-  const invoiceId = randomUUID();
-  const start = dateIn(-startedDaysAgo);
-  await write(
-    admin()
-      .from('subscriptions')
-      .insert({
-        id: subscriptionId,
-        gym_id: gym.id,
-        member_id: memberId,
-        plan_id: planId,
-        branch_id: branchId,
-        name_ckb: 'مانگانە',
-        kind: 'time',
-        duration_unit: 'month',
-        duration_count: 1,
-        price: 30_000,
-        gender: 'any',
-        max_freeze_days: 10,
-        start_date: start,
-        end_date: planEndDate(start, 'month', 1),
-      }),
-  );
-  await write(
-    admin().from('invoices').insert({
-      id: invoiceId,
-      gym_id: gym.id,
-      branch_id: branchId,
-      member_id: memberId,
-      number,
-      subtotal: 30_000,
-      total: 30_000,
-    }),
-  );
-  await write(
-    admin().from('invoice_items').insert({
-      gym_id: gym.id,
-      invoice_id: invoiceId,
-      kind: 'subscription',
-      subscription_id: subscriptionId,
-      description_ckb: 'مانگانە',
-      unit_price: 30_000,
-      total: 30_000,
-    }),
-  );
-  await write(
-    admin()
-      .from('payments')
-      .insert({
-        id: randomUUID(),
-        gym_id: gym.id,
-        branch_id: branchId,
-        member_id: memberId,
-        invoice_id: invoiceId,
-        number: number.replace('-', '-R'),
-        method: 'cash',
-        amount: 30_000,
-      }),
-  );
+  const { subscriptionId } = await addSale(data, {
+    memberId,
+    branchId,
+    planId,
+    nameCkb: 'مانگانە',
+    price: 30_000,
+    number,
+    startedDaysAgo,
+    paid: 30_000,
+  });
   return subscriptionId;
 }
 

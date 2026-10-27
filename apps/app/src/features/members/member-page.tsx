@@ -20,7 +20,12 @@ import { MemberSubscriptionsCard } from '@/features/subscriptions/member-subscri
 import { BackToList } from '@/features/staff/admin-error';
 import { useFormat } from '@/lib/format';
 import { useBaghdadToday } from '@/lib/use-today';
-import { HealthNotesBadge, MemberAvatar, MemberStatusBadge } from './member-badges';
+import {
+  HealthNotesBadge,
+  MemberAvatar,
+  MemberStatusBadge,
+  MembershipBadge,
+} from './member-badges';
 import { useBranchName } from './member-branch-name';
 import { useMember, useMemberHealth, useMemberPhoto, type Member } from './member-data';
 import { memberErrorKey } from './member-errors';
@@ -94,6 +99,7 @@ function MemberProfile({ member }: { readonly member: Member }) {
               {formatMemberNumber(member.memberNumber)}
             </span>
             <MemberStatusBadge status={member.status} />
+            <MembershipBadge membership={member.membership} />
             {member.hasHealthNotes && <HealthNotesBadge />}
           </p>
         </div>

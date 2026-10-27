@@ -33,6 +33,7 @@ import { useMember, type Member } from '@/features/members/member-data';
 import { memberErrorKey } from '@/features/members/member-errors';
 import { MemberError } from '@/features/members/member-error';
 import { MemberNotFound } from '@/features/members/member-page';
+import { PrintReceiptButton } from '@/features/payments/print-receipt-button';
 import { useMoneyBranch } from '@/features/payments/money-branch';
 import { usePlans, type Plan } from '@/features/plans/plan-data';
 import { usePlanSummary } from '@/features/plans/plan-summary';
@@ -822,6 +823,9 @@ function SoldScreen({ member, result }: { readonly member: Member; readonly resu
           </dl>
         </AlertDescription>
       </Alert>
+      <div className="flex flex-wrap gap-2">
+        <PrintReceiptButton invoiceId={result.invoice_id} size="lg" />
+      </div>
       <p className="text-sm text-muted-foreground">{t('sell.cardHint')}</p>
       <MemberCardsCard member={member} />
       <StickyActionBar>

@@ -116,5 +116,28 @@
     "invalid_request": "These details are not valid. Check them and try again.",
     "network": "Couldn't reach the server. Check your internet connection and try again; the same payment is never saved twice.",
     "unexpected": "Something went wrong. Try again. If it keeps happening, contact Click Group."
+  },
+  "receipt": {
+    "title": "Invoice",
+    "member": "Member",
+    "memberNumber": "Member number",
+    "date": "Date",
+    "branch": "Branch",
+    "item": "Item",
+    "price": "Price",
+    "discount": "Discount",
+    "total": "Total",
+    "paid": "Paid",
+    "refunded": "Given back",
+    "credited": "Waived",
+    "due": "Owed",
+    "payments": "Payments",
+    "installments": "Installments",
+    "voided": "Voided",
+    "thanks": "Thank you",
+    "print": "Print",
+    "size80": "Small receipt (80mm)",
+    "sizeA4": "A4 page",
+    "printedAt": "Printed on {{date}}"
   }
 }

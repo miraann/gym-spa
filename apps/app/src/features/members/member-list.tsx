@@ -1,4 +1,4 @@
-import { GENDERS, formatMemberNumber, formatMemberPhone } from '@gym/core';
+import { GENDERS, MEMBERSHIPS, formatMemberNumber, formatMemberPhone } from '@gym/core';
 import { localizedName } from '@gym/i18n';
 import { Chip, ChipRow } from '@gym/ui/blocks/chip-row';
 import {
@@ -41,7 +41,12 @@ import { usePermission } from '@/features/auth/use-permissions';
 import { useAdminBranches } from '@/features/staff/admin-data';
 import { useFormat } from '@/lib/format';
 import { usePreferences } from '@/lib/preferences';
-import { HealthNotesBadge, MemberAvatar, MemberStatusBadge } from './member-badges';
+import {
+  HealthNotesBadge,
+  MemberAvatar,
+  MemberStatusBadge,
+  MembershipBadge,
+} from './member-badges';
 import { useBranchName } from './member-branch-name';
 import {
   MEMBER_PAGE_SIZE,
@@ -290,7 +295,12 @@ function ListFilters({
   const tags = useMemberTags();
   const tagOptions = tags.data ?? [];
   return (
-    <div className={cn('grid gap-2', compact ? 'grid-cols-2' : 'grid-cols-2 md:grid-cols-4')}>
+    <div
+      className={cn(
+        'grid gap-2',
+        compact ? 'grid-cols-2' : 'grid-cols-2 md:grid-cols-3 xl:grid-cols-5',
+      )}
+    >
       <NativeSelect
         aria-label={t('list.gender')}
         value={search.gender ?? ''}
@@ -335,6 +345,21 @@ function ListFilters({
         {tagOptions.map((tag) => (
           <NativeSelectOption key={tag} value={tag}>
             {tag}
+          </NativeSelectOption>
+        ))}
+      </NativeSelect>
+      <NativeSelect
+        aria-label={t('list.membership')}
+        value={search.membership ?? ''}
+        onChange={(event) => {
+          const membership = MEMBERSHIPS.find((each) => each === event.target.value);
+          onChange({ membership });
+        }}
+      >
+        <NativeSelectOption value="">{t('list.anyMembership')}</NativeSelectOption>
+        {MEMBERSHIPS.map((membership) => (
+          <NativeSelectOption key={membership} value={membership}>
+            {t(`memberships.${membership}`)}
           </NativeSelectOption>
         ))}
       </NativeSelect>
@@ -398,6 +423,7 @@ function MemberCards({ members }: { readonly members: readonly Member[] }) {
                   )}
                   <span>{branchName(member.branchId)}</span>
                   <MemberStatusBadge status={member.status} />
+                  <MembershipBadge membership={member.membership} />
                   {member.hasHealthNotes && <HealthNotesBadge />}
                 </span>
               </span>
@@ -503,6 +529,7 @@ function MemberTable({ members }: { readonly members: readonly Member[] }) {
           cell: (info) => (
             <span className="flex flex-wrap gap-1">
               <MemberStatusBadge status={info.row.original.status} />
+              <MembershipBadge membership={info.row.original.membership} />
               {info.row.original.hasHealthNotes && <HealthNotesBadge />}
             </span>
           ),

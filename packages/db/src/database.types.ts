@@ -720,6 +720,8 @@ export type Database = {
           tags: string[];
           updated_at: string;
           updated_by: string | null;
+          membership: string | null;
+          membership_ends_on: string | null;
         };
         Insert: {
           address?: string | null;
@@ -2182,6 +2184,14 @@ export type Database = {
           member_count: number;
           tag: string;
         }[];
+      };
+      membership: {
+        Args: { p_member: Database['public']['Tables']['members']['Row'] };
+        Returns: string;
+      };
+      membership_ends_on: {
+        Args: { p_member: Database['public']['Tables']['members']['Row'] };
+        Returns: string;
       };
       move_device: {
         Args: { p_branch_id: string; p_device_id: string };

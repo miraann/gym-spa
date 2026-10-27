@@ -267,6 +267,7 @@ export {
   type PaymentMethod,
 } from './pricing.ts';
 export {
+  MEMBERSHIPS,
   SUBSCRIPTION_STATUSES,
   addMonths,
   daysBetween,
@@ -276,6 +277,7 @@ export {
   renewalStart,
   subscriptionState,
   type FreezeDates,
+  type Membership,
   type SubscriptionDates,
   type SubscriptionState,
   type SubscriptionStatus,

@@ -12,6 +12,13 @@ export const SUBSCRIPTION_STATUSES = [
 ] as const;
 export type SubscriptionStatus = (typeof SUBSCRIPTION_STATUSES)[number];
 
+/**
+ * What a member's subscriptions make them today (public.membership): frozen, current, upcoming,
+ * expired (none runs any more) or none (never bought one). Never stored on the member.
+ */
+export const MEMBERSHIPS = ['current', 'frozen', 'upcoming', 'expired', 'none'] as const;
+export type Membership = (typeof MEMBERSHIPS)[number];
+
 /** What a subscription is on a day: a sale that stands is upcoming, current, frozen or expired. */
 export type SubscriptionState =
   Exclude<SubscriptionStatus, 'active'> | 'upcoming' | 'current' | 'frozen' | 'expired';
