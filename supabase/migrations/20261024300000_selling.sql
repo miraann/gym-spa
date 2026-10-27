@@ -77,7 +77,9 @@ create table app.branch_counters (
   counter text not null check (counter in ('invoice', 'receipt')),
   last_value bigint not null check (last_value > 0),
   primary key (branch_id, counter),
-  foreign key (branch_id, gym_id) references public.branches (id, gym_id)
+  -- Branches are never deleted (only test data is); a counter goes with its branch, like
+  -- app.gym_counters with its gym.
+  foreign key (branch_id, gym_id) references public.branches (id, gym_id) on delete cascade
 );
 
 revoke all on table app.branch_counters from public, anon, authenticated;
