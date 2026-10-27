@@ -587,9 +587,11 @@ Setting up the Vercel project: [A cloud project](#a-cloud-project), step 7. `app
 
 ## Releasing
 
-Every release follows the working rules in `CLAUDE.md`: a feature branch, all checks green, cloud migrations before the merge, then a pull request merged with `gh pr merge` (never a push to `main`).
+Every release follows the working rules in `CLAUDE.md`: one release per phase, its sub-steps on stacked feature branches; the full suite once; cloud migrations before the merge; then one pull request from the phase's last branch, merged with `gh pr merge` (never a push to `main`).
 
-1. Push the branch: `git push origin <branch>`.
+**On every push**, GitHub Actions runs `pnpm check`, `pnpm db:test` and `pnpm db:lint` (`.github/workflows/checks.yml`; the database jobs start a local Supabase in the runner with only Postgres, Auth and the API). The end-to-end tests run on the PC. Between releases each sub-step runs only the tests its change touches.
+
+1. Push the phase's last branch: `git push origin <branch>`.
 2. Checks: `pnpm check`, `pnpm db:test`, `pnpm db:lint`, and the full `pnpm test:e2e` with `pnpm db:functions` running (for staff- or seller-module changes also `pnpm test:int` and `pnpm test:deno`).
 3. Cloud migrations (needs `SUPABASE_DB_URL` in `supabase/.env.local` and Docker): `pnpm release:migrations --push`. It stops without pushing anything when the cloud has a migration this branch doesn't, when a pending one is older than the cloud's last, or when one isn't purely additive (any `drop`, `rename`, `delete`, `truncate`, `update`, changed column type, or `revoke` on something older; `supabase/scripts/migration-safety.ts`). Otherwise it rehearses them on a local copy of the cloud's schema (the local database reset to the cloud's last migration, with a gym and its Owner), resets the local database again, runs the cloud dry run, and pushes only when the dry run lists exactly the pending migrations. Destructive migrations wait for the user.
 4. `gh pr create --base main --head <branch>`, then `gh pr merge <number> --merge`.
