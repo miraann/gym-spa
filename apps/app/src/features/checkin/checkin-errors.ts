@@ -1,7 +1,7 @@
 import { logError } from '@/lib/logger';
 import { errorField } from '@/lib/save-error';
 
-/** Keys the database raises for check-in (a refusal is an answer, not an error). */
+/** Keys the database raises for check-in, checking out and voiding (a refusal is an answer). */
 const DATABASE_ERROR_KEYS = [
   'permission_denied',
   'no_branch_access',
@@ -10,6 +10,10 @@ const DATABASE_ERROR_KEYS = [
   'device_not_found',
   'invalid_request',
   'gym_read_only',
+  'visit_not_found',
+  'visit_voided',
+  'already_voided',
+  'reason_required',
 ] as const;
 
 /** Why a check-in failed, as a key of checkin:errors. */

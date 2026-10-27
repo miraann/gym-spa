@@ -22,6 +22,7 @@ import { Route as BranchesBranchIdRouteImport } from './routes/branches/$branchI
 import { Route as BranchesNewRouteImport } from './routes/branches/new'
 import { Route as CheckinIndexRouteImport } from './routes/checkin/index'
 import { Route as CheckinDoorRouteImport } from './routes/checkin/door'
+import { Route as CheckinVisitsRouteImport } from './routes/checkin/visits'
 import { Route as DevicesIndexRouteImport } from './routes/devices/index'
 import { Route as DevicesDeviceIdRouteImport } from './routes/devices/$deviceId'
 import { Route as MembersIndexRouteImport } from './routes/members/index'
@@ -108,6 +109,11 @@ const CheckinIndexRoute = CheckinIndexRouteImport.update({
 const CheckinDoorRoute = CheckinDoorRouteImport.update({
   id: '/checkin/door',
   path: '/checkin/door',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CheckinVisitsRoute = CheckinVisitsRouteImport.update({
+  id: '/checkin/visits',
+  path: '/checkin/visits',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DevicesIndexRoute = DevicesIndexRouteImport.update({
@@ -233,6 +239,7 @@ export interface FileRoutesByFullPath {
   '/branches/$branchId': typeof BranchesBranchIdRoute
   '/branches/new': typeof BranchesNewRoute
   '/checkin/door': typeof CheckinDoorRoute
+  '/checkin/visits': typeof CheckinVisitsRoute
   '/devices/$deviceId': typeof DevicesDeviceIdRoute
   '/members/import': typeof MembersImportRoute
   '/members/new': typeof MembersNewRoute
@@ -263,6 +270,7 @@ export interface FileRoutesByTo {
   '/branches/$branchId': typeof BranchesBranchIdRoute
   '/branches/new': typeof BranchesNewRoute
   '/checkin/door': typeof CheckinDoorRoute
+  '/checkin/visits': typeof CheckinVisitsRoute
   '/devices/$deviceId': typeof DevicesDeviceIdRoute
   '/members/import': typeof MembersImportRoute
   '/members/new': typeof MembersNewRoute
@@ -301,6 +309,7 @@ export interface FileRoutesById {
   '/branches/$branchId': typeof BranchesBranchIdRoute
   '/branches/new': typeof BranchesNewRoute
   '/checkin/door': typeof CheckinDoorRoute
+  '/checkin/visits': typeof CheckinVisitsRoute
   '/devices/$deviceId': typeof DevicesDeviceIdRoute
   '/members/import': typeof MembersImportRoute
   '/members/new': typeof MembersNewRoute
@@ -340,6 +349,7 @@ export interface FileRouteTypes {
     | '/branches/$branchId'
     | '/branches/new'
     | '/checkin/door'
+    | '/checkin/visits'
     | '/devices/$deviceId'
     | '/members/import'
     | '/members/new'
@@ -370,6 +380,7 @@ export interface FileRouteTypes {
     | '/branches/$branchId'
     | '/branches/new'
     | '/checkin/door'
+    | '/checkin/visits'
     | '/devices/$deviceId'
     | '/members/import'
     | '/members/new'
@@ -407,6 +418,7 @@ export interface FileRouteTypes {
     | '/branches/$branchId'
     | '/branches/new'
     | '/checkin/door'
+    | '/checkin/visits'
     | '/devices/$deviceId'
     | '/members/import'
     | '/members/new'
@@ -443,6 +455,7 @@ export interface RootRouteChildren {
   SettingsRouteRoute: typeof SettingsRouteRouteWithChildren
   StaffRouteRoute: typeof StaffRouteRouteWithChildren
   CheckinDoorRoute: typeof CheckinDoorRoute
+  CheckinVisitsRoute: typeof CheckinVisitsRoute
   CheckinIndexRoute: typeof CheckinIndexRoute
   PaymentsIndexRoute: typeof PaymentsIndexRoute
 }
@@ -538,6 +551,13 @@ declare module '@tanstack/react-router' {
       path: '/checkin/door'
       fullPath: '/checkin/door'
       preLoaderRoute: typeof CheckinDoorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/checkin/visits': {
+      id: '/checkin/visits'
+      path: '/checkin/visits'
+      fullPath: '/checkin/visits'
+      preLoaderRoute: typeof CheckinVisitsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/devices/': {
@@ -825,6 +845,7 @@ const rootRouteChildren: RootRouteChildren = {
   SettingsRouteRoute: SettingsRouteRouteWithChildren,
   StaffRouteRoute: StaffRouteRouteWithChildren,
   CheckinDoorRoute: CheckinDoorRoute,
+  CheckinVisitsRoute: CheckinVisitsRoute,
   CheckinIndexRoute: CheckinIndexRoute,
   PaymentsIndexRoute: PaymentsIndexRoute,
 }

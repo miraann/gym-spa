@@ -147,3 +147,66 @@ test('the door screen checks members in, and leaving it locks the app', async ({
   await door.getByRole('button', { name: 'دەرچوون' }).click();
   await expect(page.getByRole('heading', { level: 1, name: 'کێ کار دەکات؟' })).toBeVisible();
 });
+
+test('a manager sees who is inside, checks a member out and voids a mistaken visit', async ({
+  page,
+  data,
+}) => {
+  const branchId = await data.branch();
+  const gym = await data.gym();
+  const manager = await data.staff({ role: 'branch_manager', branchIds: [branchId] });
+  const planId = await addPlan(data, 'مانگانە', 35_000);
+  const first = await addMember(data, branchId, 'ڤیان سەردار', '+9647501280005');
+  const second = await addMember(data, branchId, 'دانا ئەحمەد', '+9647501280006');
+  const sales = await Promise.all(
+    [first, second].map((memberId, index) =>
+      addSale(data, {
+        memberId,
+        branchId,
+        planId,
+        nameCkb: 'مانگانە',
+        price: 35_000,
+        number: `B2-90011${String(index)}`,
+        paid: 35_000,
+      }),
+    ),
+  );
+  await write(
+    admin()
+      .from('attendance')
+      .insert(
+        [first, second].map((memberId, index) => ({
+          id: randomUUID(),
+          gym_id: gym.id,
+          branch_id: branchId,
+          member_id: memberId,
+          subscription_id: sales[index]?.subscriptionId,
+          method: 'manual',
+        })),
+      ),
+  );
+  await page.setViewportSize(DESKTOP);
+  await signIn(page, manager, '/checkin');
+
+  await expect(page.getByTestId('occupancy')).toContainText('2');
+  await page.getByRole('link', { name: 'هاتنەکانی ئەمڕۆ' }).click();
+  await expect(page.locator('[data-visit]')).toHaveCount(2);
+
+  const firstRow = page.locator('[data-visit="ڤیان سەردار"]');
+  await firstRow.getByRole('button', { name: 'تۆمارکردنی ڕۆیشتن' }).click();
+  await expect(page.getByText('ڕۆیشتنی ڤیان سەردار تۆمار کرا.')).toBeVisible();
+  await expect(page.getByTestId('occupancy')).toContainText('1');
+  await expect(firstRow).toContainText('ڕۆیشت');
+
+  const secondRow = page.locator('[data-visit="دانا ئەحمەد"]');
+  await secondRow.getByRole('button', { name: 'پووچەڵکردنەوە' }).click();
+  const dialog = page.getByRole('dialog', { name: 'پووچەڵکردنەوەی هاتنی دانا ئەحمەد' });
+  await dialog.getByLabel('هۆکار').fill('بە هەڵە تۆمار کرا');
+  await dialog.getByRole('button', { name: 'پووچەڵکردنەوە' }).click();
+  await expect(page.getByText('هاتنەکە پووچەڵ کرایەوە.')).toBeVisible();
+  await expect(secondRow).toContainText('پووچەڵکراوە: بە هەڵە تۆمار کرا');
+  await expect(page.getByTestId('occupancy')).toContainText('0');
+
+  await page.getByRole('button', { name: 'لە ژوورەوە', exact: true }).click();
+  await expect(page.getByText('هیچ هاتنێک نییە.')).toBeVisible();
+});

@@ -406,6 +406,7 @@ The app must not have only one look. The default is indigo + light + soft corner
    - **Settings** (per gym, a branch may differ): cooldown minutes (default 60), what money owed now does (default: a warning; can be set to deny above an amount), how long a visit lasts for occupancy when nobody checks out (default 3 hours).
    - **Only counted visits are stored** (`attendance`); a refused try is not. `checkin.override` lets a refused member in with a reason, stored on the visit. Visits are voided (`attendance.void`, a reason), never deleted; a voided visit gives the visit back.
    - **Manual check-in** (search by name, number or phone, `checkin.manual`) is stored as `manual`; a card as `card`.
+   - **Built (2026-10-27):** 4a, 4b and 4c are done. The kiosk is the "door screen" (`/checkin/door`): it pauses the idle lock while open, and leaving it locks the app. The attendance list lives at `/checkin/visits` (no menu item of its own; reached from check-in), so the saved-tabs list in the database didn't change. Check-out is a button on the visit; scanning a member who is inside does not check them out.
    - **Then MT-4 Support access** (§2.6), before Phase 5.
 5. **Lockers**
 6. **Spa:** services, rooms, therapists, booking calendar, packages

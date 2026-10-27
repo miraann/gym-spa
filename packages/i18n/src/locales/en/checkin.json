@@ -8,7 +8,9 @@
     "holdHint": "The result shows here at once.",
     "checking": "Checking…",
     "kiosk": "Door screen",
-    "kioskHint": "A dark screen for the door, where members hold their own card to the reader."
+    "kioskHint": "A dark screen for the door, where members hold their own card to the reader.",
+    "insideNow": "Inside now",
+    "visits": "Today's visits"
   },
   "manual": {
     "title": "Find a member",
@@ -78,6 +80,34 @@
     "invalid_request": "Something in the request isn't right. Try again.",
     "gym_read_only": "This gym is view-only, so no check-in is saved.",
     "network": "No internet connection. Nothing was checked in.",
-    "unexpected": "Something went wrong. Try again."
+    "unexpected": "Something went wrong. Try again.",
+    "visit_not_found": "This visit wasn't found, or isn't in your branches.",
+    "visit_voided": "This visit was voided.",
+    "already_voided": "This visit was voided already.",
+    "reason_required": "Write a reason."
+  },
+  "visits": {
+    "title": "Visits",
+    "description": "Who came in, and who is inside now.",
+    "day": "Day",
+    "show": "Show",
+    "all": "All",
+    "inside": "Inside",
+    "none": "No visits.",
+    "limit": "Only the last {{count}} visits are shown.",
+    "card": "By card",
+    "manual": "By hand",
+    "left": "Left at {{time}}",
+    "overridden": "Let in by staff: {{note}}",
+    "voided": "Voided: {{reason}}",
+    "checkOut": "Check out",
+    "checkedOut": "{{name}} checked out.",
+    "void": "Void",
+    "voidTitle": "Void the visit of {{name}}",
+    "voidDescription": "The visit counts for nothing, and goes back to the subscription it used.",
+    "voidReason": "Reason",
+    "voidDone": "The visit was voided.",
+    "cancel": "Cancel",
+    "actions": "Actions for the visit of {{name}}"
   }
 }

@@ -10,7 +10,7 @@ import { useAuthController } from '@/features/auth/auth-context';
 import { usePauseIdleLock } from '@/features/auth/use-idle-lock';
 import { useFormat } from '@/lib/format';
 import { useCheckinBranch } from './checkin-branch';
-import { CheckinError } from './checkin-page';
+import { CheckinError } from './checkin-error';
 import { CheckinResultView } from './checkin-result';
 import { ScreenOverlay } from './screen-overlay';
 import { useCheckinFlow } from './use-checkin-flow';

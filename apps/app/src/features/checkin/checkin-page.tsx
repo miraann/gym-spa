@@ -8,7 +8,7 @@ import { Field, FieldLabel } from '@gym/ui/components/field';
 import { Input } from '@gym/ui/components/input';
 import { Spinner } from '@gym/ui/components/spinner';
 import { Link } from '@tanstack/react-router';
-import { MonitorIcon, NfcIcon, TriangleAlertIcon } from 'lucide-react';
+import { ListIcon, MonitorIcon, NfcIcon, TriangleAlertIcon } from 'lucide-react';
 import { useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { RequirePermission } from '@/components/no-access';
@@ -19,19 +19,9 @@ import { useAdminWriteState } from '@/features/staff/write-state';
 import { usePreferences } from '@/lib/preferences';
 import { useCheckinBranch } from './checkin-branch';
 import { CheckinResultView } from './checkin-result';
-import type { CheckinErrorKey } from './checkin-errors';
+import { CheckinError } from './checkin-error';
 import { useCheckinFlow } from './use-checkin-flow';
-
-export function CheckinError({ error }: { readonly error: CheckinErrorKey | null }) {
-  const { t } = useTranslation('checkin');
-  if (error === null) return null;
-  return (
-    <Alert variant="destructive" role="alert">
-      <TriangleAlertIcon />
-      <AlertDescription>{t(`errors.${error}`)}</AlertDescription>
-    </Alert>
-  );
-}
+import { OccupancyTile } from './visits-page';
 
 /** /checkin (checkin.perform): reception checks members in by card, or by hand (checkin.manual). */
 export function CheckinPage() {
@@ -48,6 +38,7 @@ function CheckinScreen() {
   const { branchId, branch, pending } = useCheckinBranch();
   const flow = useCheckinFlow(branchId);
   const manual = usePermission('checkin.manual');
+  const mayViewVisits = usePermission('attendance.view');
 
   return (
     <div className="flex flex-col gap-6">
@@ -87,6 +78,19 @@ function CheckinScreen() {
             <p className="text-muted-foreground">{t('page.holdHint')}</p>
           </div>
           <CheckinError error={flow.error} />
+          {mayViewVisits && (
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+              <div className="flex-1">
+                <OccupancyTile branchId={branchId} />
+              </div>
+              <Button variant="outline" size="lg" asChild>
+                <Link to="/checkin/visits">
+                  <ListIcon />
+                  {t('page.visits')}
+                </Link>
+              </Button>
+            </div>
+          )}
           <BrowserReaderNotice />
           {manual && <ManualCheckin onPick={flow.checkInMember} disabled={flow.pending} />}
         </>
