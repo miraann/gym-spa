@@ -51,7 +51,7 @@ export const NAV_GROUPS: readonly NavGroup[] = [
     key: 'main',
     items: [
       { key: 'home', icon: HouseIcon, to: '/' },
-      { key: 'checkin', icon: NfcIcon, permission: 'checkin.perform' },
+      { key: 'checkin', icon: NfcIcon, to: '/checkin', permission: 'checkin.perform' },
     ],
   },
   {

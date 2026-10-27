@@ -21,3 +21,10 @@
     display: block;
   }
 }
+
+/* The check-in result's ring (step 4b): it empties over the seconds the result stays. */
+@keyframes checkin-countdown {
+  to {
+    stroke-dashoffset: var(--checkin-length);
+  }
+}

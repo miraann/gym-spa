@@ -20,6 +20,8 @@ import { Route as StaffRouteRouteImport } from './routes/staff/route'
 import { Route as BranchesIndexRouteImport } from './routes/branches/index'
 import { Route as BranchesBranchIdRouteImport } from './routes/branches/$branchId'
 import { Route as BranchesNewRouteImport } from './routes/branches/new'
+import { Route as CheckinIndexRouteImport } from './routes/checkin/index'
+import { Route as CheckinDoorRouteImport } from './routes/checkin/door'
 import { Route as DevicesIndexRouteImport } from './routes/devices/index'
 import { Route as DevicesDeviceIdRouteImport } from './routes/devices/$deviceId'
 import { Route as MembersIndexRouteImport } from './routes/members/index'
@@ -97,6 +99,16 @@ const BranchesNewRoute = BranchesNewRouteImport.update({
   id: '/new',
   path: '/new',
   getParentRoute: () => BranchesRouteRoute,
+} as any)
+const CheckinIndexRoute = CheckinIndexRouteImport.update({
+  id: '/checkin/',
+  path: '/checkin/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CheckinDoorRoute = CheckinDoorRouteImport.update({
+  id: '/checkin/door',
+  path: '/checkin/door',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const DevicesIndexRoute = DevicesIndexRouteImport.update({
   id: '/',
@@ -220,6 +232,7 @@ export interface FileRoutesByFullPath {
   '/staff': typeof StaffRouteRouteWithChildren
   '/branches/$branchId': typeof BranchesBranchIdRoute
   '/branches/new': typeof BranchesNewRoute
+  '/checkin/door': typeof CheckinDoorRoute
   '/devices/$deviceId': typeof DevicesDeviceIdRoute
   '/members/import': typeof MembersImportRoute
   '/members/new': typeof MembersNewRoute
@@ -233,6 +246,7 @@ export interface FileRoutesByFullPath {
   '/staff/$staffId': typeof StaffStaffIdRoute
   '/staff/new': typeof StaffNewRoute
   '/branches/': typeof BranchesIndexRoute
+  '/checkin/': typeof CheckinIndexRoute
   '/devices/': typeof DevicesIndexRoute
   '/members/': typeof MembersIndexRoute
   '/payments/': typeof PaymentsIndexRoute
@@ -248,6 +262,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/branches/$branchId': typeof BranchesBranchIdRoute
   '/branches/new': typeof BranchesNewRoute
+  '/checkin/door': typeof CheckinDoorRoute
   '/devices/$deviceId': typeof DevicesDeviceIdRoute
   '/members/import': typeof MembersImportRoute
   '/members/new': typeof MembersNewRoute
@@ -261,6 +276,7 @@ export interface FileRoutesByTo {
   '/staff/$staffId': typeof StaffStaffIdRoute
   '/staff/new': typeof StaffNewRoute
   '/branches': typeof BranchesIndexRoute
+  '/checkin': typeof CheckinIndexRoute
   '/devices': typeof DevicesIndexRoute
   '/members': typeof MembersIndexRoute
   '/payments': typeof PaymentsIndexRoute
@@ -284,6 +300,7 @@ export interface FileRoutesById {
   '/staff': typeof StaffRouteRouteWithChildren
   '/branches/$branchId': typeof BranchesBranchIdRoute
   '/branches/new': typeof BranchesNewRoute
+  '/checkin/door': typeof CheckinDoorRoute
   '/devices/$deviceId': typeof DevicesDeviceIdRoute
   '/members/import': typeof MembersImportRoute
   '/members/new': typeof MembersNewRoute
@@ -297,6 +314,7 @@ export interface FileRoutesById {
   '/staff/$staffId': typeof StaffStaffIdRoute
   '/staff/new': typeof StaffNewRoute
   '/branches/': typeof BranchesIndexRoute
+  '/checkin/': typeof CheckinIndexRoute
   '/devices/': typeof DevicesIndexRoute
   '/members/': typeof MembersIndexRoute
   '/payments/': typeof PaymentsIndexRoute
@@ -321,6 +339,7 @@ export interface FileRouteTypes {
     | '/staff'
     | '/branches/$branchId'
     | '/branches/new'
+    | '/checkin/door'
     | '/devices/$deviceId'
     | '/members/import'
     | '/members/new'
@@ -334,6 +353,7 @@ export interface FileRouteTypes {
     | '/staff/$staffId'
     | '/staff/new'
     | '/branches/'
+    | '/checkin/'
     | '/devices/'
     | '/members/'
     | '/payments/'
@@ -349,6 +369,7 @@ export interface FileRouteTypes {
     | '/'
     | '/branches/$branchId'
     | '/branches/new'
+    | '/checkin/door'
     | '/devices/$deviceId'
     | '/members/import'
     | '/members/new'
@@ -362,6 +383,7 @@ export interface FileRouteTypes {
     | '/staff/$staffId'
     | '/staff/new'
     | '/branches'
+    | '/checkin'
     | '/devices'
     | '/members'
     | '/payments'
@@ -384,6 +406,7 @@ export interface FileRouteTypes {
     | '/staff'
     | '/branches/$branchId'
     | '/branches/new'
+    | '/checkin/door'
     | '/devices/$deviceId'
     | '/members/import'
     | '/members/new'
@@ -397,6 +420,7 @@ export interface FileRouteTypes {
     | '/staff/$staffId'
     | '/staff/new'
     | '/branches/'
+    | '/checkin/'
     | '/devices/'
     | '/members/'
     | '/payments/'
@@ -418,6 +442,8 @@ export interface RootRouteChildren {
   RolesRouteRoute: typeof RolesRouteRouteWithChildren
   SettingsRouteRoute: typeof SettingsRouteRouteWithChildren
   StaffRouteRoute: typeof StaffRouteRouteWithChildren
+  CheckinDoorRoute: typeof CheckinDoorRoute
+  CheckinIndexRoute: typeof CheckinIndexRoute
   PaymentsIndexRoute: typeof PaymentsIndexRoute
 }
 
@@ -499,6 +525,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/branches/new'
       preLoaderRoute: typeof BranchesNewRouteImport
       parentRoute: typeof BranchesRouteRoute
+    }
+    '/checkin/': {
+      id: '/checkin/'
+      path: '/checkin'
+      fullPath: '/checkin/'
+      preLoaderRoute: typeof CheckinIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/checkin/door': {
+      id: '/checkin/door'
+      path: '/checkin/door'
+      fullPath: '/checkin/door'
+      preLoaderRoute: typeof CheckinDoorRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/devices/': {
       id: '/devices/'
@@ -784,6 +824,8 @@ const rootRouteChildren: RootRouteChildren = {
   RolesRouteRoute: RolesRouteRouteWithChildren,
   SettingsRouteRoute: SettingsRouteRouteWithChildren,
   StaffRouteRoute: StaffRouteRouteWithChildren,
+  CheckinDoorRoute: CheckinDoorRoute,
+  CheckinIndexRoute: CheckinIndexRoute,
   PaymentsIndexRoute: PaymentsIndexRoute,
 }
 export const routeTree = rootRouteImport

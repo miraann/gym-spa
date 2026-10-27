@@ -1,6 +1,7 @@
 import arAuth from './locales/ar/auth.json';
 import arBranches from './locales/ar/branches.json';
 import arCards from './locales/ar/cards.json';
+import arCheckin from './locales/ar/checkin.json';
 import arCommon from './locales/ar/common.json';
 import arDates from './locales/ar/dates.json';
 import arDevices from './locales/ar/devices.json';
@@ -17,6 +18,7 @@ import arSubscriptions from './locales/ar/subscriptions.json';
 import ckbAuth from './locales/ckb/auth.json';
 import ckbBranches from './locales/ckb/branches.json';
 import ckbCards from './locales/ckb/cards.json';
+import ckbCheckin from './locales/ckb/checkin.json';
 import ckbCommon from './locales/ckb/common.json';
 import ckbDates from './locales/ckb/dates.json';
 import ckbDevices from './locales/ckb/devices.json';
@@ -33,6 +35,7 @@ import ckbSubscriptions from './locales/ckb/subscriptions.json';
 import enAuth from './locales/en/auth.json';
 import enBranches from './locales/en/branches.json';
 import enCards from './locales/en/cards.json';
+import enCheckin from './locales/en/checkin.json';
 import enCommon from './locales/en/common.json';
 import enDates from './locales/en/dates.json';
 import enDevices from './locales/en/devices.json';
@@ -65,6 +68,7 @@ const ckb = {
   devices: ckbDevices,
   members: ckbMembers,
   cards: ckbCards,
+  checkin: ckbCheckin,
   memberImport: ckbMemberImport,
   plans: ckbPlans,
   subscriptions: ckbSubscriptions,
@@ -93,6 +97,7 @@ const en: GymResources = {
   devices: enDevices,
   members: enMembers,
   cards: enCards,
+  checkin: enCheckin,
   memberImport: enMemberImport,
   plans: enPlans,
   subscriptions: enSubscriptions,
@@ -112,6 +117,7 @@ const ar: GymResources = {
   devices: arDevices,
   members: arMembers,
   cards: arCards,
+  checkin: arCheckin,
   memberImport: arMemberImport,
   plans: arPlans,
   subscriptions: arSubscriptions,
@@ -133,6 +139,7 @@ export const NAMESPACES = [
   'devices',
   'members',
   'cards',
+  'checkin',
   'memberImport',
   'plans',
   'subscriptions',

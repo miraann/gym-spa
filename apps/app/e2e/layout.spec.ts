@@ -106,10 +106,10 @@ test("phones get a bottom tab bar with the role's tabs, and pages end above it",
   await expect(page.locator(RAIL)).toHaveCount(0);
 
   // A receptionist's default tabs (home, members, check-in, cash register): pages not built yet
-  // have no tab, and the free slot gets the next page they may open.
+  // have no tab, and the free slot gets the next page they may open. Check-in sits in the middle.
   await expect
     .poll(() => tabNames(page))
-    .toEqual(['سەرەکی', 'ئەندامان', 'پارەدانەکان', 'ڕێکخستنەکان', 'زیاتر']);
+    .toEqual(['سەرەکی', 'ئەندامان', 'تۆمارکردنی هاتن', 'پارەدانەکان', 'زیاتر']);
   await expect(page.getByText('بەم زووانە')).toHaveCount(0);
 
   // The last card of a long page scrolls clear of the bar.
@@ -125,10 +125,11 @@ test("phones get a bottom tab bar with the role's tabs, and pages end above it",
   await expect(page.getByRole('heading', HOME_HEADING)).toBeVisible();
   await page.getByRole('button', { name: 'زیاتر' }).click();
   const more = page.getByRole('dialog', { name: 'هەموو بەشەکان' });
-  // Every page they may open is a tab already: nothing to choose.
-  await expect(more.getByRole('button', { name: 'گۆڕینی تابەکانم' })).toHaveCount(0);
+  // More pages than tabs (settings is not one): they may choose their own.
+  await expect(more.getByRole('button', { name: 'گۆڕینی تابەکانم' })).toHaveCount(1);
   await expect(more.getByRole('link')).toHaveText([
     'سەرەکی',
+    'تۆمارکردنی هاتن',
     'ئەندامان',
     'پارەدانەکان',
     'ڕێکخستنەکان',
@@ -151,13 +152,13 @@ test('staff choose their own tabs, which follow them to other devices', async ({
   await page.getByRole('button', { name: 'گۆڕینی تابەکانم' }).click();
   const editor = tabEditor(page);
 
-  // It starts from the role's tabs (reports isn't built yet: plans, the next page, fills its slot).
-  for (const name of ['سەرەکی', 'ئەندامان', 'کارمەندان', 'پلانەکان']) {
+  // It starts from the role's tabs (reports isn't built yet: check-in, the next page, fills its slot).
+  for (const name of ['سەرەکی', 'ئەندامان', 'کارمەندان', 'تۆمارکردنی هاتن']) {
     await editor.getByRole('button', { name, exact: true, pressed: true }).click();
   }
   await expect(editor.getByRole('button', { name: 'پاشەکەوتکردن' })).toBeDisabled();
   // Pages not built yet can't be chosen.
-  await expect(editor.getByRole('button', { name: 'تۆمارکردنی هاتن', exact: true })).toHaveCount(0);
+  await expect(editor.getByRole('button', { name: 'ڕاپۆرتەکان', exact: true })).toHaveCount(0);
   // Tapped in this order.
   for (const name of ['ڕێکخستنەکان', 'لقەکان', 'سەرەکی', 'ئامێرەکان']) {
     await editor.getByRole('button', { name, exact: true }).click();
@@ -195,5 +196,5 @@ test('staff choose their own tabs, which follow them to other devices', async ({
   // The toast of the first save may still be showing: wait for the tabs themselves.
   await expect
     .poll(() => tabNames(page))
-    .toEqual(['سەرەکی', 'ئەندامان', 'کارمەندان', 'پلانەکان', 'زیاتر']);
+    .toEqual(['سەرەکی', 'ئەندامان', 'تۆمارکردنی هاتن', 'کارمەندان', 'زیاتر']);
 });

@@ -31,7 +31,7 @@ import type { PreparedPhoto } from './member-photo-image';
 // database functions decide what they see and may change (README → Members). The query keys
 // include who is acting, so a PIN switch never shows another staff member's view from the cache.
 
-const MEMBERS_QUERY = 'members';
+export const MEMBERS_QUERY = 'members';
 const MEMBER_TAGS_QUERY = 'member-tags';
 export const MEMBER_PAGE_SIZE = 25;
 
