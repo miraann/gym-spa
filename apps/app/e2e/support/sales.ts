@@ -2,14 +2,17 @@
 // as sell_subscription() would leave them: a subscription with its own copy of the plan, its
 // invoice and item, and optionally a payment and installments.
 import { randomUUID } from 'node:crypto';
-import { planEndDate } from '@gym/core';
+import { baghdadDateOf, planEndDate } from '@gym/core';
 import { admin, write, type TestData } from './backend';
 
 const DAY = 86_400_000;
 
-/** A date `days` from today (YYYY-MM-DD; negative: in the past). */
+/**
+ * A date `days` from today in Baghdad (YYYY-MM-DD; negative: in the past), the server's today: a
+ * UTC date is a day behind between 21:00 and midnight UTC.
+ */
 export function dateIn(days: number): string {
-  return new Date(Date.now() + days * DAY).toISOString().slice(0, 10);
+  return baghdadDateOf(Date.now() + days * DAY);
 }
 
 /** A plan of `months` months, with 10 freeze days. */
