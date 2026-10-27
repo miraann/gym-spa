@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import {
   SUBSCRIPTION_STATUSES,
   addMonths,
+  frozenDays,
+  isFrozenOn,
   daysBetween,
   nextDay,
   renewalStart,
@@ -48,6 +50,38 @@ describe('subscriptionState', () => {
     expect(sql).toContain(
       `status in (${SUBSCRIPTION_STATUSES.map((status) => `'${status}'`).join(', ')})`,
     );
+  });
+});
+
+describe('freezes', () => {
+  const freeze = { startDate: '2026-10-20', endDate: '2026-10-29', endedOn: null };
+
+  it('freeze a subscription from their first day through their last', () => {
+    expect(isFrozenOn(freeze, '2026-10-20')).toBe(true);
+    expect(isFrozenOn(freeze, '2026-10-29')).toBe(true);
+    expect(isFrozenOn(freeze, '2026-10-30')).toBe(false);
+    expect(isFrozenOn(freeze, '2026-10-19')).toBe(false);
+    expect(frozenDays(freeze)).toBe(10);
+  });
+
+  it('end on the day back when ended early', () => {
+    const ended = { ...freeze, endedOn: '2026-10-24' };
+    expect(isFrozenOn(ended, '2026-10-23')).toBe(true);
+    expect(isFrozenOn(ended, '2026-10-24')).toBe(false);
+    expect(frozenDays(ended)).toBe(4);
+    expect(frozenDays({ ...freeze, endedOn: '2026-10-20' })).toBe(0);
+  });
+
+  it('make a current subscription frozen', () => {
+    expect(
+      subscriptionState({ ...sold('2026-10-01', '2026-11-30'), freezes: [freeze] }, today),
+    ).toBe('frozen');
+    expect(
+      subscriptionState(
+        { ...sold('2026-10-01', '2026-11-30'), freezes: [{ ...freeze, endedOn: '2026-10-22' }] },
+        today,
+      ),
+    ).toBe('current');
   });
 });
 

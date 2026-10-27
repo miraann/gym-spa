@@ -20,7 +20,7 @@ import { Skeleton } from '@gym/ui/components/skeleton';
 import { Spinner } from '@gym/ui/components/spinner';
 import { useSideBySide } from '@gym/ui/hooks/use-side-by-side';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Link, useParams } from '@tanstack/react-router';
+import { Link, useParams, useSearch } from '@tanstack/react-router';
 import { ChevronRightIcon, CircleCheckIcon, InfoIcon } from 'lucide-react';
 import { useId, useMemo, useState, type ReactNode } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
@@ -67,6 +67,7 @@ import { subscriptionErrorKey, type SubscriptionErrorKey } from './subscription-
 /** /members/$memberId/sell: selling a member a subscription (subscriptions.sell). */
 export function SellPage() {
   const { memberId } = useParams({ from: '/members/$memberId/sell' });
+  const { plan: planId } = useSearch({ from: '/members/$memberId/sell' });
   const member = useMember(memberId);
   const plans = usePlans();
   const subscriptions = useMemberSubscriptions(memberId);
@@ -93,6 +94,7 @@ export function SellPage() {
         plans={plans.data}
         subscriptions={subscriptions.data}
         branches={branches.data}
+        planId={planId ?? null}
       />
     );
   }
@@ -114,11 +116,14 @@ function SellForm({
   plans,
   subscriptions,
   branches,
+  planId,
 }: {
   readonly member: Member;
   readonly plans: readonly Plan[];
   readonly subscriptions: readonly MemberSubscription[];
   readonly branches: readonly AdminBranch[];
+  /** Renewing: the plan chosen at first, when it is still sold to this member. */
+  readonly planId: string | null;
 }) {
   const { t } = useTranslation('subscriptions');
   const { language } = usePreferences();
@@ -158,7 +163,10 @@ function SellForm({
 
   const form = useForm<SellFormValues>({
     resolver: zodResolver(sellFormSchema(context)),
-    defaultValues: emptySellForm(context, null),
+    defaultValues: emptySellForm(
+      context,
+      forMember.some((plan) => plan.id === planId) ? planId : null,
+    ),
   });
   const { errors, isDirty } = form.formState;
   useUnsavedChanges(isDirty && result === null);

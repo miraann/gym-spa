@@ -73,6 +73,14 @@ insert into public.payments (id, gym_id, branch_id, member_id, invoice_id, numbe
 insert into public.installments (id, gym_id, invoice_id, due_date, amount) values
   ('e0000000-0000-4000-8000-0000000000a8', tests.gym('pgtap-a'), 'e0000000-0000-4000-8000-0000000000a5', current_date + 30, 500),
   ('e0000000-0000-4000-8000-0000000000b8', tests.gym('pgtap-b'), 'e0000000-0000-4000-8000-0000000000b5', current_date + 30, 500);
+insert into public.subscription_freezes (id, gym_id, subscription_id, start_date, end_date) values
+  ('e0000000-0000-4000-8000-0000000000ab', tests.gym('pgtap-a'), 'e0000000-0000-4000-8000-0000000000a4', current_date + 1, current_date + 3),
+  ('e0000000-0000-4000-8000-0000000000bb', tests.gym('pgtap-b'), 'e0000000-0000-4000-8000-0000000000b4', current_date + 1, current_date + 3);
+insert into public.invoice_credits (id, gym_id, invoice_id, subscription_id, kind, amount) values
+  ('e0000000-0000-4000-8000-0000000000aa', tests.gym('pgtap-a'), 'e0000000-0000-4000-8000-0000000000a5',
+   'e0000000-0000-4000-8000-0000000000a4', 'cancellation', 100),
+  ('e0000000-0000-4000-8000-0000000000ba', tests.gym('pgtap-b'), 'e0000000-0000-4000-8000-0000000000b5',
+   'e0000000-0000-4000-8000-0000000000b4', 'cancellation', 100);
 
 select is_empty(
   $$ select t from tests.gym_tables() t
@@ -142,6 +150,14 @@ insert into insert_cases (table_name, statement) values
   ('payments', $$ insert into public.payments (gym_id, id, branch_id, member_id, invoice_id, number, method, amount)
                   values (tests.gym('pgtap-b'), gen_random_uuid(), tests.branch('B901', 'pgtap-b'), 'e0000000-0000-4000-8000-0000000000b1',
                           'e0000000-0000-4000-8000-0000000000b5', 'B901-R000002', 'cash', 100) $$),
+  ('subscription_freezes', $$ insert into public.subscription_freezes (gym_id, id, subscription_id, start_date, end_date)
+                              values (tests.gym('pgtap-b'), gen_random_uuid(), 'e0000000-0000-4000-8000-0000000000b4',
+                                      current_date + 5, current_date + 6) $$),
+  ('subscription_freezes', $$ select public.freeze_subscription(gen_random_uuid(), 'e0000000-0000-4000-8000-0000000000b4',
+                                current_date + 5, 2) $$),
+  ('invoice_credits', $$ insert into public.invoice_credits (gym_id, invoice_id, subscription_id, kind, amount)
+                         values (tests.gym('pgtap-b'), 'e0000000-0000-4000-8000-0000000000b5',
+                                 'e0000000-0000-4000-8000-0000000000b4', 'cancellation', 100) $$),
   ('installments', $$ insert into public.installments (gym_id, id, invoice_id, due_date, amount)
                       values (tests.gym('pgtap-b'), gen_random_uuid(), 'e0000000-0000-4000-8000-0000000000b5', current_date + 60, 100) $$),
   -- Their own gym (gym_id left to fill itself in), pointing at gym B's rows.

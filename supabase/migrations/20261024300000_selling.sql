@@ -146,6 +146,10 @@ create table public.subscriptions (
   status_reason text check (app.is_clean_text(status_reason, 500)),
   status_changed_at timestamptz,
   status_changed_by uuid,
+  -- The subscription this one took the place of: changed to another plan (step 3f), or moved from
+  -- another member (a transfer, step 3f).
+  replaces_id uuid,
+  transferred_from_id uuid,
   created_at timestamptz not null default now(),
   created_by uuid,
   updated_at timestamptz not null default now(),
@@ -156,6 +160,9 @@ create table public.subscriptions (
   constraint subscriptions_member_id_gym_id_fkey foreign key (member_id, gym_id) references public.members (id, gym_id),
   constraint subscriptions_plan_id_gym_id_fkey foreign key (plan_id, gym_id) references public.plans (id, gym_id),
   constraint subscriptions_branch_id_gym_id_fkey foreign key (branch_id, gym_id) references public.branches (id, gym_id),
+  constraint subscriptions_replaces_id_gym_id_fkey foreign key (replaces_id, gym_id) references public.subscriptions (id, gym_id),
+  constraint subscriptions_transferred_from_id_gym_id_fkey foreign key (transferred_from_id, gym_id)
+    references public.subscriptions (id, gym_id),
   constraint subscriptions_kind check (
     (kind in ('time', 'hybrid')) = (duration_count is not null)
     and (duration_unit is null) = (duration_count is null)
@@ -174,6 +181,8 @@ create table public.subscriptions (
 create index subscriptions_member_id_gym_id_idx on public.subscriptions (member_id, gym_id, status, end_date);
 create index subscriptions_plan_id_gym_id_idx on public.subscriptions (plan_id, gym_id);
 create index subscriptions_branch_id_gym_id_idx on public.subscriptions (branch_id, gym_id);
+create index subscriptions_replaces_id_gym_id_idx on public.subscriptions (replaces_id, gym_id);
+create index subscriptions_transferred_from_id_gym_id_idx on public.subscriptions (transferred_from_id, gym_id);
 
 -- Invoices --------------------------------------------------------------------------------------------
 
@@ -326,6 +335,32 @@ create table public.installments (
 
 create index installments_invoice_id_gym_id_idx on public.installments (invoice_id, gym_id);
 
+-- What an invoice no longer asks for, with no money moving (step 3f): the unused part of a
+-- subscription changed to another plan or cancelled. It lowers what is owed; nothing is given back.
+create table public.invoice_credits (
+  id uuid primary key default gen_random_uuid(),
+  gym_id uuid not null default app.current_gym_id(),
+  invoice_id uuid not null,
+  subscription_id uuid not null,
+  kind text not null check (kind in ('plan_change', 'cancellation')),
+  -- Whole dinars.
+  amount numeric(14,2) not null check (amount > 0 and amount = trunc(amount)),
+  reason text check (app.is_clean_text(reason, 500)),
+  created_at timestamptz not null default now(),
+  created_by uuid,
+  updated_at timestamptz not null default now(),
+  updated_by uuid,
+  deleted_at timestamptz,
+  constraint invoice_credits_id_gym_id_key unique (id, gym_id),
+  constraint invoice_credits_invoice_id_gym_id_fkey foreign key (invoice_id, gym_id) references public.invoices (id, gym_id),
+  constraint invoice_credits_subscription_id_gym_id_fkey foreign key (subscription_id, gym_id)
+    references public.subscriptions (id, gym_id),
+  constraint invoice_credits_never_deleted check (deleted_at is null)
+);
+
+create index invoice_credits_invoice_id_gym_id_idx on public.invoice_credits (invoice_id, gym_id);
+create index invoice_credits_subscription_id_gym_id_idx on public.invoice_credits (subscription_id, gym_id);
+
 -- Triggers ------------------------------------------------------------------------------------------------
 -- BEFORE triggers run in name order: check_writable, read_only, stamp. Only the server's functions
 -- write these tables (no client role may), so they need no guard; the read_only triggers keep
@@ -337,7 +372,8 @@ create trigger read_only before update on public.subscriptions
   for each row execute function app.read_only_columns(
     'id', 'gym_id', 'member_id', 'plan_id', 'branch_id', 'name_ckb', 'name_en', 'name_ar', 'kind',
     'duration_unit', 'duration_count', 'visit_count', 'price', 'gender', 'branch_ids', 'allowed_days',
-    'allowed_from', 'allowed_until', 'daily_visit_limit', 'max_freeze_days', 'start_date', 'created_at', 'created_by'
+    'allowed_from', 'allowed_until', 'daily_visit_limit', 'max_freeze_days', 'start_date', 'replaces_id',
+    'transferred_from_id', 'created_at', 'created_by'
   );
 create trigger stamp before insert or update on public.subscriptions
   for each row execute function app.stamp_row();
@@ -388,6 +424,17 @@ create trigger stamp before insert or update on public.installments
 create trigger audit after insert or update or delete on public.installments
   for each row execute function app.audit_row();
 
+create trigger check_writable before insert or update or delete on public.invoice_credits
+  for each row execute function app.check_gym_writable();
+create trigger read_only before update on public.invoice_credits
+  for each row execute function app.read_only_columns(
+    'id', 'gym_id', 'invoice_id', 'subscription_id', 'kind', 'amount', 'reason', 'created_at', 'created_by'
+  );
+create trigger stamp before insert or update on public.invoice_credits
+  for each row execute function app.stamp_row();
+create trigger audit after insert or update or delete on public.invoice_credits
+  for each row execute function app.audit_row();
+
 -- Row level security ----------------------------------------------------------------------------------------
 
 alter table public.subscriptions enable row level security;
@@ -395,14 +442,15 @@ alter table public.invoices enable row level security;
 alter table public.invoice_items enable row level security;
 alter table public.payments enable row level security;
 alter table public.installments enable row level security;
+alter table public.invoice_credits enable row level security;
 
-revoke all on table public.subscriptions, public.invoices, public.invoice_items, public.payments, public.installments
-  from anon, authenticated;
-grant all on table public.subscriptions, public.invoices, public.invoice_items, public.payments, public.installments
-  to service_role;
+revoke all on table public.subscriptions, public.invoices, public.invoice_items, public.payments, public.installments,
+  public.invoice_credits from anon, authenticated;
+grant all on table public.subscriptions, public.invoices, public.invoice_items, public.payments, public.installments,
+  public.invoice_credits to service_role;
 -- Staff only read them; the functions below write them.
-grant select on table public.subscriptions, public.invoices, public.invoice_items, public.payments, public.installments
-  to authenticated;
+grant select on table public.subscriptions, public.invoices, public.invoice_items, public.payments, public.installments,
+  public.invoice_credits to authenticated;
 
 -- Members belong to the whole gym, and so do their subscriptions (spec §4.1).
 create policy "staff with members.view see subscriptions" on public.subscriptions
@@ -432,14 +480,18 @@ create policy "staff see the installments of invoices they see" on public.instal
   for select to authenticated
   using (gym_id = (select app.current_gym_id()) and invoice_id in (select v.id from public.invoices v));
 
+create policy "staff see the credits of invoices they see" on public.invoice_credits
+  for select to authenticated
+  using (gym_id = (select app.current_gym_id()) and invoice_id in (select v.id from public.invoices v));
+
 -- Balances --------------------------------------------------------------------------------------------------
 -- Computed from the rows, never stored (CLAUDE.md → Data rules). As the caller (security_invoker),
 -- so they show only what the caller may see.
 
 -- Each invoice: what was paid in (voided payments not counted), what was given back (refunds, step
--- 3e), and what is still owed. A refund gives money back and lowers the charge by as much, so it
--- never makes the member owe more: due is the total less what was paid in. A voided invoice owes
--- nothing.
+-- 3e), what it no longer asks for (credits, step 3f), and what is still owed. A refund gives money
+-- back and lowers the charge by as much, so it never makes the member owe more: due is the total
+-- less the credits and what was paid in. A voided invoice owes nothing.
 create view public.invoice_balances with (security_invoker = true) as
 select v.id as invoice_id,
        v.gym_id,
@@ -450,18 +502,25 @@ select v.id as invoice_id,
        v.created_at,
        v.voided_at,
        coalesce(p.paid, 0)::numeric(14,2) as paid,
-       case when v.voided_at is null then v.total - coalesce(p.paid, 0) else 0 end::numeric(14,2) as due,
-       coalesce(p.refunded, 0)::numeric(14,2) as refunded
+       case when v.voided_at is null then v.total - coalesce(c.credited, 0) - coalesce(p.paid, 0) else 0 end::numeric(14,2) as due,
+       coalesce(p.refunded, 0)::numeric(14,2) as refunded,
+       coalesce(c.credited, 0)::numeric(14,2) as credited
   from public.invoices v
   left join lateral (
     select sum(p.amount) filter (where p.kind = 'payment') as paid,
            sum(p.amount) filter (where p.kind = 'refund') as refunded
       from public.payments p
      where p.invoice_id = v.id and p.gym_id = v.gym_id and p.voided_at is null
-  ) p on true;
+  ) p on true
+  left join lateral (
+    select sum(c.amount) as credited
+      from public.invoice_credits c
+     where c.invoice_id = v.id and c.gym_id = v.gym_id
+  ) c on true;
 
--- Each installment: how much of it is paid. What was paid goes first to the part of the invoice
--- that had no installment (paid at the sale), then to the installments oldest first.
+-- Each installment: how much of it is paid (or credited). What was paid and credited goes first to
+-- the part of the invoice that had no installment (paid at the sale), then to the installments
+-- oldest first.
 create view public.installment_balances with (security_invoker = true) as
 with ordered as (
   select i.*,
@@ -474,7 +533,7 @@ select o.id as installment_id,
        o.invoice_id,
        o.due_date,
        o.amount,
-       least(o.amount, greatest(0, b.paid - (b.total - o.all_installments) - (o.through - o.amount)))::numeric(14,2) as paid,
+       least(o.amount, greatest(0, b.paid + b.credited - (b.total - o.all_installments) - (o.through - o.amount)))::numeric(14,2) as paid,
        (b.voided_at is not null) as voided
   from ordered o
   join public.invoice_balances b on b.invoice_id = o.invoice_id;
@@ -618,6 +677,117 @@ $$;
 
 revoke execute on function app.sale_result(uuid) from public, anon, authenticated;
 
+-- Saves a sale that was checked (sell_subscription, change_plan): the subscription with its own copy
+-- of the plan, its invoice and item, the first payment and the installments, and returns what was
+-- saved. It checks the payment (app.read_payment) and the installments itself: invalid_payment,
+-- payment_too_large, invalid_installments, installments_mismatch. p_discount_reason goes with a
+-- discount. p_replaces_id: the subscription this one took the place of (a change of plan).
+create function app.save_sale(
+  p_gym_id uuid,
+  p_subscription_id uuid,
+  p_invoice_id uuid,
+  p_member_id uuid,
+  p_plan public.plans,
+  p_branch_id uuid,
+  p_start_date date,
+  p_discount numeric,
+  p_discount_reason text,
+  p_payment jsonb,
+  p_installments jsonb,
+  p_replaces_id uuid
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  today date := (now() at time zone 'Asia/Baghdad')::date;
+  gym uuid := p_gym_id;
+  plan public.plans := p_plan;
+  total numeric(14,2) := p_plan.price - p_discount;
+  paid numeric(14,2) := 0;
+  installment record;
+  installments_total numeric(14,2) := 0;
+  last_due date;
+begin
+  if p_payment is not null then
+    paid := (select r.amount from app.read_payment(p_payment, total) as r);
+  end if;
+
+  if p_installments is not null and jsonb_typeof(p_installments) <> 'array' then
+    raise exception using errcode = '22023', message = 'invalid_installments',
+      detail = 'Installments are a list';
+  end if;
+  begin
+    for installment in
+      select (e ->> 'due_date')::date as due_date, (e ->> 'amount')::numeric as amount, (e ->> 'id')::uuid as id
+        from jsonb_array_elements(coalesce(p_installments, '[]'::jsonb)) as e
+    loop
+      if installment.id is null or installment.amount is null or installment.amount <= 0
+         or installment.amount <> trunc(installment.amount) or installment.due_date is null
+         or installment.due_date < today or installment.due_date <= last_due then
+        raise exception using errcode = '22023', message = 'invalid_installments';
+      end if;
+      last_due := installment.due_date;
+      installments_total := installments_total + installment.amount;
+    end loop;
+  exception
+    when invalid_parameter_value or invalid_text_representation or invalid_datetime_format
+         or datetime_field_overflow or numeric_value_out_of_range then
+      raise exception using errcode = '22023', message = 'invalid_installments',
+        detail = 'Each installment has an id, a due date from today on after the one before, and whole dinars above 0';
+  end;
+  if last_due is not null and installments_total <> total - paid then
+    raise exception using errcode = '23514', message = 'installments_mismatch',
+      detail = format('The installments add up to %s, not %s', installments_total, total - paid);
+  end if;
+
+  insert into public.subscriptions (
+    id, gym_id, member_id, plan_id, branch_id, name_ckb, name_en, name_ar, kind, duration_unit,
+    duration_count, visit_count, price, gender, branch_ids, allowed_days, allowed_from, allowed_until,
+    daily_visit_limit, max_freeze_days, start_date, end_date, replaces_id
+  )
+  values (
+    p_subscription_id, gym, p_member_id, plan.id, p_branch_id, plan.name_ckb, plan.name_en, plan.name_ar,
+    plan.kind, plan.duration_unit, plan.duration_count, plan.visit_count, plan.price, plan.gender,
+    case when plan.all_branches then null
+         else array(select pb.branch_id from public.plan_branches pb where pb.plan_id = plan.id order by pb.branch_id) end,
+    plan.allowed_days, plan.allowed_from, plan.allowed_until, plan.daily_visit_limit, plan.max_freeze_days,
+    p_start_date,
+    case when plan.duration_count is not null
+         then app.plan_end_date(p_start_date, plan.duration_unit, plan.duration_count) end,
+    p_replaces_id
+  );
+
+  insert into public.invoices (id, gym_id, branch_id, member_id, number, subtotal, discount, total)
+  values (p_invoice_id, gym, p_branch_id, p_member_id, app.next_document_number(p_branch_id, 'invoice'),
+          plan.price, p_discount, total);
+
+  insert into public.invoice_items (
+    gym_id, invoice_id, kind, subscription_id, description_ckb, description_en, description_ar,
+    unit_price, discount, discount_reason, total
+  )
+  values (
+    gym, p_invoice_id, 'subscription', p_subscription_id, plan.name_ckb, plan.name_en, plan.name_ar,
+    plan.price, p_discount, p_discount_reason, total
+  );
+
+  if p_payment is not null then
+    perform app.record_payment(p_payment, total, gym, p_branch_id, p_member_id, p_invoice_id);
+  end if;
+
+  insert into public.installments (id, gym_id, invoice_id, due_date, amount)
+  select (e ->> 'id')::uuid, gym, p_invoice_id, (e ->> 'due_date')::date, (e ->> 'amount')::numeric
+    from jsonb_array_elements(coalesce(p_installments, '[]'::jsonb)) as e;
+
+  return app.sale_result(p_subscription_id);
+end
+$$;
+
+revoke execute on function app.save_sale(uuid, uuid, uuid, uuid, public.plans, uuid, date, numeric, text, jsonb, jsonb, uuid)
+  from public, anon, authenticated;
+
 -- Sells a member a plan: the subscription, its invoice with one item, the first payment and the
 -- installments, all or nothing. The ids are made by the app; the same sale sent again (a retry
 -- after a lost answer) returns what was saved. Checked in this order:
@@ -660,11 +830,6 @@ declare
   member public.members;
   plan public.plans;
   existing public.subscriptions;
-  total numeric(14,2);
-  paid numeric(14,2) := 0;
-  installment record;
-  installments_total numeric(14,2) := 0;
-  last_due date;
 begin
   if gym is null or not (app.has_permission('subscriptions.sell') and app.has_permission('members.view')) then
     raise exception using errcode = '42501', message = 'permission_denied',
@@ -743,78 +908,8 @@ begin
         detail = 'A discount needs a reason';
     end if;
   end if;
-  total := plan.price - p_discount;
-
-  if p_payment is not null then
-    paid := (select r.amount from app.read_payment(p_payment, total) as r);
-  end if;
-
-  if p_installments is not null and jsonb_typeof(p_installments) <> 'array' then
-    raise exception using errcode = '22023', message = 'invalid_installments',
-      detail = 'Installments are a list';
-  end if;
-  begin
-    for installment in
-      select (e ->> 'due_date')::date as due_date, (e ->> 'amount')::numeric as amount, (e ->> 'id')::uuid as id
-        from jsonb_array_elements(coalesce(p_installments, '[]'::jsonb)) as e
-    loop
-      if installment.id is null or installment.amount is null or installment.amount <= 0
-         or installment.amount <> trunc(installment.amount) or installment.due_date is null
-         or installment.due_date < today or installment.due_date <= last_due then
-        raise exception using errcode = '22023', message = 'invalid_installments';
-      end if;
-      last_due := installment.due_date;
-      installments_total := installments_total + installment.amount;
-    end loop;
-  exception
-    when invalid_parameter_value or invalid_text_representation or invalid_datetime_format
-         or datetime_field_overflow or numeric_value_out_of_range then
-      raise exception using errcode = '22023', message = 'invalid_installments',
-        detail = 'Each installment has an id, a due date from today on after the one before, and whole dinars above 0';
-  end;
-  if last_due is not null and installments_total <> total - paid then
-    raise exception using errcode = '23514', message = 'installments_mismatch',
-      detail = format('The installments add up to %s, not %s', installments_total, total - paid);
-  end if;
-
-  insert into public.subscriptions (
-    id, gym_id, member_id, plan_id, branch_id, name_ckb, name_en, name_ar, kind, duration_unit,
-    duration_count, visit_count, price, gender, branch_ids, allowed_days, allowed_from, allowed_until,
-    daily_visit_limit, max_freeze_days, start_date, end_date
-  )
-  values (
-    p_subscription_id, gym, p_member_id, plan.id, p_branch_id, plan.name_ckb, plan.name_en, plan.name_ar,
-    plan.kind, plan.duration_unit, plan.duration_count, plan.visit_count, plan.price, plan.gender,
-    case when plan.all_branches then null
-         else array(select pb.branch_id from public.plan_branches pb where pb.plan_id = plan.id order by pb.branch_id) end,
-    plan.allowed_days, plan.allowed_from, plan.allowed_until, plan.daily_visit_limit, plan.max_freeze_days,
-    p_start_date,
-    case when plan.duration_count is not null
-         then app.plan_end_date(p_start_date, plan.duration_unit, plan.duration_count) end
-  );
-
-  insert into public.invoices (id, gym_id, branch_id, member_id, number, subtotal, discount, total)
-  values (p_invoice_id, gym, p_branch_id, p_member_id, app.next_document_number(p_branch_id, 'invoice'),
-          plan.price, p_discount, total);
-
-  insert into public.invoice_items (
-    gym_id, invoice_id, kind, subscription_id, description_ckb, description_en, description_ar,
-    unit_price, discount, discount_reason, total
-  )
-  values (
-    gym, p_invoice_id, 'subscription', p_subscription_id, plan.name_ckb, plan.name_en, plan.name_ar,
-    plan.price, p_discount, case when p_discount > 0 then p_discount_reason end, total
-  );
-
-  if p_payment is not null then
-    perform app.record_payment(p_payment, total, gym, p_branch_id, p_member_id, p_invoice_id);
-  end if;
-
-  insert into public.installments (id, gym_id, invoice_id, due_date, amount)
-  select (e ->> 'id')::uuid, gym, p_invoice_id, (e ->> 'due_date')::date, (e ->> 'amount')::numeric
-    from jsonb_array_elements(coalesce(p_installments, '[]'::jsonb)) as e;
-
-  return app.sale_result(p_subscription_id);
+  return app.save_sale(gym, p_subscription_id, p_invoice_id, p_member_id, plan, p_branch_id, p_start_date,
+    p_discount, case when p_discount > 0 then p_discount_reason end, p_payment, p_installments, null);
 end
 $$;
 

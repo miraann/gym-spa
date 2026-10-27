@@ -1,7 +1,7 @@
 import { logError } from '@/lib/logger';
 import { errorField } from '@/lib/save-error';
 
-/** Keys the database raises when selling (sell_subscription) and reading subscriptions. */
+/** Keys the database raises when selling (sell_subscription), changing (step 3f) and reading subscriptions. */
 const DATABASE_ERROR_KEYS = [
   'permission_denied',
   'no_branch_access',
@@ -22,6 +22,24 @@ const DATABASE_ERROR_KEYS = [
   'installments_mismatch',
   'sale_exists',
   'gym_read_only',
+  'subscription_not_found',
+  'subscription_not_active',
+  'subscription_not_current',
+  'subscription_ended',
+  'subscription_frozen',
+  'cannot_freeze',
+  'cannot_change_plan',
+  'invalid_freeze_dates',
+  'already_frozen',
+  'freeze_too_long',
+  'freeze_not_found',
+  'freeze_exists',
+  'not_frozen',
+  'same_plan',
+  'credit_exceeds_price',
+  'same_member',
+  'refund_too_large',
+  'invalid_refund',
 ] as const;
 
 /** Why loading subscriptions or a sale failed, as a key of subscriptions:errors. */

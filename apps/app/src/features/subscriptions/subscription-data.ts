@@ -3,6 +3,7 @@ import {
   PLAN_KINDS,
   SUBSCRIPTION_STATUSES,
   type DurationUnit,
+  type FreezeDates,
   type PlanKind,
   type SubscriptionStatus,
 } from '@gym/core';
@@ -18,8 +19,13 @@ import { requireClient, useActingClient } from '@/features/staff/admin-data';
 export const SUBSCRIPTIONS_QUERY = 'subscriptions';
 export const BALANCES_QUERY = 'balances';
 
+export interface SubscriptionFreeze extends FreezeDates {
+  readonly id: string;
+}
+
 export interface MemberSubscription extends LocalizedNames {
   readonly id: string;
+  readonly planId: string;
   readonly kind: PlanKind;
   readonly durationUnit: DurationUnit | null;
   readonly durationCount: number | null;
@@ -28,6 +34,8 @@ export interface MemberSubscription extends LocalizedNames {
   readonly startDate: string;
   readonly endDate: string | null;
   readonly status: SubscriptionStatus;
+  readonly maxFreezeDays: number;
+  readonly freezes: readonly SubscriptionFreeze[];
   /** Shown only to staff who see the invoice (payments.view and its branch). */
   readonly invoiceNumber: string | null;
 }
@@ -46,7 +54,7 @@ export function useMemberSubscriptions(memberId: string) {
       const { data, error } = await requireClient(client)
         .from('subscriptions')
         .select(
-          'id, name_ckb, name_en, name_ar, kind, duration_unit, duration_count, visit_count, price, start_date, end_date, status, created_at, invoice_items (invoices (number))',
+          'id, plan_id, name_ckb, name_en, name_ar, kind, duration_unit, duration_count, visit_count, price, start_date, end_date, status, max_freeze_days, created_at, invoice_items (invoices (number)), subscription_freezes (id, start_date, end_date, ended_on)',
         )
         .eq('member_id', memberId)
         .order('start_date', { ascending: false })
@@ -54,6 +62,7 @@ export function useMemberSubscriptions(memberId: string) {
       if (error) throw error;
       return data.map((row) => ({
         id: row.id,
+        planId: row.plan_id,
         nameCkb: row.name_ckb,
         nameEn: row.name_en,
         nameAr: row.name_ar,
@@ -66,6 +75,13 @@ export function useMemberSubscriptions(memberId: string) {
         startDate: row.start_date,
         endDate: row.end_date,
         status: oneOf(SUBSCRIPTION_STATUSES, row.status, 'active'),
+        maxFreezeDays: row.max_freeze_days,
+        freezes: row.subscription_freezes.map((freeze) => ({
+          id: freeze.id,
+          startDate: freeze.start_date,
+          endDate: freeze.end_date,
+          endedOn: freeze.ended_on,
+        })),
         // The types call the invoice always there, but RLS hides it without payments.view.
         invoiceNumber:
           (row.invoice_items[0]?.invoices as { number: string } | null | undefined)?.number ?? null,

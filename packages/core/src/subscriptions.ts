@@ -1,6 +1,6 @@
-// What a member's subscriptions are on a day (step 3d): the stored status says whether a sale
-// still stands (spec §4.2); expired and not started yet come from the dates and are never stored.
-// Frozen comes with step 3f.
+// What a member's subscriptions are on a day (steps 3d and 3f): the stored status says whether a
+// sale still stands (spec §4.2); expired, not started yet and frozen come from the dates and the
+// freezes, and are never stored.
 
 /** Stored statuses (subscriptions.status). */
 export const SUBSCRIPTION_STATUSES = [
@@ -12,9 +12,17 @@ export const SUBSCRIPTION_STATUSES = [
 ] as const;
 export type SubscriptionStatus = (typeof SUBSCRIPTION_STATUSES)[number];
 
-/** What a subscription is on a day: a sale that stands is upcoming, current or expired. */
+/** What a subscription is on a day: a sale that stands is upcoming, current, frozen or expired. */
 export type SubscriptionState =
-  Exclude<SubscriptionStatus, 'active'> | 'upcoming' | 'current' | 'expired';
+  Exclude<SubscriptionStatus, 'active'> | 'upcoming' | 'current' | 'frozen' | 'expired';
+
+/** A freeze (subscription_freezes): planned from startDate to endDate, or ended early. */
+export interface FreezeDates {
+  readonly startDate: string;
+  readonly endDate: string;
+  /** Ended early: the first day back. */
+  readonly endedOn: string | null;
+}
 
 export interface SubscriptionDates {
   readonly status: SubscriptionStatus;
@@ -22,6 +30,17 @@ export interface SubscriptionDates {
   readonly startDate: string;
   /** Its last day (YYYY-MM-DD); null for plans of visits or unlimited plans. */
   readonly endDate: string | null;
+  readonly freezes?: readonly FreezeDates[];
+}
+
+/** Whether a freeze keeps the subscription frozen on `date`, like app.is_frozen(). */
+export function isFrozenOn(freeze: FreezeDates, date: string): boolean {
+  return freeze.startDate <= date && date < (freeze.endedOn ?? nextDay(freeze.endDate));
+}
+
+/** The days a freeze keeps the subscription frozen in all, like app.frozen_days(). */
+export function frozenDays(freeze: FreezeDates): number {
+  return Math.max(0, daysBetween(freeze.startDate, freeze.endedOn ?? nextDay(freeze.endDate)));
 }
 
 /** What the subscription is on `today` (Baghdad's date, YYYY-MM-DD). */
@@ -32,6 +51,7 @@ export function subscriptionState(
   if (subscription.status !== 'active') return subscription.status;
   if (subscription.startDate > today) return 'upcoming';
   if (subscription.endDate !== null && subscription.endDate < today) return 'expired';
+  if (subscription.freezes?.some((freeze) => isFrozenOn(freeze, today))) return 'frozen';
   return 'current';
 }
 
@@ -74,7 +94,7 @@ export function renewalStart(
   const ends = subscriptions
     .filter((each) => {
       const state = subscriptionState(each, today);
-      return state === 'current' || state === 'upcoming';
+      return state === 'current' || state === 'frozen' || state === 'upcoming';
     })
     .map((each) => each.endDate)
     .filter((end): end is string => end !== null && end >= today)

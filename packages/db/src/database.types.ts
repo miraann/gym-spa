@@ -309,6 +309,73 @@ export type Database = {
           },
         ];
       };
+      invoice_credits: {
+        Row: {
+          amount: number;
+          created_at: string;
+          created_by: string | null;
+          deleted_at: string | null;
+          gym_id: string;
+          id: string;
+          invoice_id: string;
+          kind: string;
+          reason: string | null;
+          subscription_id: string;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          amount: number;
+          created_at?: string;
+          created_by?: string | null;
+          deleted_at?: string | null;
+          gym_id?: string;
+          id?: string;
+          invoice_id: string;
+          kind: string;
+          reason?: string | null;
+          subscription_id: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          amount?: number;
+          created_at?: string;
+          created_by?: string | null;
+          deleted_at?: string | null;
+          gym_id?: string;
+          id?: string;
+          invoice_id?: string;
+          kind?: string;
+          reason?: string | null;
+          subscription_id?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'invoice_credits_invoice_id_gym_id_fkey';
+            columns: ['invoice_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'invoice_balances';
+            referencedColumns: ['invoice_id', 'gym_id'];
+          },
+          {
+            foreignKeyName: 'invoice_credits_invoice_id_gym_id_fkey';
+            columns: ['invoice_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'invoices';
+            referencedColumns: ['id', 'gym_id'];
+          },
+          {
+            foreignKeyName: 'invoice_credits_subscription_id_gym_id_fkey';
+            columns: ['subscription_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'subscriptions';
+            referencedColumns: ['id', 'gym_id'];
+          },
+        ];
+      };
       invoice_items: {
         Row: {
           created_at: string;
@@ -1423,6 +1490,59 @@ export type Database = {
           },
         ];
       };
+      subscription_freezes: {
+        Row: {
+          created_at: string;
+          created_by: string | null;
+          deleted_at: string | null;
+          end_date: string;
+          ended_on: string | null;
+          gym_id: string;
+          id: string;
+          reason: string | null;
+          start_date: string;
+          subscription_id: string;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          created_at?: string;
+          created_by?: string | null;
+          deleted_at?: string | null;
+          end_date: string;
+          ended_on?: string | null;
+          gym_id?: string;
+          id: string;
+          reason?: string | null;
+          start_date: string;
+          subscription_id: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          created_at?: string;
+          created_by?: string | null;
+          deleted_at?: string | null;
+          end_date?: string;
+          ended_on?: string | null;
+          gym_id?: string;
+          id?: string;
+          reason?: string | null;
+          start_date?: string;
+          subscription_id?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'subscription_freezes_subscription_id_gym_id_fkey';
+            columns: ['subscription_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'subscriptions';
+            referencedColumns: ['id', 'gym_id'];
+          },
+        ];
+      };
       subscriptions: {
         Row: {
           allowed_days: number[] | null;
@@ -1448,11 +1568,13 @@ export type Database = {
           name_en: string | null;
           plan_id: string;
           price: number;
+          replaces_id: string | null;
           start_date: string;
           status: string;
           status_changed_at: string | null;
           status_changed_by: string | null;
           status_reason: string | null;
+          transferred_from_id: string | null;
           updated_at: string;
           updated_by: string | null;
           visit_count: number | null;
@@ -1481,11 +1603,13 @@ export type Database = {
           name_en?: string | null;
           plan_id: string;
           price: number;
+          replaces_id?: string | null;
           start_date: string;
           status?: string;
           status_changed_at?: string | null;
           status_changed_by?: string | null;
           status_reason?: string | null;
+          transferred_from_id?: string | null;
           updated_at?: string;
           updated_by?: string | null;
           visit_count?: number | null;
@@ -1514,11 +1638,13 @@ export type Database = {
           name_en?: string | null;
           plan_id?: string;
           price?: number;
+          replaces_id?: string | null;
           start_date?: string;
           status?: string;
           status_changed_at?: string | null;
           status_changed_by?: string | null;
           status_reason?: string | null;
+          transferred_from_id?: string | null;
           updated_at?: string;
           updated_by?: string | null;
           visit_count?: number | null;
@@ -1543,6 +1669,20 @@ export type Database = {
             columns: ['plan_id', 'gym_id'];
             isOneToOne: false;
             referencedRelation: 'plans';
+            referencedColumns: ['id', 'gym_id'];
+          },
+          {
+            foreignKeyName: 'subscriptions_replaces_id_gym_id_fkey';
+            columns: ['replaces_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'subscriptions';
+            referencedColumns: ['id', 'gym_id'];
+          },
+          {
+            foreignKeyName: 'subscriptions_transferred_from_id_gym_id_fkey';
+            columns: ['transferred_from_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'subscriptions';
             referencedColumns: ['id', 'gym_id'];
           },
         ];
@@ -1580,6 +1720,7 @@ export type Database = {
         Row: {
           branch_id: string | null;
           created_at: string | null;
+          credited: number | null;
           due: number | null;
           gym_id: string | null;
           invoice_id: string | null;
@@ -1691,6 +1832,28 @@ export type Database = {
           isOneToOne: true;
           isSetofReturn: false;
         };
+      };
+      cancel_subscription: {
+        Args: {
+          p_branch_id?: string;
+          p_reason: string;
+          p_refund?: Json;
+          p_subscription_id: string;
+        };
+        Returns: Json;
+      };
+      change_plan: {
+        Args: {
+          p_branch_id: string;
+          p_installments?: Json;
+          p_invoice_id: string;
+          p_new_subscription_id: string;
+          p_payment?: Json;
+          p_plan_id: string;
+          p_price: number;
+          p_subscription_id: string;
+        };
+        Returns: Json;
       };
       charge_member: {
         Args: {
@@ -1945,6 +2108,16 @@ export type Database = {
           phone: string;
           status: string;
         }[];
+      };
+      freeze_subscription: {
+        Args: {
+          p_days: number;
+          p_freeze_id: string;
+          p_reason?: string;
+          p_start_date: string;
+          p_subscription_id: string;
+        };
+        Returns: Json;
       };
       gym_limits: {
         Args: Record<PropertyKey, never>;
@@ -2525,6 +2698,16 @@ export type Database = {
           username: string;
         }[];
       };
+      subscription_change_preview: { Args: { p_subscription_id: string }; Returns: Json };
+      transfer_subscription: {
+        Args: {
+          p_member_id: string;
+          p_new_subscription_id: string;
+          p_reason: string;
+          p_subscription_id: string;
+        };
+        Returns: Json;
+      };
       unblock_card: {
         Args: { p_card_id: string };
         Returns: {
@@ -2564,6 +2747,7 @@ export type Database = {
           changed: number;
         }[];
       };
+      unfreeze_subscription: { Args: { p_freeze_id: string }; Returns: Json };
       unlock_on_device: { Args: { p_device_id: string; p_pin: string }; Returns: Json };
       unlock_with_pin: { Args: { p_branch_id: string; p_pin: string }; Returns: Json };
       update_member: {
