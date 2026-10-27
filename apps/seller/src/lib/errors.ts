@@ -15,6 +15,8 @@ const DATABASE_ONLY_KEYS = [
   'invalid_limit',
   'offline_gym',
   'gym_not_found',
+  'support_not_granted',
+  'member_not_found',
 ] as const;
 
 function isPanelKey(value: string): value is PanelErrorKey {

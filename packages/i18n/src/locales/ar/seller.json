@@ -308,7 +308,86 @@
     "invalid_limit": "الحد لا يقل عن 1، أو فارغ.",
     "offline_gym": "النادي دون اتصال يتبع ترخيصه.",
     "gym_not_found": "لم يُعثر على هذا النادي.",
+    "support_not_granted": "لم يسمح لك هذا النادي برؤية بياناته، أو انتهى الوقت.",
+    "member_not_found": "لم يُعثر على هذا العضو.",
     "network": "تعذّر الوصول إلى الخادم. تحقق من الإنترنت وحاول مرة أخرى.",
     "unexpected": "حدث خطأ. حاول مرة أخرى."
+  },
+  "support": {
+    "title": "وصول الدعم",
+    "granted": "يسمح لك هذا النادي برؤية بياناته حتى {{date}}.",
+    "reason": "سبب النادي: {{reason}}",
+    "notGranted": "لم يسمح لك هذا النادي برؤية بياناته. صاحب النادي وحده يستطيع السماح بذلك من إعدادات التطبيق.",
+    "offline": "النادي غير المتصل لا يرسل بياناته أبدًا.",
+    "open": "عرض الأعضاء",
+    "recorded": "كل ما تطّلع عليه هنا يُسجّل للنادي ويراه.",
+    "search": "الاسم أو رقم العضو أو الهاتف",
+    "searchButton": "بحث",
+    "all": "كل الأعضاء",
+    "noMembers": "لم يُعثر على أي عضو.",
+    "limit": "تُعرض أول 50 عضوًا فقط. ضيّق البحث.",
+    "back": "العودة إلى النادي",
+    "backToMembers": "العودة إلى الأعضاء",
+    "number": "رقم العضو",
+    "phone": "الهاتف",
+    "branch": "الفرع",
+    "status": "الحالة",
+    "membership": "الاشتراك",
+    "joined": "تاريخ التسجيل",
+    "birthDate": "تاريخ الميلاد",
+    "subscriptions": "الاشتراكات",
+    "invoices": "الفواتير",
+    "payments": "المدفوعات",
+    "cards": "البطاقات",
+    "visits": "آخر الزيارات",
+    "none": "لا شيء.",
+    "visitsUsed": "{{used}} من {{count}} زيارة",
+    "invoiceLine": "المجموع {{total}} · المدفوع {{paid}} · المتبقي {{due}}",
+    "voided": "مُلغاة",
+    "refund": "استرداد",
+    "period": "{{from}} إلى {{to}}",
+    "noEnd": "دون نهاية",
+    "reads": "سجل الاطلاع",
+    "readsNone": "لم يُطّلع على شيء بعد.",
+    "readMembers": "قائمة الأعضاء",
+    "readSearch": "بحث عن «{{search}}»",
+    "readMember": "بيانات عضو",
+    "memberStatus": {
+      "active": "فعّال",
+      "suspended": "موقوف",
+      "banned": "ممنوع",
+      "archived": "مؤرشف"
+    },
+    "memberships": {
+      "current": "لديه اشتراك",
+      "frozen": "مجمّد",
+      "upcoming": "لم يبدأ بعد",
+      "expired": "منتهٍ",
+      "none": "لا اشتراك"
+    },
+    "subscriptionStatus": {
+      "active": "فعّال",
+      "cancelled": "ملغى",
+      "voided": "مُلغاة",
+      "replaced": "مُستبدل",
+      "transferred": "منقول"
+    },
+    "cardStatus": {
+      "active": "فعّالة",
+      "ended": "منتهية",
+      "blocked": "محظورة"
+    },
+    "methods": {
+      "cash": "نقدًا",
+      "card": "بطاقة مصرفية",
+      "fib": "FIB",
+      "fastpay": "FastPay",
+      "zaincash": "ZainCash",
+      "bank_transfer": "حوالة مصرفية"
+    },
+    "visitMethods": {
+      "card": "بالبطاقة",
+      "manual": "يدويًا"
+    }
   }
 }

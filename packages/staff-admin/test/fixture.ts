@@ -179,6 +179,8 @@ export class TestGym {
       if (users.length < 1000) break;
     }
     for (const table of [
+      'support_reads',
+      'support_grants',
       'device_status',
       'devices',
       'branches',
