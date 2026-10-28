@@ -45,6 +45,8 @@ import { Route as SettingsAppearanceRouteImport } from './routes/settings/appear
 import { Route as SettingsCardReaderRouteImport } from './routes/settings/card-reader'
 import { Route as SettingsDisplayRouteImport } from './routes/settings/display'
 import { Route as SettingsSupportRouteImport } from './routes/settings/support'
+import { Route as ShopProductsRouteImport } from './routes/shop/products'
+import { Route as ShopStockRouteImport } from './routes/shop/stock'
 import { Route as SpaIndexRouteImport } from './routes/spa/index'
 import { Route as SpaCommissionsRouteImport } from './routes/spa/commissions'
 import { Route as SpaSetupRouteRouteImport } from './routes/spa/setup/route'
@@ -242,6 +244,16 @@ const SettingsSupportRoute = SettingsSupportRouteImport.update({
   path: '/support',
   getParentRoute: () => SettingsRouteRoute,
 } as any)
+const ShopProductsRoute = ShopProductsRouteImport.update({
+  id: '/shop/products',
+  path: '/shop/products',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ShopStockRoute = ShopStockRouteImport.update({
+  id: '/shop/stock',
+  path: '/shop/stock',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SpaIndexRoute = SpaIndexRouteImport.update({
   id: '/spa/',
   path: '/spa/',
@@ -351,6 +363,8 @@ export interface FileRoutesByFullPath {
   '/settings/card-reader': typeof SettingsCardReaderRoute
   '/settings/display': typeof SettingsDisplayRoute
   '/settings/support': typeof SettingsSupportRoute
+  '/shop/products': typeof ShopProductsRoute
+  '/shop/stock': typeof ShopStockRoute
   '/spa/commissions': typeof SpaCommissionsRoute
   '/staff/$staffId': typeof StaffStaffIdRoute
   '/staff/new': typeof StaffNewRoute
@@ -397,6 +411,8 @@ export interface FileRoutesByTo {
   '/settings/card-reader': typeof SettingsCardReaderRoute
   '/settings/display': typeof SettingsDisplayRoute
   '/settings/support': typeof SettingsSupportRoute
+  '/shop/products': typeof ShopProductsRoute
+  '/shop/stock': typeof ShopStockRoute
   '/spa/commissions': typeof SpaCommissionsRoute
   '/staff/$staffId': typeof StaffStaffIdRoute
   '/staff/new': typeof StaffNewRoute
@@ -452,6 +468,8 @@ export interface FileRoutesById {
   '/settings/card-reader': typeof SettingsCardReaderRoute
   '/settings/display': typeof SettingsDisplayRoute
   '/settings/support': typeof SettingsSupportRoute
+  '/shop/products': typeof ShopProductsRoute
+  '/shop/stock': typeof ShopStockRoute
   '/spa/commissions': typeof SpaCommissionsRoute
   '/staff/$staffId': typeof StaffStaffIdRoute
   '/staff/new': typeof StaffNewRoute
@@ -508,6 +526,8 @@ export interface FileRouteTypes {
     | '/settings/card-reader'
     | '/settings/display'
     | '/settings/support'
+    | '/shop/products'
+    | '/shop/stock'
     | '/spa/commissions'
     | '/staff/$staffId'
     | '/staff/new'
@@ -554,6 +574,8 @@ export interface FileRouteTypes {
     | '/settings/card-reader'
     | '/settings/display'
     | '/settings/support'
+    | '/shop/products'
+    | '/shop/stock'
     | '/spa/commissions'
     | '/staff/$staffId'
     | '/staff/new'
@@ -608,6 +630,8 @@ export interface FileRouteTypes {
     | '/settings/card-reader'
     | '/settings/display'
     | '/settings/support'
+    | '/shop/products'
+    | '/shop/stock'
     | '/spa/commissions'
     | '/staff/$staffId'
     | '/staff/new'
@@ -650,6 +674,8 @@ export interface RootRouteChildren {
   ClassesSetupRoute: typeof ClassesSetupRoute
   HrClockRoute: typeof HrClockRoute
   HrShiftsRoute: typeof HrShiftsRoute
+  ShopProductsRoute: typeof ShopProductsRoute
+  ShopStockRoute: typeof ShopStockRoute
   SpaCommissionsRoute: typeof SpaCommissionsRoute
   TrainersReportRoute: typeof TrainersReportRoute
   CheckinIndexRoute: typeof CheckinIndexRoute
@@ -913,6 +939,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/settings/support'
       preLoaderRoute: typeof SettingsSupportRouteImport
       parentRoute: typeof SettingsRouteRoute
+    }
+    '/shop/products': {
+      id: '/shop/products'
+      path: '/shop/products'
+      fullPath: '/shop/products'
+      preLoaderRoute: typeof ShopProductsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/shop/stock': {
+      id: '/shop/stock'
+      path: '/shop/stock'
+      fullPath: '/shop/stock'
+      preLoaderRoute: typeof ShopStockRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/spa/': {
       id: '/spa/'
@@ -1184,6 +1224,8 @@ const rootRouteChildren: RootRouteChildren = {
   ClassesSetupRoute: ClassesSetupRoute,
   HrClockRoute: HrClockRoute,
   HrShiftsRoute: HrShiftsRoute,
+  ShopProductsRoute: ShopProductsRoute,
+  ShopStockRoute: ShopStockRoute,
   SpaCommissionsRoute: SpaCommissionsRoute,
   TrainersReportRoute: TrainersReportRoute,
   CheckinIndexRoute: CheckinIndexRoute,

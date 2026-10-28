@@ -7,6 +7,7 @@ import arSpa from './locales/ar/spa.json';
 import arHr from './locales/ar/hr.json';
 import arClasses from './locales/ar/classes.json';
 import arPt from './locales/ar/pt.json';
+import arShop from './locales/ar/shop.json';
 import arCommon from './locales/ar/common.json';
 import arDates from './locales/ar/dates.json';
 import arDevices from './locales/ar/devices.json';
@@ -30,6 +31,7 @@ import ckbSpa from './locales/ckb/spa.json';
 import ckbHr from './locales/ckb/hr.json';
 import ckbClasses from './locales/ckb/classes.json';
 import ckbPt from './locales/ckb/pt.json';
+import ckbShop from './locales/ckb/shop.json';
 import ckbCommon from './locales/ckb/common.json';
 import ckbDates from './locales/ckb/dates.json';
 import ckbDevices from './locales/ckb/devices.json';
@@ -53,6 +55,7 @@ import enSpa from './locales/en/spa.json';
 import enHr from './locales/en/hr.json';
 import enClasses from './locales/en/classes.json';
 import enPt from './locales/en/pt.json';
+import enShop from './locales/en/shop.json';
 import enCommon from './locales/en/common.json';
 import enDates from './locales/en/dates.json';
 import enDevices from './locales/en/devices.json';
@@ -97,6 +100,7 @@ const ckb = {
   hr: ckbHr,
   classes: ckbClasses,
   pt: ckbPt,
+  shop: ckbShop,
 };
 
 /** The gym app's texts (every namespace it loads). */
@@ -132,6 +136,7 @@ const en: GymResources = {
   hr: enHr,
   classes: enClasses,
   pt: enPt,
+  shop: enShop,
 };
 
 const ar: GymResources = {
@@ -158,6 +163,7 @@ const ar: GymResources = {
   hr: arHr,
   classes: arClasses,
   pt: arPt,
+  shop: arShop,
 };
 
 export const resources: Record<Language, GymResources> = { ckb, en, ar };
@@ -186,6 +192,7 @@ export const NAMESPACES = [
   'hr',
   'classes',
   'pt',
+  'shop',
 ] as const satisfies readonly Namespace[];
 
 export const DEFAULT_NAMESPACE = 'common' satisfies Namespace;

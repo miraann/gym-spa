@@ -5565,7 +5565,7 @@ export type Database = {
           p_branch_id: string;
           p_invoice_id: string;
           p_items: Json;
-          p_member_id: string;
+          p_member_id?: string;
           p_payment?: Json;
         };
         Returns: Json;

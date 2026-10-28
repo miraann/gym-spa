@@ -622,7 +622,7 @@ grant execute on function public.remove_stock(uuid, uuid, uuid, integer, text, t
 
 -- A sale in a branch: p_items is [{"product_id", "quantity" (1 to 1000), "price" (the price the
 -- screen showed)}], 1 to 50 products, each once; to a member (p_member_id), or to the walk-in
--- customer (null), who pays in full. One invoice with an item per product, the stock taken and an
+-- customer (none), who pays in full. One invoice with an item per product, the stock taken and an
 -- optional payment, all or nothing. The same p_invoice_id again returns what was saved.
 -- permission_denied; invoice_exists; no_branch_access, branch_inactive; member_not_found,
 -- member_archived; invalid_sale; product_not_found; product_inactive; price_changed;
@@ -630,9 +630,9 @@ grant execute on function public.remove_stock(uuid, uuid, uuid, integer, text, t
 create function public.sell_products(
   p_invoice_id uuid,
   p_branch_id uuid,
-  p_member_id uuid,
   p_items jsonb,
-  p_payment jsonb default null
+  p_payment jsonb default null,
+  p_member_id uuid default null
 )
 returns jsonb
 language plpgsql
@@ -776,8 +776,8 @@ begin
 end
 $$;
 
-revoke execute on function public.sell_products(uuid, uuid, uuid, jsonb, jsonb) from public, anon;
-grant execute on function public.sell_products(uuid, uuid, uuid, jsonb, jsonb) to authenticated;
+revoke execute on function public.sell_products(uuid, uuid, jsonb, jsonb, uuid) from public, anon;
+grant execute on function public.sell_products(uuid, uuid, jsonb, jsonb, uuid) to authenticated;
 
 -- AFTER UPDATE of voided_at on invoices: a voided invoice's goods go back to the stock they came from.
 create function app.return_invoice_goods()
