@@ -201,6 +201,7 @@ revoke execute on function app.cash_shift_expected(public.cash_shifts) from publ
 create function app.cash_shift(p_shift_id uuid, p_reading boolean)
 returns public.cash_shifts
 language plpgsql
+stable
 security definer
 set search_path = ''
 as $$
