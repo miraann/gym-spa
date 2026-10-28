@@ -155,6 +155,21 @@ insert into public.staff_clock (id, gym_id, branch_id, staff_id, method, note) v
 insert into public.staff_shifts (id, gym_id, branch_id, staff_id, starts_at, ends_at) values
   ('f0000000-0000-4000-8000-0000000000a6', tests.gym('pgtap-a'), tests.branch('B901'), tests.staff('trainer_ab'), now(), now() + interval '1 hour'),
   ('f0000000-0000-4000-8000-0000000000b6', tests.gym('pgtap-b'), tests.branch('B901', 'pgtap-b'), tests.staff('trainer_ab', 'pgtap-b'), now(), now() + interval '1 hour');
+-- Classes in both gyms.
+insert into public.class_types (id, gym_id, name_ckb) values
+  ('f0000000-0000-4000-8000-0000000000a7', tests.gym('pgtap-a'), 'یۆگا'),
+  ('f0000000-0000-4000-8000-0000000000b7', tests.gym('pgtap-b'), 'یۆگا');
+insert into public.class_schedules (id, gym_id, branch_id, class_type_id, weekday, starts_at, duration_minutes, capacity, starts_on) values
+  ('f0000000-0000-4000-8000-0000000000a8', tests.gym('pgtap-a'), tests.branch('B901'), 'f0000000-0000-4000-8000-0000000000a7', 1, '18:00', 60, 10, current_date),
+  ('f0000000-0000-4000-8000-0000000000b8', tests.gym('pgtap-b'), tests.branch('B901', 'pgtap-b'), 'f0000000-0000-4000-8000-0000000000b7', 1, '18:00', 60, 10, current_date);
+insert into public.class_sessions (id, gym_id, branch_id, schedule_id, class_type_id, session_date, starts_at, ends_at, capacity) values
+  ('f0000000-0000-4000-8000-0000000000a9', tests.gym('pgtap-a'), tests.branch('B901'), 'f0000000-0000-4000-8000-0000000000a8',
+   'f0000000-0000-4000-8000-0000000000a7', current_date, now(), now() + interval '1 hour', 10),
+  ('f0000000-0000-4000-8000-0000000000b9', tests.gym('pgtap-b'), tests.branch('B901', 'pgtap-b'), 'f0000000-0000-4000-8000-0000000000b8',
+   'f0000000-0000-4000-8000-0000000000b7', current_date, now(), now() + interval '1 hour', 10);
+insert into public.class_bookings (id, gym_id, session_id, member_id, status) values
+  ('f0000000-0000-4000-8000-0000000000aa', tests.gym('pgtap-a'), 'f0000000-0000-4000-8000-0000000000a9', 'e0000000-0000-4000-8000-0000000000a1', 'booked'),
+  ('f0000000-0000-4000-8000-0000000000ba', tests.gym('pgtap-b'), 'f0000000-0000-4000-8000-0000000000b9', 'e0000000-0000-4000-8000-0000000000b1', 'booked');
 
 select is_empty(
   $$ select t from tests.gym_tables() t
@@ -305,6 +320,19 @@ insert into insert_cases (table_name, statement) values
   ('staff_shifts', $$ insert into public.staff_shifts (gym_id, id, branch_id, staff_id, starts_at, ends_at)
                       values (tests.gym('pgtap-b'), gen_random_uuid(), tests.branch('B901', 'pgtap-b'), tests.staff('reception_b', 'pgtap-b'), now() + interval '1 day', now() + interval '25 hours') $$),
   ('staff_shifts', $$ select public.save_staff_shift(gen_random_uuid(), tests.staff('reception_b', 'pgtap-b'), tests.branch('B901', 'pgtap-b'), now() + interval '1 day', now() + interval '25 hours') $$),
+  ('class_types', $$ insert into public.class_types (gym_id, id, name_ckb) values (tests.gym('pgtap-b'), gen_random_uuid(), 'زومبا') $$),
+  ('class_types', $$ select public.save_class_type('f0000000-0000-4000-8000-0000000000b7', 'زومبا') $$),
+  ('class_schedules', $$ insert into public.class_schedules (gym_id, id, branch_id, class_type_id, weekday, starts_at, duration_minutes, capacity, starts_on)
+                         values (tests.gym('pgtap-b'), gen_random_uuid(), tests.branch('B901', 'pgtap-b'), 'f0000000-0000-4000-8000-0000000000b7', 2, '18:00', 60, 10, current_date) $$),
+  ('class_schedules', $$ select public.save_class_schedule(gen_random_uuid(), tests.branch('B901', 'pgtap-b'), 'f0000000-0000-4000-8000-0000000000b7',
+                           2::smallint, '18:00', 60, 10, current_date) $$),
+  ('class_sessions', $$ insert into public.class_sessions (gym_id, id, branch_id, schedule_id, class_type_id, session_date, starts_at, ends_at, capacity)
+                        values (tests.gym('pgtap-b'), gen_random_uuid(), tests.branch('B901', 'pgtap-b'), 'f0000000-0000-4000-8000-0000000000b8',
+                                'f0000000-0000-4000-8000-0000000000b7', current_date + 7, now(), now() + interval '1 hour', 10) $$),
+  ('class_sessions', $$ select public.cancel_class_session('f0000000-0000-4000-8000-0000000000b8', current_date + 7, 'x') $$),
+  ('class_bookings', $$ insert into public.class_bookings (gym_id, id, session_id, member_id, status)
+                        values (tests.gym('pgtap-b'), gen_random_uuid(), 'f0000000-0000-4000-8000-0000000000b9', 'e0000000-0000-4000-8000-0000000000b2', 'booked') $$),
+  ('class_bookings', $$ select public.book_class(gen_random_uuid(), 'f0000000-0000-4000-8000-0000000000b8', current_date + 7, 'e0000000-0000-4000-8000-0000000000b2') $$),
   -- Their own gym (gym_id left to fill itself in), pointing at gym B's rows.
   ('role_permissions', $$ insert into public.role_permissions (role_id, permission_key) values (tests.role('trainer', 'pgtap-b'), 'payments.view') $$),
   ('staff_users', $$ insert into public.staff_users (id, username, full_name, role_id)

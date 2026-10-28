@@ -222,6 +222,306 @@ export type Database = {
           },
         ];
       };
+      class_bookings: {
+        Row: {
+          created_at: string;
+          created_by: string | null;
+          deleted_at: string | null;
+          gym_id: string;
+          id: string;
+          member_id: string;
+          session_id: string;
+          status: string;
+          status_changed_at: string | null;
+          status_changed_by: string | null;
+          updated_at: string;
+          updated_by: string | null;
+          waitlisted_at: string | null;
+        };
+        Insert: {
+          created_at?: string;
+          created_by?: string | null;
+          deleted_at?: string | null;
+          gym_id?: string;
+          id: string;
+          member_id: string;
+          session_id: string;
+          status: string;
+          status_changed_at?: string | null;
+          status_changed_by?: string | null;
+          updated_at?: string;
+          updated_by?: string | null;
+          waitlisted_at?: string | null;
+        };
+        Update: {
+          created_at?: string;
+          created_by?: string | null;
+          deleted_at?: string | null;
+          gym_id?: string;
+          id?: string;
+          member_id?: string;
+          session_id?: string;
+          status?: string;
+          status_changed_at?: string | null;
+          status_changed_by?: string | null;
+          updated_at?: string;
+          updated_by?: string | null;
+          waitlisted_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'class_bookings_member_id_gym_id_fkey';
+            columns: ['member_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'members';
+            referencedColumns: ['id', 'gym_id'];
+          },
+          {
+            foreignKeyName: 'class_bookings_session_id_gym_id_fkey';
+            columns: ['session_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'class_sessions';
+            referencedColumns: ['id', 'gym_id'];
+          },
+        ];
+      };
+      class_schedules: {
+        Row: {
+          branch_id: string;
+          capacity: number;
+          class_type_id: string;
+          created_at: string;
+          created_by: string | null;
+          deleted_at: string | null;
+          duration_minutes: number;
+          ends_on: string | null;
+          gym_id: string;
+          id: string;
+          is_active: boolean;
+          place: string | null;
+          starts_at: string;
+          starts_on: string;
+          trainer_id: string | null;
+          updated_at: string;
+          updated_by: string | null;
+          weekday: number;
+        };
+        Insert: {
+          branch_id: string;
+          capacity: number;
+          class_type_id: string;
+          created_at?: string;
+          created_by?: string | null;
+          deleted_at?: string | null;
+          duration_minutes: number;
+          ends_on?: string | null;
+          gym_id?: string;
+          id: string;
+          is_active?: boolean;
+          place?: string | null;
+          starts_at: string;
+          starts_on: string;
+          trainer_id?: string | null;
+          updated_at?: string;
+          updated_by?: string | null;
+          weekday: number;
+        };
+        Update: {
+          branch_id?: string;
+          capacity?: number;
+          class_type_id?: string;
+          created_at?: string;
+          created_by?: string | null;
+          deleted_at?: string | null;
+          duration_minutes?: number;
+          ends_on?: string | null;
+          gym_id?: string;
+          id?: string;
+          is_active?: boolean;
+          place?: string | null;
+          starts_at?: string;
+          starts_on?: string;
+          trainer_id?: string | null;
+          updated_at?: string;
+          updated_by?: string | null;
+          weekday?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'class_schedules_branch_id_gym_id_fkey';
+            columns: ['branch_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'branches';
+            referencedColumns: ['id', 'gym_id'];
+          },
+          {
+            foreignKeyName: 'class_schedules_class_type_id_gym_id_fkey';
+            columns: ['class_type_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'class_types';
+            referencedColumns: ['id', 'gym_id'];
+          },
+          {
+            foreignKeyName: 'class_schedules_trainer_id_gym_id_fkey';
+            columns: ['trainer_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'staff_users';
+            referencedColumns: ['id', 'gym_id'];
+          },
+        ];
+      };
+      class_sessions: {
+        Row: {
+          branch_id: string;
+          cancel_reason: string | null;
+          cancelled_at: string | null;
+          cancelled_by: string | null;
+          capacity: number;
+          class_type_id: string;
+          created_at: string;
+          created_by: string | null;
+          deleted_at: string | null;
+          ends_at: string;
+          gym_id: string;
+          id: string;
+          place: string | null;
+          schedule_id: string;
+          session_date: string;
+          starts_at: string;
+          trainer_id: string | null;
+          updated_at: string;
+          updated_by: string | null;
+          taken: number | null;
+        };
+        Insert: {
+          branch_id: string;
+          cancel_reason?: string | null;
+          cancelled_at?: string | null;
+          cancelled_by?: string | null;
+          capacity: number;
+          class_type_id: string;
+          created_at?: string;
+          created_by?: string | null;
+          deleted_at?: string | null;
+          ends_at: string;
+          gym_id?: string;
+          id: string;
+          place?: string | null;
+          schedule_id: string;
+          session_date: string;
+          starts_at: string;
+          trainer_id?: string | null;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          branch_id?: string;
+          cancel_reason?: string | null;
+          cancelled_at?: string | null;
+          cancelled_by?: string | null;
+          capacity?: number;
+          class_type_id?: string;
+          created_at?: string;
+          created_by?: string | null;
+          deleted_at?: string | null;
+          ends_at?: string;
+          gym_id?: string;
+          id?: string;
+          place?: string | null;
+          schedule_id?: string;
+          session_date?: string;
+          starts_at?: string;
+          trainer_id?: string | null;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'class_sessions_branch_id_gym_id_fkey';
+            columns: ['branch_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'branches';
+            referencedColumns: ['id', 'gym_id'];
+          },
+          {
+            foreignKeyName: 'class_sessions_class_type_id_gym_id_fkey';
+            columns: ['class_type_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'class_types';
+            referencedColumns: ['id', 'gym_id'];
+          },
+          {
+            foreignKeyName: 'class_sessions_schedule_id_gym_id_fkey';
+            columns: ['schedule_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'class_schedules';
+            referencedColumns: ['id', 'gym_id'];
+          },
+          {
+            foreignKeyName: 'class_sessions_trainer_id_gym_id_fkey';
+            columns: ['trainer_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'staff_users';
+            referencedColumns: ['id', 'gym_id'];
+          },
+        ];
+      };
+      class_types: {
+        Row: {
+          capacity: number;
+          created_at: string;
+          created_by: string | null;
+          deleted_at: string | null;
+          duration_minutes: number;
+          gym_id: string;
+          id: string;
+          is_active: boolean;
+          name_ar: string | null;
+          name_ckb: string;
+          name_en: string | null;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          capacity?: number;
+          created_at?: string;
+          created_by?: string | null;
+          deleted_at?: string | null;
+          duration_minutes?: number;
+          gym_id?: string;
+          id: string;
+          is_active?: boolean;
+          name_ar?: string | null;
+          name_ckb: string;
+          name_en?: string | null;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          capacity?: number;
+          created_at?: string;
+          created_by?: string | null;
+          deleted_at?: string | null;
+          duration_minutes?: number;
+          gym_id?: string;
+          id?: string;
+          is_active?: boolean;
+          name_ar?: string | null;
+          name_ckb?: string;
+          name_en?: string | null;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'class_types_gym_id_fkey';
+            columns: ['gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'gyms';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       device_status: {
         Row: {
           app_version: string | null;
@@ -3263,6 +3563,10 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      book_class: {
+        Args: { p_booking_id: string; p_date: string; p_member_id: string; p_schedule_id: string };
+        Returns: Json;
+      };
       book_spa: {
         Args: {
           p_branch_id: string;
@@ -3281,6 +3585,11 @@ export type Database = {
         Returns: Json;
       };
       branch_occupancy: { Args: { p_branch_id: string }; Returns: number };
+      cancel_class_booking: { Args: { p_booking_id: string }; Returns: Json };
+      cancel_class_session: {
+        Args: { p_date: string; p_reason: string; p_schedule_id: string };
+        Returns: Json;
+      };
       cancel_subscription: {
         Args: {
           p_branch_id?: string;
@@ -3776,6 +4085,7 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      mark_class_attendance: { Args: { p_booking_id: string; p_status: string }; Returns: Json };
       member_import_history: {
         Args: Record<PropertyKey, never>;
         Returns: {
@@ -4016,6 +4326,80 @@ export type Database = {
           permission_keys: string[];
           staff_count: number;
         }[];
+      };
+      save_class_schedule: {
+        Args: {
+          p_branch_id: string;
+          p_capacity: number;
+          p_class_type_id: string;
+          p_duration_minutes: number;
+          p_ends_on?: string;
+          p_id: string;
+          p_is_active?: boolean;
+          p_place?: string;
+          p_starts_at: string;
+          p_starts_on: string;
+          p_trainer_id?: string;
+          p_weekday: number;
+        };
+        Returns: {
+          branch_id: string;
+          capacity: number;
+          class_type_id: string;
+          created_at: string;
+          created_by: string | null;
+          deleted_at: string | null;
+          duration_minutes: number;
+          ends_on: string | null;
+          gym_id: string;
+          id: string;
+          is_active: boolean;
+          place: string | null;
+          starts_at: string;
+          starts_on: string;
+          trainer_id: string | null;
+          updated_at: string;
+          updated_by: string | null;
+          weekday: number;
+        };
+        SetofOptions: {
+          from: '*';
+          to: 'class_schedules';
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
+      save_class_type: {
+        Args: {
+          p_capacity?: number;
+          p_duration_minutes?: number;
+          p_id: string;
+          p_is_active?: boolean;
+          p_name_ar?: string;
+          p_name_ckb: string;
+          p_name_en?: string;
+        };
+        Returns: {
+          capacity: number;
+          created_at: string;
+          created_by: string | null;
+          deleted_at: string | null;
+          duration_minutes: number;
+          gym_id: string;
+          id: string;
+          is_active: boolean;
+          name_ar: string | null;
+          name_ckb: string;
+          name_en: string | null;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        SetofOptions: {
+          from: '*';
+          to: 'class_types';
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
       };
       save_plan: {
         Args: {
@@ -4657,6 +5041,10 @@ export type Database = {
         }[];
       };
       subscription_change_preview: { Args: { p_subscription_id: string }; Returns: Json };
+      taken: {
+        Args: { p_session: Database['public']['Tables']['class_sessions']['Row'] };
+        Returns: number;
+      };
       trainers: {
         Args: { p_branch_id?: string };
         Returns: {
