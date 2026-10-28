@@ -362,3 +362,18 @@ export {
   type SpaPaidWith,
   type WorkWindow,
 } from './spa.ts';
+export {
+  SHOP_LIMITS,
+  STOCK_MOVEMENT_KINDS,
+  STOCK_REMOVE_REASONS,
+  addToBasket,
+  basketCount,
+  basketTotal,
+  isLowStock,
+  isValidBarcode,
+  normalizeBarcode,
+  setBasketQuantity,
+  type BasketLine,
+  type StockMovementKind,
+  type StockRemoveReason,
+} from './shop.ts';

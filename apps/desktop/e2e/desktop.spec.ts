@@ -378,6 +378,22 @@ test('the title bar follows the app theme', async () => {
   expect(await themeSource()).toBe('dark');
 });
 
+test('lists the printers and refuses a printer name that is not one (step 8f)', async () => {
+  const page = await mainWindow();
+  const printing = await page.evaluate(async () => {
+    const bridge = window.gymDesktop as
+      | { listPrinters: () => Promise<unknown>; printSilently: (name: unknown) => Promise<unknown> }
+      | undefined;
+    const printers = await bridge?.listPrinters();
+    const refused = await bridge?.printSilently('').then(
+      () => false,
+      () => true,
+    );
+    return { isList: Array.isArray(printers), refused };
+  });
+  expect(printing).toEqual({ isList: true, refused: true });
+});
+
 test('zooms with Ctrl and the =, - and 0 keys', async () => {
   await mainWindow();
   // Sent through Electron like real key presses. Playwright's keyboard goes through DevTools,

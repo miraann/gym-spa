@@ -28,22 +28,37 @@ describe('isNavItemActive', () => {
 describe('visibleNavGroups', () => {
   it('hides pages that are not built yet, even with the permission', () => {
     const keys = visibleNavGroups(
-      new Set(['checkin.perform', 'members.view', 'cash_register.operate']),
+      new Set(['checkin.perform', 'members.view', 'reports.view']),
     ).flatMap((group) => group.items.map((item) => item.key));
     expect(keys).toEqual(['home', 'checkin', 'members', 'settings']);
+  });
+
+  it('shows a page needing any of several permissions to staff with one of them', () => {
+    const keys = (permissions: string[]) =>
+      visibleNavGroups(new Set(permissions)).flatMap((group) =>
+        group.items.map((item) => item.key),
+      );
+    expect(keys(['cash_register.view_all'])).toContain('cashRegister');
+    expect(keys(['cash_register.operate'])).toContain('cashRegister');
+    expect(keys([])).not.toContain('cashRegister');
   });
 });
 
 describe('navTabItems', () => {
   it("gives a receptionist their role's tabs that are built, filling free slots", () => {
     const permissions = new Set(['checkin.perform', 'members.view', 'cash_register.operate']);
-    // The cash register comes back by itself once its page exists.
     expect(navTabItems(null, 'receptionist', permissions).map((item) => item.key)).toEqual([
       'home',
       'members',
       'checkin',
-      'settings',
+      'cashRegister',
     ]);
+    // Without the cash register, the free slot gets the next page they may open.
+    expect(
+      navTabItems(null, 'receptionist', new Set(['checkin.perform', 'members.view'])).map(
+        (item) => item.key,
+      ),
+    ).toEqual(['home', 'members', 'checkin', 'settings']);
   });
 
   it('leaves out pages the staff member may not see', () => {

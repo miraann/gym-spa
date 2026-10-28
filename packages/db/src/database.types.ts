@@ -222,6 +222,133 @@ export type Database = {
           },
         ];
       };
+      cash_movements: {
+        Row: {
+          amount: number;
+          created_at: string;
+          created_by: string | null;
+          currency: string;
+          deleted_at: string | null;
+          gym_id: string;
+          id: string;
+          kind: string;
+          reason: string;
+          shift_id: string;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          amount: number;
+          created_at?: string;
+          created_by?: string | null;
+          currency: string;
+          deleted_at?: string | null;
+          gym_id?: string;
+          id: string;
+          kind: string;
+          reason: string;
+          shift_id: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          amount?: number;
+          created_at?: string;
+          created_by?: string | null;
+          currency?: string;
+          deleted_at?: string | null;
+          gym_id?: string;
+          id?: string;
+          kind?: string;
+          reason?: string;
+          shift_id?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'cash_movements_shift_id_gym_id_fkey';
+            columns: ['shift_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'cash_shifts';
+            referencedColumns: ['id', 'gym_id'];
+          },
+        ];
+      };
+      cash_shifts: {
+        Row: {
+          branch_id: string;
+          close_note: string | null;
+          closed_at: string | null;
+          closed_by: string | null;
+          counted_iqd: number | null;
+          counted_usd: number | null;
+          created_at: string;
+          created_by: string | null;
+          deleted_at: string | null;
+          expected_iqd: number | null;
+          expected_usd: number | null;
+          gym_id: string;
+          id: string;
+          opened_at: string;
+          opened_by: string | null;
+          opening_iqd: number;
+          opening_usd: number;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          branch_id: string;
+          close_note?: string | null;
+          closed_at?: string | null;
+          closed_by?: string | null;
+          counted_iqd?: number | null;
+          counted_usd?: number | null;
+          created_at?: string;
+          created_by?: string | null;
+          deleted_at?: string | null;
+          expected_iqd?: number | null;
+          expected_usd?: number | null;
+          gym_id?: string;
+          id: string;
+          opened_at?: string;
+          opened_by?: string | null;
+          opening_iqd: number;
+          opening_usd?: number;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          branch_id?: string;
+          close_note?: string | null;
+          closed_at?: string | null;
+          closed_by?: string | null;
+          counted_iqd?: number | null;
+          counted_usd?: number | null;
+          created_at?: string;
+          created_by?: string | null;
+          deleted_at?: string | null;
+          expected_iqd?: number | null;
+          expected_usd?: number | null;
+          gym_id?: string;
+          id?: string;
+          opened_at?: string;
+          opened_by?: string | null;
+          opening_iqd?: number;
+          opening_usd?: number;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'cash_shifts_branch_id_gym_id_fkey';
+            columns: ['branch_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'branches';
+            referencedColumns: ['id', 'gym_id'];
+          },
+        ];
+      };
       class_bookings: {
         Row: {
           created_at: string;
@@ -802,6 +929,7 @@ export type Database = {
           id: string;
           invoice_id: string;
           kind: string;
+          product_id: string | null;
           quantity: number;
           subscription_id: string | null;
           total: number;
@@ -822,6 +950,7 @@ export type Database = {
           id?: string;
           invoice_id: string;
           kind: string;
+          product_id?: string | null;
           quantity?: number;
           subscription_id?: string | null;
           total: number;
@@ -842,6 +971,7 @@ export type Database = {
           id?: string;
           invoice_id?: string;
           kind?: string;
+          product_id?: string | null;
           quantity?: number;
           subscription_id?: string | null;
           total?: number;
@@ -862,6 +992,13 @@ export type Database = {
             columns: ['invoice_id', 'gym_id'];
             isOneToOne: false;
             referencedRelation: 'invoices';
+            referencedColumns: ['id', 'gym_id'];
+          },
+          {
+            foreignKeyName: 'invoice_items_product_id_gym_id_fkey';
+            columns: ['product_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'products';
             referencedColumns: ['id', 'gym_id'];
           },
           {
@@ -1531,6 +1668,7 @@ export type Database = {
           id: string;
           import_id: string | null;
           is_guest: boolean;
+          is_walk_in: boolean;
           member_number: number;
           notes: string | null;
           phone: string | null;
@@ -1565,6 +1703,7 @@ export type Database = {
           id: string;
           import_id?: string | null;
           is_guest?: boolean;
+          is_walk_in?: boolean;
           member_number: number;
           notes?: string | null;
           phone?: string | null;
@@ -1597,6 +1736,7 @@ export type Database = {
           id?: string;
           import_id?: string | null;
           is_guest?: boolean;
+          is_walk_in?: boolean;
           member_number?: number;
           notes?: string | null;
           phone?: string | null;
@@ -1721,6 +1861,7 @@ export type Database = {
         Row: {
           amount: number;
           branch_id: string;
+          cash_shift_id: string | null;
           change_given: number | null;
           created_at: string;
           created_by: string | null;
@@ -1746,6 +1887,7 @@ export type Database = {
         Insert: {
           amount: number;
           branch_id: string;
+          cash_shift_id?: string | null;
           change_given?: number | null;
           created_at?: string;
           created_by?: string | null;
@@ -1771,6 +1913,7 @@ export type Database = {
         Update: {
           amount?: number;
           branch_id?: string;
+          cash_shift_id?: string | null;
           change_given?: number | null;
           created_at?: string;
           created_by?: string | null;
@@ -1799,6 +1942,13 @@ export type Database = {
             columns: ['branch_id', 'gym_id'];
             isOneToOne: false;
             referencedRelation: 'branches';
+            referencedColumns: ['id', 'gym_id'];
+          },
+          {
+            foreignKeyName: 'payments_cash_shift_id_gym_id_fkey';
+            columns: ['cash_shift_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'cash_shifts';
             referencedColumns: ['id', 'gym_id'];
           },
           {
@@ -2017,6 +2167,131 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: 'plans_gym_id_fkey';
+            columns: ['gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'gyms';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      product_categories: {
+        Row: {
+          created_at: string;
+          created_by: string | null;
+          deleted_at: string | null;
+          gym_id: string;
+          id: string;
+          is_active: boolean;
+          name_ar: string | null;
+          name_ckb: string;
+          name_en: string | null;
+          sort_order: number;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          created_at?: string;
+          created_by?: string | null;
+          deleted_at?: string | null;
+          gym_id?: string;
+          id: string;
+          is_active?: boolean;
+          name_ar?: string | null;
+          name_ckb: string;
+          name_en?: string | null;
+          sort_order?: number;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          created_at?: string;
+          created_by?: string | null;
+          deleted_at?: string | null;
+          gym_id?: string;
+          id?: string;
+          is_active?: boolean;
+          name_ar?: string | null;
+          name_ckb?: string;
+          name_en?: string | null;
+          sort_order?: number;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'product_categories_gym_id_fkey';
+            columns: ['gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'gyms';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      products: {
+        Row: {
+          barcode: string | null;
+          category_id: string | null;
+          created_at: string;
+          created_by: string | null;
+          deleted_at: string | null;
+          gym_id: string;
+          id: string;
+          is_active: boolean;
+          low_stock_level: number | null;
+          name_ar: string | null;
+          name_ckb: string;
+          name_en: string | null;
+          price: number;
+          track_stock: boolean;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          barcode?: string | null;
+          category_id?: string | null;
+          created_at?: string;
+          created_by?: string | null;
+          deleted_at?: string | null;
+          gym_id?: string;
+          id: string;
+          is_active?: boolean;
+          low_stock_level?: number | null;
+          name_ar?: string | null;
+          name_ckb: string;
+          name_en?: string | null;
+          price: number;
+          track_stock?: boolean;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          barcode?: string | null;
+          category_id?: string | null;
+          created_at?: string;
+          created_by?: string | null;
+          deleted_at?: string | null;
+          gym_id?: string;
+          id?: string;
+          is_active?: boolean;
+          low_stock_level?: number | null;
+          name_ar?: string | null;
+          name_ckb?: string;
+          name_en?: string | null;
+          price?: number;
+          track_stock?: boolean;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'products_category_id_gym_id_fkey';
+            columns: ['category_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'product_categories';
+            referencedColumns: ['id', 'gym_id'];
+          },
+          {
+            foreignKeyName: 'products_gym_id_fkey';
             columns: ['gym_id'];
             isOneToOne: false;
             referencedRelation: 'gyms';
@@ -3300,6 +3575,82 @@ export type Database = {
           },
         ];
       };
+      stock_movements: {
+        Row: {
+          branch_id: string;
+          created_at: string;
+          created_by: string | null;
+          deleted_at: string | null;
+          gym_id: string;
+          id: string;
+          invoice_item_id: string | null;
+          kind: string;
+          note: string | null;
+          product_id: string;
+          quantity: number;
+          reason: string | null;
+          unit_cost: number | null;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          branch_id: string;
+          created_at?: string;
+          created_by?: string | null;
+          deleted_at?: string | null;
+          gym_id?: string;
+          id: string;
+          invoice_item_id?: string | null;
+          kind: string;
+          note?: string | null;
+          product_id: string;
+          quantity: number;
+          reason?: string | null;
+          unit_cost?: number | null;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          branch_id?: string;
+          created_at?: string;
+          created_by?: string | null;
+          deleted_at?: string | null;
+          gym_id?: string;
+          id?: string;
+          invoice_item_id?: string | null;
+          kind?: string;
+          note?: string | null;
+          product_id?: string;
+          quantity?: number;
+          reason?: string | null;
+          unit_cost?: number | null;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'stock_movements_branch_id_gym_id_fkey';
+            columns: ['branch_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'branches';
+            referencedColumns: ['id', 'gym_id'];
+          },
+          {
+            foreignKeyName: 'stock_movements_invoice_item_id_gym_id_fkey';
+            columns: ['invoice_item_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'invoice_items';
+            referencedColumns: ['id', 'gym_id'];
+          },
+          {
+            foreignKeyName: 'stock_movements_product_id_gym_id_fkey';
+            columns: ['product_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'products';
+            referencedColumns: ['id', 'gym_id'];
+          },
+        ];
+      };
       subscription_freezes: {
         Row: {
           created_at: string;
@@ -3749,6 +4100,36 @@ export type Database = {
       };
     };
     Functions: {
+      add_cash_movement: {
+        Args: {
+          p_amount: number;
+          p_currency: string;
+          p_id: string;
+          p_kind: string;
+          p_reason: string;
+          p_shift_id: string;
+        };
+        Returns: {
+          amount: number;
+          created_at: string;
+          created_by: string | null;
+          currency: string;
+          deleted_at: string | null;
+          gym_id: string;
+          id: string;
+          kind: string;
+          reason: string;
+          shift_id: string;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        SetofOptions: {
+          from: '*';
+          to: 'cash_movements';
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
       add_lockers: {
         Args: {
           p_branch_id: string;
@@ -3860,6 +4241,7 @@ export type Database = {
         };
         Returns: Json;
       };
+      cash_shift_report: { Args: { p_shift_id: string }; Returns: Json };
       change_plan: {
         Args: {
           p_branch_id: string;
@@ -3909,6 +4291,25 @@ export type Database = {
       };
       check_out: { Args: { p_attendance_id: string }; Returns: Json };
       clear_my_pin_lockout: { Args: Record<PropertyKey, never>; Returns: undefined };
+      close_cash_shift: {
+        Args: {
+          p_counted_iqd: number;
+          p_counted_usd?: number;
+          p_note?: string;
+          p_shift_id: string;
+        };
+        Returns: Json;
+      };
+      count_stock: {
+        Args: {
+          p_branch_id: string;
+          p_counted: number;
+          p_id: string;
+          p_note?: string;
+          p_product_id: string;
+        };
+        Returns: Json;
+      };
       create_branch: {
         Args: {
           p_address?: string;
@@ -3966,6 +4367,7 @@ export type Database = {
           id: string;
           import_id: string | null;
           is_guest: boolean;
+          is_walk_in: boolean;
           member_number: number;
           notes: string | null;
           phone: string | null;
@@ -4060,6 +4462,7 @@ export type Database = {
           id: string;
           import_id: string | null;
           is_guest: boolean;
+          is_walk_in: boolean;
           member_number: number;
           notes: string | null;
           phone: string | null;
@@ -4336,6 +4739,7 @@ export type Database = {
           id: string;
           import_id: string | null;
           is_guest: boolean;
+          is_walk_in: boolean;
           member_number: number;
           notes: string | null;
           phone: string | null;
@@ -4462,6 +4866,36 @@ export type Database = {
           suspended: boolean;
         }[];
       };
+      open_cash_shift: {
+        Args: { p_branch_id: string; p_id: string; p_opening_iqd: number; p_opening_usd?: number };
+        Returns: {
+          branch_id: string;
+          close_note: string | null;
+          closed_at: string | null;
+          closed_by: string | null;
+          counted_iqd: number | null;
+          counted_usd: number | null;
+          created_at: string;
+          created_by: string | null;
+          deleted_at: string | null;
+          expected_iqd: number | null;
+          expected_usd: number | null;
+          gym_id: string;
+          id: string;
+          opened_at: string;
+          opened_by: string | null;
+          opening_iqd: number;
+          opening_usd: number;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        SetofOptions: {
+          from: '*';
+          to: 'cash_shifts';
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
       pay_invoice: {
         Args: { p_branch_id: string; p_invoice_id: string; p_payment: Json };
         Returns: Json;
@@ -4480,6 +4914,17 @@ export type Database = {
         }[];
       };
       platform_script_record: { Args: { p_action: string; p_user_id: string }; Returns: undefined };
+      receive_stock: {
+        Args: {
+          p_branch_id: string;
+          p_id: string;
+          p_note?: string;
+          p_product_id: string;
+          p_quantity: number;
+          p_unit_cost?: number;
+        };
+        Returns: Json;
+      };
       refund_invoice: {
         Args: {
           p_amount: number;
@@ -4527,6 +4972,17 @@ export type Database = {
       remove_locker: { Args: { p_locker_id: string }; Returns: undefined };
       remove_member_photo: { Args: { p_member_id: string }; Returns: undefined };
       remove_staff_shift: { Args: { p_id: string }; Returns: undefined };
+      remove_stock: {
+        Args: {
+          p_branch_id: string;
+          p_id: string;
+          p_note?: string;
+          p_product_id: string;
+          p_quantity: number;
+          p_reason: string;
+        };
+        Returns: Json;
+      };
       renew_locker_rental: {
         Args: {
           p_assignment_id: string;
@@ -4722,6 +5178,74 @@ export type Database = {
         SetofOptions: {
           from: '*';
           to: 'plans';
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
+      save_product: {
+        Args: {
+          p_barcode?: string;
+          p_category_id?: string;
+          p_id: string;
+          p_is_active?: boolean;
+          p_low_stock_level?: number;
+          p_name_ar?: string;
+          p_name_ckb: string;
+          p_name_en?: string;
+          p_price: number;
+          p_track_stock?: boolean;
+        };
+        Returns: {
+          barcode: string | null;
+          category_id: string | null;
+          created_at: string;
+          created_by: string | null;
+          deleted_at: string | null;
+          gym_id: string;
+          id: string;
+          is_active: boolean;
+          low_stock_level: number | null;
+          name_ar: string | null;
+          name_ckb: string;
+          name_en: string | null;
+          price: number;
+          track_stock: boolean;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        SetofOptions: {
+          from: '*';
+          to: 'products';
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
+      save_product_category: {
+        Args: {
+          p_id: string;
+          p_is_active?: boolean;
+          p_name_ar?: string;
+          p_name_ckb: string;
+          p_name_en?: string;
+          p_sort_order?: number;
+        };
+        Returns: {
+          created_at: string;
+          created_by: string | null;
+          deleted_at: string | null;
+          gym_id: string;
+          id: string;
+          is_active: boolean;
+          name_ar: string | null;
+          name_ckb: string;
+          name_en: string | null;
+          sort_order: number;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        SetofOptions: {
+          from: '*';
+          to: 'product_categories';
           isOneToOne: true;
           isSetofReturn: false;
         };
@@ -5013,6 +5537,7 @@ export type Database = {
           id: string;
           import_id: string | null;
           is_guest: boolean;
+          is_walk_in: boolean;
           member_number: number;
           notes: string | null;
           phone: string | null;
@@ -5034,6 +5559,16 @@ export type Database = {
           isOneToOne: false;
           isSetofReturn: true;
         };
+      };
+      sell_products: {
+        Args: {
+          p_branch_id: string;
+          p_invoice_id: string;
+          p_items: Json;
+          p_member_id?: string;
+          p_payment?: Json;
+        };
+        Returns: Json;
       };
       sell_pt_package: {
         Args: {
@@ -5277,6 +5812,7 @@ export type Database = {
           id: string;
           import_id: string | null;
           is_guest: boolean;
+          is_walk_in: boolean;
           member_number: number;
           notes: string | null;
           phone: string | null;
@@ -5365,6 +5901,13 @@ export type Database = {
           pin_locked: boolean;
           role_id: string;
           username: string;
+        }[];
+      };
+      stock_levels: {
+        Args: { p_branch_id: string };
+        Returns: {
+          product_id: string;
+          quantity: number;
         }[];
       };
       subscription_change_preview: { Args: { p_subscription_id: string }; Returns: Json };
@@ -5484,6 +6027,7 @@ export type Database = {
           id: string;
           import_id: string | null;
           is_guest: boolean;
+          is_walk_in: boolean;
           member_number: number;
           notes: string | null;
           phone: string | null;
@@ -5515,6 +6059,7 @@ export type Database = {
       void_pt_session: { Args: { p_id: string; p_reason: string }; Returns: undefined };
       void_staff_clock: { Args: { p_reason: string; p_record_id: string }; Returns: undefined };
       void_visit: { Args: { p_attendance_id: string; p_reason: string }; Returns: Json };
+      walk_in_member_id: { Args: Record<PropertyKey, never>; Returns: string };
     };
     Enums: {
       language_code: 'ckb' | 'en' | 'ar';

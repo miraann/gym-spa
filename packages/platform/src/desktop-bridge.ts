@@ -24,6 +24,13 @@ export interface DesktopBridge {
   readonly watchCardReaders: (onChange: (readers: readonly string[]) => void) => () => void;
   /** Shows on a reader whether the app took the card it read: LED and beep, where it can. */
   readonly signalCard: (reader: string, signal: CardSignal) => void;
+  /** The printers Windows knows (step 8f), by name. */
+  readonly listPrinters: () => Promise<readonly string[]>;
+  /**
+   * Prints the page to the named printer without the print dialog (receipts on an 80mm printer).
+   * Resolves false when it couldn't (the printer is gone, out of paper, ...).
+   */
+  readonly printSilently: (printer: string) => Promise<boolean>;
 }
 
 /** A card a PC/SC reader read: its UID in hex, as the card gave it, and the reader's name. */
@@ -55,7 +62,21 @@ export const DESKTOP_CHANNELS = {
   cardReaders: 'gym:card-readers',
   /** Page → main: a reader's name and a CardSignal. */
   cardSignal: 'gym:card-signal',
+  /** Page → main: the printers' names. */
+  printersGet: 'gym:printers-get',
+  /** Page → main: print the page to a printer, without the dialog. */
+  printSilent: 'gym:print-silent',
 } as const;
+
+/** A printer's name as Windows gives it: 1 to 256 characters, no control characters. */
+export function isPrinterName(value: unknown): value is string {
+  if (typeof value !== 'string' || value.length === 0 || value.length > 256) return false;
+  for (let index = 0; index < value.length; index += 1) {
+    const code = value.charCodeAt(index);
+    if (code <= 0x1f || code === 0x7f) return false;
+  }
+  return true;
+}
 
 export function isCardSignal(value: unknown): value is CardSignal {
   return value === 'ok' || value === 'error';

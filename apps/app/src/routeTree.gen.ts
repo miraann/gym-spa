@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as BranchesRouteRouteImport } from './routes/branches/route'
+import { Route as CashRouteImport } from './routes/cash'
 import { Route as DevicesRouteRouteImport } from './routes/devices/route'
 import { Route as MembersRouteRouteImport } from './routes/members/route'
 import { Route as PlansRouteRouteImport } from './routes/plans/route'
@@ -44,7 +45,11 @@ import { Route as SettingsIndexRouteImport } from './routes/settings/index'
 import { Route as SettingsAppearanceRouteImport } from './routes/settings/appearance'
 import { Route as SettingsCardReaderRouteImport } from './routes/settings/card-reader'
 import { Route as SettingsDisplayRouteImport } from './routes/settings/display'
+import { Route as SettingsPrinterRouteImport } from './routes/settings/printer'
 import { Route as SettingsSupportRouteImport } from './routes/settings/support'
+import { Route as ShopIndexRouteImport } from './routes/shop/index'
+import { Route as ShopProductsRouteImport } from './routes/shop/products'
+import { Route as ShopStockRouteImport } from './routes/shop/stock'
 import { Route as SpaIndexRouteImport } from './routes/spa/index'
 import { Route as SpaCommissionsRouteImport } from './routes/spa/commissions'
 import { Route as SpaSetupRouteRouteImport } from './routes/spa/setup/route'
@@ -70,6 +75,11 @@ const IndexRoute = IndexRouteImport.update({
 const BranchesRouteRoute = BranchesRouteRouteImport.update({
   id: '/branches',
   path: '/branches',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CashRoute = CashRouteImport.update({
+  id: '/cash',
+  path: '/cash',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DevicesRouteRoute = DevicesRouteRouteImport.update({
@@ -237,10 +247,30 @@ const SettingsDisplayRoute = SettingsDisplayRouteImport.update({
   path: '/display',
   getParentRoute: () => SettingsRouteRoute,
 } as any)
+const SettingsPrinterRoute = SettingsPrinterRouteImport.update({
+  id: '/printer',
+  path: '/printer',
+  getParentRoute: () => SettingsRouteRoute,
+} as any)
 const SettingsSupportRoute = SettingsSupportRouteImport.update({
   id: '/support',
   path: '/support',
   getParentRoute: () => SettingsRouteRoute,
+} as any)
+const ShopIndexRoute = ShopIndexRouteImport.update({
+  id: '/shop/',
+  path: '/shop/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ShopProductsRoute = ShopProductsRouteImport.update({
+  id: '/shop/products',
+  path: '/shop/products',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ShopStockRoute = ShopStockRouteImport.update({
+  id: '/shop/stock',
+  path: '/shop/stock',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const SpaIndexRoute = SpaIndexRouteImport.update({
   id: '/spa/',
@@ -332,6 +362,7 @@ export interface FileRoutesByFullPath {
   '/roles': typeof RolesRouteRouteWithChildren
   '/settings': typeof SettingsRouteRouteWithChildren
   '/staff': typeof StaffRouteRouteWithChildren
+  '/cash': typeof CashRoute
   '/spa/setup': typeof SpaSetupRouteRouteWithChildren
   '/branches/$branchId': typeof BranchesBranchIdRoute
   '/branches/new': typeof BranchesNewRoute
@@ -350,7 +381,10 @@ export interface FileRoutesByFullPath {
   '/settings/appearance': typeof SettingsAppearanceRoute
   '/settings/card-reader': typeof SettingsCardReaderRoute
   '/settings/display': typeof SettingsDisplayRoute
+  '/settings/printer': typeof SettingsPrinterRoute
   '/settings/support': typeof SettingsSupportRoute
+  '/shop/products': typeof ShopProductsRoute
+  '/shop/stock': typeof ShopStockRoute
   '/spa/commissions': typeof SpaCommissionsRoute
   '/staff/$staffId': typeof StaffStaffIdRoute
   '/staff/new': typeof StaffNewRoute
@@ -365,6 +399,7 @@ export interface FileRoutesByFullPath {
   '/plans/': typeof PlansIndexRoute
   '/roles/': typeof RolesIndexRoute
   '/settings/': typeof SettingsIndexRoute
+  '/shop/': typeof ShopIndexRoute
   '/spa/': typeof SpaIndexRoute
   '/staff/': typeof StaffIndexRoute
   '/trainers/': typeof TrainersIndexRoute
@@ -379,6 +414,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/cash': typeof CashRoute
   '/branches/$branchId': typeof BranchesBranchIdRoute
   '/branches/new': typeof BranchesNewRoute
   '/checkin/door': typeof CheckinDoorRoute
@@ -396,7 +432,10 @@ export interface FileRoutesByTo {
   '/settings/appearance': typeof SettingsAppearanceRoute
   '/settings/card-reader': typeof SettingsCardReaderRoute
   '/settings/display': typeof SettingsDisplayRoute
+  '/settings/printer': typeof SettingsPrinterRoute
   '/settings/support': typeof SettingsSupportRoute
+  '/shop/products': typeof ShopProductsRoute
+  '/shop/stock': typeof ShopStockRoute
   '/spa/commissions': typeof SpaCommissionsRoute
   '/staff/$staffId': typeof StaffStaffIdRoute
   '/staff/new': typeof StaffNewRoute
@@ -411,6 +450,7 @@ export interface FileRoutesByTo {
   '/plans': typeof PlansIndexRoute
   '/roles': typeof RolesIndexRoute
   '/settings': typeof SettingsIndexRoute
+  '/shop': typeof ShopIndexRoute
   '/spa': typeof SpaIndexRoute
   '/staff': typeof StaffIndexRoute
   '/trainers': typeof TrainersIndexRoute
@@ -433,6 +473,7 @@ export interface FileRoutesById {
   '/roles': typeof RolesRouteRouteWithChildren
   '/settings': typeof SettingsRouteRouteWithChildren
   '/staff': typeof StaffRouteRouteWithChildren
+  '/cash': typeof CashRoute
   '/spa/setup': typeof SpaSetupRouteRouteWithChildren
   '/branches/$branchId': typeof BranchesBranchIdRoute
   '/branches/new': typeof BranchesNewRoute
@@ -451,7 +492,10 @@ export interface FileRoutesById {
   '/settings/appearance': typeof SettingsAppearanceRoute
   '/settings/card-reader': typeof SettingsCardReaderRoute
   '/settings/display': typeof SettingsDisplayRoute
+  '/settings/printer': typeof SettingsPrinterRoute
   '/settings/support': typeof SettingsSupportRoute
+  '/shop/products': typeof ShopProductsRoute
+  '/shop/stock': typeof ShopStockRoute
   '/spa/commissions': typeof SpaCommissionsRoute
   '/staff/$staffId': typeof StaffStaffIdRoute
   '/staff/new': typeof StaffNewRoute
@@ -466,6 +510,7 @@ export interface FileRoutesById {
   '/plans/': typeof PlansIndexRoute
   '/roles/': typeof RolesIndexRoute
   '/settings/': typeof SettingsIndexRoute
+  '/shop/': typeof ShopIndexRoute
   '/spa/': typeof SpaIndexRoute
   '/staff/': typeof StaffIndexRoute
   '/trainers/': typeof TrainersIndexRoute
@@ -489,6 +534,7 @@ export interface FileRouteTypes {
     | '/roles'
     | '/settings'
     | '/staff'
+    | '/cash'
     | '/spa/setup'
     | '/branches/$branchId'
     | '/branches/new'
@@ -507,7 +553,10 @@ export interface FileRouteTypes {
     | '/settings/appearance'
     | '/settings/card-reader'
     | '/settings/display'
+    | '/settings/printer'
     | '/settings/support'
+    | '/shop/products'
+    | '/shop/stock'
     | '/spa/commissions'
     | '/staff/$staffId'
     | '/staff/new'
@@ -522,6 +571,7 @@ export interface FileRouteTypes {
     | '/plans/'
     | '/roles/'
     | '/settings/'
+    | '/shop/'
     | '/spa/'
     | '/staff/'
     | '/trainers/'
@@ -536,6 +586,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/cash'
     | '/branches/$branchId'
     | '/branches/new'
     | '/checkin/door'
@@ -553,7 +604,10 @@ export interface FileRouteTypes {
     | '/settings/appearance'
     | '/settings/card-reader'
     | '/settings/display'
+    | '/settings/printer'
     | '/settings/support'
+    | '/shop/products'
+    | '/shop/stock'
     | '/spa/commissions'
     | '/staff/$staffId'
     | '/staff/new'
@@ -568,6 +622,7 @@ export interface FileRouteTypes {
     | '/plans'
     | '/roles'
     | '/settings'
+    | '/shop'
     | '/spa'
     | '/staff'
     | '/trainers'
@@ -589,6 +644,7 @@ export interface FileRouteTypes {
     | '/roles'
     | '/settings'
     | '/staff'
+    | '/cash'
     | '/spa/setup'
     | '/branches/$branchId'
     | '/branches/new'
@@ -607,7 +663,10 @@ export interface FileRouteTypes {
     | '/settings/appearance'
     | '/settings/card-reader'
     | '/settings/display'
+    | '/settings/printer'
     | '/settings/support'
+    | '/shop/products'
+    | '/shop/stock'
     | '/spa/commissions'
     | '/staff/$staffId'
     | '/staff/new'
@@ -622,6 +681,7 @@ export interface FileRouteTypes {
     | '/plans/'
     | '/roles/'
     | '/settings/'
+    | '/shop/'
     | '/spa/'
     | '/staff/'
     | '/trainers/'
@@ -644,18 +704,22 @@ export interface RootRouteChildren {
   RolesRouteRoute: typeof RolesRouteRouteWithChildren
   SettingsRouteRoute: typeof SettingsRouteRouteWithChildren
   StaffRouteRoute: typeof StaffRouteRouteWithChildren
+  CashRoute: typeof CashRoute
   SpaSetupRouteRoute: typeof SpaSetupRouteRouteWithChildren
   CheckinDoorRoute: typeof CheckinDoorRoute
   CheckinVisitsRoute: typeof CheckinVisitsRoute
   ClassesSetupRoute: typeof ClassesSetupRoute
   HrClockRoute: typeof HrClockRoute
   HrShiftsRoute: typeof HrShiftsRoute
+  ShopProductsRoute: typeof ShopProductsRoute
+  ShopStockRoute: typeof ShopStockRoute
   SpaCommissionsRoute: typeof SpaCommissionsRoute
   TrainersReportRoute: typeof TrainersReportRoute
   CheckinIndexRoute: typeof CheckinIndexRoute
   ClassesIndexRoute: typeof ClassesIndexRoute
   LockersIndexRoute: typeof LockersIndexRoute
   PaymentsIndexRoute: typeof PaymentsIndexRoute
+  ShopIndexRoute: typeof ShopIndexRoute
   SpaIndexRoute: typeof SpaIndexRoute
   TrainersIndexRoute: typeof TrainersIndexRoute
 }
@@ -674,6 +738,13 @@ declare module '@tanstack/react-router' {
       path: '/branches'
       fullPath: '/branches'
       preLoaderRoute: typeof BranchesRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cash': {
+      id: '/cash'
+      path: '/cash'
+      fullPath: '/cash'
+      preLoaderRoute: typeof CashRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/devices': {
@@ -907,12 +978,40 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsDisplayRouteImport
       parentRoute: typeof SettingsRouteRoute
     }
+    '/settings/printer': {
+      id: '/settings/printer'
+      path: '/printer'
+      fullPath: '/settings/printer'
+      preLoaderRoute: typeof SettingsPrinterRouteImport
+      parentRoute: typeof SettingsRouteRoute
+    }
     '/settings/support': {
       id: '/settings/support'
       path: '/support'
       fullPath: '/settings/support'
       preLoaderRoute: typeof SettingsSupportRouteImport
       parentRoute: typeof SettingsRouteRoute
+    }
+    '/shop/': {
+      id: '/shop/'
+      path: '/shop'
+      fullPath: '/shop/'
+      preLoaderRoute: typeof ShopIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/shop/products': {
+      id: '/shop/products'
+      path: '/shop/products'
+      fullPath: '/shop/products'
+      preLoaderRoute: typeof ShopProductsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/shop/stock': {
+      id: '/shop/stock'
+      path: '/shop/stock'
+      fullPath: '/shop/stock'
+      preLoaderRoute: typeof ShopStockRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/spa/': {
       id: '/spa/'
@@ -1117,6 +1216,7 @@ interface SettingsRouteRouteChildren {
   SettingsAppearanceRoute: typeof SettingsAppearanceRoute
   SettingsCardReaderRoute: typeof SettingsCardReaderRoute
   SettingsDisplayRoute: typeof SettingsDisplayRoute
+  SettingsPrinterRoute: typeof SettingsPrinterRoute
   SettingsSupportRoute: typeof SettingsSupportRoute
   SettingsIndexRoute: typeof SettingsIndexRoute
 }
@@ -1125,6 +1225,7 @@ const SettingsRouteRouteChildren: SettingsRouteRouteChildren = {
   SettingsAppearanceRoute: SettingsAppearanceRoute,
   SettingsCardReaderRoute: SettingsCardReaderRoute,
   SettingsDisplayRoute: SettingsDisplayRoute,
+  SettingsPrinterRoute: SettingsPrinterRoute,
   SettingsSupportRoute: SettingsSupportRoute,
   SettingsIndexRoute: SettingsIndexRoute,
 }
@@ -1178,18 +1279,22 @@ const rootRouteChildren: RootRouteChildren = {
   RolesRouteRoute: RolesRouteRouteWithChildren,
   SettingsRouteRoute: SettingsRouteRouteWithChildren,
   StaffRouteRoute: StaffRouteRouteWithChildren,
+  CashRoute: CashRoute,
   SpaSetupRouteRoute: SpaSetupRouteRouteWithChildren,
   CheckinDoorRoute: CheckinDoorRoute,
   CheckinVisitsRoute: CheckinVisitsRoute,
   ClassesSetupRoute: ClassesSetupRoute,
   HrClockRoute: HrClockRoute,
   HrShiftsRoute: HrShiftsRoute,
+  ShopProductsRoute: ShopProductsRoute,
+  ShopStockRoute: ShopStockRoute,
   SpaCommissionsRoute: SpaCommissionsRoute,
   TrainersReportRoute: TrainersReportRoute,
   CheckinIndexRoute: CheckinIndexRoute,
   ClassesIndexRoute: ClassesIndexRoute,
   LockersIndexRoute: LockersIndexRoute,
   PaymentsIndexRoute: PaymentsIndexRoute,
+  ShopIndexRoute: ShopIndexRoute,
   SpaIndexRoute: SpaIndexRoute,
   TrainersIndexRoute: TrainersIndexRoute,
 }

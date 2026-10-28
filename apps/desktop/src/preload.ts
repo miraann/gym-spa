@@ -51,6 +51,9 @@ const bridge: DesktopBridge = {
   signalCard: (reader, signal) => {
     ipcRenderer.send(DESKTOP_CHANNELS.cardSignal, reader, signal);
   },
+  listPrinters: () => ipcRenderer.invoke(DESKTOP_CHANNELS.printersGet) as Promise<string[]>,
+  printSilently: (printer) =>
+    ipcRenderer.invoke(DESKTOP_CHANNELS.printSilent, printer) as Promise<boolean>,
 };
 
 contextBridge.exposeInMainWorld(DESKTOP_BRIDGE_KEY, bridge);

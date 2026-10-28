@@ -15,6 +15,7 @@ import { GymMark } from '@/components/layout/gym-mark';
 import { i18n } from '@/lib/i18n';
 import { usePreferences } from '@/lib/preferences';
 import { useReceipt, type Receipt } from './receipt-data';
+import { silentPrinter } from './receipt-printer';
 
 // Printing an invoice's receipt (step 3g): it is drawn into #print-root, which the print styles
 // show alone (styles.css), on an 80mm roll or an A4 page, in the member's language; then the
@@ -55,7 +56,12 @@ export function ReceiptPrint({
     window.addEventListener('afterprint', finish, { once: true });
     // The fonts first, or the receipt prints in the fallback font.
     void document.fonts.ready.then(() => {
-      if (!cancelled) printPage();
+      if (cancelled) return;
+      const printer = silentPrinter();
+      void printPage(printer).then(() => {
+        // Printed without the dialog, there is no afterprint event.
+        if (printer !== null && !cancelled) finish();
+      });
     });
     return () => {
       cancelled = true;
@@ -123,11 +129,15 @@ export function ReceiptView({
       <section className="flex flex-col gap-0.5 border-y border-dashed border-black py-1">
         <Line label={t('receipt.title')} value={<span dir="ltr">{receipt.number}</span>} />
         <Line label={t('receipt.date')} value={formatDateTime(receipt.createdAt, options)} />
-        <Line label={t('receipt.member')} value={receipt.memberName} />
-        <Line
-          label={t('receipt.memberNumber')}
-          value={<span dir="ltr">{formatMemberNumber(receipt.memberNumber)}</span>}
-        />
+        {receipt.memberNumber !== null && (
+          <>
+            <Line label={t('receipt.member')} value={receipt.memberName} />
+            <Line
+              label={t('receipt.memberNumber')}
+              value={<span dir="ltr">{formatMemberNumber(receipt.memberNumber)}</span>}
+            />
+          </>
+        )}
         {receipt.voided && <strong>{t('receipt.voided')}</strong>}
       </section>
 
@@ -135,7 +145,11 @@ export function ReceiptView({
         {receipt.items.map((item, index) => (
           <div key={index} className="flex flex-col">
             <Line
-              label={localizedName(item, language)}
+              label={
+                item.quantity > 1
+                  ? `${localizedName(item, language)} × ${formatNumber(item.quantity, options)}`
+                  : localizedName(item, language)
+              }
               value={money(item.unitPrice * item.quantity)}
             />
             {item.discount > 0 && (
