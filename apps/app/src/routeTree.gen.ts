@@ -41,6 +41,7 @@ import { Route as SettingsAppearanceRouteImport } from './routes/settings/appear
 import { Route as SettingsCardReaderRouteImport } from './routes/settings/card-reader'
 import { Route as SettingsDisplayRouteImport } from './routes/settings/display'
 import { Route as SettingsSupportRouteImport } from './routes/settings/support'
+import { Route as SpaIndexRouteImport } from './routes/spa/index'
 import { Route as SpaSetupRouteRouteImport } from './routes/spa/setup/route'
 import { Route as StaffIndexRouteImport } from './routes/staff/index'
 import { Route as StaffStaffIdRouteImport } from './routes/staff/$staffId'
@@ -214,6 +215,11 @@ const SettingsSupportRoute = SettingsSupportRouteImport.update({
   path: '/support',
   getParentRoute: () => SettingsRouteRoute,
 } as any)
+const SpaIndexRoute = SpaIndexRouteImport.update({
+  id: '/spa/',
+  path: '/spa/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SpaSetupRouteRoute = SpaSetupRouteRouteImport.update({
   id: '/spa/setup',
   path: '/spa/setup',
@@ -311,6 +317,7 @@ export interface FileRoutesByFullPath {
   '/plans/': typeof PlansIndexRoute
   '/roles/': typeof RolesIndexRoute
   '/settings/': typeof SettingsIndexRoute
+  '/spa/': typeof SpaIndexRoute
   '/staff/': typeof StaffIndexRoute
   '/members/$memberId/edit': typeof MembersMemberIdEditRoute
   '/members/$memberId/sell': typeof MembersMemberIdSellRoute
@@ -349,6 +356,7 @@ export interface FileRoutesByTo {
   '/plans': typeof PlansIndexRoute
   '/roles': typeof RolesIndexRoute
   '/settings': typeof SettingsIndexRoute
+  '/spa': typeof SpaIndexRoute
   '/staff': typeof StaffIndexRoute
   '/members/$memberId/edit': typeof MembersMemberIdEditRoute
   '/members/$memberId/sell': typeof MembersMemberIdSellRoute
@@ -396,6 +404,7 @@ export interface FileRoutesById {
   '/plans/': typeof PlansIndexRoute
   '/roles/': typeof RolesIndexRoute
   '/settings/': typeof SettingsIndexRoute
+  '/spa/': typeof SpaIndexRoute
   '/staff/': typeof StaffIndexRoute
   '/members/$memberId/edit': typeof MembersMemberIdEditRoute
   '/members/$memberId/sell': typeof MembersMemberIdSellRoute
@@ -444,6 +453,7 @@ export interface FileRouteTypes {
     | '/plans/'
     | '/roles/'
     | '/settings/'
+    | '/spa/'
     | '/staff/'
     | '/members/$memberId/edit'
     | '/members/$memberId/sell'
@@ -482,6 +492,7 @@ export interface FileRouteTypes {
     | '/plans'
     | '/roles'
     | '/settings'
+    | '/spa'
     | '/staff'
     | '/members/$memberId/edit'
     | '/members/$memberId/sell'
@@ -528,6 +539,7 @@ export interface FileRouteTypes {
     | '/plans/'
     | '/roles/'
     | '/settings/'
+    | '/spa/'
     | '/staff/'
     | '/members/$memberId/edit'
     | '/members/$memberId/sell'
@@ -554,6 +566,7 @@ export interface RootRouteChildren {
   CheckinIndexRoute: typeof CheckinIndexRoute
   LockersIndexRoute: typeof LockersIndexRoute
   PaymentsIndexRoute: typeof PaymentsIndexRoute
+  SpaIndexRoute: typeof SpaIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -781,6 +794,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/settings/support'
       preLoaderRoute: typeof SettingsSupportRouteImport
       parentRoute: typeof SettingsRouteRoute
+    }
+    '/spa/': {
+      id: '/spa/'
+      path: '/spa'
+      fullPath: '/spa/'
+      preLoaderRoute: typeof SpaIndexRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/spa/setup': {
       id: '/spa/setup'
@@ -1024,6 +1044,7 @@ const rootRouteChildren: RootRouteChildren = {
   CheckinIndexRoute: CheckinIndexRoute,
   LockersIndexRoute: LockersIndexRoute,
   PaymentsIndexRoute: PaymentsIndexRoute,
+  SpaIndexRoute: SpaIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

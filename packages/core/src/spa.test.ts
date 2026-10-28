@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
   SPA_BOOKING_STATUSES,
+  addDays,
+  baghdadClock,
+  baghdadMoment,
+  weekStartOf,
+  weekdayOf,
   canChangeSpaStatus,
   clockMinutes,
   isValidWorkWindows,
@@ -113,5 +118,30 @@ describe('spaDaySlots', () => {
 
   it('shows at least one hour', () => {
     expect(spaDaySlots(10, 9, 60)).toEqual([600]);
+  });
+});
+
+describe('Baghdad time', () => {
+  it('turns a day and a minute into a moment and back', () => {
+    expect(baghdadMoment('2026-10-28', 10 * 60).toISOString()).toBe('2026-10-28T07:00:00.000Z');
+    expect(baghdadMoment('2026-10-28', 60).toISOString()).toBe('2026-10-27T22:00:00.000Z');
+    expect(baghdadClock('2026-10-27T22:00:00.000Z')).toEqual({ day: '2026-10-28', minute: 60 });
+    expect(baghdadClock(new Date('2026-10-28T20:59:00Z'))).toEqual({
+      day: '2026-10-28',
+      minute: 1439,
+    });
+  });
+
+  it('counts days across months and years', () => {
+    expect(addDays('2026-12-31', 1)).toBe('2027-01-01');
+    expect(addDays('2026-03-01', -1)).toBe('2026-02-28');
+  });
+
+  it('knows the weekday and that the gym week starts on Saturday', () => {
+    expect(weekdayOf('2026-10-28')).toBe(3);
+    expect(weekdayOf('2026-11-01')).toBe(7);
+    expect(weekStartOf('2026-10-28')).toBe('2026-10-24');
+    expect(weekStartOf('2026-10-24')).toBe('2026-10-24');
+    expect(weekStartOf('2026-10-23')).toBe('2026-10-17');
   });
 });

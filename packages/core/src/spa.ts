@@ -1,5 +1,5 @@
 import { toLatinDigits } from './digits.ts';
-import type { Weekday } from './plans.ts';
+import { WEEK_ORDER, type Weekday } from './plans.ts';
 
 // The spa (Phase 6; supabase/migrations/20261028400000_spa_setup.sql, 20261028500000_spa_packages.sql
 // and 20261028600000_spa_bookings.sql). The database decides; this file gives the screens the same
@@ -144,4 +144,46 @@ export function spaDaySlots(fromHour: number, untilHour: number, step: number): 
   const slots: number[] = [];
   for (let minute = first; minute < last; minute += size) slots.push(minute);
   return slots;
+}
+
+// Baghdad time (UTC+3, no summer time), which the calendar is drawn in.
+const BAGHDAD_OFFSET_MS = 3 * 60 * 60_000;
+const DAY_MS = 24 * 60 * 60_000;
+
+function dayStartUtc(day: string): number {
+  const [year = 0, month = 1, date = 1] = day.split('-').map(Number);
+  return Date.UTC(year, month - 1, date);
+}
+
+/** The moment `minute` minutes after midnight of a Baghdad day (YYYY-MM-DD). */
+export function baghdadMoment(day: string, minute: number): Date {
+  return new Date(dayStartUtc(day) - BAGHDAD_OFFSET_MS + minute * 60_000);
+}
+
+/** A moment's Baghdad day (YYYY-MM-DD) and minutes after that day's midnight. */
+export function baghdadClock(moment: Date | string): {
+  readonly day: string;
+  readonly minute: number;
+} {
+  const local = new Date(new Date(moment).getTime() + BAGHDAD_OFFSET_MS);
+  return {
+    day: local.toISOString().slice(0, 10),
+    minute: local.getUTCHours() * 60 + local.getUTCMinutes(),
+  };
+}
+
+/** The day `count` days after `day` (YYYY-MM-DD; negative: before). */
+export function addDays(day: string, count: number): string {
+  return new Date(dayStartUtc(day) + count * DAY_MS).toISOString().slice(0, 10);
+}
+
+/** A day's ISO weekday (1 Monday … 7 Sunday). */
+export function weekdayOf(day: string): Weekday {
+  const sunday0 = new Date(dayStartUtc(day)).getUTCDay();
+  return (sunday0 === 0 ? 7 : sunday0) as Weekday;
+}
+
+/** The first day of the gym week (Saturday, WEEK_ORDER) that `day` is in. */
+export function weekStartOf(day: string): string {
+  return addDays(day, -WEEK_ORDER.indexOf(weekdayOf(day)));
 }
