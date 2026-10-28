@@ -9,6 +9,7 @@ import { useGymName } from '@/components/layout/use-gym-name';
 import { useAuthController } from '@/features/auth/auth-context';
 import { usePauseIdleLock } from '@/features/auth/use-idle-lock';
 import { useFormat } from '@/lib/format';
+import { StaffClockNotice } from '@/features/hr/staff-clock-notice';
 import { useCheckinBranch } from './checkin-branch';
 import { CheckinError } from './checkin-error';
 import { CheckinResultView } from './checkin-result';
@@ -71,8 +72,9 @@ function DoorScreen() {
           )}
           <p className="text-5xl">{t('kiosk.hold')}</p>
           <Clock />
-          <div className="w-full max-w-xl">
+          <div className="flex w-full max-w-xl flex-col gap-4">
             <CheckinError error={flow.error} />
+            {flow.staff && <StaffClockNotice result={flow.staff} onClose={flow.closeStaff} large />}
           </div>
         </div>
         {flow.answer && <CheckinResultView answer={flow.answer} onClose={flow.close} door />}

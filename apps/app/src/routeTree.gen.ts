@@ -25,6 +25,8 @@ import { Route as CheckinDoorRouteImport } from './routes/checkin/door'
 import { Route as CheckinVisitsRouteImport } from './routes/checkin/visits'
 import { Route as DevicesIndexRouteImport } from './routes/devices/index'
 import { Route as DevicesDeviceIdRouteImport } from './routes/devices/$deviceId'
+import { Route as HrClockRouteImport } from './routes/hr/clock'
+import { Route as HrShiftsRouteImport } from './routes/hr/shifts'
 import { Route as LockersIndexRouteImport } from './routes/lockers/index'
 import { Route as MembersIndexRouteImport } from './routes/members/index'
 import { Route as MembersImportRouteImport } from './routes/members/import'
@@ -135,6 +137,16 @@ const DevicesDeviceIdRoute = DevicesDeviceIdRouteImport.update({
   id: '/$deviceId',
   path: '/$deviceId',
   getParentRoute: () => DevicesRouteRoute,
+} as any)
+const HrClockRoute = HrClockRouteImport.update({
+  id: '/hr/clock',
+  path: '/hr/clock',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HrShiftsRoute = HrShiftsRouteImport.update({
+  id: '/hr/shifts',
+  path: '/hr/shifts',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const LockersIndexRoute = LockersIndexRouteImport.update({
   id: '/lockers/',
@@ -302,6 +314,8 @@ export interface FileRoutesByFullPath {
   '/checkin/door': typeof CheckinDoorRoute
   '/checkin/visits': typeof CheckinVisitsRoute
   '/devices/$deviceId': typeof DevicesDeviceIdRoute
+  '/hr/clock': typeof HrClockRoute
+  '/hr/shifts': typeof HrShiftsRoute
   '/members/import': typeof MembersImportRoute
   '/members/new': typeof MembersNewRoute
   '/plans/$planId': typeof PlansPlanIdRoute
@@ -342,6 +356,8 @@ export interface FileRoutesByTo {
   '/checkin/door': typeof CheckinDoorRoute
   '/checkin/visits': typeof CheckinVisitsRoute
   '/devices/$deviceId': typeof DevicesDeviceIdRoute
+  '/hr/clock': typeof HrClockRoute
+  '/hr/shifts': typeof HrShiftsRoute
   '/members/import': typeof MembersImportRoute
   '/members/new': typeof MembersNewRoute
   '/plans/$planId': typeof PlansPlanIdRoute
@@ -391,6 +407,8 @@ export interface FileRoutesById {
   '/checkin/door': typeof CheckinDoorRoute
   '/checkin/visits': typeof CheckinVisitsRoute
   '/devices/$deviceId': typeof DevicesDeviceIdRoute
+  '/hr/clock': typeof HrClockRoute
+  '/hr/shifts': typeof HrShiftsRoute
   '/members/import': typeof MembersImportRoute
   '/members/new': typeof MembersNewRoute
   '/plans/$planId': typeof PlansPlanIdRoute
@@ -441,6 +459,8 @@ export interface FileRouteTypes {
     | '/checkin/door'
     | '/checkin/visits'
     | '/devices/$deviceId'
+    | '/hr/clock'
+    | '/hr/shifts'
     | '/members/import'
     | '/members/new'
     | '/plans/$planId'
@@ -481,6 +501,8 @@ export interface FileRouteTypes {
     | '/checkin/door'
     | '/checkin/visits'
     | '/devices/$deviceId'
+    | '/hr/clock'
+    | '/hr/shifts'
     | '/members/import'
     | '/members/new'
     | '/plans/$planId'
@@ -529,6 +551,8 @@ export interface FileRouteTypes {
     | '/checkin/door'
     | '/checkin/visits'
     | '/devices/$deviceId'
+    | '/hr/clock'
+    | '/hr/shifts'
     | '/members/import'
     | '/members/new'
     | '/plans/$planId'
@@ -575,6 +599,8 @@ export interface RootRouteChildren {
   SpaSetupRouteRoute: typeof SpaSetupRouteRouteWithChildren
   CheckinDoorRoute: typeof CheckinDoorRoute
   CheckinVisitsRoute: typeof CheckinVisitsRoute
+  HrClockRoute: typeof HrClockRoute
+  HrShiftsRoute: typeof HrShiftsRoute
   SpaCommissionsRoute: typeof SpaCommissionsRoute
   CheckinIndexRoute: typeof CheckinIndexRoute
   LockersIndexRoute: typeof LockersIndexRoute
@@ -695,6 +721,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/devices/$deviceId'
       preLoaderRoute: typeof DevicesDeviceIdRouteImport
       parentRoute: typeof DevicesRouteRoute
+    }
+    '/hr/clock': {
+      id: '/hr/clock'
+      path: '/hr/clock'
+      fullPath: '/hr/clock'
+      preLoaderRoute: typeof HrClockRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/hr/shifts': {
+      id: '/hr/shifts'
+      path: '/hr/shifts'
+      fullPath: '/hr/shifts'
+      preLoaderRoute: typeof HrShiftsRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/lockers/': {
       id: '/lockers/'
@@ -1061,6 +1101,8 @@ const rootRouteChildren: RootRouteChildren = {
   SpaSetupRouteRoute: SpaSetupRouteRouteWithChildren,
   CheckinDoorRoute: CheckinDoorRoute,
   CheckinVisitsRoute: CheckinVisitsRoute,
+  HrClockRoute: HrClockRoute,
+  HrShiftsRoute: HrShiftsRoute,
   SpaCommissionsRoute: SpaCommissionsRoute,
   CheckinIndexRoute: CheckinIndexRoute,
   LockersIndexRoute: LockersIndexRoute,

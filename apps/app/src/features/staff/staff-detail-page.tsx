@@ -46,6 +46,7 @@ import { BranchPicker, RolePicker } from './staff-fields';
 import { staffAccessSchema, usernameSchema, type StaffAccessInput } from './staff-form';
 import { TemporaryPasswordDialog } from './temporary-password';
 import { useAdminWriteState } from './write-state';
+import { StaffHrSection } from '@/features/hr/staff-hr-section';
 import { WriteStateNotice } from './write-state-notice';
 
 /** One staff member: who they are, their access, and what a manager can do to their account. */
@@ -148,6 +149,7 @@ function StaffDetail({ member }: { readonly member: StaffMember }) {
           <AccountActions member={member} />
         </>
       )}
+      <StaffHrSection member={member} isSelf={isSelf} />
     </div>
   );
 }

@@ -36,7 +36,7 @@ import { useBaghdadToday } from '@/lib/use-today';
 import { BookingDetails } from './booking-details';
 import { BookingDialog, type BookingStart } from './booking-dialog';
 import { BookingList, SpaWeek } from './spa-agenda';
-import { useSpaBranch } from './spa-branch';
+import { useBranchChoice } from '@/lib/use-branch-choice';
 import {
   useMoveSpaBooking,
   useSpaBookings,
@@ -47,7 +47,7 @@ import { useSpaRooms, useSpaTherapists } from './spa-data';
 import { SpaDayGrid, type GridColumn, type GridSpot } from './spa-day-grid';
 import { SpaError } from './spa-error';
 import { spaErrorKey, type SpaErrorKey } from './spa-errors';
-import { BranchSelect } from './spa-fields';
+import { BranchSelect } from '@/components/branch-select';
 
 /** /spa (spa.view): the spa's bookings, a day by room or staff member, or a week. */
 export function SpaPage() {
@@ -67,7 +67,7 @@ function Spa() {
   const { online, readOnly } = useAdminWriteState();
   const mayBook = usePermission('spa.book');
   const mayManage = usePermission('spa.manage');
-  const { branchId, setBranchId, active, loaded } = useSpaBranch();
+  const { branchId, setBranchId, active, loaded } = useBranchChoice();
   const [view, setView] = useState<'day' | 'week'>('day');
   const [by, setBy] = useState<'rooms' | 'therapists'>('rooms');
   const [day, setDay] = useState(today);
@@ -218,7 +218,12 @@ function Spa() {
       />
 
       <div className="flex flex-wrap items-end gap-3">
-        <BranchSelect branchId={branchId} active={active} onChange={setBranchId} />
+        <BranchSelect
+          label={t('setup.branch')}
+          branchId={branchId}
+          active={active}
+          onChange={setBranchId}
+        />
         <div className="flex items-center gap-1">
           <Button
             variant="outline"

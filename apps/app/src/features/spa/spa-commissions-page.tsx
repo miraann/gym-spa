@@ -10,11 +10,11 @@ import { DateSelectField } from '@/components/date-select-field';
 import { RequirePermission } from '@/components/no-access';
 import { useFormat } from '@/lib/format';
 import { useBaghdadToday } from '@/lib/use-today';
-import { useSpaBranch } from './spa-branch';
+import { useBranchChoice } from '@/lib/use-branch-choice';
 import { useSpaCommissions } from './spa-calendar-data';
 import { SpaError } from './spa-error';
 import { spaErrorKey } from './spa-errors';
-import { BranchSelect } from './spa-fields';
+import { BranchSelect } from '@/components/branch-select';
 
 /** /spa/commissions (spa.manage): each spa staff member's completed bookings and commission. */
 export function SpaCommissionsPage() {
@@ -29,7 +29,7 @@ function Commissions() {
   const { t } = useTranslation('spa');
   const format = useFormat();
   const today = useBaghdadToday();
-  const { branchId, setBranchId, active, loaded } = useSpaBranch();
+  const { branchId, setBranchId, active, loaded } = useBranchChoice();
   // This month so far.
   const [from, setFrom] = useState(`${today.slice(0, 8)}01`);
   const [until, setUntil] = useState(today);
@@ -44,7 +44,12 @@ function Commissions() {
     <div className="flex flex-col gap-4">
       <PageHeader title={t('commissions.title')} description={t('commissions.description')} />
       <div className="flex flex-wrap items-end gap-3">
-        <BranchSelect branchId={branchId} active={active} onChange={setBranchId} />
+        <BranchSelect
+          label={t('setup.branch')}
+          branchId={branchId}
+          active={active}
+          onChange={setBranchId}
+        />
         <DateSelectField
           label={t('commissions.from')}
           value={from}
