@@ -51,6 +51,8 @@ import { Route as SpaSetupRouteRouteImport } from './routes/spa/setup/route'
 import { Route as StaffIndexRouteImport } from './routes/staff/index'
 import { Route as StaffStaffIdRouteImport } from './routes/staff/$staffId'
 import { Route as StaffNewRouteImport } from './routes/staff/new'
+import { Route as TrainersIndexRouteImport } from './routes/trainers/index'
+import { Route as TrainersReportRouteImport } from './routes/trainers/report'
 import { Route as MembersMemberIdIndexRouteImport } from './routes/members/$memberId/index'
 import { Route as MembersMemberIdEditRouteImport } from './routes/members/$memberId/edit'
 import { Route as MembersMemberIdSellRouteImport } from './routes/members/$memberId/sell'
@@ -270,6 +272,16 @@ const StaffNewRoute = StaffNewRouteImport.update({
   path: '/new',
   getParentRoute: () => StaffRouteRoute,
 } as any)
+const TrainersIndexRoute = TrainersIndexRouteImport.update({
+  id: '/trainers/',
+  path: '/trainers/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TrainersReportRoute = TrainersReportRouteImport.update({
+  id: '/trainers/report',
+  path: '/trainers/report',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MembersMemberIdIndexRoute = MembersMemberIdIndexRouteImport.update({
   id: '/$memberId/',
   path: '/$memberId/',
@@ -342,6 +354,7 @@ export interface FileRoutesByFullPath {
   '/spa/commissions': typeof SpaCommissionsRoute
   '/staff/$staffId': typeof StaffStaffIdRoute
   '/staff/new': typeof StaffNewRoute
+  '/trainers/report': typeof TrainersReportRoute
   '/branches/': typeof BranchesIndexRoute
   '/checkin/': typeof CheckinIndexRoute
   '/classes/': typeof ClassesIndexRoute
@@ -354,6 +367,7 @@ export interface FileRoutesByFullPath {
   '/settings/': typeof SettingsIndexRoute
   '/spa/': typeof SpaIndexRoute
   '/staff/': typeof StaffIndexRoute
+  '/trainers/': typeof TrainersIndexRoute
   '/members/$memberId/edit': typeof MembersMemberIdEditRoute
   '/members/$memberId/sell': typeof MembersMemberIdSellRoute
   '/spa/setup/packages': typeof SpaSetupPackagesRoute
@@ -386,6 +400,7 @@ export interface FileRoutesByTo {
   '/spa/commissions': typeof SpaCommissionsRoute
   '/staff/$staffId': typeof StaffStaffIdRoute
   '/staff/new': typeof StaffNewRoute
+  '/trainers/report': typeof TrainersReportRoute
   '/branches': typeof BranchesIndexRoute
   '/checkin': typeof CheckinIndexRoute
   '/classes': typeof ClassesIndexRoute
@@ -398,6 +413,7 @@ export interface FileRoutesByTo {
   '/settings': typeof SettingsIndexRoute
   '/spa': typeof SpaIndexRoute
   '/staff': typeof StaffIndexRoute
+  '/trainers': typeof TrainersIndexRoute
   '/members/$memberId/edit': typeof MembersMemberIdEditRoute
   '/members/$memberId/sell': typeof MembersMemberIdSellRoute
   '/spa/setup/packages': typeof SpaSetupPackagesRoute
@@ -439,6 +455,7 @@ export interface FileRoutesById {
   '/spa/commissions': typeof SpaCommissionsRoute
   '/staff/$staffId': typeof StaffStaffIdRoute
   '/staff/new': typeof StaffNewRoute
+  '/trainers/report': typeof TrainersReportRoute
   '/branches/': typeof BranchesIndexRoute
   '/checkin/': typeof CheckinIndexRoute
   '/classes/': typeof ClassesIndexRoute
@@ -451,6 +468,7 @@ export interface FileRoutesById {
   '/settings/': typeof SettingsIndexRoute
   '/spa/': typeof SpaIndexRoute
   '/staff/': typeof StaffIndexRoute
+  '/trainers/': typeof TrainersIndexRoute
   '/members/$memberId/edit': typeof MembersMemberIdEditRoute
   '/members/$memberId/sell': typeof MembersMemberIdSellRoute
   '/spa/setup/packages': typeof SpaSetupPackagesRoute
@@ -493,6 +511,7 @@ export interface FileRouteTypes {
     | '/spa/commissions'
     | '/staff/$staffId'
     | '/staff/new'
+    | '/trainers/report'
     | '/branches/'
     | '/checkin/'
     | '/classes/'
@@ -505,6 +524,7 @@ export interface FileRouteTypes {
     | '/settings/'
     | '/spa/'
     | '/staff/'
+    | '/trainers/'
     | '/members/$memberId/edit'
     | '/members/$memberId/sell'
     | '/spa/setup/packages'
@@ -537,6 +557,7 @@ export interface FileRouteTypes {
     | '/spa/commissions'
     | '/staff/$staffId'
     | '/staff/new'
+    | '/trainers/report'
     | '/branches'
     | '/checkin'
     | '/classes'
@@ -549,6 +570,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/spa'
     | '/staff'
+    | '/trainers'
     | '/members/$memberId/edit'
     | '/members/$memberId/sell'
     | '/spa/setup/packages'
@@ -589,6 +611,7 @@ export interface FileRouteTypes {
     | '/spa/commissions'
     | '/staff/$staffId'
     | '/staff/new'
+    | '/trainers/report'
     | '/branches/'
     | '/checkin/'
     | '/classes/'
@@ -601,6 +624,7 @@ export interface FileRouteTypes {
     | '/settings/'
     | '/spa/'
     | '/staff/'
+    | '/trainers/'
     | '/members/$memberId/edit'
     | '/members/$memberId/sell'
     | '/spa/setup/packages'
@@ -627,11 +651,13 @@ export interface RootRouteChildren {
   HrClockRoute: typeof HrClockRoute
   HrShiftsRoute: typeof HrShiftsRoute
   SpaCommissionsRoute: typeof SpaCommissionsRoute
+  TrainersReportRoute: typeof TrainersReportRoute
   CheckinIndexRoute: typeof CheckinIndexRoute
   ClassesIndexRoute: typeof ClassesIndexRoute
   LockersIndexRoute: typeof LockersIndexRoute
   PaymentsIndexRoute: typeof PaymentsIndexRoute
   SpaIndexRoute: typeof SpaIndexRoute
+  TrainersIndexRoute: typeof TrainersIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -930,6 +956,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StaffNewRouteImport
       parentRoute: typeof StaffRouteRoute
     }
+    '/trainers/': {
+      id: '/trainers/'
+      path: '/trainers'
+      fullPath: '/trainers/'
+      preLoaderRoute: typeof TrainersIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/trainers/report': {
+      id: '/trainers/report'
+      path: '/trainers/report'
+      fullPath: '/trainers/report'
+      preLoaderRoute: typeof TrainersReportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/members/$memberId/': {
       id: '/members/$memberId/'
       path: '/$memberId'
@@ -1145,11 +1185,13 @@ const rootRouteChildren: RootRouteChildren = {
   HrClockRoute: HrClockRoute,
   HrShiftsRoute: HrShiftsRoute,
   SpaCommissionsRoute: SpaCommissionsRoute,
+  TrainersReportRoute: TrainersReportRoute,
   CheckinIndexRoute: CheckinIndexRoute,
   ClassesIndexRoute: ClassesIndexRoute,
   LockersIndexRoute: LockersIndexRoute,
   PaymentsIndexRoute: PaymentsIndexRoute,
   SpaIndexRoute: SpaIndexRoute,
+  TrainersIndexRoute: TrainersIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
