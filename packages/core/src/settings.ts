@@ -21,6 +21,10 @@ export const SETTINGS = {
   'checkin.deny_for_debt': { min: 0, max: 1, default: 0 },
   /** Dinars a member may owe now and still come in, when checkin.deny_for_debt is 1. */
   'checkin.debt_limit': { min: 0, max: 1_000_000_000, default: 0 },
+  /** Dinars a rented locker costs per month; 0: not set, so lockers can't be rented yet. */
+  'lockers.rent_month_price': { min: 0, max: 1_000_000_000, default: 0 },
+  /** Dinars charged for a lost locker key; 0: no fee. */
+  'lockers.lost_key_fee': { min: 0, max: 1_000_000_000, default: 0 },
 } as const satisfies Record<string, IntegerSetting>;
 
 export type SettingKey = keyof typeof SETTINGS;

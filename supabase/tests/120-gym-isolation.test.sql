@@ -93,6 +93,15 @@ insert into public.support_reads (gym_id, grant_id, admin_id, what) values
   (tests.gym('pgtap-a'), 'e0000000-0000-4000-8000-0000000000ad', gen_random_uuid(), 'members'),
   (tests.gym('pgtap-b'), 'e0000000-0000-4000-8000-0000000000bd', gen_random_uuid(), 'members');
 
+insert into public.lockers (id, gym_id, branch_id, number, zone, kind) values
+  ('e0000000-0000-4000-8000-0000000000ae', tests.gym('pgtap-a'), tests.branch('B901'), '1', 'mixed', 'daily'),
+  ('e0000000-0000-4000-8000-0000000000be', tests.gym('pgtap-b'), tests.branch('B901', 'pgtap-b'), '1', 'mixed', 'daily');
+insert into public.locker_assignments (id, gym_id, branch_id, locker_id, member_id, kind, starts_on) values
+  ('e0000000-0000-4000-8000-0000000000af', tests.gym('pgtap-a'), tests.branch('B901'), 'e0000000-0000-4000-8000-0000000000ae',
+   'e0000000-0000-4000-8000-0000000000a1', 'daily', current_date),
+  ('e0000000-0000-4000-8000-0000000000bf', tests.gym('pgtap-b'), tests.branch('B901', 'pgtap-b'), 'e0000000-0000-4000-8000-0000000000be',
+   'e0000000-0000-4000-8000-0000000000b1', 'daily', current_date);
+
 select is_empty(
   $$ select t from tests.gym_tables() t
       where tests.total_rows(('public.' || t)::regclass, 'pgtap-a') = 0
@@ -183,6 +192,14 @@ insert into insert_cases (table_name, statement) values
   ('support_grants', $$ select public.revoke_support_access('e0000000-0000-4000-8000-0000000000bd') $$),
   ('support_reads', $$ insert into public.support_reads (gym_id, grant_id, admin_id, what)
                        values (tests.gym('pgtap-b'), 'e0000000-0000-4000-8000-0000000000bd', gen_random_uuid(), 'members') $$),
+  ('lockers', $$ insert into public.lockers (gym_id, id, branch_id, number, zone, kind)
+                 values (tests.gym('pgtap-b'), gen_random_uuid(), tests.branch('B901', 'pgtap-b'), '99', 'mixed', 'daily') $$),
+  ('lockers', $$ select public.add_lockers(tests.branch('B901', 'pgtap-b'), 'mixed', 'daily', '', 50, 51) $$),
+  ('locker_assignments', $$ insert into public.locker_assignments (gym_id, id, branch_id, locker_id, member_id, kind, starts_on)
+                            values (tests.gym('pgtap-b'), gen_random_uuid(), tests.branch('B901', 'pgtap-b'),
+                                    'e0000000-0000-4000-8000-0000000000be', 'e0000000-0000-4000-8000-0000000000b2', 'daily', current_date) $$),
+  ('locker_assignments', $$ select public.give_locker(gen_random_uuid(), 'e0000000-0000-4000-8000-0000000000be',
+                              'e0000000-0000-4000-8000-0000000000b2') $$),
   -- Their own gym (gym_id left to fill itself in), pointing at gym B's rows.
   ('role_permissions', $$ insert into public.role_permissions (role_id, permission_key) values (tests.role('trainer', 'pgtap-b'), 'payments.view') $$),
   ('staff_users', $$ insert into public.staff_users (id, username, full_name, role_id)
