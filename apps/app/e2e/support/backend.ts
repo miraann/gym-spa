@@ -294,6 +294,16 @@ export class TestData {
     }
     for (const id of this.staffIds) await db.auth.admin.deleteUser(id);
     for (const table of [
+      'spa_bookings',
+      'member_spa_packages',
+      'subscription_spa_sessions',
+      'plan_spa_sessions',
+      'spa_packages',
+      'spa_therapist_hours',
+      'spa_therapist_services',
+      'spa_therapists',
+      'spa_rooms',
+      'spa_services',
       'locker_assignments',
       'lockers',
       'support_reads',

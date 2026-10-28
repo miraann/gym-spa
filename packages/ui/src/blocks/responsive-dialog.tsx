@@ -15,6 +15,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from '../components/sheet';
+import { cn } from '../lib/utils';
 import { useLayout } from '../hooks/use-layout';
 
 /** Keeps the focus on the dialog itself instead of its first field (no keyboard pops up). */
@@ -37,6 +38,7 @@ export function ResponsiveDialog({
   children,
   footer,
   focusFirst = true,
+  wide = false,
 }: {
   readonly open: boolean;
   readonly onOpenChange: (open: boolean) => void;
@@ -45,6 +47,8 @@ export function ResponsiveDialog({
   readonly children?: ReactNode;
   readonly footer: ReactNode;
   readonly focusFirst?: boolean;
+  /** A wider dialog on larger screens, for long forms. */
+  readonly wide?: boolean;
 }) {
   const phone = useLayout() === 'phone';
   const onOpenAutoFocus = focusFirst ? undefined : focusDialog;
@@ -69,12 +73,19 @@ export function ResponsiveDialog({
   }
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md" onOpenAutoFocus={onOpenAutoFocus}>
+      <DialogContent
+        className={cn(
+          'max-h-[90svh] grid-rows-[auto_minmax(0,1fr)_auto]',
+          wide ? 'sm:max-w-2xl' : 'sm:max-w-md',
+        )}
+        onOpenAutoFocus={onOpenAutoFocus}
+      >
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           {description && <DialogDescription>{description}</DialogDescription>}
         </DialogHeader>
-        {children}
+        {/* A long form scrolls between the title and the buttons; the padding keeps focus rings visible. */}
+        {children && <div className="-mx-5 overflow-y-auto px-5 py-1">{children}</div>}
         <DialogFooter>{footer}</DialogFooter>
       </DialogContent>
     </Dialog>
