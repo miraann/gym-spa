@@ -38,7 +38,7 @@ test('reception books a massage, drags it an hour later, confirms and cancels it
   const dialog = page.getByRole('dialog');
 
   await page.getByRole('button', { name: 'ڕۆژی دواتر' }).click();
-  await page.getByRole('button', { name: 'نۆرەی نوێ' }).click();
+  await page.getByRole('button', { name: 'نۆرەی نوێ', exact: true }).click();
   await dialog.getByLabel('ئەندام یان میوان بدۆزەرەوە: ناو، ژمارە یان مۆبایل').fill('ئارام');
   await dialog.getByRole('radio', { name: /ئارام کەریم/ }).click();
   await expect(dialog.getByLabel('کارمەندی سپا')).toHaveValue(/.+/);

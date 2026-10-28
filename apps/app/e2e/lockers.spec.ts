@@ -102,7 +102,9 @@ test('a receptionist gives a daily locker, and the end-of-day list releases yest
   await addLockers(data, branchId, 4);
   const memberId = await addMember(data, branchId, 'شوان ئەحمەد', '+9647501260002');
   const lateId = await addMember(data, branchId, 'دلێر حەسەن', '+9647501260003');
-  // Locker 4 was given yesterday and never given back.
+  // Locker 4 was given yesterday and never given back, and the night release hasn't taken it yet
+  // (as before its time, or on the offline edition): given on yesterday's date, but after the last
+  // release time, so the local pg_cron job leaves it alone.
   const { data: four } = await admin()
     .from('lockers')
     .select('id')
@@ -121,7 +123,7 @@ test('a receptionist gives a daily locker, and the end-of-day list releases yest
         member_id: lateId,
         kind: 'daily',
         starts_on: yesterday.toLocaleDateString('en-CA', { timeZone: 'Asia/Baghdad' }),
-        assigned_at: yesterday.toISOString(),
+        assigned_at: new Date().toISOString(),
       }),
   );
   await page.setViewportSize(DESKTOP);

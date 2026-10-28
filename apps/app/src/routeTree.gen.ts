@@ -23,8 +23,12 @@ import { Route as BranchesNewRouteImport } from './routes/branches/new'
 import { Route as CheckinIndexRouteImport } from './routes/checkin/index'
 import { Route as CheckinDoorRouteImport } from './routes/checkin/door'
 import { Route as CheckinVisitsRouteImport } from './routes/checkin/visits'
+import { Route as ClassesIndexRouteImport } from './routes/classes/index'
+import { Route as ClassesSetupRouteImport } from './routes/classes/setup'
 import { Route as DevicesIndexRouteImport } from './routes/devices/index'
 import { Route as DevicesDeviceIdRouteImport } from './routes/devices/$deviceId'
+import { Route as HrClockRouteImport } from './routes/hr/clock'
+import { Route as HrShiftsRouteImport } from './routes/hr/shifts'
 import { Route as LockersIndexRouteImport } from './routes/lockers/index'
 import { Route as MembersIndexRouteImport } from './routes/members/index'
 import { Route as MembersImportRouteImport } from './routes/members/import'
@@ -47,6 +51,8 @@ import { Route as SpaSetupRouteRouteImport } from './routes/spa/setup/route'
 import { Route as StaffIndexRouteImport } from './routes/staff/index'
 import { Route as StaffStaffIdRouteImport } from './routes/staff/$staffId'
 import { Route as StaffNewRouteImport } from './routes/staff/new'
+import { Route as TrainersIndexRouteImport } from './routes/trainers/index'
+import { Route as TrainersReportRouteImport } from './routes/trainers/report'
 import { Route as MembersMemberIdIndexRouteImport } from './routes/members/$memberId/index'
 import { Route as MembersMemberIdEditRouteImport } from './routes/members/$memberId/edit'
 import { Route as MembersMemberIdSellRouteImport } from './routes/members/$memberId/sell'
@@ -126,6 +132,16 @@ const CheckinVisitsRoute = CheckinVisitsRouteImport.update({
   path: '/checkin/visits',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ClassesIndexRoute = ClassesIndexRouteImport.update({
+  id: '/classes/',
+  path: '/classes/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ClassesSetupRoute = ClassesSetupRouteImport.update({
+  id: '/classes/setup',
+  path: '/classes/setup',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DevicesIndexRoute = DevicesIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -135,6 +151,16 @@ const DevicesDeviceIdRoute = DevicesDeviceIdRouteImport.update({
   id: '/$deviceId',
   path: '/$deviceId',
   getParentRoute: () => DevicesRouteRoute,
+} as any)
+const HrClockRoute = HrClockRouteImport.update({
+  id: '/hr/clock',
+  path: '/hr/clock',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HrShiftsRoute = HrShiftsRouteImport.update({
+  id: '/hr/shifts',
+  path: '/hr/shifts',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const LockersIndexRoute = LockersIndexRouteImport.update({
   id: '/lockers/',
@@ -246,6 +272,16 @@ const StaffNewRoute = StaffNewRouteImport.update({
   path: '/new',
   getParentRoute: () => StaffRouteRoute,
 } as any)
+const TrainersIndexRoute = TrainersIndexRouteImport.update({
+  id: '/trainers/',
+  path: '/trainers/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TrainersReportRoute = TrainersReportRouteImport.update({
+  id: '/trainers/report',
+  path: '/trainers/report',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MembersMemberIdIndexRoute = MembersMemberIdIndexRouteImport.update({
   id: '/$memberId/',
   path: '/$memberId/',
@@ -301,7 +337,10 @@ export interface FileRoutesByFullPath {
   '/branches/new': typeof BranchesNewRoute
   '/checkin/door': typeof CheckinDoorRoute
   '/checkin/visits': typeof CheckinVisitsRoute
+  '/classes/setup': typeof ClassesSetupRoute
   '/devices/$deviceId': typeof DevicesDeviceIdRoute
+  '/hr/clock': typeof HrClockRoute
+  '/hr/shifts': typeof HrShiftsRoute
   '/members/import': typeof MembersImportRoute
   '/members/new': typeof MembersNewRoute
   '/plans/$planId': typeof PlansPlanIdRoute
@@ -315,8 +354,10 @@ export interface FileRoutesByFullPath {
   '/spa/commissions': typeof SpaCommissionsRoute
   '/staff/$staffId': typeof StaffStaffIdRoute
   '/staff/new': typeof StaffNewRoute
+  '/trainers/report': typeof TrainersReportRoute
   '/branches/': typeof BranchesIndexRoute
   '/checkin/': typeof CheckinIndexRoute
+  '/classes/': typeof ClassesIndexRoute
   '/devices/': typeof DevicesIndexRoute
   '/lockers/': typeof LockersIndexRoute
   '/members/': typeof MembersIndexRoute
@@ -326,6 +367,7 @@ export interface FileRoutesByFullPath {
   '/settings/': typeof SettingsIndexRoute
   '/spa/': typeof SpaIndexRoute
   '/staff/': typeof StaffIndexRoute
+  '/trainers/': typeof TrainersIndexRoute
   '/members/$memberId/edit': typeof MembersMemberIdEditRoute
   '/members/$memberId/sell': typeof MembersMemberIdSellRoute
   '/spa/setup/packages': typeof SpaSetupPackagesRoute
@@ -341,7 +383,10 @@ export interface FileRoutesByTo {
   '/branches/new': typeof BranchesNewRoute
   '/checkin/door': typeof CheckinDoorRoute
   '/checkin/visits': typeof CheckinVisitsRoute
+  '/classes/setup': typeof ClassesSetupRoute
   '/devices/$deviceId': typeof DevicesDeviceIdRoute
+  '/hr/clock': typeof HrClockRoute
+  '/hr/shifts': typeof HrShiftsRoute
   '/members/import': typeof MembersImportRoute
   '/members/new': typeof MembersNewRoute
   '/plans/$planId': typeof PlansPlanIdRoute
@@ -355,8 +400,10 @@ export interface FileRoutesByTo {
   '/spa/commissions': typeof SpaCommissionsRoute
   '/staff/$staffId': typeof StaffStaffIdRoute
   '/staff/new': typeof StaffNewRoute
+  '/trainers/report': typeof TrainersReportRoute
   '/branches': typeof BranchesIndexRoute
   '/checkin': typeof CheckinIndexRoute
+  '/classes': typeof ClassesIndexRoute
   '/devices': typeof DevicesIndexRoute
   '/lockers': typeof LockersIndexRoute
   '/members': typeof MembersIndexRoute
@@ -366,6 +413,7 @@ export interface FileRoutesByTo {
   '/settings': typeof SettingsIndexRoute
   '/spa': typeof SpaIndexRoute
   '/staff': typeof StaffIndexRoute
+  '/trainers': typeof TrainersIndexRoute
   '/members/$memberId/edit': typeof MembersMemberIdEditRoute
   '/members/$memberId/sell': typeof MembersMemberIdSellRoute
   '/spa/setup/packages': typeof SpaSetupPackagesRoute
@@ -390,7 +438,10 @@ export interface FileRoutesById {
   '/branches/new': typeof BranchesNewRoute
   '/checkin/door': typeof CheckinDoorRoute
   '/checkin/visits': typeof CheckinVisitsRoute
+  '/classes/setup': typeof ClassesSetupRoute
   '/devices/$deviceId': typeof DevicesDeviceIdRoute
+  '/hr/clock': typeof HrClockRoute
+  '/hr/shifts': typeof HrShiftsRoute
   '/members/import': typeof MembersImportRoute
   '/members/new': typeof MembersNewRoute
   '/plans/$planId': typeof PlansPlanIdRoute
@@ -404,8 +455,10 @@ export interface FileRoutesById {
   '/spa/commissions': typeof SpaCommissionsRoute
   '/staff/$staffId': typeof StaffStaffIdRoute
   '/staff/new': typeof StaffNewRoute
+  '/trainers/report': typeof TrainersReportRoute
   '/branches/': typeof BranchesIndexRoute
   '/checkin/': typeof CheckinIndexRoute
+  '/classes/': typeof ClassesIndexRoute
   '/devices/': typeof DevicesIndexRoute
   '/lockers/': typeof LockersIndexRoute
   '/members/': typeof MembersIndexRoute
@@ -415,6 +468,7 @@ export interface FileRoutesById {
   '/settings/': typeof SettingsIndexRoute
   '/spa/': typeof SpaIndexRoute
   '/staff/': typeof StaffIndexRoute
+  '/trainers/': typeof TrainersIndexRoute
   '/members/$memberId/edit': typeof MembersMemberIdEditRoute
   '/members/$memberId/sell': typeof MembersMemberIdSellRoute
   '/spa/setup/packages': typeof SpaSetupPackagesRoute
@@ -440,7 +494,10 @@ export interface FileRouteTypes {
     | '/branches/new'
     | '/checkin/door'
     | '/checkin/visits'
+    | '/classes/setup'
     | '/devices/$deviceId'
+    | '/hr/clock'
+    | '/hr/shifts'
     | '/members/import'
     | '/members/new'
     | '/plans/$planId'
@@ -454,8 +511,10 @@ export interface FileRouteTypes {
     | '/spa/commissions'
     | '/staff/$staffId'
     | '/staff/new'
+    | '/trainers/report'
     | '/branches/'
     | '/checkin/'
+    | '/classes/'
     | '/devices/'
     | '/lockers/'
     | '/members/'
@@ -465,6 +524,7 @@ export interface FileRouteTypes {
     | '/settings/'
     | '/spa/'
     | '/staff/'
+    | '/trainers/'
     | '/members/$memberId/edit'
     | '/members/$memberId/sell'
     | '/spa/setup/packages'
@@ -480,7 +540,10 @@ export interface FileRouteTypes {
     | '/branches/new'
     | '/checkin/door'
     | '/checkin/visits'
+    | '/classes/setup'
     | '/devices/$deviceId'
+    | '/hr/clock'
+    | '/hr/shifts'
     | '/members/import'
     | '/members/new'
     | '/plans/$planId'
@@ -494,8 +557,10 @@ export interface FileRouteTypes {
     | '/spa/commissions'
     | '/staff/$staffId'
     | '/staff/new'
+    | '/trainers/report'
     | '/branches'
     | '/checkin'
+    | '/classes'
     | '/devices'
     | '/lockers'
     | '/members'
@@ -505,6 +570,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/spa'
     | '/staff'
+    | '/trainers'
     | '/members/$memberId/edit'
     | '/members/$memberId/sell'
     | '/spa/setup/packages'
@@ -528,7 +594,10 @@ export interface FileRouteTypes {
     | '/branches/new'
     | '/checkin/door'
     | '/checkin/visits'
+    | '/classes/setup'
     | '/devices/$deviceId'
+    | '/hr/clock'
+    | '/hr/shifts'
     | '/members/import'
     | '/members/new'
     | '/plans/$planId'
@@ -542,8 +611,10 @@ export interface FileRouteTypes {
     | '/spa/commissions'
     | '/staff/$staffId'
     | '/staff/new'
+    | '/trainers/report'
     | '/branches/'
     | '/checkin/'
+    | '/classes/'
     | '/devices/'
     | '/lockers/'
     | '/members/'
@@ -553,6 +624,7 @@ export interface FileRouteTypes {
     | '/settings/'
     | '/spa/'
     | '/staff/'
+    | '/trainers/'
     | '/members/$memberId/edit'
     | '/members/$memberId/sell'
     | '/spa/setup/packages'
@@ -575,11 +647,17 @@ export interface RootRouteChildren {
   SpaSetupRouteRoute: typeof SpaSetupRouteRouteWithChildren
   CheckinDoorRoute: typeof CheckinDoorRoute
   CheckinVisitsRoute: typeof CheckinVisitsRoute
+  ClassesSetupRoute: typeof ClassesSetupRoute
+  HrClockRoute: typeof HrClockRoute
+  HrShiftsRoute: typeof HrShiftsRoute
   SpaCommissionsRoute: typeof SpaCommissionsRoute
+  TrainersReportRoute: typeof TrainersReportRoute
   CheckinIndexRoute: typeof CheckinIndexRoute
+  ClassesIndexRoute: typeof ClassesIndexRoute
   LockersIndexRoute: typeof LockersIndexRoute
   PaymentsIndexRoute: typeof PaymentsIndexRoute
   SpaIndexRoute: typeof SpaIndexRoute
+  TrainersIndexRoute: typeof TrainersIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -682,6 +760,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CheckinVisitsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/classes/': {
+      id: '/classes/'
+      path: '/classes'
+      fullPath: '/classes/'
+      preLoaderRoute: typeof ClassesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/classes/setup': {
+      id: '/classes/setup'
+      path: '/classes/setup'
+      fullPath: '/classes/setup'
+      preLoaderRoute: typeof ClassesSetupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/devices/': {
       id: '/devices/'
       path: '/'
@@ -695,6 +787,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/devices/$deviceId'
       preLoaderRoute: typeof DevicesDeviceIdRouteImport
       parentRoute: typeof DevicesRouteRoute
+    }
+    '/hr/clock': {
+      id: '/hr/clock'
+      path: '/hr/clock'
+      fullPath: '/hr/clock'
+      preLoaderRoute: typeof HrClockRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/hr/shifts': {
+      id: '/hr/shifts'
+      path: '/hr/shifts'
+      fullPath: '/hr/shifts'
+      preLoaderRoute: typeof HrShiftsRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/lockers/': {
       id: '/lockers/'
@@ -849,6 +955,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/staff/new'
       preLoaderRoute: typeof StaffNewRouteImport
       parentRoute: typeof StaffRouteRoute
+    }
+    '/trainers/': {
+      id: '/trainers/'
+      path: '/trainers'
+      fullPath: '/trainers/'
+      preLoaderRoute: typeof TrainersIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/trainers/report': {
+      id: '/trainers/report'
+      path: '/trainers/report'
+      fullPath: '/trainers/report'
+      preLoaderRoute: typeof TrainersReportRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/members/$memberId/': {
       id: '/members/$memberId/'
@@ -1061,11 +1181,17 @@ const rootRouteChildren: RootRouteChildren = {
   SpaSetupRouteRoute: SpaSetupRouteRouteWithChildren,
   CheckinDoorRoute: CheckinDoorRoute,
   CheckinVisitsRoute: CheckinVisitsRoute,
+  ClassesSetupRoute: ClassesSetupRoute,
+  HrClockRoute: HrClockRoute,
+  HrShiftsRoute: HrShiftsRoute,
   SpaCommissionsRoute: SpaCommissionsRoute,
+  TrainersReportRoute: TrainersReportRoute,
   CheckinIndexRoute: CheckinIndexRoute,
+  ClassesIndexRoute: ClassesIndexRoute,
   LockersIndexRoute: LockersIndexRoute,
   PaymentsIndexRoute: PaymentsIndexRoute,
   SpaIndexRoute: SpaIndexRoute,
+  TrainersIndexRoute: TrainersIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

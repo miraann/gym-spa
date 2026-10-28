@@ -289,6 +289,21 @@ export class TestData {
     for (const { id } of madeInApp ?? []) {
       if (!this.staffIds.includes(id)) this.staffIds.push(id);
     }
+    for (const table of [
+      'pt_sessions',
+      'member_pt_packages',
+      'pt_packages',
+      'class_bookings',
+      'class_sessions',
+      'class_schedules',
+      'class_types',
+      'staff_shifts',
+      'staff_clock',
+      'staff_cards',
+      'staff_profiles',
+    ] as const) {
+      await write(db.from(table).delete().eq('gym_id', gymId));
+    }
     for (const table of ['staff_pins', 'settings', 'staff_branches', 'staff_users'] as const) {
       await write(db.from(table).delete().eq('gym_id', gymId));
     }

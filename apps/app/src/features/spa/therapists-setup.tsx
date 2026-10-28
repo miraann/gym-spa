@@ -39,8 +39,9 @@ import {
 } from './spa-data';
 import { SpaError } from './spa-error';
 import { spaErrorKey, type SpaErrorKey } from './spa-errors';
-import { useSpaBranch } from './spa-branch';
-import { BranchSelect, CheckField, FormMessage } from './spa-fields';
+import { useBranchChoice } from '@/lib/use-branch-choice';
+import { BranchSelect } from '@/components/branch-select';
+import { CheckField, FormMessage } from './spa-fields';
 import { therapistFormSchema, therapistFormValues, type TherapistFormValues } from './spa-forms';
 
 /** How many decimals a percent like 12.5 needs (0 for 10, at most 2). */
@@ -53,7 +54,7 @@ function decimals(value: number): number {
 export function TherapistsSetup() {
   const { t } = useTranslation('spa');
   const format = useFormat();
-  const { branchId, setBranchId, active, loaded } = useSpaBranch();
+  const { branchId, setBranchId, active, loaded } = useBranchChoice();
   const therapists = useSpaTherapists(branchId);
   const [editing, setEditing] = useState<SpaTherapist | 'new' | null>(null);
 
@@ -73,7 +74,14 @@ export function TherapistsSetup() {
         empty={t('therapists.empty')}
         emptyIcon={<UsersIcon />}
         isEmpty={therapists.data?.length === 0}
-        toolbar={<BranchSelect branchId={branchId} active={active} onChange={setBranchId} />}
+        toolbar={
+          <BranchSelect
+            label={t('setup.branch')}
+            branchId={branchId}
+            active={active}
+            onChange={setBranchId}
+          />
+        }
       >
         <GroupedList aria-label={t('setup.tabs.therapists')}>
           {therapists.data?.map((therapist) => (

@@ -1,15 +1,11 @@
-import { localizedName } from '@gym/i18n';
 import { Checkbox } from '@gym/ui/components/checkbox';
 import { Field, FieldDescription, FieldError, FieldLabel } from '@gym/ui/components/field';
 import { Input } from '@gym/ui/components/input';
 import { Label } from '@gym/ui/components/label';
-import { NativeSelect, NativeSelectOption } from '@gym/ui/components/native-select';
 import { useId } from 'react';
 import type { FieldError as HookFieldError, UseFormRegisterReturn } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
-import type { AdminBranch } from '@/features/staff/admin-data';
 import { useFormat } from '@/lib/format';
-import { usePreferences } from '@/lib/preferences';
 
 // Pieces the spa's forms share.
 
@@ -126,40 +122,6 @@ export function CheckField({
         </Label>
       </div>
       {hint && <FieldDescription>{hint}</FieldDescription>}
-    </Field>
-  );
-}
-
-/** Picks the branch, when the staff member has more than one. */
-export function BranchSelect({
-  branchId,
-  active,
-  onChange,
-}: {
-  readonly branchId: string;
-  readonly active: readonly AdminBranch[];
-  readonly onChange: (branchId: string) => void;
-}) {
-  const { t } = useTranslation('spa');
-  const { language } = usePreferences();
-  const id = useId();
-  if (active.length < 2) return null;
-  return (
-    <Field className="md:w-72">
-      <FieldLabel htmlFor={id}>{t('setup.branch')}</FieldLabel>
-      <NativeSelect
-        id={id}
-        value={branchId}
-        onChange={(event) => {
-          onChange(event.target.value);
-        }}
-      >
-        {active.map((branch) => (
-          <NativeSelectOption key={branch.id} value={branch.id}>
-            {localizedName(branch, language)}
-          </NativeSelectOption>
-        ))}
-      </NativeSelect>
     </Field>
   );
 }

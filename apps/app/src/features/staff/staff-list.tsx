@@ -13,7 +13,7 @@ import { Button } from '@gym/ui/components/button';
 import { Card } from '@gym/ui/components/card';
 import { Input } from '@gym/ui/components/input';
 import { Link, useRouterState } from '@tanstack/react-router';
-import { SearchIcon, UserPlusIcon, UsersIcon } from 'lucide-react';
+import { CalendarRangeIcon, ClockIcon, SearchIcon, UserPlusIcon, UsersIcon } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { usePermission } from '@/features/auth/use-permissions';
@@ -32,6 +32,8 @@ export function StaffList() {
   const { t } = useTranslation('staff');
   const { language } = usePreferences();
   const canManage = usePermission('staff.manage');
+  const mayViewHr = usePermission('hr.view');
+  const { t: hr } = useTranslation('hr');
   const staff = useStaffDirectory();
   const roles = useRoleOverview();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
@@ -59,14 +61,32 @@ export function StaffList() {
       <PageHeader
         title={t('list.title')}
         actions={
-          canManage && (
-            <Button asChild size="lg">
-              <Link to="/staff/new">
-                <UserPlusIcon data-icon="inline-start" />
-                {t('list.add')}
-              </Link>
-            </Button>
-          )
+          <>
+            {mayViewHr && (
+              <>
+                <Button asChild variant="outline">
+                  <Link to="/hr/clock">
+                    <ClockIcon data-icon="inline-start" />
+                    {hr('links.clock')}
+                  </Link>
+                </Button>
+                <Button asChild variant="outline">
+                  <Link to="/hr/shifts">
+                    <CalendarRangeIcon data-icon="inline-start" />
+                    {hr('links.shifts')}
+                  </Link>
+                </Button>
+              </>
+            )}
+            {canManage && (
+              <Button asChild size="lg">
+                <Link to="/staff/new">
+                  <UserPlusIcon data-icon="inline-start" />
+                  {t('list.add')}
+                </Link>
+              </Button>
+            )}
+          </>
         }
       />
       <div className="relative">

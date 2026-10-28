@@ -82,12 +82,19 @@ function check(files: readonly string[]): boolean {
 // Rehearsal -------------------------------------------------------------------------------------------
 
 function runScript(script: string, scriptArgs: readonly string[], env: Record<string, string>) {
-  const result = spawnSync(
-    process.execPath,
-    [path.resolve('node_modules', 'tsx', 'dist', 'cli.mjs'), script, ...scriptArgs],
-    { encoding: 'utf8', env: { ...process.env, ...env }, stdio: ['ignore', 'pipe', 'pipe'] },
-  );
-  if (result.status !== 0) fail(`${script} failed:\n${result.stdout}\n${result.stderr}`);
+  // Right after a reset the API may not have reconnected to the restarted database yet
+  // (PGRST002, "schema cache"): wait and try again, for up to a minute.
+  for (let attempt = 1; ; attempt += 1) {
+    const result = spawnSync(
+      process.execPath,
+      [path.resolve('node_modules', 'tsx', 'dist', 'cli.mjs'), script, ...scriptArgs],
+      { encoding: 'utf8', env: { ...process.env, ...env }, stdio: ['ignore', 'pipe', 'pipe'] },
+    );
+    if (result.status === 0) return;
+    const output = `${result.stdout}\n${result.stderr}`;
+    if (attempt >= 12 || !output.includes('schema cache')) fail(`${script} failed:\n${output}`);
+    Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 5000);
+  }
 }
 
 function rehearseOn(lastCloudVersion: string, pending: readonly string[]): void {

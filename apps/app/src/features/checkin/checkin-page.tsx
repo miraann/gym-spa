@@ -17,6 +17,7 @@ import { BrowserReaderNotice } from '@/features/cards/card-scan';
 import { useMemberSearch } from '@/features/members/member-data';
 import { CheckinLocker } from '@/features/lockers/checkin-locker';
 import { useAdminWriteState } from '@/features/staff/write-state';
+import { StaffClockNotice } from '@/features/hr/staff-clock-notice';
 import { usePreferences } from '@/lib/preferences';
 import { useCheckinBranch } from './checkin-branch';
 import { CheckinResultView } from './checkin-result';
@@ -96,6 +97,7 @@ function CheckinScreen() {
           {manual && <ManualCheckin onPick={flow.checkInMember} disabled={flow.pending} />}
         </>
       )}
+      {flow.staff && <StaffClockNotice result={flow.staff} onClose={flow.closeStaff} />}
       {flow.answer && (
         <CheckinResultView
           answer={flow.answer}

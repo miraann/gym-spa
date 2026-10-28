@@ -21,8 +21,9 @@ import { InactiveBadge, SetupSection } from './setup-section';
 import { useSaveSpaRoom, useSpaRooms, type SpaRoom, type SpaRoomDraft } from './spa-data';
 import { SpaError } from './spa-error';
 import { spaErrorKey, type SpaErrorKey } from './spa-errors';
-import { useSpaBranch } from './spa-branch';
-import { BranchSelect, CheckField, FormMessage, NameFields } from './spa-fields';
+import { useBranchChoice } from '@/lib/use-branch-choice';
+import { BranchSelect } from '@/components/branch-select';
+import { CheckField, FormMessage, NameFields } from './spa-fields';
 import { roomFormSchema, roomFormValues, type RoomFormValues } from './spa-forms';
 
 /** /spa/setup/rooms: a branch's rooms, added and changed in a dialog. */
@@ -30,7 +31,7 @@ export function RoomsSetup() {
   const { t } = useTranslation('spa');
   const { language } = usePreferences();
   const format = useFormat();
-  const { branchId, setBranchId, active, loaded } = useSpaBranch();
+  const { branchId, setBranchId, active, loaded } = useBranchChoice();
   const rooms = useSpaRooms(branchId);
   const [editing, setEditing] = useState<SpaRoom | 'new' | null>(null);
 
@@ -50,7 +51,14 @@ export function RoomsSetup() {
         empty={t('rooms.empty')}
         emptyIcon={<DoorOpenIcon />}
         isEmpty={rooms.data?.length === 0}
-        toolbar={<BranchSelect branchId={branchId} active={active} onChange={setBranchId} />}
+        toolbar={
+          <BranchSelect
+            label={t('setup.branch')}
+            branchId={branchId}
+            active={active}
+            onChange={setBranchId}
+          />
+        }
       >
         <GroupedList aria-label={t('setup.tabs.rooms')}>
           {rooms.data?.map((room) => (

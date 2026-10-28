@@ -3,10 +3,10 @@ import { useMoneyBranch } from '@/features/payments/money-branch';
 import { useAdminBranches } from '@/features/staff/admin-data';
 
 /**
- * The branch a spa screen shows: chosen here, else this device's branch when the staff member works
+ * The branch a screen shows: chosen here, else this device's branch when the staff member works
  * there, else their first active one ('' when they have none).
  */
-export function useSpaBranch() {
+export function useBranchChoice() {
   const branches = useAdminBranches();
   const fallback = useMoneyBranch(branches.data);
   const [chosen, setChosen] = useState<string | null>(null);
