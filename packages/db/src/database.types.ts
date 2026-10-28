@@ -2354,6 +2354,144 @@ export type Database = {
           },
         ];
       };
+      staff_cards: {
+        Row: {
+          created_at: string;
+          created_by: string | null;
+          deleted_at: string | null;
+          end_reason: string | null;
+          ended_at: string | null;
+          ended_by: string | null;
+          gym_id: string;
+          id: string;
+          staff_id: string;
+          status: string;
+          uid: string;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          created_at?: string;
+          created_by?: string | null;
+          deleted_at?: string | null;
+          end_reason?: string | null;
+          ended_at?: string | null;
+          ended_by?: string | null;
+          gym_id?: string;
+          id: string;
+          staff_id: string;
+          status?: string;
+          uid: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          created_at?: string;
+          created_by?: string | null;
+          deleted_at?: string | null;
+          end_reason?: string | null;
+          ended_at?: string | null;
+          ended_by?: string | null;
+          gym_id?: string;
+          id?: string;
+          staff_id?: string;
+          status?: string;
+          uid?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'staff_cards_staff_id_gym_id_fkey';
+            columns: ['staff_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'staff_users';
+            referencedColumns: ['id', 'gym_id'];
+          },
+        ];
+      };
+      staff_clock: {
+        Row: {
+          branch_id: string;
+          card_id: string | null;
+          clocked_in_at: string;
+          clocked_out_at: string | null;
+          created_at: string;
+          created_by: string | null;
+          deleted_at: string | null;
+          gym_id: string;
+          id: string;
+          method: string;
+          note: string | null;
+          staff_id: string;
+          updated_at: string;
+          updated_by: string | null;
+          void_reason: string | null;
+          voided_at: string | null;
+          voided_by: string | null;
+        };
+        Insert: {
+          branch_id: string;
+          card_id?: string | null;
+          clocked_in_at?: string;
+          clocked_out_at?: string | null;
+          created_at?: string;
+          created_by?: string | null;
+          deleted_at?: string | null;
+          gym_id?: string;
+          id: string;
+          method: string;
+          note?: string | null;
+          staff_id: string;
+          updated_at?: string;
+          updated_by?: string | null;
+          void_reason?: string | null;
+          voided_at?: string | null;
+          voided_by?: string | null;
+        };
+        Update: {
+          branch_id?: string;
+          card_id?: string | null;
+          clocked_in_at?: string;
+          clocked_out_at?: string | null;
+          created_at?: string;
+          created_by?: string | null;
+          deleted_at?: string | null;
+          gym_id?: string;
+          id?: string;
+          method?: string;
+          note?: string | null;
+          staff_id?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+          void_reason?: string | null;
+          voided_at?: string | null;
+          voided_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'staff_clock_branch_id_gym_id_fkey';
+            columns: ['branch_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'branches';
+            referencedColumns: ['id', 'gym_id'];
+          },
+          {
+            foreignKeyName: 'staff_clock_card_id_gym_id_fkey';
+            columns: ['card_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'staff_cards';
+            referencedColumns: ['id', 'gym_id'];
+          },
+          {
+            foreignKeyName: 'staff_clock_staff_id_gym_id_fkey';
+            columns: ['staff_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'staff_users';
+            referencedColumns: ['id', 'gym_id'];
+          },
+        ];
+      };
       staff_pins: {
         Row: {
           created_at: string;
@@ -2391,6 +2529,131 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: 'staff_pins_staff_id_gym_id_fkey';
+            columns: ['staff_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'staff_users';
+            referencedColumns: ['id', 'gym_id'];
+          },
+        ];
+      };
+      staff_profiles: {
+        Row: {
+          class_fee: number;
+          created_at: string;
+          created_by: string | null;
+          deleted_at: string | null;
+          gym_id: string;
+          hired_on: string | null;
+          hourly_rate: number | null;
+          id: string;
+          monthly_salary: number | null;
+          note: string | null;
+          pt_percent: number;
+          salary_type: string;
+          teaches: boolean;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          class_fee?: number;
+          created_at?: string;
+          created_by?: string | null;
+          deleted_at?: string | null;
+          gym_id?: string;
+          hired_on?: string | null;
+          hourly_rate?: number | null;
+          id: string;
+          monthly_salary?: number | null;
+          note?: string | null;
+          pt_percent?: number;
+          salary_type?: string;
+          teaches?: boolean;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          class_fee?: number;
+          created_at?: string;
+          created_by?: string | null;
+          deleted_at?: string | null;
+          gym_id?: string;
+          hired_on?: string | null;
+          hourly_rate?: number | null;
+          id?: string;
+          monthly_salary?: number | null;
+          note?: string | null;
+          pt_percent?: number;
+          salary_type?: string;
+          teaches?: boolean;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'staff_profiles_id_gym_id_fkey';
+            columns: ['id', 'gym_id'];
+            isOneToOne: true;
+            referencedRelation: 'staff_users';
+            referencedColumns: ['id', 'gym_id'];
+          },
+        ];
+      };
+      staff_shifts: {
+        Row: {
+          branch_id: string;
+          created_at: string;
+          created_by: string | null;
+          deleted_at: string | null;
+          ends_at: string;
+          gym_id: string;
+          id: string;
+          note: string | null;
+          shift_time: unknown;
+          staff_id: string;
+          starts_at: string;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          branch_id: string;
+          created_at?: string;
+          created_by?: string | null;
+          deleted_at?: string | null;
+          ends_at: string;
+          gym_id?: string;
+          id: string;
+          note?: string | null;
+          shift_time?: never;
+          staff_id: string;
+          starts_at: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          branch_id?: string;
+          created_at?: string;
+          created_by?: string | null;
+          deleted_at?: string | null;
+          ends_at?: string;
+          gym_id?: string;
+          id?: string;
+          note?: string | null;
+          shift_time?: never;
+          staff_id?: string;
+          starts_at?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'staff_shifts_branch_id_gym_id_fkey';
+            columns: ['branch_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'branches';
+            referencedColumns: ['id', 'gym_id'];
+          },
+          {
+            foreignKeyName: 'staff_shifts_staff_id_gym_id_fkey';
             columns: ['staff_id', 'gym_id'];
             isOneToOne: false;
             referencedRelation: 'staff_users';
@@ -3312,6 +3575,30 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      end_staff_card: {
+        Args: { p_card_id: string; p_reason: string };
+        Returns: {
+          created_at: string;
+          created_by: string | null;
+          deleted_at: string | null;
+          end_reason: string | null;
+          ended_at: string | null;
+          ended_by: string | null;
+          gym_id: string;
+          id: string;
+          staff_id: string;
+          status: string;
+          uid: string;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        SetofOptions: {
+          from: '*';
+          to: 'staff_cards';
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
       find_card: {
         Args: { p_uid: string };
         Returns: {
@@ -3372,6 +3659,30 @@ export type Database = {
           p_member_id: string;
         };
         Returns: Json;
+      };
+      give_staff_card: {
+        Args: { p_id: string; p_staff_id: string; p_uid: string };
+        Returns: {
+          created_at: string;
+          created_by: string | null;
+          deleted_at: string | null;
+          end_reason: string | null;
+          ended_at: string | null;
+          ended_by: string | null;
+          gym_id: string;
+          id: string;
+          staff_id: string;
+          status: string;
+          uid: string;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        SetofOptions: {
+          from: '*';
+          to: 'staff_cards';
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
       };
       grant_support_access: {
         Args: { p_hours: number; p_id: string; p_reason: string };
@@ -3632,6 +3943,7 @@ export type Database = {
       release_locker: { Args: { p_assignment_id: string }; Returns: Json };
       remove_locker: { Args: { p_locker_id: string }; Returns: undefined };
       remove_member_photo: { Args: { p_member_id: string }; Returns: undefined };
+      remove_staff_shift: { Args: { p_id: string }; Returns: undefined };
       renew_locker_rental: {
         Args: {
           p_assignment_id: string;
@@ -3923,6 +4235,73 @@ export type Database = {
           p_staff_id: string;
         };
         Returns: undefined;
+      };
+      save_staff_profile: {
+        Args: {
+          p_class_fee?: number;
+          p_hired_on?: string;
+          p_hourly_rate?: number;
+          p_monthly_salary?: number;
+          p_note?: string;
+          p_pt_percent?: number;
+          p_salary_type: string;
+          p_staff_id: string;
+          p_teaches?: boolean;
+        };
+        Returns: {
+          class_fee: number;
+          created_at: string;
+          created_by: string | null;
+          deleted_at: string | null;
+          gym_id: string;
+          hired_on: string | null;
+          hourly_rate: number | null;
+          id: string;
+          monthly_salary: number | null;
+          note: string | null;
+          pt_percent: number;
+          salary_type: string;
+          teaches: boolean;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        SetofOptions: {
+          from: '*';
+          to: 'staff_profiles';
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
+      save_staff_shift: {
+        Args: {
+          p_branch_id: string;
+          p_ends_at: string;
+          p_id: string;
+          p_note?: string;
+          p_staff_id: string;
+          p_starts_at: string;
+        };
+        Returns: {
+          branch_id: string;
+          created_at: string;
+          created_by: string | null;
+          deleted_at: string | null;
+          ends_at: string;
+          gym_id: string;
+          id: string;
+          note: string | null;
+          shift_time: unknown;
+          staff_id: string;
+          starts_at: string;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        SetofOptions: {
+          from: '*';
+          to: 'staff_shifts';
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
       };
       search_members: {
         Args: { p_include_archived?: boolean; p_limit?: number; p_query: string };
@@ -4246,6 +4625,17 @@ export type Database = {
           gym_id: string;
         }[];
       };
+      staff_clock_by_card: { Args: { p_branch_id: string; p_uid: string }; Returns: Json };
+      staff_clock_manual: {
+        Args: {
+          p_at: string;
+          p_branch_id: string;
+          p_in: boolean;
+          p_note: string;
+          p_staff_id: string;
+        };
+        Returns: Json;
+      };
       staff_directory: {
         Args: Record<PropertyKey, never>;
         Returns: {
@@ -4267,6 +4657,13 @@ export type Database = {
         }[];
       };
       subscription_change_preview: { Args: { p_subscription_id: string }; Returns: Json };
+      trainers: {
+        Args: { p_branch_id?: string };
+        Returns: {
+          full_name: string;
+          id: string;
+        }[];
+      };
       transfer_subscription: {
         Args: {
           p_member_id: string;
@@ -4388,6 +4785,7 @@ export type Database = {
       };
       void_invoice: { Args: { p_invoice_id: string; p_reason: string }; Returns: undefined };
       void_payment: { Args: { p_payment_id: string; p_reason: string }; Returns: Json };
+      void_staff_clock: { Args: { p_reason: string; p_record_id: string }; Returns: undefined };
       void_visit: { Args: { p_attendance_id: string; p_reason: string }; Returns: Json };
     };
     Enums: {

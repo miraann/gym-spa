@@ -142,6 +142,19 @@ insert into public.spa_bookings (id, gym_id, branch_id, member_id, service_id, r
   ('f0000000-0000-4000-8000-0000000000b3', tests.gym('pgtap-b'), tests.branch('B901', 'pgtap-b'), 'e0000000-0000-4000-8000-0000000000b1',
    'e0000000-0000-4000-8000-0000000000b5', 'e0000000-0000-4000-8000-0000000000b6', 1, 'مەساژ', 0,
    now() + interval '1 day', now() + interval '25 hours', now() + interval '25 hours', 'pay');
+-- Staff HR in both gyms.
+insert into public.staff_profiles (id, gym_id, salary_type, monthly_salary) values
+  (tests.staff('trainer_ab'), tests.gym('pgtap-a'), 'fixed', 1),
+  (tests.staff('trainer_ab', 'pgtap-b'), tests.gym('pgtap-b'), 'fixed', 1);
+insert into public.staff_cards (id, gym_id, staff_id, uid) values
+  ('f0000000-0000-4000-8000-0000000000a4', tests.gym('pgtap-a'), tests.staff('trainer_ab'), 'CAFEBABE'),
+  ('f0000000-0000-4000-8000-0000000000b4', tests.gym('pgtap-b'), tests.staff('trainer_ab', 'pgtap-b'), 'CAFEBABE');
+insert into public.staff_clock (id, gym_id, branch_id, staff_id, method, note) values
+  ('f0000000-0000-4000-8000-0000000000a5', tests.gym('pgtap-a'), tests.branch('B901'), tests.staff('trainer_ab'), 'manual', 'x'),
+  ('f0000000-0000-4000-8000-0000000000b5', tests.gym('pgtap-b'), tests.branch('B901', 'pgtap-b'), tests.staff('trainer_ab', 'pgtap-b'), 'manual', 'x');
+insert into public.staff_shifts (id, gym_id, branch_id, staff_id, starts_at, ends_at) values
+  ('f0000000-0000-4000-8000-0000000000a6', tests.gym('pgtap-a'), tests.branch('B901'), tests.staff('trainer_ab'), now(), now() + interval '1 hour'),
+  ('f0000000-0000-4000-8000-0000000000b6', tests.gym('pgtap-b'), tests.branch('B901', 'pgtap-b'), tests.staff('trainer_ab', 'pgtap-b'), now(), now() + interval '1 hour');
 
 select is_empty(
   $$ select t from tests.gym_tables() t
@@ -280,6 +293,18 @@ insert into insert_cases (table_name, statement) values
   ('spa_bookings', $$ select public.book_spa(gen_random_uuid(), tests.branch('B901', 'pgtap-b'), 'e0000000-0000-4000-8000-0000000000b1',
                        'e0000000-0000-4000-8000-0000000000b5', now() + interval '2 days', 'e0000000-0000-4000-8000-0000000000b6') $$),
   ('spa_bookings', $$ select public.set_spa_booking_status('f0000000-0000-4000-8000-0000000000b3', 'cancelled') $$),
+  ('staff_profiles', $$ insert into public.staff_profiles (gym_id, id, salary_type, monthly_salary)
+                        values (tests.gym('pgtap-b'), tests.staff('reception_b', 'pgtap-b'), 'fixed', 1) $$),
+  ('staff_profiles', $$ select public.save_staff_profile(tests.staff('reception_b', 'pgtap-b'), 'fixed', p_monthly_salary => 1) $$),
+  ('staff_cards', $$ insert into public.staff_cards (gym_id, id, staff_id, uid)
+                     values (tests.gym('pgtap-b'), gen_random_uuid(), tests.staff('reception_b', 'pgtap-b'), '11223344') $$),
+  ('staff_cards', $$ select public.give_staff_card(gen_random_uuid(), tests.staff('reception_b', 'pgtap-b'), '11223344') $$),
+  ('staff_clock', $$ insert into public.staff_clock (gym_id, id, branch_id, staff_id, method)
+                     values (tests.gym('pgtap-b'), gen_random_uuid(), tests.branch('B901', 'pgtap-b'), tests.staff('reception_b', 'pgtap-b'), 'manual') $$),
+  ('staff_clock', $$ select public.staff_clock_manual(tests.staff('reception_b', 'pgtap-b'), tests.branch('B901', 'pgtap-b'), true, now(), 'x') $$),
+  ('staff_shifts', $$ insert into public.staff_shifts (gym_id, id, branch_id, staff_id, starts_at, ends_at)
+                      values (tests.gym('pgtap-b'), gen_random_uuid(), tests.branch('B901', 'pgtap-b'), tests.staff('reception_b', 'pgtap-b'), now() + interval '1 day', now() + interval '25 hours') $$),
+  ('staff_shifts', $$ select public.save_staff_shift(gen_random_uuid(), tests.staff('reception_b', 'pgtap-b'), tests.branch('B901', 'pgtap-b'), now() + interval '1 day', now() + interval '25 hours') $$),
   -- Their own gym (gym_id left to fill itself in), pointing at gym B's rows.
   ('role_permissions', $$ insert into public.role_permissions (role_id, permission_key) values (tests.role('trainer', 'pgtap-b'), 'payments.view') $$),
   ('staff_users', $$ insert into public.staff_users (id, username, full_name, role_id)
