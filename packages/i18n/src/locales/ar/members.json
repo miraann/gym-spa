@@ -9,7 +9,8 @@
       "active": "نشط",
       "suspended": "موقوف",
       "banned": "محظور",
-      "archived": "مؤرشف"
+      "archived": "مؤرشف",
+      "guests": "الضيوف"
     },
     "gender": "الجنس",
     "anyGender": "كل الأجناس",
@@ -232,5 +233,10 @@
     "upcoming": "الاشتراك لم يبدأ بعد",
     "expired": "الاشتراك منتهٍ",
     "none": "دون اشتراك"
+  },
+  "guest": {
+    "badge": "ضيف",
+    "makeMember": "جعله عضوًا",
+    "done": "أصبح {{name}} عضوًا."
   }
 }

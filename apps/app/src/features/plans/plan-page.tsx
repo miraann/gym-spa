@@ -41,6 +41,7 @@ import { toast } from 'sonner';
 import { useActiveAccount } from '@/features/auth/auth-context';
 import { useAdminBranches } from '@/features/staff/admin-data';
 import { BackToList } from '@/features/staff/admin-error';
+import { PlanSpaSessions } from '@/features/spa/plan-spa-sessions';
 import { useAdminWriteState } from '@/features/staff/write-state';
 import { WriteStateNotice } from '@/features/staff/write-state-notice';
 import { useFormat } from '@/lib/format';
@@ -572,6 +573,7 @@ function PlanEditor({ plan }: { readonly plan: Plan | null }) {
           </Card>
         </fieldset>
       </form>
+      {plan && <PlanSpaSessions planId={plan.id} disabled={disabled} />}
 
       {canChange && (
         <StickyActionBar>

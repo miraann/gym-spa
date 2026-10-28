@@ -9,7 +9,8 @@
       "active": "Active",
       "suspended": "Suspended",
       "banned": "Banned",
-      "archived": "Archived"
+      "archived": "Archived",
+      "guests": "Guests"
     },
     "gender": "Gender",
     "anyGender": "All genders",
@@ -232,5 +233,10 @@
     "upcoming": "Subscription not started yet",
     "expired": "Subscription expired",
     "none": "No subscription"
+  },
+  "guest": {
+    "badge": "Guest",
+    "makeMember": "Make a member",
+    "done": "{{name}} is now a member."
   }
 }

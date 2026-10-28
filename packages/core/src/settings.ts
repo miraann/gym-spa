@@ -27,6 +27,12 @@ export const SETTINGS = {
   'lockers.lost_key_fee': { min: 0, max: 1_000_000_000, default: 0 },
   /** When each night the daily lockers not given back are released: minutes after midnight in Baghdad. */
   'lockers.night_release_minute': { min: 0, max: 1439, default: 180 },
+  /** The first hour the spa calendar shows (Baghdad time). */
+  'spa.calendar_from_hour': { min: 0, max: 23, default: 8 },
+  /** The hour the spa calendar ends (24: midnight). */
+  'spa.calendar_until_hour': { min: 1, max: 24, default: 24 },
+  /** The spa calendar's step in minutes. */
+  'spa.slot_minutes': { min: 5, max: 60, default: 15 },
 } as const satisfies Record<string, IntegerSetting>;
 
 export type SettingKey = keyof typeof SETTINGS;

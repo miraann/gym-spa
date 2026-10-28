@@ -13,7 +13,6 @@ import {
 import { ChoiceGroup } from '@gym/ui/blocks/choice-group';
 import { ResponsiveDialog } from '@gym/ui/blocks/responsive-dialog';
 import { Button } from '@gym/ui/components/button';
-import { Checkbox } from '@gym/ui/components/checkbox';
 import {
   Field,
   FieldDescription,
@@ -32,13 +31,8 @@ import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { DateSelectField } from '@/components/date-select-field';
 import { useMemberSearch, type Member } from '@/features/members/member-data';
-import {
-  emptyPaymentFields,
-  paymentFieldsDraft,
-  toPaymentInput,
-  type PaymentFieldValues,
-} from '@/features/payments/payment-draft';
-import { PaymentFields } from '@/features/payments/payment-fields';
+import { PayNow } from '@/features/payments/pay-now';
+import { usePayNow } from '@/features/payments/use-pay-now';
 import { useAdminWriteState } from '@/features/staff/write-state';
 import { useFormat } from '@/lib/format';
 import { useBaghdadToday } from '@/lib/use-today';
@@ -243,68 +237,6 @@ export function GiveLockerDialog({ locker, onBack, onDone }: ActionProps) {
   );
 }
 
-/** Payment now, or none (the member owes it); shared by renting, renewing and the key fee. */
-function PayNow({
-  total,
-  payNow,
-  onPayNow,
-  payment,
-  onPayment,
-  showProblems,
-}: {
-  readonly total: number;
-  readonly payNow: boolean;
-  readonly onPayNow: (payNow: boolean) => void;
-  readonly payment: PaymentFieldValues;
-  readonly onPayment: (payment: PaymentFieldValues) => void;
-  readonly showProblems: boolean;
-}) {
-  const { t } = useTranslation('lockers');
-  const id = useId();
-  return (
-    <>
-      <div className="flex items-center gap-3">
-        <Checkbox
-          id={`${id}-pay-now`}
-          checked={payNow}
-          onCheckedChange={(checked) => {
-            onPayNow(checked === true);
-          }}
-        />
-        <Label htmlFor={`${id}-pay-now`} className="font-normal">
-          {t('money.payNow')}
-        </Label>
-      </div>
-      {payNow && total > 0 && (
-        <PaymentFields
-          value={payment}
-          onChange={onPayment}
-          owed={total}
-          showProblems={showProblems}
-          wholeAmount
-        />
-      )}
-    </>
-  );
-}
-
-/** The payment fields' state, paid in full in dinars unless dollars are chosen. */
-function usePayNow(total: number) {
-  const [payNow, setPayNow] = useState(true);
-  const [payment, setPayment] = useState<PaymentFieldValues>(() => emptyPaymentFields(null));
-  const values: PaymentFieldValues =
-    payment.currency === 'IQD' ? { ...payment, amount: String(total) } : payment;
-  const problem = payNow && total > 0 && paymentFieldsDraft(values, total).problem !== null;
-  return {
-    payNow,
-    setPayNow,
-    values,
-    setPayment,
-    problem,
-    input: (paymentId: string) => (payNow && total > 0 ? toPaymentInput(values, paymentId) : null),
-  };
-}
-
 function MonthsField({
   value,
   onChange,
@@ -436,6 +368,7 @@ export function RentLockerDialog({
       {prices.isSuccess && <Total total={total} priceSet={monthPrice > 0} />}
       {monthPrice > 0 && (
         <PayNow
+          label={t('money.payNow')}
           total={total}
           payNow={pay.payNow}
           onPayNow={pay.setPayNow}
@@ -515,6 +448,7 @@ export function RenewLockerDialog({
       {prices.isSuccess && <Total total={total} priceSet={monthPrice > 0} />}
       {monthPrice > 0 && (
         <PayNow
+          label={t('money.payNow')}
           total={total}
           payNow={pay.payNow}
           onPayNow={pay.setPayNow}
@@ -581,6 +515,7 @@ export function LostKeyDialog({
     >
       {fee > 0 && (
         <PayNow
+          label={t('money.payNow')}
           total={fee}
           payNow={pay.payNow}
           onPayNow={pay.setPayNow}

@@ -3,6 +3,7 @@ import arBranches from './locales/ar/branches.json';
 import arCards from './locales/ar/cards.json';
 import arCheckin from './locales/ar/checkin.json';
 import arLockers from './locales/ar/lockers.json';
+import arSpa from './locales/ar/spa.json';
 import arCommon from './locales/ar/common.json';
 import arDates from './locales/ar/dates.json';
 import arDevices from './locales/ar/devices.json';
@@ -22,6 +23,7 @@ import ckbBranches from './locales/ckb/branches.json';
 import ckbCards from './locales/ckb/cards.json';
 import ckbCheckin from './locales/ckb/checkin.json';
 import ckbLockers from './locales/ckb/lockers.json';
+import ckbSpa from './locales/ckb/spa.json';
 import ckbCommon from './locales/ckb/common.json';
 import ckbDates from './locales/ckb/dates.json';
 import ckbDevices from './locales/ckb/devices.json';
@@ -41,6 +43,7 @@ import enBranches from './locales/en/branches.json';
 import enCards from './locales/en/cards.json';
 import enCheckin from './locales/en/checkin.json';
 import enLockers from './locales/en/lockers.json';
+import enSpa from './locales/en/spa.json';
 import enCommon from './locales/en/common.json';
 import enDates from './locales/en/dates.json';
 import enDevices from './locales/en/devices.json';
@@ -81,6 +84,7 @@ const ckb = {
   payments: ckbPayments,
   support: ckbSupport,
   lockers: ckbLockers,
+  spa: ckbSpa,
 };
 
 /** The gym app's texts (every namespace it loads). */
@@ -112,6 +116,7 @@ const en: GymResources = {
   payments: enPayments,
   support: enSupport,
   lockers: enLockers,
+  spa: enSpa,
 };
 
 const ar: GymResources = {
@@ -134,6 +139,7 @@ const ar: GymResources = {
   payments: arPayments,
   support: arSupport,
   lockers: arLockers,
+  spa: arSpa,
 };
 
 export const resources: Record<Language, GymResources> = { ckb, en, ar };
@@ -158,6 +164,7 @@ export const NAMESPACES = [
   'payments',
   'support',
   'lockers',
+  'spa',
 ] as const satisfies readonly Namespace[];
 
 export const DEFAULT_NAMESPACE = 'common' satisfies Namespace;

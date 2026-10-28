@@ -41,12 +41,20 @@ import { Route as SettingsAppearanceRouteImport } from './routes/settings/appear
 import { Route as SettingsCardReaderRouteImport } from './routes/settings/card-reader'
 import { Route as SettingsDisplayRouteImport } from './routes/settings/display'
 import { Route as SettingsSupportRouteImport } from './routes/settings/support'
+import { Route as SpaIndexRouteImport } from './routes/spa/index'
+import { Route as SpaCommissionsRouteImport } from './routes/spa/commissions'
+import { Route as SpaSetupRouteRouteImport } from './routes/spa/setup/route'
 import { Route as StaffIndexRouteImport } from './routes/staff/index'
 import { Route as StaffStaffIdRouteImport } from './routes/staff/$staffId'
 import { Route as StaffNewRouteImport } from './routes/staff/new'
 import { Route as MembersMemberIdIndexRouteImport } from './routes/members/$memberId/index'
 import { Route as MembersMemberIdEditRouteImport } from './routes/members/$memberId/edit'
 import { Route as MembersMemberIdSellRouteImport } from './routes/members/$memberId/sell'
+import { Route as SpaSetupIndexRouteImport } from './routes/spa/setup/index'
+import { Route as SpaSetupPackagesRouteImport } from './routes/spa/setup/packages'
+import { Route as SpaSetupRoomsRouteImport } from './routes/spa/setup/rooms'
+import { Route as SpaSetupServicesRouteImport } from './routes/spa/setup/services'
+import { Route as SpaSetupTherapistsRouteImport } from './routes/spa/setup/therapists'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -208,6 +216,21 @@ const SettingsSupportRoute = SettingsSupportRouteImport.update({
   path: '/support',
   getParentRoute: () => SettingsRouteRoute,
 } as any)
+const SpaIndexRoute = SpaIndexRouteImport.update({
+  id: '/spa/',
+  path: '/spa/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SpaCommissionsRoute = SpaCommissionsRouteImport.update({
+  id: '/spa/commissions',
+  path: '/spa/commissions',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SpaSetupRouteRoute = SpaSetupRouteRouteImport.update({
+  id: '/spa/setup',
+  path: '/spa/setup',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const StaffIndexRoute = StaffIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -238,6 +261,31 @@ const MembersMemberIdSellRoute = MembersMemberIdSellRouteImport.update({
   path: '/$memberId/sell',
   getParentRoute: () => MembersRouteRoute,
 } as any)
+const SpaSetupIndexRoute = SpaSetupIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => SpaSetupRouteRoute,
+} as any)
+const SpaSetupPackagesRoute = SpaSetupPackagesRouteImport.update({
+  id: '/packages',
+  path: '/packages',
+  getParentRoute: () => SpaSetupRouteRoute,
+} as any)
+const SpaSetupRoomsRoute = SpaSetupRoomsRouteImport.update({
+  id: '/rooms',
+  path: '/rooms',
+  getParentRoute: () => SpaSetupRouteRoute,
+} as any)
+const SpaSetupServicesRoute = SpaSetupServicesRouteImport.update({
+  id: '/services',
+  path: '/services',
+  getParentRoute: () => SpaSetupRouteRoute,
+} as any)
+const SpaSetupTherapistsRoute = SpaSetupTherapistsRouteImport.update({
+  id: '/therapists',
+  path: '/therapists',
+  getParentRoute: () => SpaSetupRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -248,6 +296,7 @@ export interface FileRoutesByFullPath {
   '/roles': typeof RolesRouteRouteWithChildren
   '/settings': typeof SettingsRouteRouteWithChildren
   '/staff': typeof StaffRouteRouteWithChildren
+  '/spa/setup': typeof SpaSetupRouteRouteWithChildren
   '/branches/$branchId': typeof BranchesBranchIdRoute
   '/branches/new': typeof BranchesNewRoute
   '/checkin/door': typeof CheckinDoorRoute
@@ -263,6 +312,7 @@ export interface FileRoutesByFullPath {
   '/settings/card-reader': typeof SettingsCardReaderRoute
   '/settings/display': typeof SettingsDisplayRoute
   '/settings/support': typeof SettingsSupportRoute
+  '/spa/commissions': typeof SpaCommissionsRoute
   '/staff/$staffId': typeof StaffStaffIdRoute
   '/staff/new': typeof StaffNewRoute
   '/branches/': typeof BranchesIndexRoute
@@ -274,10 +324,16 @@ export interface FileRoutesByFullPath {
   '/plans/': typeof PlansIndexRoute
   '/roles/': typeof RolesIndexRoute
   '/settings/': typeof SettingsIndexRoute
+  '/spa/': typeof SpaIndexRoute
   '/staff/': typeof StaffIndexRoute
   '/members/$memberId/edit': typeof MembersMemberIdEditRoute
   '/members/$memberId/sell': typeof MembersMemberIdSellRoute
+  '/spa/setup/packages': typeof SpaSetupPackagesRoute
+  '/spa/setup/rooms': typeof SpaSetupRoomsRoute
+  '/spa/setup/services': typeof SpaSetupServicesRoute
+  '/spa/setup/therapists': typeof SpaSetupTherapistsRoute
   '/members/$memberId/': typeof MembersMemberIdIndexRoute
+  '/spa/setup/': typeof SpaSetupIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -296,6 +352,7 @@ export interface FileRoutesByTo {
   '/settings/card-reader': typeof SettingsCardReaderRoute
   '/settings/display': typeof SettingsDisplayRoute
   '/settings/support': typeof SettingsSupportRoute
+  '/spa/commissions': typeof SpaCommissionsRoute
   '/staff/$staffId': typeof StaffStaffIdRoute
   '/staff/new': typeof StaffNewRoute
   '/branches': typeof BranchesIndexRoute
@@ -307,10 +364,16 @@ export interface FileRoutesByTo {
   '/plans': typeof PlansIndexRoute
   '/roles': typeof RolesIndexRoute
   '/settings': typeof SettingsIndexRoute
+  '/spa': typeof SpaIndexRoute
   '/staff': typeof StaffIndexRoute
   '/members/$memberId/edit': typeof MembersMemberIdEditRoute
   '/members/$memberId/sell': typeof MembersMemberIdSellRoute
+  '/spa/setup/packages': typeof SpaSetupPackagesRoute
+  '/spa/setup/rooms': typeof SpaSetupRoomsRoute
+  '/spa/setup/services': typeof SpaSetupServicesRoute
+  '/spa/setup/therapists': typeof SpaSetupTherapistsRoute
   '/members/$memberId': typeof MembersMemberIdIndexRoute
+  '/spa/setup': typeof SpaSetupIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -322,6 +385,7 @@ export interface FileRoutesById {
   '/roles': typeof RolesRouteRouteWithChildren
   '/settings': typeof SettingsRouteRouteWithChildren
   '/staff': typeof StaffRouteRouteWithChildren
+  '/spa/setup': typeof SpaSetupRouteRouteWithChildren
   '/branches/$branchId': typeof BranchesBranchIdRoute
   '/branches/new': typeof BranchesNewRoute
   '/checkin/door': typeof CheckinDoorRoute
@@ -337,6 +401,7 @@ export interface FileRoutesById {
   '/settings/card-reader': typeof SettingsCardReaderRoute
   '/settings/display': typeof SettingsDisplayRoute
   '/settings/support': typeof SettingsSupportRoute
+  '/spa/commissions': typeof SpaCommissionsRoute
   '/staff/$staffId': typeof StaffStaffIdRoute
   '/staff/new': typeof StaffNewRoute
   '/branches/': typeof BranchesIndexRoute
@@ -348,10 +413,16 @@ export interface FileRoutesById {
   '/plans/': typeof PlansIndexRoute
   '/roles/': typeof RolesIndexRoute
   '/settings/': typeof SettingsIndexRoute
+  '/spa/': typeof SpaIndexRoute
   '/staff/': typeof StaffIndexRoute
   '/members/$memberId/edit': typeof MembersMemberIdEditRoute
   '/members/$memberId/sell': typeof MembersMemberIdSellRoute
+  '/spa/setup/packages': typeof SpaSetupPackagesRoute
+  '/spa/setup/rooms': typeof SpaSetupRoomsRoute
+  '/spa/setup/services': typeof SpaSetupServicesRoute
+  '/spa/setup/therapists': typeof SpaSetupTherapistsRoute
   '/members/$memberId/': typeof MembersMemberIdIndexRoute
+  '/spa/setup/': typeof SpaSetupIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -364,6 +435,7 @@ export interface FileRouteTypes {
     | '/roles'
     | '/settings'
     | '/staff'
+    | '/spa/setup'
     | '/branches/$branchId'
     | '/branches/new'
     | '/checkin/door'
@@ -379,6 +451,7 @@ export interface FileRouteTypes {
     | '/settings/card-reader'
     | '/settings/display'
     | '/settings/support'
+    | '/spa/commissions'
     | '/staff/$staffId'
     | '/staff/new'
     | '/branches/'
@@ -390,10 +463,16 @@ export interface FileRouteTypes {
     | '/plans/'
     | '/roles/'
     | '/settings/'
+    | '/spa/'
     | '/staff/'
     | '/members/$memberId/edit'
     | '/members/$memberId/sell'
+    | '/spa/setup/packages'
+    | '/spa/setup/rooms'
+    | '/spa/setup/services'
+    | '/spa/setup/therapists'
     | '/members/$memberId/'
+    | '/spa/setup/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -412,6 +491,7 @@ export interface FileRouteTypes {
     | '/settings/card-reader'
     | '/settings/display'
     | '/settings/support'
+    | '/spa/commissions'
     | '/staff/$staffId'
     | '/staff/new'
     | '/branches'
@@ -423,10 +503,16 @@ export interface FileRouteTypes {
     | '/plans'
     | '/roles'
     | '/settings'
+    | '/spa'
     | '/staff'
     | '/members/$memberId/edit'
     | '/members/$memberId/sell'
+    | '/spa/setup/packages'
+    | '/spa/setup/rooms'
+    | '/spa/setup/services'
+    | '/spa/setup/therapists'
     | '/members/$memberId'
+    | '/spa/setup'
   id:
     | '__root__'
     | '/'
@@ -437,6 +523,7 @@ export interface FileRouteTypes {
     | '/roles'
     | '/settings'
     | '/staff'
+    | '/spa/setup'
     | '/branches/$branchId'
     | '/branches/new'
     | '/checkin/door'
@@ -452,6 +539,7 @@ export interface FileRouteTypes {
     | '/settings/card-reader'
     | '/settings/display'
     | '/settings/support'
+    | '/spa/commissions'
     | '/staff/$staffId'
     | '/staff/new'
     | '/branches/'
@@ -463,10 +551,16 @@ export interface FileRouteTypes {
     | '/plans/'
     | '/roles/'
     | '/settings/'
+    | '/spa/'
     | '/staff/'
     | '/members/$memberId/edit'
     | '/members/$memberId/sell'
+    | '/spa/setup/packages'
+    | '/spa/setup/rooms'
+    | '/spa/setup/services'
+    | '/spa/setup/therapists'
     | '/members/$memberId/'
+    | '/spa/setup/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -478,11 +572,14 @@ export interface RootRouteChildren {
   RolesRouteRoute: typeof RolesRouteRouteWithChildren
   SettingsRouteRoute: typeof SettingsRouteRouteWithChildren
   StaffRouteRoute: typeof StaffRouteRouteWithChildren
+  SpaSetupRouteRoute: typeof SpaSetupRouteRouteWithChildren
   CheckinDoorRoute: typeof CheckinDoorRoute
   CheckinVisitsRoute: typeof CheckinVisitsRoute
+  SpaCommissionsRoute: typeof SpaCommissionsRoute
   CheckinIndexRoute: typeof CheckinIndexRoute
   LockersIndexRoute: typeof LockersIndexRoute
   PaymentsIndexRoute: typeof PaymentsIndexRoute
+  SpaIndexRoute: typeof SpaIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -711,6 +808,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsSupportRouteImport
       parentRoute: typeof SettingsRouteRoute
     }
+    '/spa/': {
+      id: '/spa/'
+      path: '/spa'
+      fullPath: '/spa/'
+      preLoaderRoute: typeof SpaIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/spa/commissions': {
+      id: '/spa/commissions'
+      path: '/spa/commissions'
+      fullPath: '/spa/commissions'
+      preLoaderRoute: typeof SpaCommissionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/spa/setup': {
+      id: '/spa/setup'
+      path: '/spa/setup'
+      fullPath: '/spa/setup'
+      preLoaderRoute: typeof SpaSetupRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/staff/': {
       id: '/staff/'
       path: '/'
@@ -752,6 +870,41 @@ declare module '@tanstack/react-router' {
       fullPath: '/members/$memberId/sell'
       preLoaderRoute: typeof MembersMemberIdSellRouteImport
       parentRoute: typeof MembersRouteRoute
+    }
+    '/spa/setup/': {
+      id: '/spa/setup/'
+      path: '/'
+      fullPath: '/spa/setup/'
+      preLoaderRoute: typeof SpaSetupIndexRouteImport
+      parentRoute: typeof SpaSetupRouteRoute
+    }
+    '/spa/setup/packages': {
+      id: '/spa/setup/packages'
+      path: '/packages'
+      fullPath: '/spa/setup/packages'
+      preLoaderRoute: typeof SpaSetupPackagesRouteImport
+      parentRoute: typeof SpaSetupRouteRoute
+    }
+    '/spa/setup/rooms': {
+      id: '/spa/setup/rooms'
+      path: '/rooms'
+      fullPath: '/spa/setup/rooms'
+      preLoaderRoute: typeof SpaSetupRoomsRouteImport
+      parentRoute: typeof SpaSetupRouteRoute
+    }
+    '/spa/setup/services': {
+      id: '/spa/setup/services'
+      path: '/services'
+      fullPath: '/spa/setup/services'
+      preLoaderRoute: typeof SpaSetupServicesRouteImport
+      parentRoute: typeof SpaSetupRouteRoute
+    }
+    '/spa/setup/therapists': {
+      id: '/spa/setup/therapists'
+      path: '/therapists'
+      fullPath: '/spa/setup/therapists'
+      preLoaderRoute: typeof SpaSetupTherapistsRouteImport
+      parentRoute: typeof SpaSetupRouteRoute
     }
   }
 }
@@ -876,6 +1029,26 @@ const StaffRouteRouteWithChildren = StaffRouteRoute._addFileChildren(
   StaffRouteRouteChildren,
 )
 
+interface SpaSetupRouteRouteChildren {
+  SpaSetupPackagesRoute: typeof SpaSetupPackagesRoute
+  SpaSetupRoomsRoute: typeof SpaSetupRoomsRoute
+  SpaSetupServicesRoute: typeof SpaSetupServicesRoute
+  SpaSetupTherapistsRoute: typeof SpaSetupTherapistsRoute
+  SpaSetupIndexRoute: typeof SpaSetupIndexRoute
+}
+
+const SpaSetupRouteRouteChildren: SpaSetupRouteRouteChildren = {
+  SpaSetupPackagesRoute: SpaSetupPackagesRoute,
+  SpaSetupRoomsRoute: SpaSetupRoomsRoute,
+  SpaSetupServicesRoute: SpaSetupServicesRoute,
+  SpaSetupTherapistsRoute: SpaSetupTherapistsRoute,
+  SpaSetupIndexRoute: SpaSetupIndexRoute,
+}
+
+const SpaSetupRouteRouteWithChildren = SpaSetupRouteRoute._addFileChildren(
+  SpaSetupRouteRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   BranchesRouteRoute: BranchesRouteRouteWithChildren,
@@ -885,11 +1058,14 @@ const rootRouteChildren: RootRouteChildren = {
   RolesRouteRoute: RolesRouteRouteWithChildren,
   SettingsRouteRoute: SettingsRouteRouteWithChildren,
   StaffRouteRoute: StaffRouteRouteWithChildren,
+  SpaSetupRouteRoute: SpaSetupRouteRouteWithChildren,
   CheckinDoorRoute: CheckinDoorRoute,
   CheckinVisitsRoute: CheckinVisitsRoute,
+  SpaCommissionsRoute: SpaCommissionsRoute,
   CheckinIndexRoute: CheckinIndexRoute,
   LockersIndexRoute: LockersIndexRoute,
   PaymentsIndexRoute: PaymentsIndexRoute,
+  SpaIndexRoute: SpaIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

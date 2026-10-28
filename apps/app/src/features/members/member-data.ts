@@ -60,6 +60,8 @@ export interface Member {
   readonly statusReason: string | null;
   readonly statusChangedAt: string | null;
   readonly hasHealthNotes: boolean;
+  /** A guest profile (spa walk-ins and non-members), not a member yet. */
+  readonly isGuest: boolean;
   /** When the photo last changed; null: no photo. */
   readonly photoUpdatedAt: string | null;
   readonly createdAt: string;
@@ -92,7 +94,7 @@ export interface MemberPage {
 }
 
 const MEMBER_COLUMNS =
-  'id, member_number, branch_id, full_name, gender, phone, emergency_contact_name, emergency_phone, birth_date, preferred_language, address, referral_source, goals, notes, tags, status, status_reason, status_changed_at, has_health_notes, photo_updated_at, created_at, membership, membership_ends_on';
+  'id, member_number, branch_id, full_name, gender, phone, emergency_contact_name, emergency_phone, birth_date, preferred_language, address, referral_source, goals, notes, tags, status, status_reason, status_changed_at, has_health_notes, is_guest, photo_updated_at, created_at, membership, membership_ends_on';
 
 /** The database's checks keep these columns to their lists; this only narrows the types. */
 function oneOf<T extends string>(values: readonly T[], value: string | null, fallback: T): T {
@@ -128,7 +130,7 @@ type MemberColumns = Pick<
   | 'created_at'
 > &
   // Computed from the subscriptions (public.membership); not in what the member functions return.
-  Partial<Pick<MemberRow, 'membership' | 'membership_ends_on'>>;
+  Partial<Pick<MemberRow, 'membership' | 'membership_ends_on' | 'is_guest'>>;
 
 export function toMember(row: MemberColumns): Member {
   return {
@@ -151,6 +153,7 @@ export function toMember(row: MemberColumns): Member {
     statusReason: row.status_reason,
     statusChangedAt: row.status_changed_at,
     hasHealthNotes: row.has_health_notes,
+    isGuest: row.is_guest ?? false,
     photoUpdatedAt: row.photo_updated_at,
     createdAt: row.created_at,
     membership: optionalOneOf(MEMBERSHIPS, row.membership ?? null),
@@ -178,10 +181,13 @@ async function fetchMemberPage(
   // PostgREST reads * as a wildcard too; names and phones never contain one.
   const needle = memberSearchNeedle(params.q).replaceAll('*', '');
   if (needle !== '') query = query.ilike('search_text', `%${escapeLikePattern(needle)}%`);
+  // Guests (spa walk-ins) have a filter of their own; every other filter is members only.
   query =
-    params.status === 'current'
-      ? query.neq('status', 'archived')
-      : query.eq('status', params.status);
+    params.status === 'guests'
+      ? query.eq('is_guest', true).neq('status', 'archived')
+      : params.status === 'current'
+        ? query.eq('is_guest', false).neq('status', 'archived')
+        : query.eq('is_guest', false).eq('status', params.status);
   if (params.gender !== null) query = query.eq('gender', params.gender);
   if (params.branch !== null) query = query.eq('branch_id', params.branch);
   if (params.tag !== null) query = query.contains('tags', [params.tag]);
@@ -285,7 +291,7 @@ export function useMemberCounts(since: Date) {
           .select('id', { count: 'exact', head: true })
           .is('deleted_at', null);
         return filter === 'active'
-          ? query.eq('status', 'active')
+          ? query.eq('status', 'active').eq('is_guest', false)
           : query.gte('created_at', since.toISOString());
       };
       const [active, created] = await Promise.all([count('active'), count('new')]);
@@ -490,6 +496,22 @@ export function useSetMemberStatus() {
         p_id: id,
         p_status: status,
         ...(reason === null ? {} : { p_reason: reason }),
+      });
+      if (error) throw error;
+      return toMember(data);
+    },
+    onSettled: refresh,
+  });
+}
+
+/** Makes a guest a full member (members.create and members.edit). */
+export function useMakeGuestMember() {
+  const { client } = useActingClient();
+  const refresh = useRefreshMembers();
+  return useMutation({
+    mutationFn: async (id: string): Promise<Member> => {
+      const { data, error } = await requireClient(client).rpc('make_guest_member', {
+        p_member_id: id,
       });
       if (error) throw error;
       return toMember(data);

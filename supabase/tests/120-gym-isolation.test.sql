@@ -101,6 +101,47 @@ insert into public.locker_assignments (id, gym_id, branch_id, locker_id, member_
    'e0000000-0000-4000-8000-0000000000a1', 'daily', current_date),
   ('e0000000-0000-4000-8000-0000000000bf', tests.gym('pgtap-b'), tests.branch('B901', 'pgtap-b'), 'e0000000-0000-4000-8000-0000000000be',
    'e0000000-0000-4000-8000-0000000000b1', 'daily', current_date);
+-- The spa's setup in both gyms.
+insert into public.spa_services (id, gym_id, name_ckb, kind, duration_minutes, price) values
+  ('e0000000-0000-4000-8000-0000000000a5', tests.gym('pgtap-a'), 'مەساژ', 'massage', 60, 30000),
+  ('e0000000-0000-4000-8000-0000000000b5', tests.gym('pgtap-b'), 'مەساژ', 'massage', 60, 30000);
+insert into public.spa_rooms (id, gym_id, branch_id, name_ckb, kind) values
+  ('e0000000-0000-4000-8000-0000000000a6', tests.gym('pgtap-a'), tests.branch('B901'), 'ژووری ١', 'massage'),
+  ('e0000000-0000-4000-8000-0000000000b6', tests.gym('pgtap-b'), tests.branch('B901', 'pgtap-b'), 'ژووری ١', 'massage');
+insert into public.spa_therapists (id, gym_id, branch_id, full_name, gender) values
+  ('e0000000-0000-4000-8000-0000000000a7', tests.gym('pgtap-a'), tests.branch('B901'), 'ڕۆژان', 'female'),
+  ('e0000000-0000-4000-8000-0000000000b7', tests.gym('pgtap-b'), tests.branch('B901', 'pgtap-b'), 'ڕۆژان', 'female');
+insert into public.spa_therapist_services (gym_id, therapist_id, service_id) values
+  (tests.gym('pgtap-a'), 'e0000000-0000-4000-8000-0000000000a7', 'e0000000-0000-4000-8000-0000000000a5'),
+  (tests.gym('pgtap-b'), 'e0000000-0000-4000-8000-0000000000b7', 'e0000000-0000-4000-8000-0000000000b5');
+insert into public.spa_therapist_hours (gym_id, therapist_id, weekday, starts_at, ends_at) values
+  (tests.gym('pgtap-a'), 'e0000000-0000-4000-8000-0000000000a7', 1, '09:00', '17:00'),
+  (tests.gym('pgtap-b'), 'e0000000-0000-4000-8000-0000000000b7', 1, '09:00', '17:00');
+insert into public.spa_packages (id, gym_id, name_ckb, service_id, session_count, price) values
+  ('f0000000-0000-4000-8000-0000000000a1', tests.gym('pgtap-a'), 'پاکێج', 'e0000000-0000-4000-8000-0000000000a5', 5, 0),
+  ('f0000000-0000-4000-8000-0000000000b1', tests.gym('pgtap-b'), 'پاکێج', 'e0000000-0000-4000-8000-0000000000b5', 5, 0);
+insert into public.member_spa_packages (id, gym_id, branch_id, member_id, package_id, service_id, name_ckb, session_count,
+                                        price, starts_on, invoice_id) values
+  ('f0000000-0000-4000-8000-0000000000a2', tests.gym('pgtap-a'), tests.branch('B901'), 'e0000000-0000-4000-8000-0000000000a1',
+   'f0000000-0000-4000-8000-0000000000a1', 'e0000000-0000-4000-8000-0000000000a5', 'پاکێج', 5, 0, current_date,
+   'e0000000-0000-4000-8000-0000000000a5'),
+  ('f0000000-0000-4000-8000-0000000000b2', tests.gym('pgtap-b'), tests.branch('B901', 'pgtap-b'), 'e0000000-0000-4000-8000-0000000000b1',
+   'f0000000-0000-4000-8000-0000000000b1', 'e0000000-0000-4000-8000-0000000000b5', 'پاکێج', 5, 0, current_date,
+   'e0000000-0000-4000-8000-0000000000b5');
+insert into public.plan_spa_sessions (gym_id, plan_id, service_id, session_count) values
+  (tests.gym('pgtap-a'), 'e0000000-0000-4000-8000-0000000000a3', 'e0000000-0000-4000-8000-0000000000a5', 2),
+  (tests.gym('pgtap-b'), 'e0000000-0000-4000-8000-0000000000b3', 'e0000000-0000-4000-8000-0000000000b5', 2);
+insert into public.subscription_spa_sessions (gym_id, subscription_id, service_id, session_count) values
+  (tests.gym('pgtap-a'), 'e0000000-0000-4000-8000-0000000000a4', 'e0000000-0000-4000-8000-0000000000a5', 2),
+  (tests.gym('pgtap-b'), 'e0000000-0000-4000-8000-0000000000b4', 'e0000000-0000-4000-8000-0000000000b5', 2);
+insert into public.spa_bookings (id, gym_id, branch_id, member_id, service_id, room_id, place, name_ckb, price, starts_at,
+                                 ends_at, room_free_at, paid_with) values
+  ('f0000000-0000-4000-8000-0000000000a3', tests.gym('pgtap-a'), tests.branch('B901'), 'e0000000-0000-4000-8000-0000000000a1',
+   'e0000000-0000-4000-8000-0000000000a5', 'e0000000-0000-4000-8000-0000000000a6', 1, 'مەساژ', 0,
+   now() + interval '1 day', now() + interval '25 hours', now() + interval '25 hours', 'pay'),
+  ('f0000000-0000-4000-8000-0000000000b3', tests.gym('pgtap-b'), tests.branch('B901', 'pgtap-b'), 'e0000000-0000-4000-8000-0000000000b1',
+   'e0000000-0000-4000-8000-0000000000b5', 'e0000000-0000-4000-8000-0000000000b6', 1, 'مەساژ', 0,
+   now() + interval '1 day', now() + interval '25 hours', now() + interval '25 hours', 'pay');
 
 select is_empty(
   $$ select t from tests.gym_tables() t
@@ -200,6 +241,45 @@ insert into insert_cases (table_name, statement) values
                                     'e0000000-0000-4000-8000-0000000000be', 'e0000000-0000-4000-8000-0000000000b2', 'daily', current_date) $$),
   ('locker_assignments', $$ select public.give_locker(gen_random_uuid(), 'e0000000-0000-4000-8000-0000000000be',
                               'e0000000-0000-4000-8000-0000000000b2') $$),
+  ('spa_services', $$ insert into public.spa_services (gym_id, id, name_ckb, kind, duration_minutes, price)
+                      values (tests.gym('pgtap-b'), gen_random_uuid(), 'مەساژ', 'massage', 60, 1) $$),
+  ('spa_services', $$ select public.save_spa_service('e0000000-0000-4000-8000-0000000000b5', 'مەساژ', 'massage', 60, 1) $$),
+  ('spa_rooms', $$ insert into public.spa_rooms (gym_id, id, branch_id, name_ckb, kind)
+                   values (tests.gym('pgtap-b'), gen_random_uuid(), tests.branch('B901', 'pgtap-b'), 'ژووری ٩', 'massage') $$),
+  ('spa_rooms', $$ select public.save_spa_room(gen_random_uuid(), tests.branch('B901', 'pgtap-b'), 'ژووری ٩', 'massage') $$),
+  ('spa_therapists', $$ insert into public.spa_therapists (gym_id, id, branch_id, full_name, gender)
+                        values (tests.gym('pgtap-b'), gen_random_uuid(), tests.branch('B901', 'pgtap-b'), 'دانا', 'male') $$),
+  ('spa_therapists', $$ select public.save_spa_therapist(gen_random_uuid(), tests.branch('B901', 'pgtap-b'), 'دانا', 'male', '{}', '[]') $$),
+  ('spa_therapists', $$ select public.save_spa_therapist('e0000000-0000-4000-8000-0000000000b7', tests.branch('B901'), 'دانا', 'male', '{}', '[]') $$),
+  ('spa_therapist_services', $$ insert into public.spa_therapist_services (gym_id, therapist_id, service_id)
+                                values (tests.gym('pgtap-b'), 'e0000000-0000-4000-8000-0000000000b7', 'e0000000-0000-4000-8000-0000000000b5') $$),
+  ('spa_therapist_services', $$ select public.save_spa_therapist('e0000000-0000-4000-8000-0000000000a7', tests.branch('B901'), 'ڕۆژان', 'female',
+                                  array['e0000000-0000-4000-8000-0000000000b5'::uuid], '[]') $$),
+  ('spa_therapist_hours', $$ insert into public.spa_therapist_hours (gym_id, therapist_id, weekday, starts_at, ends_at)
+                             values (tests.gym('pgtap-b'), 'e0000000-0000-4000-8000-0000000000b7', 2, '09:00', '17:00') $$),
+  ('spa_packages', $$ insert into public.spa_packages (gym_id, id, name_ckb, service_id, session_count, price)
+                      values (tests.gym('pgtap-b'), gen_random_uuid(), 'پاکێج', 'e0000000-0000-4000-8000-0000000000b5', 5, 0) $$),
+  ('spa_packages', $$ select public.save_spa_package('f0000000-0000-4000-8000-0000000000b1', 'پاکێج', 'e0000000-0000-4000-8000-0000000000b5', 5, 0) $$),
+  ('member_spa_packages', $$ insert into public.member_spa_packages (gym_id, id, branch_id, member_id, package_id, service_id, name_ckb,
+                                session_count, price, starts_on, invoice_id)
+                             values (tests.gym('pgtap-b'), gen_random_uuid(), tests.branch('B901', 'pgtap-b'), 'e0000000-0000-4000-8000-0000000000b1',
+                                     'f0000000-0000-4000-8000-0000000000b1', 'e0000000-0000-4000-8000-0000000000b5', 'پاکێج', 5, 0,
+                                     current_date, 'e0000000-0000-4000-8000-0000000000b5') $$),
+  ('member_spa_packages', $$ select public.sell_spa_package(gen_random_uuid(), gen_random_uuid(), 'f0000000-0000-4000-8000-0000000000b1',
+                               'e0000000-0000-4000-8000-0000000000b1', tests.branch('B901', 'pgtap-b')) $$),
+  ('plan_spa_sessions', $$ insert into public.plan_spa_sessions (gym_id, plan_id, service_id, session_count)
+                           values (tests.gym('pgtap-b'), 'e0000000-0000-4000-8000-0000000000b3', 'e0000000-0000-4000-8000-0000000000b5', 3) $$),
+  ('plan_spa_sessions', $$ select public.set_plan_spa_sessions('e0000000-0000-4000-8000-0000000000b3', '[]') $$),
+  ('subscription_spa_sessions', $$ insert into public.subscription_spa_sessions (gym_id, subscription_id, service_id, session_count)
+                                   values (tests.gym('pgtap-b'), 'e0000000-0000-4000-8000-0000000000b4', 'e0000000-0000-4000-8000-0000000000b5', 3) $$),
+  ('spa_bookings', $$ insert into public.spa_bookings (gym_id, id, branch_id, member_id, service_id, room_id, place, name_ckb, price,
+                         starts_at, ends_at, room_free_at, paid_with)
+                      values (tests.gym('pgtap-b'), gen_random_uuid(), tests.branch('B901', 'pgtap-b'), 'e0000000-0000-4000-8000-0000000000b1',
+                              'e0000000-0000-4000-8000-0000000000b5', 'e0000000-0000-4000-8000-0000000000b6', 2, 'مەساژ', 0,
+                              now() + interval '2 days', now() + interval '49 hours', now() + interval '49 hours', 'pay') $$),
+  ('spa_bookings', $$ select public.book_spa(gen_random_uuid(), tests.branch('B901', 'pgtap-b'), 'e0000000-0000-4000-8000-0000000000b1',
+                       'e0000000-0000-4000-8000-0000000000b5', now() + interval '2 days', 'e0000000-0000-4000-8000-0000000000b6') $$),
+  ('spa_bookings', $$ select public.set_spa_booking_status('f0000000-0000-4000-8000-0000000000b3', 'cancelled') $$),
   -- Their own gym (gym_id left to fill itself in), pointing at gym B's rows.
   ('role_permissions', $$ insert into public.role_permissions (role_id, permission_key) values (tests.role('trainer', 'pgtap-b'), 'payments.view') $$),
   ('staff_users', $$ insert into public.staff_users (id, username, full_name, role_id)
