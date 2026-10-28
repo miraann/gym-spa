@@ -44,7 +44,7 @@ import { useFormat } from '@/lib/format';
 import { useBaghdadToday } from '@/lib/use-today';
 import {
   useGiveLocker,
-  useLockerPrices,
+  useLockerSettings,
   useLostLockerKey,
   useRemoveLocker,
   useRenewLocker,
@@ -361,7 +361,7 @@ export function RentLockerDialog({
   const today = useBaghdadToday();
   const thisYear = Number(today.slice(0, 4));
   const rent = useRentLocker();
-  const prices = useLockerPrices(branchId);
+  const prices = useLockerSettings(branchId);
   const [ids] = useState(() => ({
     assignment: crypto.randomUUID(),
     invoice: crypto.randomUUID(),
@@ -459,7 +459,7 @@ export function RenewLockerDialog({
   const { t } = useTranslation('lockers');
   const format = useFormat();
   const renew = useRenewLocker();
-  const prices = useLockerPrices(branchId);
+  const prices = useLockerSettings(branchId);
   const [ids] = useState(() => ({
     assignment: crypto.randomUUID(),
     invoice: crypto.randomUUID(),
@@ -538,7 +538,7 @@ export function LostKeyDialog({
   const { t } = useTranslation('lockers');
   const format = useFormat();
   const lost = useLostLockerKey();
-  const prices = useLockerPrices(branchId);
+  const prices = useLockerSettings(branchId);
   const [ids] = useState(() => ({ invoice: crypto.randomUUID(), payment: crypto.randomUUID() }));
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<LockerErrorKey | null>(null);

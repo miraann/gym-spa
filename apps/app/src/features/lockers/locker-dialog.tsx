@@ -287,7 +287,8 @@ function HistoryRow({ holder }: { readonly holder: LockerHolder }) {
       <span className="text-muted-foreground">
         {t(`kinds.${holder.kind}`)} · {format.date(holder.assignedAt)}
         {holder.releasedAt && ` – ${format.date(holder.releasedAt)}`}
-        {holder.releaseReason && ` · ${t(`releaseReasons.${holder.releaseReason}`)}`}
+        {holder.releaseReason &&
+          ` · ${t(holder.releasedAutomatically ? 'releaseReasons.night' : `releaseReasons.${holder.releaseReason}`)}`}
       </span>
     </li>
   );

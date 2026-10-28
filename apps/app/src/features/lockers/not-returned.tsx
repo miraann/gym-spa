@@ -1,3 +1,4 @@
+import { minuteAsBaghdadTime } from '@gym/core';
 import { Button } from '@gym/ui/components/button';
 import { TriangleAlertIcon } from 'lucide-react';
 import { useState } from 'react';
@@ -6,15 +7,16 @@ import { toast } from 'sonner';
 import { usePermission } from '@/features/auth/use-permissions';
 import { useAdminWriteState } from '@/features/staff/write-state';
 import { useFormat } from '@/lib/format';
-import { useReleaseDailyLockers } from './locker-data';
+import { useLockerSettings, useReleaseDailyLockers } from './locker-data';
 import { LockerError } from './locker-error';
 import { lockerErrorKey, type LockerErrorKey } from './locker-errors';
 import type { MapLocker } from './locker-look';
 
 /**
  * The end-of-day list: daily lockers from an earlier day and rentals past their last paid day, not
- * given back. Yesterday's daily lockers are released together with one button (there is no
- * scheduled job, so staff do it when they open or close).
+ * given back. The daily ones are released every night at the gym's set time (pg_cron on the cloud),
+ * and staff can still release them together with one button (before that time, or on the offline
+ * edition until its server runs the same job).
  */
 export function NotReturnedList({
   branchId,
@@ -30,6 +32,7 @@ export function NotReturnedList({
   const { online, readOnly } = useAdminWriteState();
   const mayAssign = usePermission('lockers.assign');
   const releaseAll = useReleaseDailyLockers();
+  const settings = useLockerSettings(branchId);
   const [error, setError] = useState<LockerErrorKey | null>(null);
   const overdue = lockers.filter((each) => each.status === 'overdue');
   const daily = overdue.filter((each) => each.holder?.kind === 'daily').length;
@@ -66,7 +69,11 @@ export function NotReturnedList({
           </Button>
         )}
       </div>
-      <p className="text-sm text-muted-foreground">{t('notReturned.description')}</p>
+      <p className="text-sm text-muted-foreground">
+        {t('notReturned.description')}
+        {settings.isSuccess &&
+          ` ${t('notReturned.nightly', { time: format.time(minuteAsBaghdadTime(settings.data.nightReleaseMinute)) })}`}
+      </p>
       <ul className="flex flex-wrap gap-2">
         {overdue.map((each) => (
           <li key={each.locker.id}>

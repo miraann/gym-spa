@@ -47,6 +47,8 @@ export interface LockerHolder {
   readonly attendanceId: string | null;
   readonly releasedAt: string | null;
   readonly releaseReason: LockerReleaseReason | null;
+  /** Released by the night release (no staff member), not by hand. */
+  readonly releasedAutomatically: boolean;
   /** Null: a member the staff member can't see (no members.view). */
   readonly member: {
     readonly id: string;
@@ -57,7 +59,7 @@ export interface LockerHolder {
 }
 
 const HOLDER_COLUMNS =
-  'id, locker_id, kind, starts_on, ends_on, assigned_at, attendance_id, released_at, release_reason, members (id, full_name, member_number, gender)';
+  'id, locker_id, kind, starts_on, ends_on, assigned_at, attendance_id, released_at, released_by, release_reason, members (id, full_name, member_number, gender)';
 
 interface HolderRow {
   readonly id: string;
@@ -68,6 +70,7 @@ interface HolderRow {
   readonly assigned_at: string;
   readonly attendance_id: string | null;
   readonly released_at: string | null;
+  readonly released_by: string | null;
   readonly release_reason: string | null;
   readonly members: {
     readonly id: string;
@@ -92,6 +95,7 @@ function toHolder(row: HolderRow): LockerHolder {
     attendanceId: row.attendance_id,
     releasedAt: row.released_at,
     releaseReason: isReleaseReason(row.release_reason) ? row.release_reason : null,
+    releasedAutomatically: row.release_reason === 'end_of_day' && row.released_by === null,
     member: row.members
       ? {
           id: row.members.id,
@@ -191,46 +195,54 @@ export function useMemberLockers(memberId: string, enabled: boolean) {
   });
 }
 
-export interface LockerPrices {
+export interface LockerSettings {
   /** Dinars a month; 0: not set. */
   readonly rentMonthPrice: number;
   /** Dinars; 0: no fee. */
   readonly lostKeyFee: number;
+  /** When each night the daily lockers not given back are released: minutes after midnight. */
+  readonly nightReleaseMinute: number;
 }
 
-/** The locker prices that apply in a branch (the branch's own setting, else the gym's). */
-export function useLockerPrices(branchId: string) {
+/** The locker settings that apply in a branch (the branch's own setting, else the gym's). */
+export function useLockerSettings(branchId: string) {
   const { client, actor } = useActingClient();
   return useQuery({
     queryKey: [LOCKER_SETTINGS_QUERY, actor, branchId],
     enabled: client !== undefined,
-    queryFn: async (): Promise<LockerPrices> => {
+    queryFn: async (): Promise<LockerSettings> => {
       const { data, error } = await requireClient(client)
         .from('settings')
         .select('branch_id, key, value')
-        .in('key', ['lockers.rent_month_price', 'lockers.lost_key_fee']);
+        .in('key', [
+          'lockers.rent_month_price',
+          'lockers.lost_key_fee',
+          'lockers.night_release_minute',
+        ]);
       if (error) throw error;
       const branch = branchId === '' ? null : branchId;
       return {
         rentMonthPrice: resolveSetting('lockers.rent_month_price', data, branch),
         lostKeyFee: resolveSetting('lockers.lost_key_fee', data, branch),
+        nightReleaseMinute: resolveSetting('lockers.night_release_minute', data, branch),
       };
     },
   });
 }
 
-/** Saves the gym-wide locker prices (settings.edit, every branch). */
-export function useSaveLockerPrices() {
+/** Saves the gym-wide locker settings (settings.edit, every branch). */
+export function useSaveLockerSettings() {
   const { client } = useActingClient();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (prices: LockerPrices) => {
+    mutationFn: async (settings: LockerSettings) => {
       const { error } = await requireClient(client)
         .from('settings')
         .upsert(
           [
-            { key: 'lockers.rent_month_price', value: prices.rentMonthPrice },
-            { key: 'lockers.lost_key_fee', value: prices.lostKeyFee },
+            { key: 'lockers.rent_month_price', value: settings.rentMonthPrice },
+            { key: 'lockers.lost_key_fee', value: settings.lostKeyFee },
+            { key: 'lockers.night_release_minute', value: settings.nightReleaseMinute },
           ],
           { onConflict: 'gym_id,branch_id,key' },
         );

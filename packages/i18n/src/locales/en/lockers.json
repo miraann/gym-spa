@@ -149,19 +149,23 @@
     "done": "{{count}} lockers added."
   },
   "prices": {
-    "open": "Prices",
-    "title": "Locker prices",
+    "open": "Settings",
+    "title": "Locker settings",
     "description": "For every branch.",
     "rent": "Monthly rent (IQD)",
     "rentHint": "0: no locker can be rented yet.",
     "fee": "Lost key fee (IQD)",
     "feeHint": "0: no fee.",
+    "night": "Nightly release time",
+    "nightHint": "Every night at this time (Baghdad time), daily lockers not given back are released automatically.",
+    "nightProblem": "Choose a time.",
     "problem": "Write a whole number.",
-    "done": "Prices saved."
+    "done": "Settings saved."
   },
   "notReturned": {
     "title": "Not given back: {{count}}",
     "description": "Daily lockers from earlier days, and rented lockers whose rent has ended.",
+    "nightly": "Daily lockers are released automatically every night at {{time}}.",
     "releaseDaily": "Release the daily lockers ({{count}})",
     "done": "{{count}} lockers released."
   },
@@ -171,7 +175,8 @@
     "renewed": "Renewed",
     "key_lost": "Key lost",
     "invoice_voided": "Invoice voided",
-    "end_of_day": "End of day"
+    "end_of_day": "End of day",
+    "night": "At night, automatically"
   },
   "checkin": {
     "give": "Give locker {{number}}",
@@ -201,7 +206,7 @@
     "already_released": "This locker was released already.",
     "not_a_rental": "Only a rented locker is renewed.",
     "invalid_rental": "A rental is 1 to 12 months, starting today or within 60 days.",
-    "locker_price_not_set": "No locker rent is set yet. The gym's owner sets it in \"Prices\".",
+    "locker_price_not_set": "No locker rent is set yet. The gym's owner sets it in \"Settings\".",
     "invalid_payment": "The payment isn't valid.",
     "payment_too_large": "The payment is more than the total.",
     "gym_read_only": "This gym is view-only, so nothing changes.",

@@ -1,9 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
   LOCKER_NUMBER_PATTERN,
+  clockToMinute,
   compareLockerNumbers,
   lockerFitsGender,
   lockerStatus,
+  minuteAsBaghdadTime,
+  minuteToClock,
   normalizeLockerNumber,
 } from './lockers.ts';
 
@@ -68,5 +71,24 @@ describe('locker numbers', () => {
       'A10',
       'B1',
     ]);
+  });
+});
+
+describe('the night release time', () => {
+  it('turns minutes into a time input value and back', () => {
+    expect(minuteToClock(180)).toBe('03:00');
+    expect(minuteToClock(1439)).toBe('23:59');
+    expect(minuteToClock(0)).toBe('00:00');
+    expect(clockToMinute('03:00')).toBe(180);
+    expect(clockToMinute('٢٣:٣٠')).toBe(1410);
+  });
+
+  it.each(['', '3:00', '24:00', '12:60', 'noon'])('refuses %j', (text) => {
+    expect(clockToMinute(text)).toBeNull();
+  });
+
+  it('gives a moment at that time in Baghdad', () => {
+    expect(minuteAsBaghdadTime(180).toISOString()).toBe('2026-01-01T00:00:00.000Z');
+    expect(minuteAsBaghdadTime(90).toISOString()).toBe('2025-12-31T22:30:00.000Z');
   });
 });

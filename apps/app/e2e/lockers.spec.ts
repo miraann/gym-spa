@@ -56,10 +56,18 @@ test('the owner adds lockers, sets the rent, rents one out and releases it', asy
   await expect(dialog.getByText(/هێشتا کرێی دۆڵاب دانەنراوە/)).toBeVisible();
   await dialog.getByRole('button', { name: 'گەڕانەوە' }).click();
   await dialog.getByRole('button', { name: 'داخستن' }).first().click();
-  await page.getByRole('button', { name: 'نرخەکان' }).click();
+  await page.getByRole('button', { name: 'ڕێکخستن', exact: true }).click();
   await dialog.getByLabel('کرێی مانگانە (دینار)').fill('20,000');
+  await expect(dialog.getByLabel('کاتی بەتاڵکردنەوەی شەوانە')).toHaveValue('03:00');
+  await dialog.getByLabel('کاتی بەتاڵکردنەوەی شەوانە').fill('02:30');
   await dialog.getByRole('button', { name: 'پاشەکەوتکردن' }).click();
-  await expect(page.getByText('نرخەکان پاشەکەوت کران.')).toBeVisible();
+  await expect(page.getByText('ڕێکخستنەکان پاشەکەوت کران.')).toBeVisible();
+  const { data: night } = await admin()
+    .from('settings')
+    .select('value')
+    .eq('key', 'lockers.night_release_minute')
+    .eq('gym_id', (await data.gym()).id);
+  expect(night).toEqual([{ value: 150 }]);
 
   await page.getByRole('button', { name: 'دۆڵابی R1، بەتاڵ' }).click();
   await dialog.getByRole('button', { name: 'بەکرێدان' }).click();
@@ -120,10 +128,10 @@ test('a receptionist gives a daily locker, and the end-of-day list releases yest
   await signIn(page, staff, '/lockers');
   const dialog = page.getByRole('dialog');
 
-  // Reception neither adds lockers nor sets prices.
+  // Reception neither adds lockers nor changes the locker settings.
   await expect(page.locator('[data-locker]')).toHaveCount(4);
   await expect(page.getByRole('button', { name: 'زیادکردنی دۆڵاب' })).toHaveCount(0);
-  await expect(page.getByRole('button', { name: 'نرخەکان' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'ڕێکخستن', exact: true })).toHaveCount(0);
 
   await page.getByRole('button', { name: 'دۆڵابی 1، بەتاڵ' }).click();
   await dialog.getByRole('button', { name: 'پێدانی دۆڵاب' }).click();
@@ -141,6 +149,7 @@ test('a receptionist gives a daily locker, and the end-of-day list releases yest
   const notReturned = page.getByTestId('not-returned');
   await expect(notReturned).toContainText('نەگەڕێنراوەتەوە: 1');
   await expect(notReturned).toContainText('دلێر حەسەن');
+  await expect(notReturned).toContainText('خۆکارانە بەتاڵ دەکرێنەوە');
   await expect(page.locator('[data-locker="4"]')).toHaveAttribute('data-status', 'overdue');
   await notReturned.getByRole('button', { name: 'بەتاڵکردنەوەی دۆڵابە ڕۆژانەکان (1)' }).click();
   await expect(page.getByText('1 دۆڵاب بەتاڵ کرانەوە.')).toBeVisible();
