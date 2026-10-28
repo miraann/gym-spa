@@ -170,6 +170,21 @@ insert into public.class_sessions (id, gym_id, branch_id, schedule_id, class_typ
 insert into public.class_bookings (id, gym_id, session_id, member_id, status) values
   ('f0000000-0000-4000-8000-0000000000aa', tests.gym('pgtap-a'), 'f0000000-0000-4000-8000-0000000000a9', 'e0000000-0000-4000-8000-0000000000a1', 'booked'),
   ('f0000000-0000-4000-8000-0000000000ba', tests.gym('pgtap-b'), 'f0000000-0000-4000-8000-0000000000b9', 'e0000000-0000-4000-8000-0000000000b1', 'booked');
+-- Personal training in both gyms.
+insert into public.pt_packages (id, gym_id, name_ckb, session_count, price) values
+  ('f0000000-0000-4000-8000-0000000000ab', tests.gym('pgtap-a'), 'دە دانیشتن', 10, 0),
+  ('f0000000-0000-4000-8000-0000000000bb', tests.gym('pgtap-b'), 'دە دانیشتن', 10, 0);
+insert into public.member_pt_packages (id, gym_id, branch_id, member_id, package_id, trainer_id, name_ckb, session_count, price,
+                                       starts_on, invoice_id) values
+  ('f0000000-0000-4000-8000-0000000000ac', tests.gym('pgtap-a'), tests.branch('B901'), 'e0000000-0000-4000-8000-0000000000a1',
+   'f0000000-0000-4000-8000-0000000000ab', tests.staff('trainer_ab'), 'دە دانیشتن', 10, 0, current_date, 'e0000000-0000-4000-8000-0000000000a5'),
+  ('f0000000-0000-4000-8000-0000000000bc', tests.gym('pgtap-b'), tests.branch('B901', 'pgtap-b'), 'e0000000-0000-4000-8000-0000000000b1',
+   'f0000000-0000-4000-8000-0000000000bb', tests.staff('trainer_ab', 'pgtap-b'), 'دە دانیشتن', 10, 0, current_date, 'e0000000-0000-4000-8000-0000000000b5');
+insert into public.pt_sessions (id, gym_id, branch_id, member_pt_package_id, member_id, trainer_id, status) values
+  ('f0000000-0000-4000-8000-0000000000ad', tests.gym('pgtap-a'), tests.branch('B901'), 'f0000000-0000-4000-8000-0000000000ac',
+   'e0000000-0000-4000-8000-0000000000a1', tests.staff('trainer_ab'), 'done'),
+  ('f0000000-0000-4000-8000-0000000000bd', tests.gym('pgtap-b'), tests.branch('B901', 'pgtap-b'), 'f0000000-0000-4000-8000-0000000000bc',
+   'e0000000-0000-4000-8000-0000000000b1', tests.staff('trainer_ab', 'pgtap-b'), 'done');
 
 select is_empty(
   $$ select t from tests.gym_tables() t
@@ -333,6 +348,19 @@ insert into insert_cases (table_name, statement) values
   ('class_bookings', $$ insert into public.class_bookings (gym_id, id, session_id, member_id, status)
                         values (tests.gym('pgtap-b'), gen_random_uuid(), 'f0000000-0000-4000-8000-0000000000b9', 'e0000000-0000-4000-8000-0000000000b2', 'booked') $$),
   ('class_bookings', $$ select public.book_class(gen_random_uuid(), 'f0000000-0000-4000-8000-0000000000b8', current_date + 7, 'e0000000-0000-4000-8000-0000000000b2') $$),
+  ('pt_packages', $$ insert into public.pt_packages (gym_id, id, name_ckb, session_count, price) values (tests.gym('pgtap-b'), gen_random_uuid(), 'x', 1, 0) $$),
+  ('pt_packages', $$ select public.save_pt_package('f0000000-0000-4000-8000-0000000000bb', 'x', 1, 0) $$),
+  ('member_pt_packages', $$ insert into public.member_pt_packages (gym_id, id, branch_id, member_id, package_id, trainer_id, name_ckb, session_count,
+                              price, starts_on, invoice_id)
+                            values (tests.gym('pgtap-b'), gen_random_uuid(), tests.branch('B901', 'pgtap-b'), 'e0000000-0000-4000-8000-0000000000b2',
+                                    'f0000000-0000-4000-8000-0000000000bb', tests.staff('trainer_ab', 'pgtap-b'), 'x', 1, 0, current_date,
+                                    'e0000000-0000-4000-8000-0000000000b5') $$),
+  ('member_pt_packages', $$ select public.sell_pt_package(gen_random_uuid(), gen_random_uuid(), 'f0000000-0000-4000-8000-0000000000bb',
+                              'e0000000-0000-4000-8000-0000000000b2', tests.staff('trainer_ab', 'pgtap-b'), tests.branch('B901', 'pgtap-b')) $$),
+  ('pt_sessions', $$ insert into public.pt_sessions (gym_id, id, branch_id, member_pt_package_id, member_id, trainer_id, status)
+                     values (tests.gym('pgtap-b'), gen_random_uuid(), tests.branch('B901', 'pgtap-b'), 'f0000000-0000-4000-8000-0000000000bc',
+                             'e0000000-0000-4000-8000-0000000000b1', tests.staff('trainer_ab', 'pgtap-b'), 'done') $$),
+  ('pt_sessions', $$ select public.log_pt_session(gen_random_uuid(), 'f0000000-0000-4000-8000-0000000000bc', tests.branch('B901', 'pgtap-b'), 'done') $$),
   -- Their own gym (gym_id left to fill itself in), pointing at gym B's rows.
   ('role_permissions', $$ insert into public.role_permissions (role_id, permission_key) values (tests.role('trainer', 'pgtap-b'), 'payments.view') $$),
   ('staff_users', $$ insert into public.staff_users (id, username, full_name, role_id)
