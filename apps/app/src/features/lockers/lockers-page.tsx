@@ -18,7 +18,7 @@ import { useAdminBranches } from '@/features/staff/admin-data';
 import { usePreferences } from '@/lib/preferences';
 import { useBaghdadToday } from '@/lib/use-today';
 import { LockerDialog } from './locker-dialog';
-import { AddLockersDialog, LockerPricesDialog } from './locker-manage';
+import { AddLockersDialog, LockerSettingsDialog } from './locker-manage';
 import { LockerError } from './locker-error';
 import { lockerErrorKey } from './locker-errors';
 import { NotReturnedList } from './not-returned';
@@ -235,7 +235,7 @@ function Lockers() {
         />
       )}
       {pricing && (
-        <LockerPricesDialog
+        <LockerSettingsDialog
           branchId={branchId}
           onClose={() => {
             setPricing(false);

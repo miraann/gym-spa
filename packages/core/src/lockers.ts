@@ -22,6 +22,26 @@ export const LOCKER_RELEASE_REASONS = [
 ] as const;
 export type LockerReleaseReason = (typeof LOCKER_RELEASE_REASONS)[number];
 
+/**
+ * The night release time (setting lockers.night_release_minute, minutes after midnight in Baghdad) as
+ * a time input's value, `03:00`.
+ */
+export function minuteToClock(minute: number): string {
+  const pad = (value: number) => String(value).padStart(2, '0');
+  return `${pad(Math.floor(minute / 60))}:${pad(minute % 60)}`;
+}
+
+/** A time input's value (`03:00`) as minutes after midnight, or null when it isn't a time. */
+export function clockToMinute(text: string): number | null {
+  const match = /^([01][0-9]|2[0-3]):([0-5][0-9])$/.exec(toLatinDigits(text.trim()));
+  return match ? Number(match[1]) * 60 + Number(match[2]) : null;
+}
+
+/** A moment whose time in Baghdad (UTC+3, no summer time) is this minute, to format as a time. */
+export function minuteAsBaghdadTime(minute: number): Date {
+  return new Date(Date.UTC(2026, 0, 1, 0, minute - 180));
+}
+
 /** 12 or A12: up to 3 capital Latin letters, then 1 to 4 digits (lockers.number). */
 export const LOCKER_NUMBER_PATTERN = /^[A-Z]{0,3}[0-9]{1,4}$/;
 export const LOCKER_PREFIX_PATTERN = /^[A-Z]{0,3}$/;

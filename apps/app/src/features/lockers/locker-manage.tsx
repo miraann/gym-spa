@@ -1,6 +1,8 @@
 import {
   LOCKER_MAX_ADD,
   LOCKER_PREFIX_PATTERN,
+  clockToMinute,
+  minuteToClock,
   normalizeLockerNumber,
   parseWholeNumber,
   type LockerKind,
@@ -23,7 +25,7 @@ import { toast } from 'sonner';
 import { useAdminWriteState } from '@/features/staff/write-state';
 import { useFormat } from '@/lib/format';
 import { ZoneAndKind } from './locker-actions';
-import { useAddLockers, useLockerPrices, useSaveLockerPrices } from './locker-data';
+import { useAddLockers, useLockerSettings, useSaveLockerSettings } from './locker-data';
 import { LockerError } from './locker-error';
 import { lockerErrorKey, type LockerErrorKey } from './locker-errors';
 
@@ -165,8 +167,11 @@ export function AddLockersDialog({
   );
 }
 
-/** The gym's locker prices (settings.edit): the month's rent and the lost key fee. */
-export function LockerPricesDialog({
+/**
+ * The gym's locker settings (settings.edit): the month's rent, the lost key fee, and when the daily
+ * lockers not given back are released each night.
+ */
+export function LockerSettingsDialog({
   branchId,
   onClose,
 }: {
@@ -174,11 +179,12 @@ export function LockerPricesDialog({
   readonly onClose: () => void;
 }) {
   const { t } = useTranslation('lockers');
-  const prices = useLockerPrices(branchId);
+  const prices = useLockerSettings(branchId);
   return prices.isSuccess ? (
-    <PricesForm
+    <SettingsForm
       rentMonthPrice={prices.data.rentMonthPrice}
       lostKeyFee={prices.data.lostKeyFee}
+      nightReleaseMinute={prices.data.nightReleaseMinute}
       onClose={onClose}
     />
   ) : (
@@ -203,34 +209,38 @@ export function LockerPricesDialog({
   );
 }
 
-function PricesForm({
+function SettingsForm({
   rentMonthPrice,
   lostKeyFee,
+  nightReleaseMinute,
   onClose,
 }: {
   readonly rentMonthPrice: number;
   readonly lostKeyFee: number;
+  readonly nightReleaseMinute: number;
   readonly onClose: () => void;
 }) {
   const { t } = useTranslation('lockers');
   const id = useId();
   const { online, readOnly } = useAdminWriteState();
-  const save = useSaveLockerPrices();
+  const save = useSaveLockerSettings();
   const [rent, setRent] = useState(String(rentMonthPrice));
   const [fee, setFee] = useState(String(lostKeyFee));
+  const [night, setNight] = useState(minuteToClock(nightReleaseMinute));
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<LockerErrorKey | null>(null);
   const rentValue = parseWholeNumber(rent);
   const feeValue = parseWholeNumber(fee);
   const rentProblem = rentValue === null || rentValue < 0 || rentValue > 1_000_000_000;
   const feeProblem = feeValue === null || feeValue < 0 || feeValue > 1_000_000_000;
+  const nightValue = clockToMinute(night);
 
   const confirm = () => {
     setSent(true);
-    if (rentProblem || feeProblem) return;
+    if (rentProblem || feeProblem || nightValue === null) return;
     setError(null);
     save.mutate(
-      { rentMonthPrice: rentValue, lostKeyFee: feeValue },
+      { rentMonthPrice: rentValue, lostKeyFee: feeValue, nightReleaseMinute: nightValue },
       {
         onSuccess: () => {
           toast.success(t('prices.done'));
@@ -293,6 +303,21 @@ function PricesForm({
           />
           <FieldDescription>{t('prices.feeHint')}</FieldDescription>
           {sent && feeProblem && <FieldError>{t('prices.problem')}</FieldError>}
+        </Field>
+        <Field data-invalid={(sent && nightValue === null) || undefined}>
+          <FieldLabel htmlFor={`${id}-night`}>{t('prices.night')}</FieldLabel>
+          <Input
+            id={`${id}-night`}
+            type="time"
+            dir="ltr"
+            className="w-36"
+            value={night}
+            onChange={(event) => {
+              setNight(event.target.value);
+            }}
+          />
+          <FieldDescription>{t('prices.nightHint')}</FieldDescription>
+          {sent && nightValue === null && <FieldError>{t('prices.nightProblem')}</FieldError>}
         </Field>
         <LockerError error={error} />
       </FieldGroup>

@@ -25,6 +25,8 @@ export const SETTINGS = {
   'lockers.rent_month_price': { min: 0, max: 1_000_000_000, default: 0 },
   /** Dinars charged for a lost locker key; 0: no fee. */
   'lockers.lost_key_fee': { min: 0, max: 1_000_000_000, default: 0 },
+  /** When each night the daily lockers not given back are released: minutes after midnight in Baghdad. */
+  'lockers.night_release_minute': { min: 0, max: 1439, default: 180 },
 } as const satisfies Record<string, IntegerSetting>;
 
 export type SettingKey = keyof typeof SETTINGS;
