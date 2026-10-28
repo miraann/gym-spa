@@ -1,0 +1,89 @@
+{
+  "page": {
+    "title": "Cash register",
+    "description": "Opening and closing a branch's cash register, cash in and out, and the differences.",
+    "branch": "Branch",
+    "closed": "The cash register is closed.",
+    "closedHint": "Open the cash register before taking money, so every payment belongs to a shift.",
+    "openTitle": "The cash register is open",
+    "open": "Open the cash register",
+    "close": "Close the cash register",
+    "cashIn": "Cash in",
+    "cashOut": "Cash out",
+    "shifts": "Earlier shifts",
+    "noShifts": "No closed shifts.",
+    "shiftDates": "{{from}} — {{until}}",
+    "print": "Print"
+  },
+  "report": {
+    "title": "Cash register shift report",
+    "openedBy": "Opened by {{name}}, {{time}}",
+    "closedBy": "Closed by {{name}}, {{time}}",
+    "float": "Opening float",
+    "payments": "Money taken",
+    "refunds": "Money given back",
+    "noPayments": "No money taken.",
+    "methodLine": "{{method}} ({{count}})",
+    "cashIn": "Cash in",
+    "cashOut": "Cash out",
+    "expected": "Expected",
+    "counted": "Counted",
+    "difference": "Difference",
+    "iqd": "Dinars",
+    "usd": "Dollars",
+    "blind": "What the drawer should have is shown after closing.",
+    "note": "Note",
+    "even": "Even",
+    "over": "Over",
+    "short": "Short"
+  },
+  "open": {
+    "title": "Open the cash register",
+    "floatIqd": "Opening float (IQD)",
+    "floatUsd": "Opening float (USD)",
+    "hint": "Count the money in the drawer now.",
+    "lastCount": "Last counted: {{iqd}} and {{usd}}.",
+    "opened": "The cash register is open."
+  },
+  "movement": {
+    "inTitle": "Cash in",
+    "outTitle": "Cash out",
+    "currency": "Currency",
+    "amount": "Amount",
+    "reason": "Reason",
+    "saved": "Saved.",
+    "amountProblem": "Enter a valid amount.",
+    "reasonProblem": "Write a reason."
+  },
+  "closeShift": {
+    "title": "Close the cash register",
+    "hint": "Count the money in the drawer and enter it.",
+    "countedIqd": "Dinars counted",
+    "countedUsd": "Dollars counted",
+    "note": "Note (optional)",
+    "closed": "The cash register is closed.",
+    "numberProblem": "Enter a valid number."
+  },
+  "actions": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "done": "Done"
+  },
+  "errors": {
+    "permission_denied": "You don't have permission for this.",
+    "no_branch_access": "You can only do this in your own branches.",
+    "branch_inactive": "This branch is inactive.",
+    "gym_read_only": "This gym is read-only, so nothing changes.",
+    "shift_exists": "This was saved already.",
+    "shift_open": "This branch's cash register is open already.",
+    "invalid_shift": "The opening float isn't valid.",
+    "shift_not_found": "This shift wasn't found.",
+    "movement_exists": "This was saved already.",
+    "shift_closed": "This shift is closed.",
+    "invalid_cash_movement": "The amount or the reason isn't valid.",
+    "invalid_count": "The numbers aren't valid.",
+    "invalid_request": "The details aren't valid. Try again.",
+    "network": "No connection to the internet. Nothing was saved.",
+    "unexpected": "Something went wrong. Try again."
+  }
+}

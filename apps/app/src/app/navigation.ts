@@ -37,8 +37,8 @@ export interface NavItem {
    * tabs, search); it appears by itself once its page exists.
    */
   readonly to?: AppPath;
-  /** Hidden from staff without it. Revisit when the module is built. */
-  readonly permission?: string;
+  /** Hidden from staff without it (any of them, when several). Revisit when the module is built. */
+  readonly permission?: string | readonly string[];
 }
 
 export interface NavGroup {
@@ -67,7 +67,12 @@ export const NAV_GROUPS: readonly NavGroup[] = [
     items: [
       { key: 'payments', icon: WalletIcon, to: '/payments', permission: 'payments.view' },
       { key: 'shop', icon: ShoppingBagIcon, to: '/shop', permission: 'pos.sell' },
-      { key: 'cashRegister', icon: BanknoteIcon, permission: 'cash_register.operate' },
+      {
+        key: 'cashRegister',
+        icon: BanknoteIcon,
+        to: '/cash',
+        permission: ['cash_register.operate', 'cash_register.view_all'],
+      },
     ],
   },
   {
@@ -115,7 +120,14 @@ export function canSeeNavItem(
   item: NavItem,
   permissions: ReadonlySet<string>,
 ): item is OpenNavItem {
-  return item.to !== undefined && (!item.permission || permissions.has(item.permission));
+  const needed = item.permission;
+  return (
+    item.to !== undefined &&
+    (needed === undefined ||
+      (typeof needed === 'string'
+        ? permissions.has(needed)
+        : needed.some((permission) => permissions.has(permission))))
+  );
 }
 
 /** Whether the item is the page being shown (or one of its sub-pages). */

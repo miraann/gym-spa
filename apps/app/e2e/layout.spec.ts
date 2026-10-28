@@ -105,11 +105,11 @@ test("phones get a bottom tab bar with the role's tabs, and pages end above it",
   await expect(page.locator(SIDEBAR)).toHaveCount(0);
   await expect(page.locator(RAIL)).toHaveCount(0);
 
-  // A receptionist's default tabs (home, members, check-in, cash register): pages not built yet
-  // have no tab, and the free slot gets the next page they may open. Check-in sits in the middle.
+  // A receptionist's default tabs: home, members, check-in and the cash register (a page not built
+  // yet would leave its slot to the next page they may open). Check-in sits in the middle.
   await expect
     .poll(() => tabNames(page))
-    .toEqual(['سەرەکی', 'ئەندامان', 'تۆمارکردنی هاتن', 'پارەدانەکان', 'زیاتر']);
+    .toEqual(['سەرەکی', 'ئەندامان', 'تۆمارکردنی هاتن', 'قاسە', 'زیاتر']);
   await expect(page.getByText('بەم زووانە')).toHaveCount(0);
 
   // The last card of a long page scrolls clear of the bar.
@@ -133,6 +133,7 @@ test("phones get a bottom tab bar with the role's tabs, and pages end above it",
     'ئەندامان',
     'پارەدانەکان',
     'فرۆشگا',
+    'قاسە',
     'دۆڵابەکان',
     'سپا',
     'کلاسەکان',

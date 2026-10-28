@@ -47,7 +47,8 @@ export interface Receipt {
     readonly paid: number;
   }[];
   readonly memberName: string;
-  readonly memberNumber: number;
+  /** None for the walk-in customer (or without members.view). */
+  readonly memberNumber: number | null;
   readonly language: Language;
   readonly branch:
     (LocalizedNames & { readonly phone: string | null; readonly address: string | null }) | null;
@@ -137,7 +138,7 @@ export function useReceipt(invoiceId: string | null) {
           paid: each.paid ?? 0,
         })),
         memberName: member?.full_name ?? '',
-        memberNumber: member?.member_number ?? 0,
+        memberNumber: member?.member_number ?? null,
         language: LANGUAGE_CODES.find((code) => code === member?.preferred_language) ?? 'ckb',
         branch: branch
           ? {
