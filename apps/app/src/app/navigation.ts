@@ -66,7 +66,7 @@ export const NAV_GROUPS: readonly NavGroup[] = [
     key: 'finance',
     items: [
       { key: 'payments', icon: WalletIcon, to: '/payments', permission: 'payments.view' },
-      { key: 'shop', icon: ShoppingBagIcon, permission: 'pos.sell' },
+      { key: 'shop', icon: ShoppingBagIcon, to: '/shop', permission: 'pos.sell' },
       { key: 'cashRegister', icon: BanknoteIcon, permission: 'cash_register.operate' },
     ],
   },

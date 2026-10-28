@@ -45,6 +45,7 @@ import { Route as SettingsAppearanceRouteImport } from './routes/settings/appear
 import { Route as SettingsCardReaderRouteImport } from './routes/settings/card-reader'
 import { Route as SettingsDisplayRouteImport } from './routes/settings/display'
 import { Route as SettingsSupportRouteImport } from './routes/settings/support'
+import { Route as ShopIndexRouteImport } from './routes/shop/index'
 import { Route as ShopProductsRouteImport } from './routes/shop/products'
 import { Route as ShopStockRouteImport } from './routes/shop/stock'
 import { Route as SpaIndexRouteImport } from './routes/spa/index'
@@ -244,6 +245,11 @@ const SettingsSupportRoute = SettingsSupportRouteImport.update({
   path: '/support',
   getParentRoute: () => SettingsRouteRoute,
 } as any)
+const ShopIndexRoute = ShopIndexRouteImport.update({
+  id: '/shop/',
+  path: '/shop/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ShopProductsRoute = ShopProductsRouteImport.update({
   id: '/shop/products',
   path: '/shop/products',
@@ -379,6 +385,7 @@ export interface FileRoutesByFullPath {
   '/plans/': typeof PlansIndexRoute
   '/roles/': typeof RolesIndexRoute
   '/settings/': typeof SettingsIndexRoute
+  '/shop/': typeof ShopIndexRoute
   '/spa/': typeof SpaIndexRoute
   '/staff/': typeof StaffIndexRoute
   '/trainers/': typeof TrainersIndexRoute
@@ -427,6 +434,7 @@ export interface FileRoutesByTo {
   '/plans': typeof PlansIndexRoute
   '/roles': typeof RolesIndexRoute
   '/settings': typeof SettingsIndexRoute
+  '/shop': typeof ShopIndexRoute
   '/spa': typeof SpaIndexRoute
   '/staff': typeof StaffIndexRoute
   '/trainers': typeof TrainersIndexRoute
@@ -484,6 +492,7 @@ export interface FileRoutesById {
   '/plans/': typeof PlansIndexRoute
   '/roles/': typeof RolesIndexRoute
   '/settings/': typeof SettingsIndexRoute
+  '/shop/': typeof ShopIndexRoute
   '/spa/': typeof SpaIndexRoute
   '/staff/': typeof StaffIndexRoute
   '/trainers/': typeof TrainersIndexRoute
@@ -542,6 +551,7 @@ export interface FileRouteTypes {
     | '/plans/'
     | '/roles/'
     | '/settings/'
+    | '/shop/'
     | '/spa/'
     | '/staff/'
     | '/trainers/'
@@ -590,6 +600,7 @@ export interface FileRouteTypes {
     | '/plans'
     | '/roles'
     | '/settings'
+    | '/shop'
     | '/spa'
     | '/staff'
     | '/trainers'
@@ -646,6 +657,7 @@ export interface FileRouteTypes {
     | '/plans/'
     | '/roles/'
     | '/settings/'
+    | '/shop/'
     | '/spa/'
     | '/staff/'
     | '/trainers/'
@@ -682,6 +694,7 @@ export interface RootRouteChildren {
   ClassesIndexRoute: typeof ClassesIndexRoute
   LockersIndexRoute: typeof LockersIndexRoute
   PaymentsIndexRoute: typeof PaymentsIndexRoute
+  ShopIndexRoute: typeof ShopIndexRoute
   SpaIndexRoute: typeof SpaIndexRoute
   TrainersIndexRoute: typeof TrainersIndexRoute
 }
@@ -939,6 +952,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/settings/support'
       preLoaderRoute: typeof SettingsSupportRouteImport
       parentRoute: typeof SettingsRouteRoute
+    }
+    '/shop/': {
+      id: '/shop/'
+      path: '/shop'
+      fullPath: '/shop/'
+      preLoaderRoute: typeof ShopIndexRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/shop/products': {
       id: '/shop/products'
@@ -1232,6 +1252,7 @@ const rootRouteChildren: RootRouteChildren = {
   ClassesIndexRoute: ClassesIndexRoute,
   LockersIndexRoute: LockersIndexRoute,
   PaymentsIndexRoute: PaymentsIndexRoute,
+  ShopIndexRoute: ShopIndexRoute,
   SpaIndexRoute: SpaIndexRoute,
   TrainersIndexRoute: TrainersIndexRoute,
 }
