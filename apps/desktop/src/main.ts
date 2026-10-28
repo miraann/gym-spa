@@ -154,7 +154,8 @@ function lockDownWebContents(): void {
   });
 
   app.on('web-contents-created', (_event, contents) => {
-    // The window only ever shows the app. Web links open in the user's browser instead.
+    // The window only ever shows the app. WhatsApp links (Phase 9) open in WhatsApp or the browser;
+    // every other link is refused.
     contents.setWindowOpenHandler(({ url }) => {
       if (isExternalWebLink(url)) void shell.openExternal(url);
       return { action: 'deny' };

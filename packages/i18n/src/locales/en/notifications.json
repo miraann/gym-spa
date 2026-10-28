@@ -1,0 +1,54 @@
+{
+  "templates": {
+    "expiring_7": {
+      "name": "Membership ends in {{days}} days",
+      "default": "Hi {name}, your membership ({plan}) ends in {days} days, on {end_date}. Visit {gym} to renew it."
+    },
+    "expiring_3": {
+      "name": "Membership ends in {{days}} days",
+      "default": "Hi {name}, only {days} days left on your membership ({plan}): it ends on {end_date}. See you at {gym} to renew!"
+    },
+    "expiring_1": {
+      "name": "Membership ends tomorrow",
+      "default": "Hi {name}, your membership ({plan}) ends tomorrow ({end_date}). Renew it today so your training doesn't stop. {gym}"
+    },
+    "expired": {
+      "name": "Membership ended",
+      "default": "Hi {name}, your membership ({plan}) ended on {end_date}. We miss you! Renew it whenever you're ready. {gym}"
+    },
+    "installment_due": {
+      "name": "Installment due",
+      "default": "Hi {name}, a reminder that an installment of {amount} is due on {due_date}. Thank you! {gym}"
+    },
+    "debt": {
+      "name": "Debt reminder",
+      "default": "Hi {name}, you still have {amount} to pay at {gym}. Please pay it on your next visit. Thank you!"
+    },
+    "spa_booking": {
+      "name": "Spa booking",
+      "default": "Hi {name}, a reminder of your spa booking: {service}, {date} at {time}, at {branch}. See you soon!"
+    },
+    "welcome": {
+      "name": "Welcome",
+      "default": "Hi {name}, welcome to {gym}! Your member number is {number}. Message us any time if you have a question."
+    },
+    "birthday": {
+      "name": "Birthday",
+      "default": "Happy birthday, {name}! Everyone at {gym} wishes you a year full of health and happiness."
+    }
+  },
+  "placeholders": {
+    "name": "Member name",
+    "gym": "Gym name",
+    "branch": "Branch",
+    "number": "Member number",
+    "plan": "Plan",
+    "end_date": "End date",
+    "days": "Days left",
+    "amount": "Amount",
+    "due_date": "Installment date",
+    "service": "Service",
+    "date": "Date",
+    "time": "Time"
+  }
+}

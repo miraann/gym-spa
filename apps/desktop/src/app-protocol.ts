@@ -82,11 +82,24 @@ export function isAppUrl(url: string, devServerUrl?: string): boolean {
   }
 }
 
-/** Links that may open in the user's normal browser. */
+/**
+ * The only links the app opens outside itself (with shell.openExternal): WhatsApp's click to chat,
+ * https://wa.me/ and https://api.whatsapp.com/, with no user name, password or port (Phase 9).
+ * Every other link, from the page or a window it tries to open, is refused. The same rule as
+ * isWhatsAppUrl() in packages/core.
+ */
 export function isExternalWebLink(url: string): boolean {
+  let parsed: URL;
   try {
-    return new URL(url).protocol === 'https:';
+    parsed = new URL(url);
   } catch {
     return false;
   }
+  return (
+    parsed.protocol === 'https:' &&
+    (parsed.hostname === 'wa.me' || parsed.hostname === 'api.whatsapp.com') &&
+    parsed.username === '' &&
+    parsed.password === '' &&
+    parsed.port === ''
+  );
 }
