@@ -15,6 +15,7 @@ const DATABASE_ERROR_KEYS = [
   'payment_exists',
   'already_voided',
   'void_too_late',
+  'void_whole_sale',
   'reason_required',
   'invalid_refund',
   'refund_too_large',
