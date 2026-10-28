@@ -240,14 +240,15 @@ function BookingRow({
               disabled={disabled}
               onClick={() => {
                 setError(null);
-                cancel.mutate(booking.id, {
-                  onSuccess: () => {
+                // The row goes once the booking is cancelled, so not mutate()'s callbacks.
+                void cancel.mutateAsync(booking.id).then(
+                  () => {
                     toast.success(t('session.cancelledToast'));
                   },
-                  onError: (thrown) => {
+                  (thrown: unknown) => {
                     setError(classErrorKey(thrown, 'cancel_booking'));
                   },
-                });
+                );
               }}
             >
               {t('session.cancel')}
