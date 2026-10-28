@@ -19,6 +19,7 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   DoorOpenIcon,
+  HandCoinsIcon,
   PlusIcon,
   SettingsIcon,
   UserRoundPlusIcon,
@@ -167,6 +168,14 @@ function Spa() {
         description={t('calendar.description')}
         actions={
           <>
+            {mayManage && (
+              <Button asChild variant="outline">
+                <Link to="/spa/commissions">
+                  <HandCoinsIcon data-icon="inline-start" />
+                  {t('commissions.open')}
+                </Link>
+              </Button>
+            )}
             {mayManage && (
               <Button asChild variant="outline">
                 <Link to="/spa/setup">

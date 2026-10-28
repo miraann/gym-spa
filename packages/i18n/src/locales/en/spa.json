@@ -254,6 +254,38 @@
       "arrivedInvoice": "{{name}}'s arrival recorded. Invoice {{invoice}}."
     }
   },
+  "memberSpa": {
+    "title": "Spa",
+    "balances": "Sessions left",
+    "left": "{{left}} of {{total}} left",
+    "until": "until {{date}}",
+    "noLimit": "no limit",
+    "upcoming": "Upcoming bookings",
+    "recent": "Past bookings",
+    "none": "No spa bookings.",
+    "sell": "Sell a package",
+    "sellTitle": "Sell a package to {{name}}",
+    "package": "Package",
+    "payNow": "Pays now",
+    "confirm": "Sell",
+    "sold": "Package sold. Invoice {{invoice}}.",
+    "noPackages": "There are no active packages.",
+    "calendar": "Spa calendar"
+  },
+  "commissions": {
+    "open": "Commissions",
+    "title": "Spa staff commissions",
+    "description": "Each staff member's completed bookings and their commission. Bookings whose invoice was voided don't count.",
+    "from": "From",
+    "until": "Until",
+    "therapist": "Staff",
+    "bookings": "Bookings",
+    "total": "Total price",
+    "commission": "Commission",
+    "sum": "Total",
+    "empty": "No completed bookings in this period.",
+    "range": "The period is at most 366 days, and its end isn't before its start."
+  },
   "actions": {
     "save": "Save",
     "cancel": "Cancel",

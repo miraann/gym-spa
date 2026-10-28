@@ -42,6 +42,7 @@ import { Route as SettingsCardReaderRouteImport } from './routes/settings/card-r
 import { Route as SettingsDisplayRouteImport } from './routes/settings/display'
 import { Route as SettingsSupportRouteImport } from './routes/settings/support'
 import { Route as SpaIndexRouteImport } from './routes/spa/index'
+import { Route as SpaCommissionsRouteImport } from './routes/spa/commissions'
 import { Route as SpaSetupRouteRouteImport } from './routes/spa/setup/route'
 import { Route as StaffIndexRouteImport } from './routes/staff/index'
 import { Route as StaffStaffIdRouteImport } from './routes/staff/$staffId'
@@ -220,6 +221,11 @@ const SpaIndexRoute = SpaIndexRouteImport.update({
   path: '/spa/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SpaCommissionsRoute = SpaCommissionsRouteImport.update({
+  id: '/spa/commissions',
+  path: '/spa/commissions',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SpaSetupRouteRoute = SpaSetupRouteRouteImport.update({
   id: '/spa/setup',
   path: '/spa/setup',
@@ -306,6 +312,7 @@ export interface FileRoutesByFullPath {
   '/settings/card-reader': typeof SettingsCardReaderRoute
   '/settings/display': typeof SettingsDisplayRoute
   '/settings/support': typeof SettingsSupportRoute
+  '/spa/commissions': typeof SpaCommissionsRoute
   '/staff/$staffId': typeof StaffStaffIdRoute
   '/staff/new': typeof StaffNewRoute
   '/branches/': typeof BranchesIndexRoute
@@ -345,6 +352,7 @@ export interface FileRoutesByTo {
   '/settings/card-reader': typeof SettingsCardReaderRoute
   '/settings/display': typeof SettingsDisplayRoute
   '/settings/support': typeof SettingsSupportRoute
+  '/spa/commissions': typeof SpaCommissionsRoute
   '/staff/$staffId': typeof StaffStaffIdRoute
   '/staff/new': typeof StaffNewRoute
   '/branches': typeof BranchesIndexRoute
@@ -393,6 +401,7 @@ export interface FileRoutesById {
   '/settings/card-reader': typeof SettingsCardReaderRoute
   '/settings/display': typeof SettingsDisplayRoute
   '/settings/support': typeof SettingsSupportRoute
+  '/spa/commissions': typeof SpaCommissionsRoute
   '/staff/$staffId': typeof StaffStaffIdRoute
   '/staff/new': typeof StaffNewRoute
   '/branches/': typeof BranchesIndexRoute
@@ -442,6 +451,7 @@ export interface FileRouteTypes {
     | '/settings/card-reader'
     | '/settings/display'
     | '/settings/support'
+    | '/spa/commissions'
     | '/staff/$staffId'
     | '/staff/new'
     | '/branches/'
@@ -481,6 +491,7 @@ export interface FileRouteTypes {
     | '/settings/card-reader'
     | '/settings/display'
     | '/settings/support'
+    | '/spa/commissions'
     | '/staff/$staffId'
     | '/staff/new'
     | '/branches'
@@ -528,6 +539,7 @@ export interface FileRouteTypes {
     | '/settings/card-reader'
     | '/settings/display'
     | '/settings/support'
+    | '/spa/commissions'
     | '/staff/$staffId'
     | '/staff/new'
     | '/branches/'
@@ -563,6 +575,7 @@ export interface RootRouteChildren {
   SpaSetupRouteRoute: typeof SpaSetupRouteRouteWithChildren
   CheckinDoorRoute: typeof CheckinDoorRoute
   CheckinVisitsRoute: typeof CheckinVisitsRoute
+  SpaCommissionsRoute: typeof SpaCommissionsRoute
   CheckinIndexRoute: typeof CheckinIndexRoute
   LockersIndexRoute: typeof LockersIndexRoute
   PaymentsIndexRoute: typeof PaymentsIndexRoute
@@ -800,6 +813,13 @@ declare module '@tanstack/react-router' {
       path: '/spa'
       fullPath: '/spa/'
       preLoaderRoute: typeof SpaIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/spa/commissions': {
+      id: '/spa/commissions'
+      path: '/spa/commissions'
+      fullPath: '/spa/commissions'
+      preLoaderRoute: typeof SpaCommissionsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/spa/setup': {
@@ -1041,6 +1061,7 @@ const rootRouteChildren: RootRouteChildren = {
   SpaSetupRouteRoute: SpaSetupRouteRouteWithChildren,
   CheckinDoorRoute: CheckinDoorRoute,
   CheckinVisitsRoute: CheckinVisitsRoute,
+  SpaCommissionsRoute: SpaCommissionsRoute,
   CheckinIndexRoute: CheckinIndexRoute,
   LockersIndexRoute: LockersIndexRoute,
   PaymentsIndexRoute: PaymentsIndexRoute,

@@ -7,19 +7,23 @@ import { Button } from '@gym/ui/components/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@gym/ui/components/card';
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia } from '@gym/ui/components/empty';
 import { Skeleton } from '@gym/ui/components/skeleton';
+import { Spinner } from '@gym/ui/components/spinner';
 import { useLayout } from '@gym/ui/hooks/use-layout';
 import { useSideBySide } from '@gym/ui/hooks/use-side-by-side';
 import { Link, useParams } from '@tanstack/react-router';
-import { ArchiveIcon, HeartPulseIcon, PencilIcon, SearchXIcon } from 'lucide-react';
-import type { ReactNode } from 'react';
+import { ArchiveIcon, HeartPulseIcon, PencilIcon, SearchXIcon, UserCheckIcon } from 'lucide-react';
+import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'sonner';
 import { usePermission } from '@/features/auth/use-permissions';
 import { MemberCardsCard } from '@/features/cards/member-cards';
 import { MemberVisitsCard } from '@/features/checkin/member-visits';
 import { MemberLockersCard } from '@/features/lockers/member-lockers';
 import { MemberMoneyCard } from '@/features/payments/member-money';
+import { MemberSpaCard } from '@/features/spa/member-spa';
 import { MemberSubscriptionsCard } from '@/features/subscriptions/member-subscriptions';
 import { BackToList } from '@/features/staff/admin-error';
+import { useAdminWriteState } from '@/features/staff/write-state';
 import { useFormat } from '@/lib/format';
 import { useBaghdadToday } from '@/lib/use-today';
 import {
@@ -29,8 +33,14 @@ import {
   MembershipBadge,
 } from './member-badges';
 import { useBranchName } from './member-branch-name';
-import { useMember, useMemberHealth, useMemberPhoto, type Member } from './member-data';
-import { memberErrorKey } from './member-errors';
+import {
+  useMakeGuestMember,
+  useMember,
+  useMemberHealth,
+  useMemberPhoto,
+  type Member,
+} from './member-data';
+import { memberErrorKey, type MemberErrorKey } from './member-errors';
 import { MemberError } from './member-error';
 import { MemberPhotoCard } from './member-photo';
 import { MemberStatusCard } from './member-status';
@@ -103,8 +113,10 @@ function MemberProfile({ member }: { readonly member: Member }) {
             <MemberStatusBadge status={member.status} />
             <MembershipBadge membership={member.membership} />
             {member.hasHealthNotes && <HealthNotesBadge />}
+            {member.isGuest && <Badge variant="outline">{t('guest.badge')}</Badge>}
           </p>
         </div>
+        {member.isGuest && <MakeMemberButton member={member} />}
         {!phone && editButton}
       </div>
 
@@ -119,6 +131,7 @@ function MemberProfile({ member }: { readonly member: Member }) {
       <MemberSubscriptionsCard member={member} />
       <MemberMoneyCard member={member} />
       <MemberLockersCard member={member} />
+      <MemberSpaCard member={member} />
       <MemberVisitsCard member={member} />
       <MemberCardsCard member={member} />
       <MemberDetails member={member} />
@@ -271,5 +284,41 @@ function HealthCard({ member }: { readonly member: Member }) {
         )}
       </CardContent>
     </Card>
+  );
+}
+
+/** A guest becomes a full member (members.create and members.edit): their spa history stays theirs. */
+function MakeMemberButton({ member }: { readonly member: Member }) {
+  const { t } = useTranslation('members');
+  const mayCreate = usePermission('members.create');
+  const mayEdit = usePermission('members.edit');
+  const { online, readOnly } = useAdminWriteState();
+  const make = useMakeGuestMember();
+  const [error, setError] = useState<MemberErrorKey | null>(null);
+  if (!mayCreate || !mayEdit) return null;
+  return (
+    <div className="flex flex-col gap-2">
+      <Button
+        size="lg"
+        variant="outline"
+        disabled={!online || readOnly || make.isPending}
+        onClick={() => {
+          setError(null);
+          // The page loses this button once the member is saved, so not mutate()'s callbacks.
+          void make.mutateAsync(member.id).then(
+            () => {
+              toast.success(t('guest.done', { name: member.fullName }));
+            },
+            (thrown: unknown) => {
+              setError(memberErrorKey(thrown, 'make_member'));
+            },
+          );
+        }}
+      >
+        {make.isPending ? <Spinner /> : <UserCheckIcon data-icon="inline-start" />}
+        {t('guest.makeMember')}
+      </Button>
+      <MemberError error={error} />
+    </div>
   );
 }

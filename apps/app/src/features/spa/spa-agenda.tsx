@@ -7,61 +7,82 @@ import { usePreferences } from '@/lib/preferences';
 import { BOOKING_LOOK } from './spa-booking-look';
 import type { SpaBooking } from './spa-calendar-data';
 
-/** A day's bookings as a list, by time (phones, and each day of the week view). */
+/** A day's bookings as a list, by time (phones, each day of the week view, the member's page). */
 export function BookingList({
   bookings,
   onOpen,
   compact = false,
 }: {
   readonly bookings: readonly SpaBooking[];
-  readonly onOpen: (bookingId: string) => void;
+  /** Without it the rows are only shown (the member's page). */
+  readonly onOpen?: (bookingId: string) => void;
   readonly compact?: boolean;
 }) {
   const { t } = useTranslation('spa');
-  const { language } = usePreferences();
-  const format = useFormat();
   if (bookings.length === 0) {
     return <p className="px-1 text-sm text-muted-foreground">{t('calendar.noBookings')}</p>;
   }
   return (
     <ul className="flex flex-col gap-2">
       {bookings.map((booking) => {
-        const look = BOOKING_LOOK[booking.status];
-        const Icon = look.icon;
+        const props = {
+          'data-spa-booking': booking.member?.fullName ?? booking.id,
+          'data-status': booking.status,
+          className: cn(
+            'flex w-full items-start gap-3 rounded-2xl px-3 py-2 text-start',
+            BOOKING_LOOK[booking.status].block,
+            compact && 'gap-2 px-2 text-xs',
+          ),
+        };
         return (
           <li key={booking.id}>
-            <button
-              type="button"
-              data-spa-booking={booking.member?.fullName ?? booking.id}
-              data-status={booking.status}
-              className={cn(
-                'flex w-full items-start gap-3 rounded-2xl px-3 py-2 text-start outline-none focus-visible:ring-3 focus-visible:ring-ring/60',
-                look.block,
-                compact && 'gap-2 px-2 text-xs',
-              )}
-              onClick={() => {
-                onOpen(booking.id);
-              }}
-            >
-              <span className="shrink-0 tabular-nums">{format.time(booking.startsAt)}</span>
-              <span className="flex min-w-0 flex-1 flex-col">
-                <span className="truncate font-medium">
-                  {booking.member?.fullName ?? t('details.unknownMember')}
-                </span>
-                <span className="truncate text-muted-foreground">
-                  {localizedName(booking, language)}
-                </span>
-              </span>
-              <span className="flex shrink-0 items-center gap-1 text-xs">
-                <Icon aria-hidden className="size-4" />
-                {!compact && t(`statuses.${booking.status}`)}
-                {compact && <span className="sr-only">{t(`statuses.${booking.status}`)}</span>}
-              </span>
-            </button>
+            {onOpen ? (
+              <button
+                type="button"
+                {...props}
+                className={cn(
+                  props.className,
+                  'outline-none focus-visible:ring-3 focus-visible:ring-ring/60',
+                )}
+                onClick={() => {
+                  onOpen(booking.id);
+                }}
+              >
+                <Row booking={booking} compact={compact} />
+              </button>
+            ) : (
+              <div {...props}>
+                <Row booking={booking} compact={compact} />
+              </div>
+            )}
           </li>
         );
       })}
     </ul>
+  );
+}
+
+/** What a row of the list says: time, who, the service and the status. */
+function Row({ booking, compact }: { readonly booking: SpaBooking; readonly compact: boolean }) {
+  const { t } = useTranslation('spa');
+  const { language } = usePreferences();
+  const format = useFormat();
+  const Icon = BOOKING_LOOK[booking.status].icon;
+  return (
+    <>
+      <span className="shrink-0 tabular-nums">{format.time(booking.startsAt)}</span>
+      <span className="flex min-w-0 flex-1 flex-col">
+        <span className="truncate font-medium">
+          {booking.member?.fullName ?? t('details.unknownMember')}
+        </span>
+        <span className="truncate text-muted-foreground">{localizedName(booking, language)}</span>
+      </span>
+      <span className="flex shrink-0 items-center gap-1 text-xs">
+        <Icon aria-hidden className="size-4" />
+        {!compact && t(`statuses.${booking.status}`)}
+        {compact && <span className="sr-only">{t(`statuses.${booking.status}`)}</span>}
+      </span>
+    </>
   );
 }
 

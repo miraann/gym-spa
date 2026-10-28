@@ -59,6 +59,71 @@ function oneOf<T extends string>(values: readonly T[], value: string, fallback: 
   return values.find((each) => each === value) ?? fallback;
 }
 
+const BOOKING_COLUMNS =
+  'id, member_id, service_id, room_id, place, therapist_id, name_ckb, name_en, name_ar, price, starts_at, ends_at, room_free_at, paid_with, walk_in, note, status, status_note, invoice_id, members (full_name, member_number, phone, is_guest)';
+
+interface BookingRow {
+  readonly id: string;
+  readonly member_id: string;
+  readonly service_id: string;
+  readonly room_id: string;
+  readonly place: number;
+  readonly therapist_id: string | null;
+  readonly name_ckb: string;
+  readonly name_en: string | null;
+  readonly name_ar: string | null;
+  readonly price: number;
+  readonly starts_at: string;
+  readonly ends_at: string;
+  readonly room_free_at: string;
+  readonly paid_with: string;
+  readonly walk_in: boolean;
+  readonly note: string | null;
+  readonly status: string;
+  readonly status_note: string | null;
+  readonly invoice_id: string | null;
+  /** Null: RLS hides the member from staff without members.view. */
+  readonly members: {
+    readonly full_name: string;
+    readonly member_number: number;
+    readonly phone: string | null;
+    readonly is_guest: boolean;
+  } | null;
+}
+
+function toBooking(row: BookingRow): SpaBooking {
+  const member = row.members;
+  return {
+    id: row.id,
+    memberId: row.member_id,
+    serviceId: row.service_id,
+    roomId: row.room_id,
+    place: row.place,
+    therapistId: row.therapist_id,
+    nameCkb: row.name_ckb,
+    nameEn: row.name_en,
+    nameAr: row.name_ar,
+    price: row.price,
+    startsAt: row.starts_at,
+    endsAt: row.ends_at,
+    roomFreeAt: row.room_free_at,
+    paidWith: oneOf(SPA_PAID_WITH, row.paid_with, 'pay'),
+    walkIn: row.walk_in,
+    note: row.note,
+    status: oneOf(SPA_BOOKING_STATUSES, row.status, 'booked'),
+    statusNote: row.status_note,
+    invoiceId: row.invoice_id,
+    member: member
+      ? {
+          fullName: member.full_name,
+          memberNumber: member.member_number,
+          phone: member.phone,
+          isGuest: member.is_guest,
+        }
+      : null,
+  };
+}
+
 /** A branch's bookings from the first day to the last (Baghdad), all statuses. */
 export function useSpaBookings(branchId: string, firstDay: string, lastDay: string) {
   const { client, actor } = useActingClient();
@@ -69,47 +134,13 @@ export function useSpaBookings(branchId: string, firstDay: string, lastDay: stri
     queryFn: async (): Promise<SpaBooking[]> => {
       const { data, error } = await requireClient(client)
         .from('spa_bookings')
-        .select(
-          'id, member_id, service_id, room_id, place, therapist_id, name_ckb, name_en, name_ar, price, starts_at, ends_at, room_free_at, paid_with, walk_in, note, status, status_note, invoice_id, members (full_name, member_number, phone, is_guest)',
-        )
+        .select(BOOKING_COLUMNS)
         .eq('branch_id', branchId)
         .gte('starts_at', baghdadMoment(firstDay, 0).toISOString())
         .lt('starts_at', baghdadMoment(addDays(lastDay, 1), 0).toISOString())
         .order('starts_at');
       if (error) throw error;
-      return data.map((row) => {
-        // RLS hides the member from staff without members.view, whatever the types say.
-        const member = row.members as typeof row.members | null;
-        return {
-          id: row.id,
-          memberId: row.member_id,
-          serviceId: row.service_id,
-          roomId: row.room_id,
-          place: row.place,
-          therapistId: row.therapist_id,
-          nameCkb: row.name_ckb,
-          nameEn: row.name_en,
-          nameAr: row.name_ar,
-          price: row.price,
-          startsAt: row.starts_at,
-          endsAt: row.ends_at,
-          roomFreeAt: row.room_free_at,
-          paidWith: oneOf(SPA_PAID_WITH, row.paid_with, 'pay'),
-          walkIn: row.walk_in,
-          note: row.note,
-          status: oneOf(SPA_BOOKING_STATUSES, row.status, 'booked'),
-          statusNote: row.status_note,
-          invoiceId: row.invoice_id,
-          member: member
-            ? {
-                fullName: member.full_name,
-                memberNumber: member.member_number,
-                phone: member.phone,
-                isGuest: member.is_guest,
-              }
-            : null,
-        };
-      });
+      return data.map(toBooking);
     },
   });
 }
@@ -365,5 +396,87 @@ export function useCreateGuest() {
       return id;
     },
     onSettled: () => queryClient.invalidateQueries({ queryKey: [MEMBERS_QUERY] }),
+  });
+}
+
+/** A member's bookings in the branches the staff member reaches (spa.view), the latest first. */
+export function useMemberSpaBookings(memberId: string, enabled: boolean) {
+  const { client, actor } = useActingClient();
+  return useQuery({
+    queryKey: [SPA_BOOKINGS_QUERY, actor, 'member', memberId],
+    enabled: client !== undefined && enabled,
+    queryFn: async (): Promise<SpaBooking[]> => {
+      const { data, error } = await requireClient(client)
+        .from('spa_bookings')
+        .select(BOOKING_COLUMNS)
+        .eq('member_id', memberId)
+        .order('starts_at', { ascending: false })
+        .limit(MEMBER_BOOKINGS_SHOWN);
+      if (error) throw error;
+      return data.map(toBooking);
+    },
+  });
+}
+
+/** How many of a member's bookings their page shows. */
+const MEMBER_BOOKINGS_SHOWN = 20;
+
+/** Sells a package (spa.book and payments.create); the answer is the invoice's number. */
+export function useSellSpaPackage() {
+  const { client } = useActingClient();
+  const refresh = useRefresh();
+  return useMutation({
+    mutationFn: async (sale: {
+      memberPackageId: string;
+      invoiceId: string;
+      packageId: string;
+      memberId: string;
+      branchId: string;
+      payment: PaymentInput | null;
+    }): Promise<string | null> => {
+      const { data, error } = await requireClient(client).rpc('sell_spa_package', {
+        p_member_package_id: sale.memberPackageId,
+        p_invoice_id: sale.invoiceId,
+        p_package_id: sale.packageId,
+        p_member_id: sale.memberId,
+        p_branch_id: sale.branchId,
+        ...(sale.payment ? { p_payment: paymentJson(sale.payment) } : {}),
+      });
+      if (error) throw error;
+      return arrivalSchema.parse(data).invoice_number ?? null;
+    },
+    onSettled: refresh,
+  });
+}
+
+export interface SpaCommission {
+  readonly therapistId: string;
+  readonly fullName: string;
+  readonly bookings: number;
+  readonly total: number;
+  readonly commission: number;
+}
+
+/** Each staff member's completed bookings and commission in a branch, from one day to another. */
+export function useSpaCommissions(branchId: string, from: string, until: string, enabled: boolean) {
+  const { client, actor } = useActingClient();
+  return useQuery({
+    queryKey: [SPA_BOOKINGS_QUERY, actor, 'commissions', branchId, from, until],
+    enabled: client !== undefined && enabled && branchId !== '',
+    queryFn: async (): Promise<SpaCommission[]> => {
+      const { data, error } = await requireClient(client).rpc('spa_commissions', {
+        p_branch_id: branchId,
+        p_from: from,
+        p_until: until,
+      });
+      if (error) throw error;
+      return data.map((row) => ({
+        therapistId: row.therapist_id,
+        fullName: row.full_name,
+        bookings: row.bookings,
+        total: row.total,
+        commission: row.commission,
+      }));
+    },
   });
 }

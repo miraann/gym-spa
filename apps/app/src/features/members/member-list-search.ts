@@ -10,8 +10,8 @@ import {
 // The members list's search, filters, sorting and page live in the address (/members?q=…), so the
 // list keeps them while a member is open beside it, and Back returns to the same list.
 
-export const STATUS_FILTERS = ['current', ...MEMBER_STATUSES] as const;
-/** current: every member except the archived ones (the default). */
+export const STATUS_FILTERS = ['current', ...MEMBER_STATUSES, 'guests'] as const;
+/** current: every member except the archived ones (the default); guests: spa guest profiles only. */
 export type StatusFilter = (typeof STATUS_FILTERS)[number];
 
 export const MEMBER_SORTS = ['name', 'newest', 'number'] as const;
@@ -53,7 +53,7 @@ function text(value: unknown, maxLength: number): string | undefined {
 
 /** Reads the address leniently: anything unknown or broken is left out (the default). */
 export function parseMemberListSearch(search: Record<string, unknown>): MemberListSearch {
-  const status = oneOf(MEMBER_STATUSES, search.status);
+  const status = oneOf([...MEMBER_STATUSES, 'guests'] as const, search.status);
   const sort = oneOf(MEMBER_SORTS, search.sort);
   const page = Number(search.page);
   return {
