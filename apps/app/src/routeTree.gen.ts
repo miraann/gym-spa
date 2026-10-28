@@ -23,6 +23,8 @@ import { Route as BranchesNewRouteImport } from './routes/branches/new'
 import { Route as CheckinIndexRouteImport } from './routes/checkin/index'
 import { Route as CheckinDoorRouteImport } from './routes/checkin/door'
 import { Route as CheckinVisitsRouteImport } from './routes/checkin/visits'
+import { Route as ClassesIndexRouteImport } from './routes/classes/index'
+import { Route as ClassesSetupRouteImport } from './routes/classes/setup'
 import { Route as DevicesIndexRouteImport } from './routes/devices/index'
 import { Route as DevicesDeviceIdRouteImport } from './routes/devices/$deviceId'
 import { Route as HrClockRouteImport } from './routes/hr/clock'
@@ -126,6 +128,16 @@ const CheckinDoorRoute = CheckinDoorRouteImport.update({
 const CheckinVisitsRoute = CheckinVisitsRouteImport.update({
   id: '/checkin/visits',
   path: '/checkin/visits',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ClassesIndexRoute = ClassesIndexRouteImport.update({
+  id: '/classes/',
+  path: '/classes/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ClassesSetupRoute = ClassesSetupRouteImport.update({
+  id: '/classes/setup',
+  path: '/classes/setup',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DevicesIndexRoute = DevicesIndexRouteImport.update({
@@ -313,6 +325,7 @@ export interface FileRoutesByFullPath {
   '/branches/new': typeof BranchesNewRoute
   '/checkin/door': typeof CheckinDoorRoute
   '/checkin/visits': typeof CheckinVisitsRoute
+  '/classes/setup': typeof ClassesSetupRoute
   '/devices/$deviceId': typeof DevicesDeviceIdRoute
   '/hr/clock': typeof HrClockRoute
   '/hr/shifts': typeof HrShiftsRoute
@@ -331,6 +344,7 @@ export interface FileRoutesByFullPath {
   '/staff/new': typeof StaffNewRoute
   '/branches/': typeof BranchesIndexRoute
   '/checkin/': typeof CheckinIndexRoute
+  '/classes/': typeof ClassesIndexRoute
   '/devices/': typeof DevicesIndexRoute
   '/lockers/': typeof LockersIndexRoute
   '/members/': typeof MembersIndexRoute
@@ -355,6 +369,7 @@ export interface FileRoutesByTo {
   '/branches/new': typeof BranchesNewRoute
   '/checkin/door': typeof CheckinDoorRoute
   '/checkin/visits': typeof CheckinVisitsRoute
+  '/classes/setup': typeof ClassesSetupRoute
   '/devices/$deviceId': typeof DevicesDeviceIdRoute
   '/hr/clock': typeof HrClockRoute
   '/hr/shifts': typeof HrShiftsRoute
@@ -373,6 +388,7 @@ export interface FileRoutesByTo {
   '/staff/new': typeof StaffNewRoute
   '/branches': typeof BranchesIndexRoute
   '/checkin': typeof CheckinIndexRoute
+  '/classes': typeof ClassesIndexRoute
   '/devices': typeof DevicesIndexRoute
   '/lockers': typeof LockersIndexRoute
   '/members': typeof MembersIndexRoute
@@ -406,6 +422,7 @@ export interface FileRoutesById {
   '/branches/new': typeof BranchesNewRoute
   '/checkin/door': typeof CheckinDoorRoute
   '/checkin/visits': typeof CheckinVisitsRoute
+  '/classes/setup': typeof ClassesSetupRoute
   '/devices/$deviceId': typeof DevicesDeviceIdRoute
   '/hr/clock': typeof HrClockRoute
   '/hr/shifts': typeof HrShiftsRoute
@@ -424,6 +441,7 @@ export interface FileRoutesById {
   '/staff/new': typeof StaffNewRoute
   '/branches/': typeof BranchesIndexRoute
   '/checkin/': typeof CheckinIndexRoute
+  '/classes/': typeof ClassesIndexRoute
   '/devices/': typeof DevicesIndexRoute
   '/lockers/': typeof LockersIndexRoute
   '/members/': typeof MembersIndexRoute
@@ -458,6 +476,7 @@ export interface FileRouteTypes {
     | '/branches/new'
     | '/checkin/door'
     | '/checkin/visits'
+    | '/classes/setup'
     | '/devices/$deviceId'
     | '/hr/clock'
     | '/hr/shifts'
@@ -476,6 +495,7 @@ export interface FileRouteTypes {
     | '/staff/new'
     | '/branches/'
     | '/checkin/'
+    | '/classes/'
     | '/devices/'
     | '/lockers/'
     | '/members/'
@@ -500,6 +520,7 @@ export interface FileRouteTypes {
     | '/branches/new'
     | '/checkin/door'
     | '/checkin/visits'
+    | '/classes/setup'
     | '/devices/$deviceId'
     | '/hr/clock'
     | '/hr/shifts'
@@ -518,6 +539,7 @@ export interface FileRouteTypes {
     | '/staff/new'
     | '/branches'
     | '/checkin'
+    | '/classes'
     | '/devices'
     | '/lockers'
     | '/members'
@@ -550,6 +572,7 @@ export interface FileRouteTypes {
     | '/branches/new'
     | '/checkin/door'
     | '/checkin/visits'
+    | '/classes/setup'
     | '/devices/$deviceId'
     | '/hr/clock'
     | '/hr/shifts'
@@ -568,6 +591,7 @@ export interface FileRouteTypes {
     | '/staff/new'
     | '/branches/'
     | '/checkin/'
+    | '/classes/'
     | '/devices/'
     | '/lockers/'
     | '/members/'
@@ -599,10 +623,12 @@ export interface RootRouteChildren {
   SpaSetupRouteRoute: typeof SpaSetupRouteRouteWithChildren
   CheckinDoorRoute: typeof CheckinDoorRoute
   CheckinVisitsRoute: typeof CheckinVisitsRoute
+  ClassesSetupRoute: typeof ClassesSetupRoute
   HrClockRoute: typeof HrClockRoute
   HrShiftsRoute: typeof HrShiftsRoute
   SpaCommissionsRoute: typeof SpaCommissionsRoute
   CheckinIndexRoute: typeof CheckinIndexRoute
+  ClassesIndexRoute: typeof ClassesIndexRoute
   LockersIndexRoute: typeof LockersIndexRoute
   PaymentsIndexRoute: typeof PaymentsIndexRoute
   SpaIndexRoute: typeof SpaIndexRoute
@@ -706,6 +732,20 @@ declare module '@tanstack/react-router' {
       path: '/checkin/visits'
       fullPath: '/checkin/visits'
       preLoaderRoute: typeof CheckinVisitsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/classes/': {
+      id: '/classes/'
+      path: '/classes'
+      fullPath: '/classes/'
+      preLoaderRoute: typeof ClassesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/classes/setup': {
+      id: '/classes/setup'
+      path: '/classes/setup'
+      fullPath: '/classes/setup'
+      preLoaderRoute: typeof ClassesSetupRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/devices/': {
@@ -1101,10 +1141,12 @@ const rootRouteChildren: RootRouteChildren = {
   SpaSetupRouteRoute: SpaSetupRouteRouteWithChildren,
   CheckinDoorRoute: CheckinDoorRoute,
   CheckinVisitsRoute: CheckinVisitsRoute,
+  ClassesSetupRoute: ClassesSetupRoute,
   HrClockRoute: HrClockRoute,
   HrShiftsRoute: HrShiftsRoute,
   SpaCommissionsRoute: SpaCommissionsRoute,
   CheckinIndexRoute: CheckinIndexRoute,
+  ClassesIndexRoute: ClassesIndexRoute,
   LockersIndexRoute: LockersIndexRoute,
   PaymentsIndexRoute: PaymentsIndexRoute,
   SpaIndexRoute: SpaIndexRoute,
