@@ -1010,6 +1010,7 @@ export type Database = {
           has_health_notes: boolean;
           id: string;
           import_id: string | null;
+          is_guest: boolean;
           member_number: number;
           notes: string | null;
           phone: string | null;
@@ -1043,6 +1044,7 @@ export type Database = {
           has_health_notes?: boolean;
           id: string;
           import_id?: string | null;
+          is_guest?: boolean;
           member_number: number;
           notes?: string | null;
           phone?: string | null;
@@ -1074,6 +1076,7 @@ export type Database = {
           has_health_notes?: boolean;
           id?: string;
           import_id?: string | null;
+          is_guest?: boolean;
           member_number?: number;
           notes?: string | null;
           phone?: string | null;
@@ -1593,6 +1596,282 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: 'gyms';
             referencedColumns: ['id'];
+          },
+        ];
+      };
+      spa_rooms: {
+        Row: {
+          branch_id: string;
+          capacity: number;
+          created_at: string;
+          created_by: string | null;
+          deleted_at: string | null;
+          gym_id: string;
+          id: string;
+          is_active: boolean;
+          kind: string;
+          name_ar: string | null;
+          name_ckb: string;
+          name_en: string | null;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          branch_id: string;
+          capacity?: number;
+          created_at?: string;
+          created_by?: string | null;
+          deleted_at?: string | null;
+          gym_id?: string;
+          id: string;
+          is_active?: boolean;
+          kind: string;
+          name_ar?: string | null;
+          name_ckb: string;
+          name_en?: string | null;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          branch_id?: string;
+          capacity?: number;
+          created_at?: string;
+          created_by?: string | null;
+          deleted_at?: string | null;
+          gym_id?: string;
+          id?: string;
+          is_active?: boolean;
+          kind?: string;
+          name_ar?: string | null;
+          name_ckb?: string;
+          name_en?: string | null;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'spa_rooms_branch_id_gym_id_fkey';
+            columns: ['branch_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'branches';
+            referencedColumns: ['id', 'gym_id'];
+          },
+        ];
+      };
+      spa_services: {
+        Row: {
+          cleanup_minutes: number;
+          created_at: string;
+          created_by: string | null;
+          deleted_at: string | null;
+          duration_minutes: number;
+          gender: string;
+          gym_id: string;
+          id: string;
+          is_active: boolean;
+          kind: string;
+          name_ar: string | null;
+          name_ckb: string;
+          name_en: string | null;
+          needs_therapist: boolean;
+          price: number;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          cleanup_minutes?: number;
+          created_at?: string;
+          created_by?: string | null;
+          deleted_at?: string | null;
+          duration_minutes: number;
+          gender?: string;
+          gym_id?: string;
+          id: string;
+          is_active?: boolean;
+          kind: string;
+          name_ar?: string | null;
+          name_ckb: string;
+          name_en?: string | null;
+          needs_therapist?: boolean;
+          price: number;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          cleanup_minutes?: number;
+          created_at?: string;
+          created_by?: string | null;
+          deleted_at?: string | null;
+          duration_minutes?: number;
+          gender?: string;
+          gym_id?: string;
+          id?: string;
+          is_active?: boolean;
+          kind?: string;
+          name_ar?: string | null;
+          name_ckb?: string;
+          name_en?: string | null;
+          needs_therapist?: boolean;
+          price?: number;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'spa_services_gym_id_fkey';
+            columns: ['gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'gyms';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      spa_therapist_hours: {
+        Row: {
+          created_at: string;
+          created_by: string | null;
+          ends_at: string;
+          gym_id: string;
+          id: string;
+          starts_at: string;
+          therapist_id: string;
+          weekday: number;
+        };
+        Insert: {
+          created_at?: string;
+          created_by?: string | null;
+          ends_at: string;
+          gym_id?: string;
+          id?: string;
+          starts_at: string;
+          therapist_id: string;
+          weekday: number;
+        };
+        Update: {
+          created_at?: string;
+          created_by?: string | null;
+          ends_at?: string;
+          gym_id?: string;
+          id?: string;
+          starts_at?: string;
+          therapist_id?: string;
+          weekday?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'spa_therapist_hours_therapist_id_gym_id_fkey';
+            columns: ['therapist_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'spa_therapists';
+            referencedColumns: ['id', 'gym_id'];
+          },
+        ];
+      };
+      spa_therapist_services: {
+        Row: {
+          created_at: string;
+          created_by: string | null;
+          gym_id: string;
+          id: string;
+          service_id: string;
+          therapist_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          created_by?: string | null;
+          gym_id?: string;
+          id?: string;
+          service_id: string;
+          therapist_id: string;
+        };
+        Update: {
+          created_at?: string;
+          created_by?: string | null;
+          gym_id?: string;
+          id?: string;
+          service_id?: string;
+          therapist_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'spa_therapist_services_service_id_gym_id_fkey';
+            columns: ['service_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'spa_services';
+            referencedColumns: ['id', 'gym_id'];
+          },
+          {
+            foreignKeyName: 'spa_therapist_services_therapist_id_gym_id_fkey';
+            columns: ['therapist_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'spa_therapists';
+            referencedColumns: ['id', 'gym_id'];
+          },
+        ];
+      };
+      spa_therapists: {
+        Row: {
+          branch_id: string;
+          commission_percent: number;
+          created_at: string;
+          created_by: string | null;
+          deleted_at: string | null;
+          full_name: string;
+          gender: string;
+          gym_id: string;
+          id: string;
+          is_active: boolean;
+          phone: string | null;
+          staff_user_id: string | null;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          branch_id: string;
+          commission_percent?: number;
+          created_at?: string;
+          created_by?: string | null;
+          deleted_at?: string | null;
+          full_name: string;
+          gender: string;
+          gym_id?: string;
+          id: string;
+          is_active?: boolean;
+          phone?: string | null;
+          staff_user_id?: string | null;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          branch_id?: string;
+          commission_percent?: number;
+          created_at?: string;
+          created_by?: string | null;
+          deleted_at?: string | null;
+          full_name?: string;
+          gender?: string;
+          gym_id?: string;
+          id?: string;
+          is_active?: boolean;
+          phone?: string | null;
+          staff_user_id?: string | null;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'spa_therapists_branch_id_gym_id_fkey';
+            columns: ['branch_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'branches';
+            referencedColumns: ['id', 'gym_id'];
+          },
+          {
+            foreignKeyName: 'spa_therapists_staff_user_id_gym_id_fkey';
+            columns: ['staff_user_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'staff_users';
+            referencedColumns: ['id', 'gym_id'];
           },
         ];
       };
@@ -2361,6 +2640,53 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      create_guest: {
+        Args: {
+          p_branch_id: string;
+          p_full_name: string;
+          p_gender: string;
+          p_id: string;
+          p_phone: string;
+        };
+        Returns: {
+          address: string | null;
+          birth_date: string | null;
+          branch_id: string;
+          created_at: string;
+          created_by: string | null;
+          deleted_at: string | null;
+          emergency_contact_name: string | null;
+          emergency_phone: string | null;
+          full_name: string;
+          gender: string;
+          goals: string | null;
+          gym_id: string;
+          has_health_notes: boolean;
+          id: string;
+          import_id: string | null;
+          is_guest: boolean;
+          member_number: number;
+          notes: string | null;
+          phone: string | null;
+          photo_updated_at: string | null;
+          preferred_language: Database['public']['Enums']['language_code'];
+          referral_source: string | null;
+          search_text: string;
+          status: string;
+          status_changed_at: string | null;
+          status_changed_by: string | null;
+          status_reason: string | null;
+          tags: string[];
+          updated_at: string;
+          updated_by: string | null;
+        };
+        SetofOptions: {
+          from: '*';
+          to: 'members';
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
       create_gym: {
         Args: {
           p_code: string;
@@ -2432,6 +2758,7 @@ export type Database = {
           has_health_notes: boolean;
           id: string;
           import_id: string | null;
+          is_guest: boolean;
           member_number: number;
           notes: string | null;
           phone: string | null;
@@ -2628,6 +2955,47 @@ export type Database = {
           p_payment?: Json;
         };
         Returns: Json;
+      };
+      make_guest_member: {
+        Args: { p_member_id: string };
+        Returns: {
+          address: string | null;
+          birth_date: string | null;
+          branch_id: string;
+          created_at: string;
+          created_by: string | null;
+          deleted_at: string | null;
+          emergency_contact_name: string | null;
+          emergency_phone: string | null;
+          full_name: string;
+          gender: string;
+          goals: string | null;
+          gym_id: string;
+          has_health_notes: boolean;
+          id: string;
+          import_id: string | null;
+          is_guest: boolean;
+          member_number: number;
+          notes: string | null;
+          phone: string | null;
+          photo_updated_at: string | null;
+          preferred_language: Database['public']['Enums']['language_code'];
+          referral_source: string | null;
+          search_text: string;
+          status: string;
+          status_changed_at: string | null;
+          status_changed_by: string | null;
+          status_reason: string | null;
+          tags: string[];
+          updated_at: string;
+          updated_by: string | null;
+        };
+        SetofOptions: {
+          from: '*';
+          to: 'members';
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
       };
       member_import_history: {
         Args: Record<PropertyKey, never>;
@@ -2922,6 +3290,116 @@ export type Database = {
         };
         Returns: undefined;
       };
+      save_spa_room: {
+        Args: {
+          p_branch_id: string;
+          p_capacity?: number;
+          p_id: string;
+          p_is_active?: boolean;
+          p_kind: string;
+          p_name_ar?: string;
+          p_name_ckb: string;
+          p_name_en?: string;
+        };
+        Returns: {
+          branch_id: string;
+          capacity: number;
+          created_at: string;
+          created_by: string | null;
+          deleted_at: string | null;
+          gym_id: string;
+          id: string;
+          is_active: boolean;
+          kind: string;
+          name_ar: string | null;
+          name_ckb: string;
+          name_en: string | null;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        SetofOptions: {
+          from: '*';
+          to: 'spa_rooms';
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
+      save_spa_service: {
+        Args: {
+          p_cleanup_minutes?: number;
+          p_duration_minutes: number;
+          p_gender?: string;
+          p_id: string;
+          p_is_active?: boolean;
+          p_kind: string;
+          p_name_ar?: string;
+          p_name_ckb: string;
+          p_name_en?: string;
+          p_needs_therapist?: boolean;
+          p_price: number;
+        };
+        Returns: {
+          cleanup_minutes: number;
+          created_at: string;
+          created_by: string | null;
+          deleted_at: string | null;
+          duration_minutes: number;
+          gender: string;
+          gym_id: string;
+          id: string;
+          is_active: boolean;
+          kind: string;
+          name_ar: string | null;
+          name_ckb: string;
+          name_en: string | null;
+          needs_therapist: boolean;
+          price: number;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        SetofOptions: {
+          from: '*';
+          to: 'spa_services';
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
+      save_spa_therapist: {
+        Args: {
+          p_branch_id: string;
+          p_commission_percent?: number;
+          p_full_name: string;
+          p_gender: string;
+          p_hours: Json;
+          p_id: string;
+          p_is_active?: boolean;
+          p_phone?: string;
+          p_service_ids: string[];
+          p_staff_user_id?: string;
+        };
+        Returns: {
+          branch_id: string;
+          commission_percent: number;
+          created_at: string;
+          created_by: string | null;
+          deleted_at: string | null;
+          full_name: string;
+          gender: string;
+          gym_id: string;
+          id: string;
+          is_active: boolean;
+          phone: string | null;
+          staff_user_id: string | null;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        SetofOptions: {
+          from: '*';
+          to: 'spa_therapists';
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
       save_staff_access: {
         Args: {
           p_all_branches: boolean;
@@ -2951,6 +3429,7 @@ export type Database = {
           has_health_notes: boolean;
           id: string;
           import_id: string | null;
+          is_guest: boolean;
           member_number: number;
           notes: string | null;
           phone: string | null;
@@ -3174,6 +3653,7 @@ export type Database = {
           has_health_notes: boolean;
           id: string;
           import_id: string | null;
+          is_guest: boolean;
           member_number: number;
           notes: string | null;
           phone: string | null;
@@ -3331,6 +3811,7 @@ export type Database = {
           has_health_notes: boolean;
           id: string;
           import_id: string | null;
+          is_guest: boolean;
           member_number: number;
           notes: string | null;
           phone: string | null;

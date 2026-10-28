@@ -101,6 +101,22 @@ insert into public.locker_assignments (id, gym_id, branch_id, locker_id, member_
    'e0000000-0000-4000-8000-0000000000a1', 'daily', current_date),
   ('e0000000-0000-4000-8000-0000000000bf', tests.gym('pgtap-b'), tests.branch('B901', 'pgtap-b'), 'e0000000-0000-4000-8000-0000000000be',
    'e0000000-0000-4000-8000-0000000000b1', 'daily', current_date);
+-- The spa's setup in both gyms.
+insert into public.spa_services (id, gym_id, name_ckb, kind, duration_minutes, price) values
+  ('e0000000-0000-4000-8000-0000000000a5', tests.gym('pgtap-a'), 'مەساژ', 'massage', 60, 30000),
+  ('e0000000-0000-4000-8000-0000000000b5', tests.gym('pgtap-b'), 'مەساژ', 'massage', 60, 30000);
+insert into public.spa_rooms (id, gym_id, branch_id, name_ckb, kind) values
+  ('e0000000-0000-4000-8000-0000000000a6', tests.gym('pgtap-a'), tests.branch('B901'), 'ژووری ١', 'massage'),
+  ('e0000000-0000-4000-8000-0000000000b6', tests.gym('pgtap-b'), tests.branch('B901', 'pgtap-b'), 'ژووری ١', 'massage');
+insert into public.spa_therapists (id, gym_id, branch_id, full_name, gender) values
+  ('e0000000-0000-4000-8000-0000000000a7', tests.gym('pgtap-a'), tests.branch('B901'), 'ڕۆژان', 'female'),
+  ('e0000000-0000-4000-8000-0000000000b7', tests.gym('pgtap-b'), tests.branch('B901', 'pgtap-b'), 'ڕۆژان', 'female');
+insert into public.spa_therapist_services (gym_id, therapist_id, service_id) values
+  (tests.gym('pgtap-a'), 'e0000000-0000-4000-8000-0000000000a7', 'e0000000-0000-4000-8000-0000000000a5'),
+  (tests.gym('pgtap-b'), 'e0000000-0000-4000-8000-0000000000b7', 'e0000000-0000-4000-8000-0000000000b5');
+insert into public.spa_therapist_hours (gym_id, therapist_id, weekday, starts_at, ends_at) values
+  (tests.gym('pgtap-a'), 'e0000000-0000-4000-8000-0000000000a7', 1, '09:00', '17:00'),
+  (tests.gym('pgtap-b'), 'e0000000-0000-4000-8000-0000000000b7', 1, '09:00', '17:00');
 
 select is_empty(
   $$ select t from tests.gym_tables() t
@@ -200,6 +216,22 @@ insert into insert_cases (table_name, statement) values
                                     'e0000000-0000-4000-8000-0000000000be', 'e0000000-0000-4000-8000-0000000000b2', 'daily', current_date) $$),
   ('locker_assignments', $$ select public.give_locker(gen_random_uuid(), 'e0000000-0000-4000-8000-0000000000be',
                               'e0000000-0000-4000-8000-0000000000b2') $$),
+  ('spa_services', $$ insert into public.spa_services (gym_id, id, name_ckb, kind, duration_minutes, price)
+                      values (tests.gym('pgtap-b'), gen_random_uuid(), 'مەساژ', 'massage', 60, 1) $$),
+  ('spa_services', $$ select public.save_spa_service('e0000000-0000-4000-8000-0000000000b5', 'مەساژ', 'massage', 60, 1) $$),
+  ('spa_rooms', $$ insert into public.spa_rooms (gym_id, id, branch_id, name_ckb, kind)
+                   values (tests.gym('pgtap-b'), gen_random_uuid(), tests.branch('B901', 'pgtap-b'), 'ژووری ٩', 'massage') $$),
+  ('spa_rooms', $$ select public.save_spa_room(gen_random_uuid(), tests.branch('B901', 'pgtap-b'), 'ژووری ٩', 'massage') $$),
+  ('spa_therapists', $$ insert into public.spa_therapists (gym_id, id, branch_id, full_name, gender)
+                        values (tests.gym('pgtap-b'), gen_random_uuid(), tests.branch('B901', 'pgtap-b'), 'دانا', 'male') $$),
+  ('spa_therapists', $$ select public.save_spa_therapist(gen_random_uuid(), tests.branch('B901', 'pgtap-b'), 'دانا', 'male', '{}', '[]') $$),
+  ('spa_therapists', $$ select public.save_spa_therapist('e0000000-0000-4000-8000-0000000000b7', tests.branch('B901'), 'دانا', 'male', '{}', '[]') $$),
+  ('spa_therapist_services', $$ insert into public.spa_therapist_services (gym_id, therapist_id, service_id)
+                                values (tests.gym('pgtap-b'), 'e0000000-0000-4000-8000-0000000000b7', 'e0000000-0000-4000-8000-0000000000b5') $$),
+  ('spa_therapist_services', $$ select public.save_spa_therapist('e0000000-0000-4000-8000-0000000000a7', tests.branch('B901'), 'ڕۆژان', 'female',
+                                  array['e0000000-0000-4000-8000-0000000000b5'::uuid], '[]') $$),
+  ('spa_therapist_hours', $$ insert into public.spa_therapist_hours (gym_id, therapist_id, weekday, starts_at, ends_at)
+                             values (tests.gym('pgtap-b'), 'e0000000-0000-4000-8000-0000000000b7', 2, '09:00', '17:00') $$),
   -- Their own gym (gym_id left to fill itself in), pointing at gym B's rows.
   ('role_permissions', $$ insert into public.role_permissions (role_id, permission_key) values (tests.role('trainer', 'pgtap-b'), 'payments.view') $$),
   ('staff_users', $$ insert into public.staff_users (id, username, full_name, role_id)
