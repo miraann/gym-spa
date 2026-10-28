@@ -65,9 +65,10 @@ select throws_ok($$ insert into public.invoice_items (id, gym_id, invoice_id, ki
 select results_eq(
   $$ select c.relname::text collate "default" from pg_trigger t join pg_class c on c.oid = t.tgrelid
       where t.tgname = 'not_walk_in' order by 1 $$,
-  $$ values ('attendance'), ('class_bookings'), ('locker_assignments'), ('member_health'), ('member_photos'),
-            ('member_pt_packages'), ('member_spa_packages'), ('nfc_cards'), ('spa_bookings'), ('subscriptions') $$,
-  'every table of a member''s things refuses it: subscriptions, visits, lockers, spa, classes, PT, cards, photos'
+  $$ values ('attendance'), ('class_bookings'), ('locker_assignments'), ('member_health'), ('member_messages'),
+            ('member_photos'), ('member_pt_packages'), ('member_spa_packages'), ('nfc_cards'), ('reminders'),
+            ('spa_bookings'), ('subscriptions') $$,
+  'every table of a member''s things refuses it: subscriptions, visits, lockers, spa, classes, PT, cards, photos, messages'
 );
 
 -- Voids leave no debt ------------------------------------------------------------------------------------------

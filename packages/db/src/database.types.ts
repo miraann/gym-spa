@@ -1380,6 +1380,88 @@ export type Database = {
           },
         ];
       };
+      member_messages: {
+        Row: {
+          body: string;
+          branch_id: string;
+          channel: string;
+          created_at: string;
+          created_by: string | null;
+          deleted_at: string | null;
+          gym_id: string;
+          id: string;
+          language: Database['public']['Enums']['language_code'];
+          member_id: string;
+          phone: string;
+          reminder_id: string | null;
+          status: string;
+          template_key: string | null;
+          to_emergency_contact: boolean;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          body: string;
+          branch_id: string;
+          channel?: string;
+          created_at?: string;
+          created_by?: string | null;
+          deleted_at?: string | null;
+          gym_id?: string;
+          id: string;
+          language: Database['public']['Enums']['language_code'];
+          member_id: string;
+          phone: string;
+          reminder_id?: string | null;
+          status?: string;
+          template_key?: string | null;
+          to_emergency_contact: boolean;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          body?: string;
+          branch_id?: string;
+          channel?: string;
+          created_at?: string;
+          created_by?: string | null;
+          deleted_at?: string | null;
+          gym_id?: string;
+          id?: string;
+          language?: Database['public']['Enums']['language_code'];
+          member_id?: string;
+          phone?: string;
+          reminder_id?: string | null;
+          status?: string;
+          template_key?: string | null;
+          to_emergency_contact?: boolean;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'member_messages_branch_id_gym_id_fkey';
+            columns: ['branch_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'branches';
+            referencedColumns: ['id', 'gym_id'];
+          },
+          {
+            foreignKeyName: 'member_messages_member_id_gym_id_fkey';
+            columns: ['member_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'members';
+            referencedColumns: ['id', 'gym_id'];
+          },
+          {
+            foreignKeyName: 'member_messages_reminder_id_gym_id_fkey';
+            columns: ['reminder_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'reminders';
+            referencedColumns: ['id', 'gym_id'];
+          },
+        ];
+      };
       member_photos: {
         Row: {
           created_at: string;
@@ -1773,6 +1855,56 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: 'member_imports';
             referencedColumns: ['id', 'gym_id'];
+          },
+        ];
+      };
+      message_templates: {
+        Row: {
+          body_ar: string | null;
+          body_ckb: string | null;
+          body_en: string | null;
+          created_at: string;
+          created_by: string | null;
+          deleted_at: string | null;
+          gym_id: string;
+          id: string;
+          key: string;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          body_ar?: string | null;
+          body_ckb?: string | null;
+          body_en?: string | null;
+          created_at?: string;
+          created_by?: string | null;
+          deleted_at?: string | null;
+          gym_id?: string;
+          id: string;
+          key: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          body_ar?: string | null;
+          body_ckb?: string | null;
+          body_en?: string | null;
+          created_at?: string;
+          created_by?: string | null;
+          deleted_at?: string | null;
+          gym_id?: string;
+          id?: string;
+          key?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'message_templates_gym_id_fkey';
+            columns: ['gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'gyms';
+            referencedColumns: ['id'];
           },
         ];
       };
@@ -2446,6 +2578,75 @@ export type Database = {
             columns: ['trainer_id', 'gym_id'];
             isOneToOne: false;
             referencedRelation: 'staff_users';
+            referencedColumns: ['id', 'gym_id'];
+          },
+        ];
+      };
+      reminders: {
+        Row: {
+          branch_id: string;
+          created_at: string;
+          created_by: string | null;
+          deleted_at: string | null;
+          details: NonNullable<Json>;
+          done_at: string | null;
+          done_by: string | null;
+          gym_id: string;
+          id: string;
+          kind: string;
+          member_id: string;
+          remind_on: string;
+          subject_id: string;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          branch_id: string;
+          created_at?: string;
+          created_by?: string | null;
+          deleted_at?: string | null;
+          details?: NonNullable<Json>;
+          done_at?: string | null;
+          done_by?: string | null;
+          gym_id?: string;
+          id?: string;
+          kind: string;
+          member_id: string;
+          remind_on: string;
+          subject_id: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          branch_id?: string;
+          created_at?: string;
+          created_by?: string | null;
+          deleted_at?: string | null;
+          details?: NonNullable<Json>;
+          done_at?: string | null;
+          done_by?: string | null;
+          gym_id?: string;
+          id?: string;
+          kind?: string;
+          member_id?: string;
+          remind_on?: string;
+          subject_id?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'reminders_branch_id_gym_id_fkey';
+            columns: ['branch_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'branches';
+            referencedColumns: ['id', 'gym_id'];
+          },
+          {
+            foreignKeyName: 'reminders_member_id_gym_id_fkey';
+            columns: ['member_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'members';
             referencedColumns: ['id', 'gym_id'];
           },
         ];
@@ -3324,6 +3525,110 @@ export type Database = {
             columns: ['staff_id', 'gym_id'];
             isOneToOne: false;
             referencedRelation: 'staff_users';
+            referencedColumns: ['id', 'gym_id'];
+          },
+        ];
+      };
+      staff_notification_reads: {
+        Row: {
+          created_at: string;
+          created_by: string | null;
+          deleted_at: string | null;
+          gym_id: string;
+          id: string;
+          notification_id: string;
+          staff_id: string;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          created_at?: string;
+          created_by?: string | null;
+          deleted_at?: string | null;
+          gym_id?: string;
+          id?: string;
+          notification_id: string;
+          staff_id: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          created_at?: string;
+          created_by?: string | null;
+          deleted_at?: string | null;
+          gym_id?: string;
+          id?: string;
+          notification_id?: string;
+          staff_id?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'staff_notification_reads_notification_id_gym_id_fkey';
+            columns: ['notification_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'staff_notifications';
+            referencedColumns: ['id', 'gym_id'];
+          },
+          {
+            foreignKeyName: 'staff_notification_reads_staff_id_gym_id_fkey';
+            columns: ['staff_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'staff_users';
+            referencedColumns: ['id', 'gym_id'];
+          },
+        ];
+      };
+      staff_notifications: {
+        Row: {
+          branch_id: string;
+          created_at: string;
+          created_by: string | null;
+          deleted_at: string | null;
+          details: NonNullable<Json>;
+          gym_id: string;
+          id: string;
+          kind: string;
+          notify_on: string;
+          subject_id: string;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          branch_id: string;
+          created_at?: string;
+          created_by?: string | null;
+          deleted_at?: string | null;
+          details?: NonNullable<Json>;
+          gym_id?: string;
+          id?: string;
+          kind: string;
+          notify_on: string;
+          subject_id: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          branch_id?: string;
+          created_at?: string;
+          created_by?: string | null;
+          deleted_at?: string | null;
+          details?: NonNullable<Json>;
+          gym_id?: string;
+          id?: string;
+          kind?: string;
+          notify_on?: string;
+          subject_id?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'staff_notifications_branch_id_gym_id_fkey';
+            columns: ['branch_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'branches';
             referencedColumns: ['id', 'gym_id'];
           },
         ];
@@ -4763,6 +5068,7 @@ export type Database = {
         };
       };
       mark_class_attendance: { Args: { p_booking_id: string; p_status: string }; Returns: Json };
+      mark_notifications_read: { Args: { p_ids: string[] }; Returns: number };
       member_import_history: {
         Args: Record<PropertyKey, never>;
         Returns: {
@@ -4786,6 +5092,7 @@ export type Database = {
           to_archive: number;
         }[];
       };
+      member_message_details: { Args: { p_member_id: string }; Returns: Json };
       member_tags: {
         Args: Record<PropertyKey, never>;
         Returns: {
@@ -4925,6 +5232,44 @@ export type Database = {
         };
         Returns: Json;
       };
+      record_message_opened: {
+        Args: {
+          p_body: string;
+          p_branch_id: string;
+          p_id: string;
+          p_language: Database['public']['Enums']['language_code'];
+          p_member_id: string;
+          p_phone: string;
+          p_reminder_id?: string;
+          p_template_key?: string;
+        };
+        Returns: {
+          body: string;
+          branch_id: string;
+          channel: string;
+          created_at: string;
+          created_by: string | null;
+          deleted_at: string | null;
+          gym_id: string;
+          id: string;
+          language: Database['public']['Enums']['language_code'];
+          member_id: string;
+          phone: string;
+          reminder_id: string | null;
+          status: string;
+          template_key: string | null;
+          to_emergency_contact: boolean;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        SetofOptions: {
+          from: '*';
+          to: 'member_messages';
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
+      refresh_reminders: { Args: Record<PropertyKey, never>; Returns: number };
       refund_invoice: {
         Args: {
           p_amount: number;
@@ -5126,6 +5471,28 @@ export type Database = {
         SetofOptions: {
           from: '*';
           to: 'class_types';
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
+      save_message_template: {
+        Args: { p_body_ar: string; p_body_ckb: string; p_body_en: string; p_key: string };
+        Returns: {
+          body_ar: string | null;
+          body_ckb: string | null;
+          body_en: string | null;
+          created_at: string;
+          created_by: string | null;
+          deleted_at: string | null;
+          gym_id: string;
+          id: string;
+          key: string;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        SetofOptions: {
+          from: '*';
+          to: 'message_templates';
           isOneToOne: true;
           isSetofReturn: false;
         };
@@ -5837,6 +6204,32 @@ export type Database = {
       };
       set_my_pin: { Args: { p_pin: string }; Returns: undefined };
       set_plan_spa_sessions: { Args: { p_plan_id: string; p_sessions: Json }; Returns: Json };
+      set_reminder_done: {
+        Args: { p_done: boolean; p_id: string };
+        Returns: {
+          branch_id: string;
+          created_at: string;
+          created_by: string | null;
+          deleted_at: string | null;
+          details: NonNullable<Json>;
+          done_at: string | null;
+          done_by: string | null;
+          gym_id: string;
+          id: string;
+          kind: string;
+          member_id: string;
+          remind_on: string;
+          subject_id: string;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        SetofOptions: {
+          from: '*';
+          to: 'reminders';
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
       set_spa_booking_status: {
         Args: { p_booking_id: string; p_note?: string; p_status: string };
         Returns: Json;
