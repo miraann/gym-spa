@@ -134,6 +134,14 @@ insert into public.plan_spa_sessions (gym_id, plan_id, service_id, session_count
 insert into public.subscription_spa_sessions (gym_id, subscription_id, service_id, session_count) values
   (tests.gym('pgtap-a'), 'e0000000-0000-4000-8000-0000000000a4', 'e0000000-0000-4000-8000-0000000000a5', 2),
   (tests.gym('pgtap-b'), 'e0000000-0000-4000-8000-0000000000b4', 'e0000000-0000-4000-8000-0000000000b5', 2);
+insert into public.spa_bookings (id, gym_id, branch_id, member_id, service_id, room_id, place, name_ckb, price, starts_at,
+                                 ends_at, room_free_at, paid_with) values
+  ('f0000000-0000-4000-8000-0000000000a3', tests.gym('pgtap-a'), tests.branch('B901'), 'e0000000-0000-4000-8000-0000000000a1',
+   'e0000000-0000-4000-8000-0000000000a5', 'e0000000-0000-4000-8000-0000000000a6', 1, 'مەساژ', 0,
+   now() + interval '1 day', now() + interval '25 hours', now() + interval '25 hours', 'pay'),
+  ('f0000000-0000-4000-8000-0000000000b3', tests.gym('pgtap-b'), tests.branch('B901', 'pgtap-b'), 'e0000000-0000-4000-8000-0000000000b1',
+   'e0000000-0000-4000-8000-0000000000b5', 'e0000000-0000-4000-8000-0000000000b6', 1, 'مەساژ', 0,
+   now() + interval '1 day', now() + interval '25 hours', now() + interval '25 hours', 'pay');
 
 select is_empty(
   $$ select t from tests.gym_tables() t
@@ -264,6 +272,14 @@ insert into insert_cases (table_name, statement) values
   ('plan_spa_sessions', $$ select public.set_plan_spa_sessions('e0000000-0000-4000-8000-0000000000b3', '[]') $$),
   ('subscription_spa_sessions', $$ insert into public.subscription_spa_sessions (gym_id, subscription_id, service_id, session_count)
                                    values (tests.gym('pgtap-b'), 'e0000000-0000-4000-8000-0000000000b4', 'e0000000-0000-4000-8000-0000000000b5', 3) $$),
+  ('spa_bookings', $$ insert into public.spa_bookings (gym_id, id, branch_id, member_id, service_id, room_id, place, name_ckb, price,
+                         starts_at, ends_at, room_free_at, paid_with)
+                      values (tests.gym('pgtap-b'), gen_random_uuid(), tests.branch('B901', 'pgtap-b'), 'e0000000-0000-4000-8000-0000000000b1',
+                              'e0000000-0000-4000-8000-0000000000b5', 'e0000000-0000-4000-8000-0000000000b6', 2, 'مەساژ', 0,
+                              now() + interval '2 days', now() + interval '49 hours', now() + interval '49 hours', 'pay') $$),
+  ('spa_bookings', $$ select public.book_spa(gen_random_uuid(), tests.branch('B901', 'pgtap-b'), 'e0000000-0000-4000-8000-0000000000b1',
+                       'e0000000-0000-4000-8000-0000000000b5', now() + interval '2 days', 'e0000000-0000-4000-8000-0000000000b6') $$),
+  ('spa_bookings', $$ select public.set_spa_booking_status('f0000000-0000-4000-8000-0000000000b3', 'cancelled') $$),
   -- Their own gym (gym_id left to fill itself in), pointing at gym B's rows.
   ('role_permissions', $$ insert into public.role_permissions (role_id, permission_key) values (tests.role('trainer', 'pgtap-b'), 'payments.view') $$),
   ('staff_users', $$ insert into public.staff_users (id, username, full_name, role_id)
