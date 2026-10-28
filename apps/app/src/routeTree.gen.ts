@@ -25,6 +25,7 @@ import { Route as CheckinDoorRouteImport } from './routes/checkin/door'
 import { Route as CheckinVisitsRouteImport } from './routes/checkin/visits'
 import { Route as DevicesIndexRouteImport } from './routes/devices/index'
 import { Route as DevicesDeviceIdRouteImport } from './routes/devices/$deviceId'
+import { Route as LockersIndexRouteImport } from './routes/lockers/index'
 import { Route as MembersIndexRouteImport } from './routes/members/index'
 import { Route as MembersImportRouteImport } from './routes/members/import'
 import { Route as MembersNewRouteImport } from './routes/members/new'
@@ -126,6 +127,11 @@ const DevicesDeviceIdRoute = DevicesDeviceIdRouteImport.update({
   id: '/$deviceId',
   path: '/$deviceId',
   getParentRoute: () => DevicesRouteRoute,
+} as any)
+const LockersIndexRoute = LockersIndexRouteImport.update({
+  id: '/lockers/',
+  path: '/lockers/',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const MembersIndexRoute = MembersIndexRouteImport.update({
   id: '/',
@@ -262,6 +268,7 @@ export interface FileRoutesByFullPath {
   '/branches/': typeof BranchesIndexRoute
   '/checkin/': typeof CheckinIndexRoute
   '/devices/': typeof DevicesIndexRoute
+  '/lockers/': typeof LockersIndexRoute
   '/members/': typeof MembersIndexRoute
   '/payments/': typeof PaymentsIndexRoute
   '/plans/': typeof PlansIndexRoute
@@ -294,6 +301,7 @@ export interface FileRoutesByTo {
   '/branches': typeof BranchesIndexRoute
   '/checkin': typeof CheckinIndexRoute
   '/devices': typeof DevicesIndexRoute
+  '/lockers': typeof LockersIndexRoute
   '/members': typeof MembersIndexRoute
   '/payments': typeof PaymentsIndexRoute
   '/plans': typeof PlansIndexRoute
@@ -334,6 +342,7 @@ export interface FileRoutesById {
   '/branches/': typeof BranchesIndexRoute
   '/checkin/': typeof CheckinIndexRoute
   '/devices/': typeof DevicesIndexRoute
+  '/lockers/': typeof LockersIndexRoute
   '/members/': typeof MembersIndexRoute
   '/payments/': typeof PaymentsIndexRoute
   '/plans/': typeof PlansIndexRoute
@@ -375,6 +384,7 @@ export interface FileRouteTypes {
     | '/branches/'
     | '/checkin/'
     | '/devices/'
+    | '/lockers/'
     | '/members/'
     | '/payments/'
     | '/plans/'
@@ -407,6 +417,7 @@ export interface FileRouteTypes {
     | '/branches'
     | '/checkin'
     | '/devices'
+    | '/lockers'
     | '/members'
     | '/payments'
     | '/plans'
@@ -446,6 +457,7 @@ export interface FileRouteTypes {
     | '/branches/'
     | '/checkin/'
     | '/devices/'
+    | '/lockers/'
     | '/members/'
     | '/payments/'
     | '/plans/'
@@ -469,6 +481,7 @@ export interface RootRouteChildren {
   CheckinDoorRoute: typeof CheckinDoorRoute
   CheckinVisitsRoute: typeof CheckinVisitsRoute
   CheckinIndexRoute: typeof CheckinIndexRoute
+  LockersIndexRoute: typeof LockersIndexRoute
   PaymentsIndexRoute: typeof PaymentsIndexRoute
 }
 
@@ -585,6 +598,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/devices/$deviceId'
       preLoaderRoute: typeof DevicesDeviceIdRouteImport
       parentRoute: typeof DevicesRouteRoute
+    }
+    '/lockers/': {
+      id: '/lockers/'
+      path: '/lockers'
+      fullPath: '/lockers/'
+      preLoaderRoute: typeof LockersIndexRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/members/': {
       id: '/members/'
@@ -868,6 +888,7 @@ const rootRouteChildren: RootRouteChildren = {
   CheckinDoorRoute: CheckinDoorRoute,
   CheckinVisitsRoute: CheckinVisitsRoute,
   CheckinIndexRoute: CheckinIndexRoute,
+  LockersIndexRoute: LockersIndexRoute,
   PaymentsIndexRoute: PaymentsIndexRoute,
 }
 export const routeTree = rootRouteImport

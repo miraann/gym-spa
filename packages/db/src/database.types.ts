@@ -3143,7 +3143,7 @@ export type Database = {
       seller_suspend_gym: { Args: { p_gym_id: string; p_reason?: string }; Returns: undefined };
       seller_use_recovery_code: { Args: { p_code: string }; Returns: Json };
       set_locker_out_of_order: {
-        Args: { p_locker_id: string; p_note: string };
+        Args: { p_locker_id: string; p_note?: string };
         Returns: undefined;
       };
       set_member_photo: {

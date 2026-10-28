@@ -519,7 +519,7 @@ grant execute on function public.update_locker(uuid, text, text, text) to authen
 
 -- Out of order with a note, or back in order (no note). Only while free.
 -- permission_denied; locker_not_found; invalid_request (the note); locker_in_use.
-create function public.set_locker_out_of_order(p_locker_id uuid, p_note text)
+create function public.set_locker_out_of_order(p_locker_id uuid, p_note text default null)
 returns void
 language plpgsql
 security definer
