@@ -309,6 +309,7 @@ export class TestData {
     }
     for (const id of this.staffIds) await db.auth.admin.deleteUser(id);
     for (const table of [
+      'stock_movements',
       'spa_bookings',
       'member_spa_packages',
       'subscription_spa_sessions',
@@ -330,6 +331,8 @@ export class TestData {
       'payments',
       'invoice_items',
       'invoices',
+      'products',
+      'product_categories',
       'subscriptions',
       'plan_branches',
       'plans',

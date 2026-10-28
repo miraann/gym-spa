@@ -185,6 +185,16 @@ insert into public.pt_sessions (id, gym_id, branch_id, member_pt_package_id, mem
    'e0000000-0000-4000-8000-0000000000a1', tests.staff('trainer_ab'), 'done'),
   ('f0000000-0000-4000-8000-0000000000bd', tests.gym('pgtap-b'), tests.branch('B901', 'pgtap-b'), 'f0000000-0000-4000-8000-0000000000bc',
    'e0000000-0000-4000-8000-0000000000b1', tests.staff('trainer_ab', 'pgtap-b'), 'done');
+-- The shop in both gyms.
+insert into public.product_categories (id, gym_id, name_ckb) values
+  ('f0000000-0000-4000-8000-0000000001a1', tests.gym('pgtap-a'), 'خواردنەوە'),
+  ('f0000000-0000-4000-8000-0000000001b1', tests.gym('pgtap-b'), 'خواردنەوە');
+insert into public.products (id, gym_id, category_id, name_ckb, price) values
+  ('f0000000-0000-4000-8000-0000000001a2', tests.gym('pgtap-a'), 'f0000000-0000-4000-8000-0000000001a1', 'ئاو', 500),
+  ('f0000000-0000-4000-8000-0000000001b2', tests.gym('pgtap-b'), 'f0000000-0000-4000-8000-0000000001b1', 'ئاو', 500);
+insert into public.stock_movements (id, gym_id, branch_id, product_id, kind, quantity) values
+  ('f0000000-0000-4000-8000-0000000001a3', tests.gym('pgtap-a'), tests.branch('B901'), 'f0000000-0000-4000-8000-0000000001a2', 'receive', 10),
+  ('f0000000-0000-4000-8000-0000000001b3', tests.gym('pgtap-b'), tests.branch('B901', 'pgtap-b'), 'f0000000-0000-4000-8000-0000000001b2', 'receive', 10);
 
 select is_empty(
   $$ select t from tests.gym_tables() t
@@ -361,6 +371,15 @@ insert into insert_cases (table_name, statement) values
                      values (tests.gym('pgtap-b'), gen_random_uuid(), tests.branch('B901', 'pgtap-b'), 'f0000000-0000-4000-8000-0000000000bc',
                              'e0000000-0000-4000-8000-0000000000b1', tests.staff('trainer_ab', 'pgtap-b'), 'done') $$),
   ('pt_sessions', $$ select public.log_pt_session(gen_random_uuid(), 'f0000000-0000-4000-8000-0000000000bc', tests.branch('B901', 'pgtap-b'), 'done') $$),
+  ('product_categories', $$ insert into public.product_categories (gym_id, id, name_ckb) values (tests.gym('pgtap-b'), gen_random_uuid(), 'x') $$),
+  ('product_categories', $$ select public.save_product_category('f0000000-0000-4000-8000-0000000001b1', 'x') $$),
+  ('products', $$ insert into public.products (gym_id, id, name_ckb, price) values (tests.gym('pgtap-b'), gen_random_uuid(), 'x', 0) $$),
+  ('products', $$ select public.save_product('f0000000-0000-4000-8000-0000000001b2', 'x', 0) $$),
+  ('products', $$ select public.save_product(gen_random_uuid(), 'x', 0, p_category_id => 'f0000000-0000-4000-8000-0000000001b1') $$),
+  ('stock_movements', $$ insert into public.stock_movements (gym_id, id, branch_id, product_id, kind, quantity)
+                         values (tests.gym('pgtap-b'), gen_random_uuid(), tests.branch('B901', 'pgtap-b'), 'f0000000-0000-4000-8000-0000000001b2', 'receive', 1) $$),
+  ('stock_movements', $$ select public.receive_stock(gen_random_uuid(), tests.branch('B901', 'pgtap-b'), 'f0000000-0000-4000-8000-0000000001b2', 1) $$),
+  ('stock_movements', $$ select public.receive_stock(gen_random_uuid(), tests.branch('B901'), 'f0000000-0000-4000-8000-0000000001b2', 1) $$),
   -- Their own gym (gym_id left to fill itself in), pointing at gym B's rows.
   ('role_permissions', $$ insert into public.role_permissions (role_id, permission_key) values (tests.role('trainer', 'pgtap-b'), 'payments.view') $$),
   ('staff_users', $$ insert into public.staff_users (id, username, full_name, role_id)
