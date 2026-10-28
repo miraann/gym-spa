@@ -17,6 +17,7 @@
     "display": "Display",
     "appearance": "Appearance",
     "cardReader": "Card reader",
+    "printer": "Printer",
     "support": "Click Group"
   },
   "appearance": {
@@ -114,5 +115,16 @@
       "normal": "Normal",
       "large": "Large"
     }
+  },
+  "printer": {
+    "title": "Receipt printer",
+    "description": "The printer this device prints receipts and cash register reports on. It stays on this device.",
+    "label": "Printer",
+    "none": "None: the print dialog asks",
+    "noPrinters": "Windows has no printers.",
+    "silent": "Print without asking",
+    "silentHint": "Receipts and cash register reports print straight to this printer, without the print dialog.",
+    "saved": "Saved.",
+    "onlyWindows": "Choosing a printer is only in the Windows app."
   }
 }

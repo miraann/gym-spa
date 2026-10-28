@@ -6,6 +6,7 @@ import { useEffect, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { useDeviceGym } from '@/features/auth/auth-context';
+import { silentPrinter } from '@/features/payments/receipt-printer';
 import { useFormat } from '@/lib/format';
 import { usePreferences } from '@/lib/preferences';
 import type { CashReport } from './cash-data';
@@ -252,7 +253,12 @@ export function CashReportPrint({
     window.addEventListener('afterprint', finish, { once: true });
     // The fonts first, or the report prints in the fallback font.
     void document.fonts.ready.then(() => {
-      if (!cancelled) printPage();
+      if (cancelled) return;
+      const printer = silentPrinter();
+      void printPage(printer).then(() => {
+        // Printed without the dialog, there is no afterprint event.
+        if (printer !== null && !cancelled) finish();
+      });
     });
     return () => {
       cancelled = true;

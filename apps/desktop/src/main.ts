@@ -22,6 +22,7 @@ import {
   resolveAppFile,
 } from './app-protocol';
 import { serveCardReaders } from './card-readers';
+import { servePrinting } from './printing';
 import { createSecureStore } from './secure-store';
 import { nextZoomLevel, shortcutFor } from './shortcuts';
 
@@ -191,6 +192,8 @@ function lockDownWebContents(): void {
 
   // PC/SC card readers such as the ACR122U (see card-readers.ts).
   serveCardReaders(fromApp);
+  // Printing receipts without the dialog (see printing.ts).
+  servePrinting(fromApp);
 }
 
 /** Only the app's own pages may use the bridge. */
