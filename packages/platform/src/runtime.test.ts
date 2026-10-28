@@ -11,6 +11,8 @@ const bridge: DesktopBridge = {
   readLyingCards: () => undefined,
   watchCardReaders: () => () => undefined,
   signalCard: () => undefined,
+  listPrinters: () => Promise.resolve([]),
+  printSilently: () => Promise.resolve(true),
 };
 
 describe('detectPlatform', () => {
