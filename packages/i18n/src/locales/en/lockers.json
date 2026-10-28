@@ -173,6 +173,13 @@
     "invoice_voided": "Invoice voided",
     "end_of_day": "End of day"
   },
+  "checkin": {
+    "give": "Give locker {{number}}",
+    "given": "Locker {{number}} given."
+  },
+  "memberLockers": {
+    "title": "Lockers"
+  },
   "errors": {
     "permission_denied": "You don't have permission to do this.",
     "no_branch_access": "You can do this only in your own branches.",

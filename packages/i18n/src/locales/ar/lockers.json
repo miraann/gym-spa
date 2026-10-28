@@ -173,6 +173,13 @@
     "invoice_voided": "أُلغيت الفاتورة",
     "end_of_day": "نهاية اليوم"
   },
+  "checkin": {
+    "give": "إعطاء الخزانة {{number}}",
+    "given": "أُعطيت الخزانة {{number}}."
+  },
+  "memberLockers": {
+    "title": "الخزائن"
+  },
   "errors": {
     "permission_denied": "ليست لديك صلاحية لهذا الإجراء.",
     "no_branch_access": "يمكنك ذلك في فروعك فقط.",

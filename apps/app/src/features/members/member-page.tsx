@@ -16,6 +16,7 @@ import { useTranslation } from 'react-i18next';
 import { usePermission } from '@/features/auth/use-permissions';
 import { MemberCardsCard } from '@/features/cards/member-cards';
 import { MemberVisitsCard } from '@/features/checkin/member-visits';
+import { MemberLockersCard } from '@/features/lockers/member-lockers';
 import { MemberMoneyCard } from '@/features/payments/member-money';
 import { MemberSubscriptionsCard } from '@/features/subscriptions/member-subscriptions';
 import { BackToList } from '@/features/staff/admin-error';
@@ -117,6 +118,7 @@ function MemberProfile({ member }: { readonly member: Member }) {
       <MemberPhotoCard member={member} />
       <MemberSubscriptionsCard member={member} />
       <MemberMoneyCard member={member} />
+      <MemberLockersCard member={member} />
       <MemberVisitsCard member={member} />
       <MemberCardsCard member={member} />
       <MemberDetails member={member} />

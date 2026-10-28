@@ -15,6 +15,7 @@ import { RequirePermission } from '@/components/no-access';
 import { usePermission } from '@/features/auth/use-permissions';
 import { BrowserReaderNotice } from '@/features/cards/card-scan';
 import { useMemberSearch } from '@/features/members/member-data';
+import { CheckinLocker } from '@/features/lockers/checkin-locker';
 import { useAdminWriteState } from '@/features/staff/write-state';
 import { usePreferences } from '@/lib/preferences';
 import { useCheckinBranch } from './checkin-branch';
@@ -101,6 +102,13 @@ function CheckinScreen() {
           onClose={flow.close}
           onOverride={flow.override}
           overriding={flow.pending}
+          actions={
+            <CheckinLocker
+              key={flow.answer.attendance_id ?? flow.answer.reason ?? ''}
+              answer={flow.answer}
+              branchId={branchId}
+            />
+          }
         />
       )}
     </div>

@@ -173,6 +173,13 @@
     "invoice_voided": "پسوولەکە پووچەڵ کرایەوە",
     "end_of_day": "کۆتایی ڕۆژ"
   },
+  "checkin": {
+    "give": "پێدانی دۆڵابی {{number}}",
+    "given": "دۆڵابی {{number}} درا."
+  },
+  "memberLockers": {
+    "title": "دۆڵابەکان"
+  },
   "errors": {
     "permission_denied": "دەسەڵاتی ئەم کارەت نییە.",
     "no_branch_access": "تەنها لە لقەکانی خۆت دەتوانیت ئەمە بکەیت.",

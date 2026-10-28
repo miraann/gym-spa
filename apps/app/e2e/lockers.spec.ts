@@ -1,5 +1,6 @@
 import { admin, write, type TestData } from './support/backend';
 import { addMember } from './support/members';
+import { addPlan, addSale } from './support/sales';
 import { expect, signIn, test } from './support/app';
 
 // Lockers (Phase 5): the owner adds lockers and sets the rent, a locker is rented and released, a
@@ -146,4 +147,46 @@ test('a receptionist gives a daily locker, and the end-of-day list releases yest
   await expect(notReturned).toHaveCount(0);
   await expect(page.locator('[data-locker="4"]')).toHaveAttribute('data-status', 'free');
   await expect(page.locator('[data-locker="1"]')).toHaveAttribute('data-status', 'occupied');
+});
+
+test('the check-in result gives the member a daily locker, shown on their page', async ({
+  page,
+  data,
+}) => {
+  const branchId = await data.branch();
+  const staff = await data.staff({ branchIds: [branchId] });
+  await addLockers(data, branchId, 2);
+  const planId = await addPlan(data, 'مانگانە', 35_000);
+  const memberId = await addMember(data, branchId, 'هێمن جەلال', '+9647501260004');
+  await addSale(data, {
+    memberId,
+    branchId,
+    planId,
+    nameCkb: 'مانگانە',
+    price: 35_000,
+    number: 'B2-900601',
+    paid: 35_000,
+  });
+  await page.setViewportSize(DESKTOP);
+  await signIn(page, staff, '/checkin');
+
+  await page.getByLabel('ناو، ژمارەی ئەندام یان مۆبایل').fill('هێمن');
+  await page.getByRole('button', { name: 'تۆمارکردنی هاتن: هێمن جەلال' }).click();
+  const result = page.locator('[data-checkin-result]');
+  await expect(result).toHaveAttribute('data-checkin-result', 'allowed');
+  await result.getByRole('button', { name: 'پێدانی دۆڵابی 1' }).click();
+  await expect(result.getByTestId('checkin-locker')).toHaveText('دۆڵابی 1 درا.');
+  const { data: given } = await admin()
+    .from('locker_assignments')
+    .select('kind, attendance_id')
+    .eq('member_id', memberId);
+  expect(given).toHaveLength(1);
+  expect(given?.[0]?.attendance_id).not.toBeNull();
+
+  // The member's page, through today's visits (a reload would lock the app).
+  await result.getByRole('button', { name: 'داخستن' }).click();
+  await page.getByRole('link', { name: 'هاتنەکانی ئەمڕۆ' }).click();
+  await page.getByRole('link', { name: 'هێمن جەلال' }).click();
+  await expect(page).toHaveURL(new RegExp(`/members/${memberId}$`));
+  await expect(page.getByTestId('member-lockers')).toContainText('دۆڵابی 1');
 });
