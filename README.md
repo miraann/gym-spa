@@ -324,6 +324,18 @@ Phase 4, step 4c: `apps/app/src/features/checkin/visits-page.tsx` and `visit-dat
 - **A member's own page** (step 4d, `member-visits.tsx`) lists their last 10 visits in every branch, for staff with `attendance.view`: when, where (a branch the staff member can't see is left unnamed), card or by hand, the subscription, and any override or void.
 - **Checking out** (`checkin.perform`) and **voiding** (`attendance.void`, a reason: the visit counts for nothing and goes back to its subscription) are buttons on each visit.
 
+### Lockers
+
+Phase 5 (spec §4.4 and the Phase 5 plan in §8), migration `20261028200000_lockers.sql`, tests `supabase/tests/390-lockers.test.sql`, `packages/core/src/lockers.test.ts` and `apps/app/e2e/lockers.spec.ts`; screens in `apps/app/src/features/lockers/`.
+
+- **Tables:** `lockers` (branch, number like `12` or `A12`, zone men / women / mixed, kind daily / rented, out of order with a note, removed = soft delete) and `locker_assignments` (who holds a locker; released when, by whom and why). A unique index allows one open holder per locker and one open daily locker per member, so the second staff member gets `locker_taken` at once. Only the functions write them; `lockers.view` reads them in the staff member's branches.
+- **The status is never stored:** `lockerStatus()` in `packages/core` makes it from the open holder and today (Baghdad): out of order, free, reserved (a rental that starts later), overdue (a rental past its last paid day, or a daily locker from an earlier day), occupied.
+- **Functions:** `add_lockers()` (a numbered range, at most 300), `update_locker()`, `set_locker_out_of_order()` and `remove_locker()` (`lockers.manage`; the zone, kind, out of order and removal only while free); `give_locker()` (daily, an active member whose gender fits the zone, optionally with today's visit), `release_locker()`, `release_daily_lockers()` (the end-of-day list) (`lockers.assign`); `rent_locker()`, `renew_locker_rental()` and `lost_locker_key()` (also `payments.create`: one invoice, item kind `locker` or `penalty`, with an optional payment, in one transaction).
+- **Released by other events:** checking a member out or voiding the visit releases the daily locker given with it; voiding a rent invoice releases its locker (triggers). There is no scheduled job (both editions), so daily lockers left from an earlier day show as overdue in the "not given back" list on `/lockers`, which releases them with one button.
+- **Prices** are settings, per gym (the screen) or per branch: `lockers.rent_month_price` (dinars a month; 0 = renting is refused with `locker_price_not_set`) and `lockers.lost_key_fee` (0 = no fee). `settings.edit` sets them on `/lockers` → "نرخەکان".
+- **Screens:** `/lockers` is the map by zone with filters by status (each status has an icon and a word, never color alone); a locker opens a dialog with what may be done to it and its last 20 holders. The check-in result offers the first free daily locker of the member's zone (`checkin-locker.tsx`), tied to the visit. A member's page lists the lockers they hold (`member-lockers.tsx`).
+- **Not built:** linking a locker to an NFC card for smart locks.
+
 ### Support access
 
 MT-4 (spec §2.6), migration `20261028100000_support_access.sql`, tests `supabase/tests/380-support-access.test.sql`.

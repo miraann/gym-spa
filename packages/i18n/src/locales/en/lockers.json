@@ -1,0 +1,212 @@
+{
+  "page": {
+    "title": "Lockers",
+    "description": "The branch's lockers by zone. Tap a locker to give, release or rent it.",
+    "branch": "Branch",
+    "noBranch": "You have no active branch, so no lockers are shown.",
+    "empty": "No lockers have been added to this branch yet.",
+    "noneShown": "No lockers match this choice."
+  },
+  "filters": {
+    "status": "Status",
+    "zone": "Zone",
+    "all": "All",
+    "allZones": "All zones",
+    "free": "Free",
+    "occupied": "Occupied",
+    "reserved": "Reserved",
+    "overdue": "Overdue",
+    "out_of_order": "Out of order"
+  },
+  "zones": {
+    "men": "Men",
+    "women": "Women",
+    "mixed": "Mixed"
+  },
+  "kinds": {
+    "daily": "Daily",
+    "rented": "Rented"
+  },
+  "status": {
+    "free": "Free",
+    "occupied": "Occupied",
+    "reserved": "Reserved",
+    "overdue": "Overdue",
+    "out_of_order": "Out of order"
+  },
+  "tile": {
+    "label": "Locker {{number}}, {{status}}"
+  },
+  "fields": {
+    "zone": "Zone",
+    "kind": "Kind"
+  },
+  "details": {
+    "title": "Locker {{number}}",
+    "note": "Out of order: {{note}}",
+    "unknownMember": "A member",
+    "dailySince": "Daily, since {{time}}",
+    "rentedFor": "Rented, {{from}} to {{until}}",
+    "actions": "Locker actions",
+    "history": "Earlier holders",
+    "historyEmpty": "Nobody has had this locker yet."
+  },
+  "actions": {
+    "give": "Give locker",
+    "rent": "Rent",
+    "release": "Release",
+    "renew": "Renew",
+    "lostKey": "Lost key",
+    "outOfOrder": "Out of order",
+    "backInOrder": "Fixed",
+    "edit": "Edit",
+    "remove": "Remove",
+    "save": "Save",
+    "cancel": "Cancel",
+    "back": "Back",
+    "close": "Close"
+  },
+  "member": {
+    "search": "Find the member: name, number or mobile",
+    "required": "Choose a member.",
+    "none": "No suitable member found.",
+    "zoneHint": {
+      "men": "Men only: this locker is in the men's zone.",
+      "women": "Women only: this locker is in the women's zone."
+    }
+  },
+  "give": {
+    "title": "Give locker {{number}}",
+    "description": "For today. Release it when the member leaves.",
+    "confirm": "Give",
+    "done": "Locker {{number}} given to {{name}}."
+  },
+  "money": {
+    "months": "Months",
+    "monthCount": "{{count}} month(s)",
+    "total": "Total",
+    "payNow": "Pays now"
+  },
+  "rent": {
+    "title": "Rent locker {{number}}",
+    "description": "Until {{until}}.",
+    "startsOn": "Starts",
+    "startProblem": "It starts today or within 60 days.",
+    "confirm": "Rent",
+    "invoiceText": "Locker {{number}} rent, {{count}} month(s)",
+    "done": "Locker {{number}} rented. Invoice {{invoice}}."
+  },
+  "renew": {
+    "title": "Renew locker {{number}}",
+    "description": "From {{from}} to {{until}}.",
+    "confirm": "Renew",
+    "invoiceText": "Locker {{number}} rent renewed, {{count}} month(s)",
+    "done": "Locker {{number}} renewed. Invoice {{invoice}}."
+  },
+  "lostKey": {
+    "title": "Locker {{number}}: key lost",
+    "fee": "The locker is released and {{fee}} is charged to the member.",
+    "noFee": "The locker is released. The gym has set no fee for a lost key.",
+    "confirm": "Record",
+    "invoiceText": "Lost key, locker {{number}}",
+    "done": "Lost key of locker {{number}} recorded."
+  },
+  "release": {
+    "done": "Locker {{number}} released."
+  },
+  "outOfOrder": {
+    "title": "Locker {{number}} is out of order",
+    "backTitle": "Is locker {{number}} fixed?",
+    "note": "What happened to it?",
+    "noteRequired": "Write what happened to it.",
+    "done": "Locker {{number}} marked out of order.",
+    "backDone": "Locker {{number}} is in use again."
+  },
+  "remove": {
+    "title": "Remove locker {{number}}",
+    "description": "It leaves the map, but its history stays.",
+    "done": "Locker {{number}} removed."
+  },
+  "edit": {
+    "title": "Edit locker {{number}}",
+    "number": "Locker number",
+    "numberHint": "Like 12 or A12: up to three capital English letters, then digits.",
+    "numberProblem": "Write the number like 12 or A12.",
+    "done": "Locker {{number}} saved."
+  },
+  "add": {
+    "open": "Add lockers",
+    "title": "Add lockers",
+    "description": "Several lockers at once, numbered one after another.",
+    "prefix": "Letters before the number (optional)",
+    "prefixHint": "Like A for A1, A2… Leave empty for numbers only.",
+    "prefixProblem": "Up to three English letters.",
+    "from": "From number",
+    "to": "To number",
+    "rangeProblem": "Numbers 1 to 9999, and up to {{max}} lockers at once.",
+    "preview": "{{first}} to {{last}}, {{count}} lockers",
+    "confirm": "Add",
+    "done": "{{count}} lockers added."
+  },
+  "prices": {
+    "open": "Prices",
+    "title": "Locker prices",
+    "description": "For every branch.",
+    "rent": "Monthly rent (IQD)",
+    "rentHint": "0: no locker can be rented yet.",
+    "fee": "Lost key fee (IQD)",
+    "feeHint": "0: no fee.",
+    "problem": "Write a whole number.",
+    "done": "Prices saved."
+  },
+  "notReturned": {
+    "title": "Not given back: {{count}}",
+    "description": "Daily lockers from earlier days, and rented lockers whose rent has ended.",
+    "releaseDaily": "Release the daily lockers ({{count}})",
+    "done": "{{count}} lockers released."
+  },
+  "releaseReasons": {
+    "returned": "Given back",
+    "checked_out": "Member left",
+    "renewed": "Renewed",
+    "key_lost": "Key lost",
+    "invoice_voided": "Invoice voided",
+    "end_of_day": "End of day"
+  },
+  "checkin": {
+    "give": "Give locker {{number}}",
+    "given": "Locker {{number}} given."
+  },
+  "memberLockers": {
+    "title": "Lockers"
+  },
+  "errors": {
+    "permission_denied": "You don't have permission to do this.",
+    "no_branch_access": "You can do this only in your own branches.",
+    "branch_inactive": "This branch is deactivated.",
+    "locker_not_found": "This locker wasn't found, or isn't in your branches.",
+    "locker_out_of_order": "This locker is out of order.",
+    "locker_wrong_kind": "This locker isn't for this (daily or rented).",
+    "locker_taken": "Someone else has this locker. The map was refreshed.",
+    "locker_wrong_zone": "This locker is in the other gender's zone.",
+    "locker_in_use": "Release the locker first.",
+    "locker_number_taken": "Another locker in this branch has this number.",
+    "invalid_locker": "The locker's details aren't valid.",
+    "member_not_found": "This member wasn't found.",
+    "member_archived": "An archived member gets no locker.",
+    "member_not_active": "Only an active member gets a daily locker.",
+    "already_has_locker": "This member already has a daily locker.",
+    "visit_not_found": "This member's visit today in this branch wasn't found.",
+    "assignment_not_found": "This wasn't found. The map was refreshed.",
+    "already_released": "This locker was released already.",
+    "not_a_rental": "Only a rented locker is renewed.",
+    "invalid_rental": "A rental is 1 to 12 months, starting today or within 60 days.",
+    "locker_price_not_set": "No locker rent is set yet. The gym's owner sets it in \"Prices\".",
+    "invalid_payment": "The payment isn't valid.",
+    "payment_too_large": "The payment is more than the total.",
+    "gym_read_only": "This gym is view-only, so nothing changes.",
+    "invalid_request": "The details aren't valid. Try again.",
+    "network": "No internet connection. Nothing was saved.",
+    "unexpected": "Something went wrong. Try again."
+  }
+}

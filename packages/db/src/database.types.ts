@@ -645,6 +645,198 @@ export type Database = {
           },
         ];
       };
+      locker_assignments: {
+        Row: {
+          assigned_at: string;
+          attendance_id: string | null;
+          branch_id: string;
+          created_at: string;
+          created_by: string | null;
+          deleted_at: string | null;
+          ends_on: string | null;
+          gym_id: string;
+          id: string;
+          invoice_id: string | null;
+          key_fee_invoice_id: string | null;
+          kind: string;
+          locker_id: string;
+          member_id: string;
+          release_reason: string | null;
+          released_at: string | null;
+          released_by: string | null;
+          renews_id: string | null;
+          starts_on: string;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          assigned_at?: string;
+          attendance_id?: string | null;
+          branch_id: string;
+          created_at?: string;
+          created_by?: string | null;
+          deleted_at?: string | null;
+          ends_on?: string | null;
+          gym_id?: string;
+          id: string;
+          invoice_id?: string | null;
+          key_fee_invoice_id?: string | null;
+          kind: string;
+          locker_id: string;
+          member_id: string;
+          release_reason?: string | null;
+          released_at?: string | null;
+          released_by?: string | null;
+          renews_id?: string | null;
+          starts_on: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          assigned_at?: string;
+          attendance_id?: string | null;
+          branch_id?: string;
+          created_at?: string;
+          created_by?: string | null;
+          deleted_at?: string | null;
+          ends_on?: string | null;
+          gym_id?: string;
+          id?: string;
+          invoice_id?: string | null;
+          key_fee_invoice_id?: string | null;
+          kind?: string;
+          locker_id?: string;
+          member_id?: string;
+          release_reason?: string | null;
+          released_at?: string | null;
+          released_by?: string | null;
+          renews_id?: string | null;
+          starts_on?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'locker_assignments_attendance_id_gym_id_fkey';
+            columns: ['attendance_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'attendance';
+            referencedColumns: ['id', 'gym_id'];
+          },
+          {
+            foreignKeyName: 'locker_assignments_branch_id_gym_id_fkey';
+            columns: ['branch_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'branches';
+            referencedColumns: ['id', 'gym_id'];
+          },
+          {
+            foreignKeyName: 'locker_assignments_invoice_id_gym_id_fkey';
+            columns: ['invoice_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'invoice_balances';
+            referencedColumns: ['invoice_id', 'gym_id'];
+          },
+          {
+            foreignKeyName: 'locker_assignments_invoice_id_gym_id_fkey';
+            columns: ['invoice_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'invoices';
+            referencedColumns: ['id', 'gym_id'];
+          },
+          {
+            foreignKeyName: 'locker_assignments_key_fee_invoice_id_gym_id_fkey';
+            columns: ['key_fee_invoice_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'invoice_balances';
+            referencedColumns: ['invoice_id', 'gym_id'];
+          },
+          {
+            foreignKeyName: 'locker_assignments_key_fee_invoice_id_gym_id_fkey';
+            columns: ['key_fee_invoice_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'invoices';
+            referencedColumns: ['id', 'gym_id'];
+          },
+          {
+            foreignKeyName: 'locker_assignments_locker_id_gym_id_fkey';
+            columns: ['locker_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'lockers';
+            referencedColumns: ['id', 'gym_id'];
+          },
+          {
+            foreignKeyName: 'locker_assignments_member_id_gym_id_fkey';
+            columns: ['member_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'members';
+            referencedColumns: ['id', 'gym_id'];
+          },
+          {
+            foreignKeyName: 'locker_assignments_renews_id_gym_id_fkey';
+            columns: ['renews_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'locker_assignments';
+            referencedColumns: ['id', 'gym_id'];
+          },
+        ];
+      };
+      lockers: {
+        Row: {
+          branch_id: string;
+          created_at: string;
+          created_by: string | null;
+          deleted_at: string | null;
+          gym_id: string;
+          id: string;
+          kind: string;
+          number: string;
+          out_of_order_at: string | null;
+          out_of_order_note: string | null;
+          updated_at: string;
+          updated_by: string | null;
+          zone: string;
+        };
+        Insert: {
+          branch_id: string;
+          created_at?: string;
+          created_by?: string | null;
+          deleted_at?: string | null;
+          gym_id?: string;
+          id: string;
+          kind: string;
+          number: string;
+          out_of_order_at?: string | null;
+          out_of_order_note?: string | null;
+          updated_at?: string;
+          updated_by?: string | null;
+          zone: string;
+        };
+        Update: {
+          branch_id?: string;
+          created_at?: string;
+          created_by?: string | null;
+          deleted_at?: string | null;
+          gym_id?: string;
+          id?: string;
+          kind?: string;
+          number?: string;
+          out_of_order_at?: string | null;
+          out_of_order_note?: string | null;
+          updated_at?: string;
+          updated_by?: string | null;
+          zone?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'lockers_branch_id_gym_id_fkey';
+            columns: ['branch_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'branches';
+            referencedColumns: ['id', 'gym_id'];
+          },
+        ];
+      };
       member_health: {
         Row: {
           blood_type: string | null;
@@ -2007,6 +2199,17 @@ export type Database = {
       };
     };
     Functions: {
+      add_lockers: {
+        Args: {
+          p_branch_id: string;
+          p_from: number;
+          p_kind: string;
+          p_prefix: string;
+          p_to: number;
+          p_zone: string;
+        };
+        Returns: number;
+      };
       assign_card: {
         Args: { p_id: string; p_member_id: string; p_uid: string };
         Returns: {
@@ -2366,6 +2569,15 @@ export type Database = {
         };
         Returns: Json;
       };
+      give_locker: {
+        Args: {
+          p_assignment_id: string;
+          p_attendance_id?: string;
+          p_locker_id: string;
+          p_member_id: string;
+        };
+        Returns: Json;
+      };
       grant_support_access: {
         Args: { p_hours: number; p_id: string; p_reason: string };
         Returns: Json;
@@ -2407,6 +2619,15 @@ export type Database = {
       inside: {
         Args: { p_visit: Database['public']['Tables']['attendance']['Row'] };
         Returns: boolean;
+      };
+      lost_locker_key: {
+        Args: {
+          p_assignment_id: string;
+          p_description: string;
+          p_invoice_id: string;
+          p_payment?: Json;
+        };
+        Returns: Json;
       };
       member_import_history: {
         Args: Record<PropertyKey, never>;
@@ -2562,7 +2783,34 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      release_daily_lockers: { Args: { p_branch_id: string }; Returns: number };
+      release_locker: { Args: { p_assignment_id: string }; Returns: Json };
+      remove_locker: { Args: { p_locker_id: string }; Returns: undefined };
       remove_member_photo: { Args: { p_member_id: string }; Returns: undefined };
+      renew_locker_rental: {
+        Args: {
+          p_assignment_id: string;
+          p_description: string;
+          p_invoice_id: string;
+          p_months: number;
+          p_payment?: Json;
+          p_renews_id: string;
+        };
+        Returns: Json;
+      };
+      rent_locker: {
+        Args: {
+          p_assignment_id: string;
+          p_description: string;
+          p_invoice_id: string;
+          p_locker_id: string;
+          p_member_id: string;
+          p_months: number;
+          p_payment?: Json;
+          p_starts_on: string;
+        };
+        Returns: Json;
+      };
       replace_card: {
         Args: { p_card_id: string; p_new_id?: string; p_new_uid?: string; p_reason: string };
         Returns: {
@@ -2894,6 +3142,10 @@ export type Database = {
       };
       seller_suspend_gym: { Args: { p_gym_id: string; p_reason?: string }; Returns: undefined };
       seller_use_recovery_code: { Args: { p_code: string }; Returns: Json };
+      set_locker_out_of_order: {
+        Args: { p_locker_id: string; p_note?: string };
+        Returns: undefined;
+      };
       set_member_photo: {
         Args: {
           p_member_id: string;
@@ -3038,6 +3290,10 @@ export type Database = {
       unfreeze_subscription: { Args: { p_freeze_id: string }; Returns: Json };
       unlock_on_device: { Args: { p_device_id: string; p_pin: string }; Returns: Json };
       unlock_with_pin: { Args: { p_branch_id: string; p_pin: string }; Returns: Json };
+      update_locker: {
+        Args: { p_kind: string; p_locker_id: string; p_number: string; p_zone: string };
+        Returns: undefined;
+      };
       update_member: {
         Args: {
           p_address?: string;

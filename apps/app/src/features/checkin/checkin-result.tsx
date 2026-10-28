@@ -12,7 +12,7 @@ import {
   XIcon,
   type LucideIcon,
 } from 'lucide-react';
-import { useEffect, useId, useState, type CSSProperties } from 'react';
+import { useEffect, useId, useState, type CSSProperties, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { usePermission } from '@/features/auth/use-permissions';
 import { useMemberPhoto } from '@/features/members/member-data';
@@ -121,6 +121,7 @@ export function CheckinResultView({
   onOverride,
   overriding = false,
   door = false,
+  actions,
 }: {
   readonly answer: CheckinAnswer;
   readonly onClose: () => void;
@@ -129,6 +130,8 @@ export function CheckinResultView({
   readonly overriding?: boolean;
   /** The door screen: larger, and nothing for staff. */
   readonly door?: boolean;
+  /** More for staff under the result, such as giving a locker (not on the door screen). */
+  readonly actions?: ReactNode;
 }) {
   const { t } = useTranslation('checkin');
   const { language } = usePreferences();
@@ -242,6 +245,16 @@ export function CheckinResultView({
             {subscription.visits_left !== null &&
               ` · ${t('result.visitsLeft', { count: subscription.visits_left })}`}
           </p>
+        )}
+
+        {actions && !noteOpen && (
+          <div
+            onClick={(event) => {
+              event.stopPropagation();
+            }}
+          >
+            {actions}
+          </div>
         )}
 
         {showOverride && !noteOpen && (

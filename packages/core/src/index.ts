@@ -289,6 +289,24 @@ export {
   normalizeSearchText,
 } from './search.ts';
 export {
+  LOCKER_KINDS,
+  LOCKER_MAX_ADD,
+  LOCKER_NUMBER_PATTERN,
+  LOCKER_PREFIX_PATTERN,
+  LOCKER_RELEASE_REASONS,
+  LOCKER_STATUSES,
+  LOCKER_ZONES,
+  compareLockerNumbers,
+  lockerFitsGender,
+  lockerStatus,
+  normalizeLockerNumber,
+  type LockerHolding,
+  type LockerKind,
+  type LockerReleaseReason,
+  type LockerStatus,
+  type LockerZone,
+} from './lockers.ts';
+export {
   CHECKIN_REASONS,
   CHECKIN_RESULTS,
   CHECKIN_STEPS,

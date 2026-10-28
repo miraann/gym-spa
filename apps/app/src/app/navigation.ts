@@ -73,7 +73,7 @@ export const NAV_GROUPS: readonly NavGroup[] = [
   {
     key: 'services',
     items: [
-      { key: 'lockers', icon: KeyRoundIcon, permission: 'lockers.view' },
+      { key: 'lockers', icon: KeyRoundIcon, to: '/lockers', permission: 'lockers.view' },
       { key: 'spa', icon: BathIcon, permission: 'spa.view' },
       { key: 'classes', icon: CalendarDaysIcon, permission: 'classes.view' },
       { key: 'trainers', icon: DumbbellIcon, permission: 'pt.log' },

@@ -2,6 +2,7 @@ import arAuth from './locales/ar/auth.json';
 import arBranches from './locales/ar/branches.json';
 import arCards from './locales/ar/cards.json';
 import arCheckin from './locales/ar/checkin.json';
+import arLockers from './locales/ar/lockers.json';
 import arCommon from './locales/ar/common.json';
 import arDates from './locales/ar/dates.json';
 import arDevices from './locales/ar/devices.json';
@@ -20,6 +21,7 @@ import ckbAuth from './locales/ckb/auth.json';
 import ckbBranches from './locales/ckb/branches.json';
 import ckbCards from './locales/ckb/cards.json';
 import ckbCheckin from './locales/ckb/checkin.json';
+import ckbLockers from './locales/ckb/lockers.json';
 import ckbCommon from './locales/ckb/common.json';
 import ckbDates from './locales/ckb/dates.json';
 import ckbDevices from './locales/ckb/devices.json';
@@ -38,6 +40,7 @@ import enAuth from './locales/en/auth.json';
 import enBranches from './locales/en/branches.json';
 import enCards from './locales/en/cards.json';
 import enCheckin from './locales/en/checkin.json';
+import enLockers from './locales/en/lockers.json';
 import enCommon from './locales/en/common.json';
 import enDates from './locales/en/dates.json';
 import enDevices from './locales/en/devices.json';
@@ -77,6 +80,7 @@ const ckb = {
   subscriptions: ckbSubscriptions,
   payments: ckbPayments,
   support: ckbSupport,
+  lockers: ckbLockers,
 };
 
 /** The gym app's texts (every namespace it loads). */
@@ -107,6 +111,7 @@ const en: GymResources = {
   subscriptions: enSubscriptions,
   payments: enPayments,
   support: enSupport,
+  lockers: enLockers,
 };
 
 const ar: GymResources = {
@@ -128,6 +133,7 @@ const ar: GymResources = {
   subscriptions: arSubscriptions,
   payments: arPayments,
   support: arSupport,
+  lockers: arLockers,
 };
 
 export const resources: Record<Language, GymResources> = { ckb, en, ar };
@@ -151,6 +157,7 @@ export const NAMESPACES = [
   'subscriptions',
   'payments',
   'support',
+  'lockers',
 ] as const satisfies readonly Namespace[];
 
 export const DEFAULT_NAMESPACE = 'common' satisfies Namespace;

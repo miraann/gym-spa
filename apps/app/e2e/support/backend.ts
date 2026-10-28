@@ -294,6 +294,8 @@ export class TestData {
     }
     for (const id of this.staffIds) await db.auth.admin.deleteUser(id);
     for (const table of [
+      'locker_assignments',
+      'lockers',
       'support_reads',
       'support_grants',
       'attendance',
