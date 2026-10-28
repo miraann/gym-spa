@@ -222,6 +222,133 @@ export type Database = {
           },
         ];
       };
+      cash_movements: {
+        Row: {
+          amount: number;
+          created_at: string;
+          created_by: string | null;
+          currency: string;
+          deleted_at: string | null;
+          gym_id: string;
+          id: string;
+          kind: string;
+          reason: string;
+          shift_id: string;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          amount: number;
+          created_at?: string;
+          created_by?: string | null;
+          currency: string;
+          deleted_at?: string | null;
+          gym_id?: string;
+          id: string;
+          kind: string;
+          reason: string;
+          shift_id: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          amount?: number;
+          created_at?: string;
+          created_by?: string | null;
+          currency?: string;
+          deleted_at?: string | null;
+          gym_id?: string;
+          id?: string;
+          kind?: string;
+          reason?: string;
+          shift_id?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'cash_movements_shift_id_gym_id_fkey';
+            columns: ['shift_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'cash_shifts';
+            referencedColumns: ['id', 'gym_id'];
+          },
+        ];
+      };
+      cash_shifts: {
+        Row: {
+          branch_id: string;
+          close_note: string | null;
+          closed_at: string | null;
+          closed_by: string | null;
+          counted_iqd: number | null;
+          counted_usd: number | null;
+          created_at: string;
+          created_by: string | null;
+          deleted_at: string | null;
+          expected_iqd: number | null;
+          expected_usd: number | null;
+          gym_id: string;
+          id: string;
+          opened_at: string;
+          opened_by: string | null;
+          opening_iqd: number;
+          opening_usd: number;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          branch_id: string;
+          close_note?: string | null;
+          closed_at?: string | null;
+          closed_by?: string | null;
+          counted_iqd?: number | null;
+          counted_usd?: number | null;
+          created_at?: string;
+          created_by?: string | null;
+          deleted_at?: string | null;
+          expected_iqd?: number | null;
+          expected_usd?: number | null;
+          gym_id?: string;
+          id: string;
+          opened_at?: string;
+          opened_by?: string | null;
+          opening_iqd: number;
+          opening_usd?: number;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          branch_id?: string;
+          close_note?: string | null;
+          closed_at?: string | null;
+          closed_by?: string | null;
+          counted_iqd?: number | null;
+          counted_usd?: number | null;
+          created_at?: string;
+          created_by?: string | null;
+          deleted_at?: string | null;
+          expected_iqd?: number | null;
+          expected_usd?: number | null;
+          gym_id?: string;
+          id?: string;
+          opened_at?: string;
+          opened_by?: string | null;
+          opening_iqd?: number;
+          opening_usd?: number;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'cash_shifts_branch_id_gym_id_fkey';
+            columns: ['branch_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'branches';
+            referencedColumns: ['id', 'gym_id'];
+          },
+        ];
+      };
       class_bookings: {
         Row: {
           created_at: string;
@@ -1734,6 +1861,7 @@ export type Database = {
         Row: {
           amount: number;
           branch_id: string;
+          cash_shift_id: string | null;
           change_given: number | null;
           created_at: string;
           created_by: string | null;
@@ -1759,6 +1887,7 @@ export type Database = {
         Insert: {
           amount: number;
           branch_id: string;
+          cash_shift_id?: string | null;
           change_given?: number | null;
           created_at?: string;
           created_by?: string | null;
@@ -1784,6 +1913,7 @@ export type Database = {
         Update: {
           amount?: number;
           branch_id?: string;
+          cash_shift_id?: string | null;
           change_given?: number | null;
           created_at?: string;
           created_by?: string | null;
@@ -1812,6 +1942,13 @@ export type Database = {
             columns: ['branch_id', 'gym_id'];
             isOneToOne: false;
             referencedRelation: 'branches';
+            referencedColumns: ['id', 'gym_id'];
+          },
+          {
+            foreignKeyName: 'payments_cash_shift_id_gym_id_fkey';
+            columns: ['cash_shift_id', 'gym_id'];
+            isOneToOne: false;
+            referencedRelation: 'cash_shifts';
             referencedColumns: ['id', 'gym_id'];
           },
           {
@@ -3963,6 +4100,36 @@ export type Database = {
       };
     };
     Functions: {
+      add_cash_movement: {
+        Args: {
+          p_amount: number;
+          p_currency: string;
+          p_id: string;
+          p_kind: string;
+          p_reason: string;
+          p_shift_id: string;
+        };
+        Returns: {
+          amount: number;
+          created_at: string;
+          created_by: string | null;
+          currency: string;
+          deleted_at: string | null;
+          gym_id: string;
+          id: string;
+          kind: string;
+          reason: string;
+          shift_id: string;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        SetofOptions: {
+          from: '*';
+          to: 'cash_movements';
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
       add_lockers: {
         Args: {
           p_branch_id: string;
@@ -4074,6 +4241,7 @@ export type Database = {
         };
         Returns: Json;
       };
+      cash_shift_report: { Args: { p_shift_id: string }; Returns: Json };
       change_plan: {
         Args: {
           p_branch_id: string;
@@ -4123,6 +4291,15 @@ export type Database = {
       };
       check_out: { Args: { p_attendance_id: string }; Returns: Json };
       clear_my_pin_lockout: { Args: Record<PropertyKey, never>; Returns: undefined };
+      close_cash_shift: {
+        Args: {
+          p_counted_iqd: number;
+          p_counted_usd?: number;
+          p_note?: string;
+          p_shift_id: string;
+        };
+        Returns: Json;
+      };
       count_stock: {
         Args: {
           p_branch_id: string;
@@ -4688,6 +4865,36 @@ export type Database = {
           paid_until: string;
           suspended: boolean;
         }[];
+      };
+      open_cash_shift: {
+        Args: { p_branch_id: string; p_id: string; p_opening_iqd: number; p_opening_usd?: number };
+        Returns: {
+          branch_id: string;
+          close_note: string | null;
+          closed_at: string | null;
+          closed_by: string | null;
+          counted_iqd: number | null;
+          counted_usd: number | null;
+          created_at: string;
+          created_by: string | null;
+          deleted_at: string | null;
+          expected_iqd: number | null;
+          expected_usd: number | null;
+          gym_id: string;
+          id: string;
+          opened_at: string;
+          opened_by: string | null;
+          opening_iqd: number;
+          opening_usd: number;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        SetofOptions: {
+          from: '*';
+          to: 'cash_shifts';
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
       };
       pay_invoice: {
         Args: { p_branch_id: string; p_invoice_id: string; p_payment: Json };
