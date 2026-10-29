@@ -6086,6 +6086,23 @@ export type Database = {
         };
         Returns: Json;
       };
+      seller_activations: {
+        Args: { p_gym_id?: string };
+        Returns: {
+          code: string;
+          created_at: string;
+          created_by_email: string;
+          deactivate_reason: string;
+          deactivated_at: string;
+          deactivated_by_email: string;
+          gym_id: string;
+          id: string;
+          issued_on: string;
+          kid: string;
+          license_id: string;
+          machine_code: string;
+        }[];
+      };
       seller_add_admin: { Args: { p_full_name: string; p_user_id: string }; Returns: undefined };
       seller_admins: {
         Args: Record<PropertyKey, never>;
@@ -6133,6 +6150,20 @@ export type Database = {
         };
         Returns: undefined;
       };
+      seller_create_offline_gym: {
+        Args: {
+          p_code: string;
+          p_gym_id: string;
+          p_name_ar?: string;
+          p_name_ckb: string;
+          p_name_en?: string;
+        };
+        Returns: undefined;
+      };
+      seller_deactivate_activation: {
+        Args: { p_activation_id: string; p_reason: string };
+        Returns: undefined;
+      };
       seller_gyms: {
         Args: { p_gym_id?: string };
         Returns: {
@@ -6155,6 +6186,53 @@ export type Database = {
           paid_until: string;
           state_reason: string;
           suspended_at: string;
+        }[];
+      };
+      seller_issue_activation: {
+        Args: {
+          p_activation_id: string;
+          p_code: string;
+          p_gym_id: string;
+          p_issued_on: string;
+          p_kid: string;
+          p_machine_code: string;
+        };
+        Returns: undefined;
+      };
+      seller_issue_license: {
+        Args: {
+          p_code: string;
+          p_gym_id: string;
+          p_issued_on: string;
+          p_kid: string;
+          p_license_id: string;
+          p_max_branches: number;
+          p_max_devices: number;
+          p_type: string;
+          p_valid_until: string;
+        };
+        Returns: undefined;
+      };
+      seller_licenses: {
+        Args: { p_gym_id?: string };
+        Returns: {
+          code: string;
+          created_at: string;
+          created_by_email: string;
+          expires_on: string;
+          gym_code: string;
+          gym_id: string;
+          gym_name: string;
+          id: string;
+          issued_on: string;
+          kid: string;
+          max_branches: number;
+          max_devices: number;
+          revoke_reason: string;
+          revoked_at: string;
+          revoked_by_email: string;
+          type: string;
+          updates_until: string;
         }[];
       };
       seller_lock_gym: { Args: { p_gym_id: string; p_reason: string }; Returns: undefined };
@@ -6180,6 +6258,13 @@ export type Database = {
         }[];
       };
       seller_new_recovery_codes: { Args: Record<PropertyKey, never>; Returns: string[] };
+      seller_prepare_activation: {
+        Args: { p_gym_id: string; p_machine_code: string };
+        Returns: {
+          issued_on: string;
+          machine_code: string;
+        }[];
+      };
       seller_prepare_add_admin: { Args: { p_email: string }; Returns: undefined };
       seller_prepare_admin_change: {
         Args: { p_action: string; p_user_id: string };
@@ -6192,6 +6277,20 @@ export type Database = {
         Args: { p_code: string; p_owner_username: string };
         Returns: undefined;
       };
+      seller_prepare_license: {
+        Args: {
+          p_gym_id: string;
+          p_max_branches: number;
+          p_max_devices: number;
+          p_type: string;
+          p_valid_until: string;
+        };
+        Returns: {
+          gym_code: string;
+          gym_name: string;
+          issued_on: string;
+        }[];
+      };
       seller_reactivate_gym: { Args: { p_gym_id: string; p_reason?: string }; Returns: undefined };
       seller_record_admin_change: {
         Args: { p_action: string; p_user_id: string };
@@ -6199,6 +6298,10 @@ export type Database = {
       };
       seller_rename_gym: {
         Args: { p_gym_id: string; p_name_ar: string; p_name_ckb: string; p_name_en: string };
+        Returns: undefined;
+      };
+      seller_revoke_license: {
+        Args: { p_license_id: string; p_reason: string };
         Returns: undefined;
       };
       seller_set_admin_active: {

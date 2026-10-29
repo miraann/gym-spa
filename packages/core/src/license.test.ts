@@ -24,6 +24,22 @@ import {
   type LicenseSigningKey,
 } from './license.ts';
 import { LICENSE_PUBLIC_KEYS, REVOKED_LICENSE_KIDS } from './license-keys.ts';
+import { databaseTestSql } from './sql-functions.test-helper.ts';
+
+/**
+ * The machine code cases of supabase/tests/550-licenses.test.sql, which runs them through
+ * app.normalize_machine_code(): one per line, as ('raw', 'expected' or null).
+ */
+function sharedMachineCodeCases(): { raw: string; expected: string | null }[] {
+  const sql = databaseTestSql('550-licenses.test.sql');
+  const block = /insert into machine_code_cases \(raw, expected\) values\n([\s\S]*?);\n/.exec(sql);
+  const lines = block?.[1]?.split('\n').filter((line) => line.trim() !== '') ?? [];
+  return lines.map((line) => {
+    const match = /^\s*\('((?:[^']|'')*)', (?:'([0-9A-Z]+)'|null)\),?$/.exec(line);
+    if (!match) throw new Error(`Unreadable machine code case: ${line}`);
+    return { raw: (match[1] ?? '').replaceAll("''", "'"), expected: match[2] ?? null };
+  });
+}
 
 const YEARLY: License = {
   licenseId: '5a1c0f6e-3b2d-4c8e-9f10-2a3b4c5d6e7f',
@@ -382,6 +398,18 @@ describe('licenseUpdates', () => {
 
   it('says nothing for a yearly license', () => {
     expect(licenseUpdates({ type: 'yearly', updatesUntil: null })).toEqual({ kind: 'none' });
+  });
+});
+
+describe('normalizeMachineCode: the same cases as the database (550-licenses)', () => {
+  const cases = sharedMachineCodeCases();
+
+  it('reads the shared cases', () => {
+    expect(cases.length).toBeGreaterThanOrEqual(15);
+  });
+
+  it.each(cases)('$raw → $expected', ({ raw, expected }) => {
+    expect(normalizeMachineCode(raw)).toBe(expected);
   });
 });
 
