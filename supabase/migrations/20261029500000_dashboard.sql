@@ -20,7 +20,7 @@ declare
   members boolean := app.has_permission('members.view');
   spa boolean := app.has_permission('spa.view');
   money boolean := app.has_permission('reports.financial.view') or app.has_permission('payments.view');
-  result jsonb := '{}';
+  result jsonb := '{}'::jsonb;
 begin
   if not app.has_permission('dashboard.view') then
     raise exception using errcode = '42501', message = 'permission_denied',
