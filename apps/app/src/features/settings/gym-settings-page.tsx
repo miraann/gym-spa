@@ -17,6 +17,7 @@ import { useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { RequirePermission } from '@/components/no-access';
+import { ExportAllData } from '@/features/backup/export-section';
 import { useAdminWriteState } from '@/features/staff/write-state';
 import { useGymSettings, useSaveGymSettings, type GymSettings } from './gym-settings-data';
 
@@ -45,6 +46,7 @@ function GymSettingsLoader() {
       ) : (
         <GymSettingsForm settings={settings.data} />
       )}
+      <ExportAllData />
     </div>
   );
 }

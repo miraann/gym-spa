@@ -1,4 +1,7 @@
+import { readFileSync } from 'node:fs';
+import { strFromU8, unzipSync } from 'fflate';
 import { admin } from './support/backend';
+import { addMember } from './support/members';
 import { expect, signIn, test } from './support/app';
 
 // Step 10d: Settings → جیم, the receipt's bottom line per language and the usual dollar rate.
@@ -50,4 +53,32 @@ test('the Owner sets the receipt footer and the usual dollar rate, and empties a
     { key: 'payments.usd_rate', value: 1500 },
     { key: 'receipts.footer_ckb', value: 'سوپاس بۆ هاتنت، بەردەوام بە!' },
   ]);
+});
+
+test("the Owner exports all the gym's data as a zip of CSV files", async ({ page, data }) => {
+  const owner = await data.staff({ role: 'owner', branchIds: [], allBranches: true });
+  const branchId = await data.branch();
+  await addMember(data, branchId, 'ئارام کەریم', '+9647501630001');
+  await page.setViewportSize(DESKTOP);
+  await signIn(page, owner, '/settings/gym');
+
+  const download = page.waitForEvent('download');
+  await page.getByTestId('export-all').getByRole('button').click();
+  const file = await download;
+  const gym = await data.gym();
+  expect(file.suggestedFilename()).toBe(
+    `${gym.code}-${new Date(Date.now() + 3 * 3_600_000).toISOString().slice(0, 10)}.zip`,
+  );
+  await expect(page.getByText('زانیارییەکان دەرهێنران.')).toBeVisible();
+
+  const files = unzipSync(new Uint8Array(readFileSync((await file.path()) ?? '')));
+  expect(Object.keys(files)).toContain('members.csv');
+  expect(Object.keys(files)).toContain('payments.csv');
+  expect(Object.keys(files)).not.toContain('member_photos.csv');
+  const bytes = files['members.csv'] ?? new Uint8Array();
+  // A byte order mark first, so Excel reads it as UTF-8 (the decoder below drops it).
+  expect([...bytes.slice(0, 3)]).toEqual([0xef, 0xbb, 0xbf]);
+  const members = strFromU8(bytes);
+  expect(members.startsWith('id,')).toBe(true);
+  expect(members).toContain('ئارام کەریم');
 });

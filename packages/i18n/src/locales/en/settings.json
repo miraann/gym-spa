@@ -141,5 +141,13 @@
     "saved": "Saved.",
     "saveFailed": "Not saved. Try again.",
     "loadFailed": "The settings couldn't be read."
+  },
+  "export": {
+    "title": "Export all data",
+    "description": "All of the gym's data as one zip file, a CSV file per table (they open in Excel). Photos are left out. This is not a backup that can be restored.",
+    "button": "Export all data",
+    "working": "Table {{done}} of {{total}}…",
+    "done": "The data was exported.",
+    "failed": "The export didn't work. Try again."
   }
 }
