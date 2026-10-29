@@ -11,10 +11,9 @@
     "checkinsToday": "حضور اليوم",
     "expiring": "اشتراكات تنتهي هذا الأسبوع",
     "revenueToday": "إيرادات اليوم",
-    "noNumberYet": "لا يوجد رقم بعد",
-    "comesWithCheckin": "يأتي مع قسم تسجيل الحضور",
-    "comesWithSubscriptions": "يأتي مع قسم الاشتراكات",
-    "comesWithPayments": "يأتي مع قسم المدفوعات"
+    "insideNow": "{{count}} في النادي الآن",
+    "spaToday": "مواعيد السبا اليوم",
+    "owedNow": "الديون الآن: {{amount}}"
   },
   "quick": {
     "title": "إجراءات سريعة",
@@ -26,5 +25,11 @@
     "staffHint": "حسابات الموظفين وأدوارهم",
     "appearance": "مظهر النادي",
     "appearanceHint": "اللون والشعار وشكل الزوايا"
+  },
+  "chart": {
+    "title": "تسجيلات الحضور اليوم حسب الساعة",
+    "hour": "الساعة {{hour}}",
+    "hourColumn": "الساعة",
+    "visits": "الحضور"
   }
 }
