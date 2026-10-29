@@ -45,6 +45,7 @@ import { Route as SettingsIndexRouteImport } from './routes/settings/index'
 import { Route as SettingsAppearanceRouteImport } from './routes/settings/appearance'
 import { Route as SettingsCardReaderRouteImport } from './routes/settings/card-reader'
 import { Route as SettingsDisplayRouteImport } from './routes/settings/display'
+import { Route as SettingsMessagesRouteImport } from './routes/settings/messages'
 import { Route as SettingsPrinterRouteImport } from './routes/settings/printer'
 import { Route as SettingsSupportRouteImport } from './routes/settings/support'
 import { Route as ShopIndexRouteImport } from './routes/shop/index'
@@ -247,6 +248,11 @@ const SettingsDisplayRoute = SettingsDisplayRouteImport.update({
   path: '/display',
   getParentRoute: () => SettingsRouteRoute,
 } as any)
+const SettingsMessagesRoute = SettingsMessagesRouteImport.update({
+  id: '/messages',
+  path: '/messages',
+  getParentRoute: () => SettingsRouteRoute,
+} as any)
 const SettingsPrinterRoute = SettingsPrinterRouteImport.update({
   id: '/printer',
   path: '/printer',
@@ -381,6 +387,7 @@ export interface FileRoutesByFullPath {
   '/settings/appearance': typeof SettingsAppearanceRoute
   '/settings/card-reader': typeof SettingsCardReaderRoute
   '/settings/display': typeof SettingsDisplayRoute
+  '/settings/messages': typeof SettingsMessagesRoute
   '/settings/printer': typeof SettingsPrinterRoute
   '/settings/support': typeof SettingsSupportRoute
   '/shop/products': typeof ShopProductsRoute
@@ -432,6 +439,7 @@ export interface FileRoutesByTo {
   '/settings/appearance': typeof SettingsAppearanceRoute
   '/settings/card-reader': typeof SettingsCardReaderRoute
   '/settings/display': typeof SettingsDisplayRoute
+  '/settings/messages': typeof SettingsMessagesRoute
   '/settings/printer': typeof SettingsPrinterRoute
   '/settings/support': typeof SettingsSupportRoute
   '/shop/products': typeof ShopProductsRoute
@@ -492,6 +500,7 @@ export interface FileRoutesById {
   '/settings/appearance': typeof SettingsAppearanceRoute
   '/settings/card-reader': typeof SettingsCardReaderRoute
   '/settings/display': typeof SettingsDisplayRoute
+  '/settings/messages': typeof SettingsMessagesRoute
   '/settings/printer': typeof SettingsPrinterRoute
   '/settings/support': typeof SettingsSupportRoute
   '/shop/products': typeof ShopProductsRoute
@@ -553,6 +562,7 @@ export interface FileRouteTypes {
     | '/settings/appearance'
     | '/settings/card-reader'
     | '/settings/display'
+    | '/settings/messages'
     | '/settings/printer'
     | '/settings/support'
     | '/shop/products'
@@ -604,6 +614,7 @@ export interface FileRouteTypes {
     | '/settings/appearance'
     | '/settings/card-reader'
     | '/settings/display'
+    | '/settings/messages'
     | '/settings/printer'
     | '/settings/support'
     | '/shop/products'
@@ -663,6 +674,7 @@ export interface FileRouteTypes {
     | '/settings/appearance'
     | '/settings/card-reader'
     | '/settings/display'
+    | '/settings/messages'
     | '/settings/printer'
     | '/settings/support'
     | '/shop/products'
@@ -978,6 +990,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsDisplayRouteImport
       parentRoute: typeof SettingsRouteRoute
     }
+    '/settings/messages': {
+      id: '/settings/messages'
+      path: '/messages'
+      fullPath: '/settings/messages'
+      preLoaderRoute: typeof SettingsMessagesRouteImport
+      parentRoute: typeof SettingsRouteRoute
+    }
     '/settings/printer': {
       id: '/settings/printer'
       path: '/printer'
@@ -1216,6 +1235,7 @@ interface SettingsRouteRouteChildren {
   SettingsAppearanceRoute: typeof SettingsAppearanceRoute
   SettingsCardReaderRoute: typeof SettingsCardReaderRoute
   SettingsDisplayRoute: typeof SettingsDisplayRoute
+  SettingsMessagesRoute: typeof SettingsMessagesRoute
   SettingsPrinterRoute: typeof SettingsPrinterRoute
   SettingsSupportRoute: typeof SettingsSupportRoute
   SettingsIndexRoute: typeof SettingsIndexRoute
@@ -1225,6 +1245,7 @@ const SettingsRouteRouteChildren: SettingsRouteRouteChildren = {
   SettingsAppearanceRoute: SettingsAppearanceRoute,
   SettingsCardReaderRoute: SettingsCardReaderRoute,
   SettingsDisplayRoute: SettingsDisplayRoute,
+  SettingsMessagesRoute: SettingsMessagesRoute,
   SettingsPrinterRoute: SettingsPrinterRoute,
   SettingsSupportRoute: SettingsSupportRoute,
   SettingsIndexRoute: SettingsIndexRoute,

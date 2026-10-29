@@ -5476,7 +5476,7 @@ export type Database = {
         };
       };
       save_message_template: {
-        Args: { p_body_ar: string; p_body_ckb: string; p_body_en: string; p_key: string };
+        Args: { p_body_ar?: string; p_body_ckb?: string; p_body_en?: string; p_key: string };
         Returns: {
           body_ar: string | null;
           body_ckb: string | null;

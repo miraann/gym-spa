@@ -297,6 +297,7 @@ export class TestData {
       'class_sessions',
       'class_schedules',
       'class_types',
+      'staff_notification_reads',
       'staff_shifts',
       'staff_clock',
       'staff_cards',
@@ -309,6 +310,10 @@ export class TestData {
     }
     for (const id of this.staffIds) await db.auth.admin.deleteUser(id);
     for (const table of [
+      'member_messages',
+      'reminders',
+      'staff_notifications',
+      'message_templates',
       'cash_movements',
       'stock_movements',
       'spa_bookings',

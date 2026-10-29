@@ -315,7 +315,12 @@ create policy "staff see what they read" on public.staff_notification_reads
 
 -- The gym's wording of one template; an empty language uses its default, and all three empty is
 -- "back to default". permission_denied (notifications.templates.manage); invalid_template.
-create function public.save_message_template(p_key text, p_body_ckb text, p_body_en text, p_body_ar text)
+create function public.save_message_template(
+  p_key text,
+  p_body_ckb text default null,
+  p_body_en text default null,
+  p_body_ar text default null
+)
 returns public.message_templates
 language plpgsql
 security definer

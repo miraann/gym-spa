@@ -1,5 +1,6 @@
 import { Link, Outlet, useRouterState } from '@tanstack/react-router';
 import {
+  MessageCircleIcon,
   MonitorSmartphoneIcon,
   NfcIcon,
   PaletteIcon,
@@ -11,11 +12,11 @@ import { useTranslation } from 'react-i18next';
 import { canPrintSilently } from '@gym/platform';
 import { cn } from '@gym/ui/lib/utils';
 import type { AppPath } from '@/app/navigation';
-import { usePermission } from '@/features/auth/use-permissions';
+import { usePermissions } from '@/features/auth/use-permissions';
 
 const TABS: readonly {
   to: AppPath;
-  key: 'display' | 'appearance' | 'cardReader' | 'printer' | 'support';
+  key: 'display' | 'appearance' | 'cardReader' | 'printer' | 'messages' | 'support';
   icon: LucideIcon;
   /** Shown only to staff with it. */
   permission?: string;
@@ -26,6 +27,12 @@ const TABS: readonly {
   { to: '/settings/appearance', key: 'appearance', icon: PaletteIcon },
   { to: '/settings/card-reader', key: 'cardReader', icon: NfcIcon },
   { to: '/settings/printer', key: 'printer', icon: PrinterIcon, windowsOnly: true },
+  {
+    to: '/settings/messages',
+    key: 'messages',
+    icon: MessageCircleIcon,
+    permission: 'notifications.templates.manage',
+  },
   { to: '/settings/support', key: 'support', icon: ShieldCheckIcon, permission: 'support.grant' },
 ];
 
@@ -33,17 +40,18 @@ const TABS: readonly {
 export function SettingsLayout() {
   const { t } = useTranslation('settings');
   const pathname = useRouterState({ select: (state) => state.location.pathname });
-  const maySupport = usePermission('support.grant');
+  const permissions = usePermissions();
   const tabs = TABS.filter(
     (tab) =>
-      (tab.permission === undefined || maySupport) && (!tab.windowsOnly || canPrintSilently()),
+      (tab.permission === undefined || permissions.has(tab.permission)) &&
+      (!tab.windowsOnly || canPrintSilently()),
   );
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
       <nav
         aria-label={t('tabs.label')}
-        className="flex w-full rounded-full bg-muted p-1 sm:w-fit dark:bg-muted/70"
+        className="flex w-full overflow-x-auto rounded-full bg-muted p-1 sm:w-fit dark:bg-muted/70"
       >
         {tabs.map(({ to, key, icon: Icon }) => {
           const selected = pathname.startsWith(to);
