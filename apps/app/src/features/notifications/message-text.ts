@@ -94,3 +94,12 @@ export function composeMessage(
     messageValues(context, details, language),
   );
 }
+
+/** The template a message written now most likely is: an ending membership, a debt, else welcome. */
+export function suggestedTemplate(details: ReminderDetails): MessageTemplateKey {
+  if (details.days === 7) return 'expiring_7';
+  if (details.days === 3) return 'expiring_3';
+  if (details.days === 1 || details.days === 0) return 'expiring_1';
+  if (details.amount !== undefined) return details.dueDate ? 'installment_due' : 'debt';
+  return 'welcome';
+}

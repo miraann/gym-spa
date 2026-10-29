@@ -25,6 +25,7 @@ import { MemberSpaCard } from '@/features/spa/member-spa';
 import { MemberSubscriptionsCard } from '@/features/subscriptions/member-subscriptions';
 import { BackToList } from '@/features/staff/admin-error';
 import { useAdminWriteState } from '@/features/staff/write-state';
+import { MemberWhatsAppButton } from '@/features/notifications/member-whatsapp-button';
 import { useFormat } from '@/lib/format';
 import { useBaghdadToday } from '@/lib/use-today';
 import {
@@ -118,6 +119,7 @@ function MemberProfile({ member }: { readonly member: Member }) {
           </p>
         </div>
         {member.isGuest && <MakeMemberButton member={member} />}
+        <MemberWhatsAppButton member={member} />
         {!phone && editButton}
       </div>
 

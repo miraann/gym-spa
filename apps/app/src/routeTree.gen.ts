@@ -14,6 +14,7 @@ import { Route as BranchesRouteRouteImport } from './routes/branches/route'
 import { Route as CashRouteImport } from './routes/cash'
 import { Route as DevicesRouteRouteImport } from './routes/devices/route'
 import { Route as MembersRouteRouteImport } from './routes/members/route'
+import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as PlansRouteRouteImport } from './routes/plans/route'
 import { Route as RolesRouteRouteImport } from './routes/roles/route'
 import { Route as SettingsRouteRouteImport } from './routes/settings/route'
@@ -91,6 +92,11 @@ const DevicesRouteRoute = DevicesRouteRouteImport.update({
 const MembersRouteRoute = MembersRouteRouteImport.update({
   id: '/members',
   path: '/members',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NotificationsRoute = NotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PlansRouteRoute = PlansRouteRouteImport.update({
@@ -369,6 +375,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof SettingsRouteRouteWithChildren
   '/staff': typeof StaffRouteRouteWithChildren
   '/cash': typeof CashRoute
+  '/notifications': typeof NotificationsRoute
   '/spa/setup': typeof SpaSetupRouteRouteWithChildren
   '/branches/$branchId': typeof BranchesBranchIdRoute
   '/branches/new': typeof BranchesNewRoute
@@ -422,6 +429,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/cash': typeof CashRoute
+  '/notifications': typeof NotificationsRoute
   '/branches/$branchId': typeof BranchesBranchIdRoute
   '/branches/new': typeof BranchesNewRoute
   '/checkin/door': typeof CheckinDoorRoute
@@ -482,6 +490,7 @@ export interface FileRoutesById {
   '/settings': typeof SettingsRouteRouteWithChildren
   '/staff': typeof StaffRouteRouteWithChildren
   '/cash': typeof CashRoute
+  '/notifications': typeof NotificationsRoute
   '/spa/setup': typeof SpaSetupRouteRouteWithChildren
   '/branches/$branchId': typeof BranchesBranchIdRoute
   '/branches/new': typeof BranchesNewRoute
@@ -544,6 +553,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/staff'
     | '/cash'
+    | '/notifications'
     | '/spa/setup'
     | '/branches/$branchId'
     | '/branches/new'
@@ -597,6 +607,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/cash'
+    | '/notifications'
     | '/branches/$branchId'
     | '/branches/new'
     | '/checkin/door'
@@ -656,6 +667,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/staff'
     | '/cash'
+    | '/notifications'
     | '/spa/setup'
     | '/branches/$branchId'
     | '/branches/new'
@@ -717,6 +729,7 @@ export interface RootRouteChildren {
   SettingsRouteRoute: typeof SettingsRouteRouteWithChildren
   StaffRouteRoute: typeof StaffRouteRouteWithChildren
   CashRoute: typeof CashRoute
+  NotificationsRoute: typeof NotificationsRoute
   SpaSetupRouteRoute: typeof SpaSetupRouteRouteWithChildren
   CheckinDoorRoute: typeof CheckinDoorRoute
   CheckinVisitsRoute: typeof CheckinVisitsRoute
@@ -771,6 +784,13 @@ declare module '@tanstack/react-router' {
       path: '/members'
       fullPath: '/members'
       preLoaderRoute: typeof MembersRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/notifications': {
+      id: '/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof NotificationsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/plans': {
@@ -1301,6 +1321,7 @@ const rootRouteChildren: RootRouteChildren = {
   SettingsRouteRoute: SettingsRouteRouteWithChildren,
   StaffRouteRoute: StaffRouteRouteWithChildren,
   CashRoute: CashRoute,
+  NotificationsRoute: NotificationsRoute,
   SpaSetupRouteRoute: SpaSetupRouteRouteWithChildren,
   CheckinDoorRoute: CheckinDoorRoute,
   CheckinVisitsRoute: CheckinVisitsRoute,

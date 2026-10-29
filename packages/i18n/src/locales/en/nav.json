@@ -24,7 +24,7 @@
     "roles": "Roles & permissions",
     "branches": "Branches",
     "reports": "Reports",
-    "notifications": "Notifications",
+    "notifications": "Reminders",
     "auditLog": "Activity log",
     "devices": "Devices",
     "settings": "Settings"
@@ -46,7 +46,7 @@
     "roles": "Roles",
     "branches": "Branches",
     "reports": "Reports",
-    "notifications": "Alerts",
+    "notifications": "Reminders",
     "auditLog": "Activity",
     "devices": "Devices",
     "settings": "Settings"

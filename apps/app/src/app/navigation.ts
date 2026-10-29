@@ -91,7 +91,12 @@ export const NAV_GROUPS: readonly NavGroup[] = [
       { key: 'roles', icon: ShieldCheckIcon, to: '/roles', permission: 'roles.manage' },
       { key: 'branches', icon: Building2Icon, to: '/branches', permission: 'branches.manage' },
       { key: 'reports', icon: ChartColumnIcon, permission: 'reports.view' },
-      { key: 'notifications', icon: BellIcon, permission: 'notifications.send' },
+      {
+        key: 'notifications',
+        icon: BellIcon,
+        to: '/notifications',
+        permission: 'notifications.send',
+      },
       { key: 'auditLog', icon: HistoryIcon, permission: 'audit.view' },
     ],
   },

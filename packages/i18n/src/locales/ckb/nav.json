@@ -24,7 +24,7 @@
     "roles": "ڕۆڵ و دەسەڵاتەکان",
     "branches": "لقەکان",
     "reports": "ڕاپۆرتەکان",
-    "notifications": "ئاگادارکردنەوەکان",
+    "notifications": "بیرخستنەوەکان",
     "auditLog": "تۆماری چالاکییەکان",
     "devices": "ئامێرەکان",
     "settings": "ڕێکخستنەکان"
@@ -46,7 +46,7 @@
     "roles": "ڕۆڵەکان",
     "branches": "لقەکان",
     "reports": "ڕاپۆرت",
-    "notifications": "ئاگاداری",
+    "notifications": "بیرخستنەوە",
     "auditLog": "چالاکییەکان",
     "devices": "ئامێرەکان",
     "settings": "ڕێکخستن"

@@ -109,7 +109,7 @@
     "title": "Send with WhatsApp",
     "template": "Template",
     "text": "Message",
-    "to": "To {{phone}}",
+    "to": "To",
     "toEmergency": "The member has no number of their own, so it goes to the emergency contact's number ({{name}}).",
     "memberLanguage": "In the member's language: {{language}}",
     "open": "Open in WhatsApp",
