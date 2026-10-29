@@ -90,7 +90,7 @@ export const NAV_GROUPS: readonly NavGroup[] = [
       { key: 'staff', icon: UserCogIcon, to: '/staff', permission: 'staff.view' },
       { key: 'roles', icon: ShieldCheckIcon, to: '/roles', permission: 'roles.manage' },
       { key: 'branches', icon: Building2Icon, to: '/branches', permission: 'branches.manage' },
-      { key: 'reports', icon: ChartColumnIcon, permission: 'reports.view' },
+      { key: 'reports', icon: ChartColumnIcon, to: '/reports', permission: 'reports.view' },
       {
         key: 'notifications',
         icon: BellIcon,

@@ -16,6 +16,7 @@ import { Route as DevicesRouteRouteImport } from './routes/devices/route'
 import { Route as MembersRouteRouteImport } from './routes/members/route'
 import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as PlansRouteRouteImport } from './routes/plans/route'
+import { Route as ReportsRouteImport } from './routes/reports'
 import { Route as RolesRouteRouteImport } from './routes/roles/route'
 import { Route as SettingsRouteRouteImport } from './routes/settings/route'
 import { Route as StaffRouteRouteImport } from './routes/staff/route'
@@ -102,6 +103,11 @@ const NotificationsRoute = NotificationsRouteImport.update({
 const PlansRouteRoute = PlansRouteRouteImport.update({
   id: '/plans',
   path: '/plans',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReportsRoute = ReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RolesRouteRoute = RolesRouteRouteImport.update({
@@ -376,6 +382,7 @@ export interface FileRoutesByFullPath {
   '/staff': typeof StaffRouteRouteWithChildren
   '/cash': typeof CashRoute
   '/notifications': typeof NotificationsRoute
+  '/reports': typeof ReportsRoute
   '/spa/setup': typeof SpaSetupRouteRouteWithChildren
   '/branches/$branchId': typeof BranchesBranchIdRoute
   '/branches/new': typeof BranchesNewRoute
@@ -430,6 +437,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/cash': typeof CashRoute
   '/notifications': typeof NotificationsRoute
+  '/reports': typeof ReportsRoute
   '/branches/$branchId': typeof BranchesBranchIdRoute
   '/branches/new': typeof BranchesNewRoute
   '/checkin/door': typeof CheckinDoorRoute
@@ -491,6 +499,7 @@ export interface FileRoutesById {
   '/staff': typeof StaffRouteRouteWithChildren
   '/cash': typeof CashRoute
   '/notifications': typeof NotificationsRoute
+  '/reports': typeof ReportsRoute
   '/spa/setup': typeof SpaSetupRouteRouteWithChildren
   '/branches/$branchId': typeof BranchesBranchIdRoute
   '/branches/new': typeof BranchesNewRoute
@@ -554,6 +563,7 @@ export interface FileRouteTypes {
     | '/staff'
     | '/cash'
     | '/notifications'
+    | '/reports'
     | '/spa/setup'
     | '/branches/$branchId'
     | '/branches/new'
@@ -608,6 +618,7 @@ export interface FileRouteTypes {
     | '/'
     | '/cash'
     | '/notifications'
+    | '/reports'
     | '/branches/$branchId'
     | '/branches/new'
     | '/checkin/door'
@@ -668,6 +679,7 @@ export interface FileRouteTypes {
     | '/staff'
     | '/cash'
     | '/notifications'
+    | '/reports'
     | '/spa/setup'
     | '/branches/$branchId'
     | '/branches/new'
@@ -730,6 +742,7 @@ export interface RootRouteChildren {
   StaffRouteRoute: typeof StaffRouteRouteWithChildren
   CashRoute: typeof CashRoute
   NotificationsRoute: typeof NotificationsRoute
+  ReportsRoute: typeof ReportsRoute
   SpaSetupRouteRoute: typeof SpaSetupRouteRouteWithChildren
   CheckinDoorRoute: typeof CheckinDoorRoute
   CheckinVisitsRoute: typeof CheckinVisitsRoute
@@ -798,6 +811,13 @@ declare module '@tanstack/react-router' {
       path: '/plans'
       fullPath: '/plans'
       preLoaderRoute: typeof PlansRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reports': {
+      id: '/reports'
+      path: '/reports'
+      fullPath: '/reports'
+      preLoaderRoute: typeof ReportsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/roles': {
@@ -1322,6 +1342,7 @@ const rootRouteChildren: RootRouteChildren = {
   StaffRouteRoute: StaffRouteRouteWithChildren,
   CashRoute: CashRoute,
   NotificationsRoute: NotificationsRoute,
+  ReportsRoute: ReportsRoute,
   SpaSetupRouteRoute: SpaSetupRouteRouteWithChildren,
   CheckinDoorRoute: CheckinDoorRoute,
   CheckinVisitsRoute: CheckinVisitsRoute,
