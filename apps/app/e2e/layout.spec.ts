@@ -164,9 +164,7 @@ test('staff choose their own tabs, which follow them to other devices', async ({
   }
   await expect(editor.getByRole('button', { name: 'پاشەکەوتکردن' })).toBeDisabled();
   // Pages not built yet can't be chosen.
-  await expect(editor.getByRole('button', { name: 'تۆماری چالاکییەکان', exact: true })).toHaveCount(
-    0,
-  );
+  await expect(editor.getByRole('button', { name: 'ئابوونەکان', exact: true })).toHaveCount(0);
   // Tapped in this order.
   for (const name of ['ڕێکخستنەکان', 'لقەکان', 'سەرەکی', 'ئامێرەکان']) {
     await editor.getByRole('button', { name, exact: true }).click();

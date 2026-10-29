@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuditRouteImport } from './routes/audit'
 import { Route as BranchesRouteRouteImport } from './routes/branches/route'
 import { Route as CashRouteImport } from './routes/cash'
 import { Route as DevicesRouteRouteImport } from './routes/devices/route'
@@ -74,6 +75,11 @@ import { Route as SpaSetupTherapistsRouteImport } from './routes/spa/setup/thera
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuditRoute = AuditRouteImport.update({
+  id: '/audit',
+  path: '/audit',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BranchesRouteRoute = BranchesRouteRouteImport.update({
@@ -386,6 +392,7 @@ export interface FileRoutesByFullPath {
   '/roles': typeof RolesRouteRouteWithChildren
   '/settings': typeof SettingsRouteRouteWithChildren
   '/staff': typeof StaffRouteRouteWithChildren
+  '/audit': typeof AuditRoute
   '/cash': typeof CashRoute
   '/notifications': typeof NotificationsRoute
   '/reports': typeof ReportsRoute
@@ -442,6 +449,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/audit': typeof AuditRoute
   '/cash': typeof CashRoute
   '/notifications': typeof NotificationsRoute
   '/reports': typeof ReportsRoute
@@ -505,6 +513,7 @@ export interface FileRoutesById {
   '/roles': typeof RolesRouteRouteWithChildren
   '/settings': typeof SettingsRouteRouteWithChildren
   '/staff': typeof StaffRouteRouteWithChildren
+  '/audit': typeof AuditRoute
   '/cash': typeof CashRoute
   '/notifications': typeof NotificationsRoute
   '/reports': typeof ReportsRoute
@@ -570,6 +579,7 @@ export interface FileRouteTypes {
     | '/roles'
     | '/settings'
     | '/staff'
+    | '/audit'
     | '/cash'
     | '/notifications'
     | '/reports'
@@ -626,6 +636,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/audit'
     | '/cash'
     | '/notifications'
     | '/reports'
@@ -688,6 +699,7 @@ export interface FileRouteTypes {
     | '/roles'
     | '/settings'
     | '/staff'
+    | '/audit'
     | '/cash'
     | '/notifications'
     | '/reports'
@@ -752,6 +764,7 @@ export interface RootRouteChildren {
   RolesRouteRoute: typeof RolesRouteRouteWithChildren
   SettingsRouteRoute: typeof SettingsRouteRouteWithChildren
   StaffRouteRoute: typeof StaffRouteRouteWithChildren
+  AuditRoute: typeof AuditRoute
   CashRoute: typeof CashRoute
   NotificationsRoute: typeof NotificationsRoute
   ReportsRoute: typeof ReportsRoute
@@ -781,6 +794,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/audit': {
+      id: '/audit'
+      path: '/audit'
+      fullPath: '/audit'
+      preLoaderRoute: typeof AuditRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/branches': {
@@ -1361,6 +1381,7 @@ const rootRouteChildren: RootRouteChildren = {
   RolesRouteRoute: RolesRouteRouteWithChildren,
   SettingsRouteRoute: SettingsRouteRouteWithChildren,
   StaffRouteRoute: StaffRouteRouteWithChildren,
+  AuditRoute: AuditRoute,
   CashRoute: CashRoute,
   NotificationsRoute: NotificationsRoute,
   ReportsRoute: ReportsRoute,

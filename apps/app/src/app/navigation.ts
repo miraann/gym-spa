@@ -97,7 +97,7 @@ export const NAV_GROUPS: readonly NavGroup[] = [
         to: '/notifications',
         permission: 'notifications.send',
       },
-      { key: 'auditLog', icon: HistoryIcon, permission: 'audit.view' },
+      { key: 'auditLog', icon: HistoryIcon, to: '/audit', permission: 'audit.view' },
     ],
   },
   {

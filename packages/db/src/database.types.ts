@@ -4480,6 +4480,7 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      audit_tables: { Args: Record<PropertyKey, never>; Returns: string[] };
       block_card: {
         Args: { p_card_id: string; p_reason: string };
         Returns: {
