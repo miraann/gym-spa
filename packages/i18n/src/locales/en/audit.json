@@ -1,0 +1,24 @@
+{
+  "title": "Activity log",
+  "description": "Who changed what, and when. View only.",
+  "table": "Table",
+  "allTables": "All tables",
+  "who": "Who",
+  "everyone": "Everyone",
+  "from": "From",
+  "to": "To",
+  "empty": "No changes.",
+  "loadFailed": "The log couldn't be read. Try again.",
+  "more": "More",
+  "system": "System",
+  "unknownStaff": "Another staff member",
+  "row": "Row:",
+  "column": "Field",
+  "before": "Before",
+  "after": "After",
+  "actions": {
+    "insert": "Added",
+    "update": "Changed",
+    "delete": "Removed"
+  }
+}

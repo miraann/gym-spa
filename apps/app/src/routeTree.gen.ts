@@ -10,12 +10,14 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuditRouteImport } from './routes/audit'
 import { Route as BranchesRouteRouteImport } from './routes/branches/route'
 import { Route as CashRouteImport } from './routes/cash'
 import { Route as DevicesRouteRouteImport } from './routes/devices/route'
 import { Route as MembersRouteRouteImport } from './routes/members/route'
 import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as PlansRouteRouteImport } from './routes/plans/route'
+import { Route as ReportsRouteImport } from './routes/reports'
 import { Route as RolesRouteRouteImport } from './routes/roles/route'
 import { Route as SettingsRouteRouteImport } from './routes/settings/route'
 import { Route as StaffRouteRouteImport } from './routes/staff/route'
@@ -46,6 +48,7 @@ import { Route as SettingsIndexRouteImport } from './routes/settings/index'
 import { Route as SettingsAppearanceRouteImport } from './routes/settings/appearance'
 import { Route as SettingsCardReaderRouteImport } from './routes/settings/card-reader'
 import { Route as SettingsDisplayRouteImport } from './routes/settings/display'
+import { Route as SettingsGymRouteImport } from './routes/settings/gym'
 import { Route as SettingsMessagesRouteImport } from './routes/settings/messages'
 import { Route as SettingsPrinterRouteImport } from './routes/settings/printer'
 import { Route as SettingsSupportRouteImport } from './routes/settings/support'
@@ -72,6 +75,11 @@ import { Route as SpaSetupTherapistsRouteImport } from './routes/spa/setup/thera
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuditRoute = AuditRouteImport.update({
+  id: '/audit',
+  path: '/audit',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BranchesRouteRoute = BranchesRouteRouteImport.update({
@@ -102,6 +110,11 @@ const NotificationsRoute = NotificationsRouteImport.update({
 const PlansRouteRoute = PlansRouteRouteImport.update({
   id: '/plans',
   path: '/plans',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReportsRoute = ReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RolesRouteRoute = RolesRouteRouteImport.update({
@@ -254,6 +267,11 @@ const SettingsDisplayRoute = SettingsDisplayRouteImport.update({
   path: '/display',
   getParentRoute: () => SettingsRouteRoute,
 } as any)
+const SettingsGymRoute = SettingsGymRouteImport.update({
+  id: '/gym',
+  path: '/gym',
+  getParentRoute: () => SettingsRouteRoute,
+} as any)
 const SettingsMessagesRoute = SettingsMessagesRouteImport.update({
   id: '/messages',
   path: '/messages',
@@ -374,8 +392,10 @@ export interface FileRoutesByFullPath {
   '/roles': typeof RolesRouteRouteWithChildren
   '/settings': typeof SettingsRouteRouteWithChildren
   '/staff': typeof StaffRouteRouteWithChildren
+  '/audit': typeof AuditRoute
   '/cash': typeof CashRoute
   '/notifications': typeof NotificationsRoute
+  '/reports': typeof ReportsRoute
   '/spa/setup': typeof SpaSetupRouteRouteWithChildren
   '/branches/$branchId': typeof BranchesBranchIdRoute
   '/branches/new': typeof BranchesNewRoute
@@ -394,6 +414,7 @@ export interface FileRoutesByFullPath {
   '/settings/appearance': typeof SettingsAppearanceRoute
   '/settings/card-reader': typeof SettingsCardReaderRoute
   '/settings/display': typeof SettingsDisplayRoute
+  '/settings/gym': typeof SettingsGymRoute
   '/settings/messages': typeof SettingsMessagesRoute
   '/settings/printer': typeof SettingsPrinterRoute
   '/settings/support': typeof SettingsSupportRoute
@@ -428,8 +449,10 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/audit': typeof AuditRoute
   '/cash': typeof CashRoute
   '/notifications': typeof NotificationsRoute
+  '/reports': typeof ReportsRoute
   '/branches/$branchId': typeof BranchesBranchIdRoute
   '/branches/new': typeof BranchesNewRoute
   '/checkin/door': typeof CheckinDoorRoute
@@ -447,6 +470,7 @@ export interface FileRoutesByTo {
   '/settings/appearance': typeof SettingsAppearanceRoute
   '/settings/card-reader': typeof SettingsCardReaderRoute
   '/settings/display': typeof SettingsDisplayRoute
+  '/settings/gym': typeof SettingsGymRoute
   '/settings/messages': typeof SettingsMessagesRoute
   '/settings/printer': typeof SettingsPrinterRoute
   '/settings/support': typeof SettingsSupportRoute
@@ -489,8 +513,10 @@ export interface FileRoutesById {
   '/roles': typeof RolesRouteRouteWithChildren
   '/settings': typeof SettingsRouteRouteWithChildren
   '/staff': typeof StaffRouteRouteWithChildren
+  '/audit': typeof AuditRoute
   '/cash': typeof CashRoute
   '/notifications': typeof NotificationsRoute
+  '/reports': typeof ReportsRoute
   '/spa/setup': typeof SpaSetupRouteRouteWithChildren
   '/branches/$branchId': typeof BranchesBranchIdRoute
   '/branches/new': typeof BranchesNewRoute
@@ -509,6 +535,7 @@ export interface FileRoutesById {
   '/settings/appearance': typeof SettingsAppearanceRoute
   '/settings/card-reader': typeof SettingsCardReaderRoute
   '/settings/display': typeof SettingsDisplayRoute
+  '/settings/gym': typeof SettingsGymRoute
   '/settings/messages': typeof SettingsMessagesRoute
   '/settings/printer': typeof SettingsPrinterRoute
   '/settings/support': typeof SettingsSupportRoute
@@ -552,8 +579,10 @@ export interface FileRouteTypes {
     | '/roles'
     | '/settings'
     | '/staff'
+    | '/audit'
     | '/cash'
     | '/notifications'
+    | '/reports'
     | '/spa/setup'
     | '/branches/$branchId'
     | '/branches/new'
@@ -572,6 +601,7 @@ export interface FileRouteTypes {
     | '/settings/appearance'
     | '/settings/card-reader'
     | '/settings/display'
+    | '/settings/gym'
     | '/settings/messages'
     | '/settings/printer'
     | '/settings/support'
@@ -606,8 +636,10 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/audit'
     | '/cash'
     | '/notifications'
+    | '/reports'
     | '/branches/$branchId'
     | '/branches/new'
     | '/checkin/door'
@@ -625,6 +657,7 @@ export interface FileRouteTypes {
     | '/settings/appearance'
     | '/settings/card-reader'
     | '/settings/display'
+    | '/settings/gym'
     | '/settings/messages'
     | '/settings/printer'
     | '/settings/support'
@@ -666,8 +699,10 @@ export interface FileRouteTypes {
     | '/roles'
     | '/settings'
     | '/staff'
+    | '/audit'
     | '/cash'
     | '/notifications'
+    | '/reports'
     | '/spa/setup'
     | '/branches/$branchId'
     | '/branches/new'
@@ -686,6 +721,7 @@ export interface FileRouteTypes {
     | '/settings/appearance'
     | '/settings/card-reader'
     | '/settings/display'
+    | '/settings/gym'
     | '/settings/messages'
     | '/settings/printer'
     | '/settings/support'
@@ -728,8 +764,10 @@ export interface RootRouteChildren {
   RolesRouteRoute: typeof RolesRouteRouteWithChildren
   SettingsRouteRoute: typeof SettingsRouteRouteWithChildren
   StaffRouteRoute: typeof StaffRouteRouteWithChildren
+  AuditRoute: typeof AuditRoute
   CashRoute: typeof CashRoute
   NotificationsRoute: typeof NotificationsRoute
+  ReportsRoute: typeof ReportsRoute
   SpaSetupRouteRoute: typeof SpaSetupRouteRouteWithChildren
   CheckinDoorRoute: typeof CheckinDoorRoute
   CheckinVisitsRoute: typeof CheckinVisitsRoute
@@ -756,6 +794,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/audit': {
+      id: '/audit'
+      path: '/audit'
+      fullPath: '/audit'
+      preLoaderRoute: typeof AuditRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/branches': {
@@ -798,6 +843,13 @@ declare module '@tanstack/react-router' {
       path: '/plans'
       fullPath: '/plans'
       preLoaderRoute: typeof PlansRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reports': {
+      id: '/reports'
+      path: '/reports'
+      fullPath: '/reports'
+      preLoaderRoute: typeof ReportsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/roles': {
@@ -1008,6 +1060,13 @@ declare module '@tanstack/react-router' {
       path: '/display'
       fullPath: '/settings/display'
       preLoaderRoute: typeof SettingsDisplayRouteImport
+      parentRoute: typeof SettingsRouteRoute
+    }
+    '/settings/gym': {
+      id: '/settings/gym'
+      path: '/gym'
+      fullPath: '/settings/gym'
+      preLoaderRoute: typeof SettingsGymRouteImport
       parentRoute: typeof SettingsRouteRoute
     }
     '/settings/messages': {
@@ -1255,6 +1314,7 @@ interface SettingsRouteRouteChildren {
   SettingsAppearanceRoute: typeof SettingsAppearanceRoute
   SettingsCardReaderRoute: typeof SettingsCardReaderRoute
   SettingsDisplayRoute: typeof SettingsDisplayRoute
+  SettingsGymRoute: typeof SettingsGymRoute
   SettingsMessagesRoute: typeof SettingsMessagesRoute
   SettingsPrinterRoute: typeof SettingsPrinterRoute
   SettingsSupportRoute: typeof SettingsSupportRoute
@@ -1265,6 +1325,7 @@ const SettingsRouteRouteChildren: SettingsRouteRouteChildren = {
   SettingsAppearanceRoute: SettingsAppearanceRoute,
   SettingsCardReaderRoute: SettingsCardReaderRoute,
   SettingsDisplayRoute: SettingsDisplayRoute,
+  SettingsGymRoute: SettingsGymRoute,
   SettingsMessagesRoute: SettingsMessagesRoute,
   SettingsPrinterRoute: SettingsPrinterRoute,
   SettingsSupportRoute: SettingsSupportRoute,
@@ -1320,8 +1381,10 @@ const rootRouteChildren: RootRouteChildren = {
   RolesRouteRoute: RolesRouteRouteWithChildren,
   SettingsRouteRoute: SettingsRouteRouteWithChildren,
   StaffRouteRoute: StaffRouteRouteWithChildren,
+  AuditRoute: AuditRoute,
   CashRoute: CashRoute,
   NotificationsRoute: NotificationsRoute,
+  ReportsRoute: ReportsRoute,
   SpaSetupRouteRoute: SpaSetupRouteRouteWithChildren,
   CheckinDoorRoute: CheckinDoorRoute,
   CheckinVisitsRoute: CheckinVisitsRoute,

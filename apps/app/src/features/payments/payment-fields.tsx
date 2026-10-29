@@ -5,12 +5,13 @@ import { Input } from '@gym/ui/components/input';
 import { NativeSelect, NativeSelectOption } from '@gym/ui/components/native-select';
 import { useId } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSetting } from '@/features/auth/use-idle-lock';
 import { useFormat } from '@/lib/format';
 import { paymentFieldsDraft, type PaymentFieldValues } from './payment-draft';
 
 /**
- * One payment against what is owed: dinars, or dollars with the rate (their value and the change
- * to give back), the method and its transaction number. `showProblems` once the form was sent.
+ * One payment against what is owed: dinars, or dollars with the rate (the gym's usual one filled in;
+ * their value and the change to give back), the method and its transaction number. `showProblems` once the form was sent.
  */
 export function PaymentFields({
   value,
@@ -30,6 +31,8 @@ export function PaymentFields({
   const { t: tp } = useTranslation('payments');
   const format = useFormat();
   const id = useId();
+  // The gym's usual rate (step 10d) fills in an empty rate when dollars are chosen.
+  const usualRate = useSetting('payments.usd_rate');
   const draft = paymentFieldsDraft(value, owed);
   const problem = showProblems ? draft.problem : null;
   const set = (change: Partial<PaymentFieldValues>) => {
@@ -48,7 +51,11 @@ export function PaymentFields({
             label: t(`sell.currencies.${currency}`),
           }))}
           onChange={(currency) => {
-            set({ currency });
+            set(
+              currency === 'USD' && value.rate === '' && usualRate > 0
+                ? { currency, rate: String(usualRate) }
+                : { currency },
+            );
           }}
         />
       </Field>

@@ -11,10 +11,9 @@
     "checkinsToday": "هاتنەکانی ئەمڕۆ",
     "expiring": "ئەو ئابوونانەی ئەم هەفتە تەواو دەبن",
     "revenueToday": "داهاتی ئەمڕۆ",
-    "noNumberYet": "هێشتا ژمارە نییە",
-    "comesWithCheckin": "لەگەڵ بەشی تۆمارکردنی هاتن دێت",
-    "comesWithSubscriptions": "لەگەڵ بەشی ئابوونەکان دێت",
-    "comesWithPayments": "لەگەڵ بەشی پارەدانەکان دێت"
+    "insideNow": "{{count}} ئێستا لە ناو جیمن",
+    "spaToday": "نۆرەکانی سپای ئەمڕۆ",
+    "owedNow": "قەرزی ئێستا: {{amount}}"
   },
   "quick": {
     "title": "کارە خێراکان",
@@ -26,5 +25,11 @@
     "staffHint": "هەژمار و ڕۆڵی کارمەندان",
     "appearance": "ڕووکاری جیم",
     "appearanceHint": "ڕەنگ، لۆگۆ و شێوەی گۆشەکان"
+  },
+  "chart": {
+    "title": "هاتنەکانی ئەمڕۆ بەپێی کاتژمێر",
+    "hour": "کاتژمێر {{hour}}",
+    "hourColumn": "کاتژمێر",
+    "visits": "هاتن"
   }
 }

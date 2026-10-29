@@ -27,9 +27,9 @@ describe('isNavItemActive', () => {
 
 describe('visibleNavGroups', () => {
   it('hides pages that are not built yet, even with the permission', () => {
-    const keys = visibleNavGroups(
-      new Set(['checkin.perform', 'members.view', 'reports.view']),
-    ).flatMap((group) => group.items.map((item) => item.key));
+    const keys = visibleNavGroups(new Set(['checkin.perform', 'members.view'])).flatMap((group) =>
+      group.items.map((item) => item.key),
+    );
     expect(keys).toEqual(['home', 'checkin', 'members', 'settings']);
   });
 

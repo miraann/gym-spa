@@ -4480,6 +4480,7 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      audit_tables: { Args: Record<PropertyKey, never>; Returns: string[] };
       block_card: {
         Args: { p_card_id: string; p_reason: string };
         Returns: {
@@ -4802,6 +4803,7 @@ export type Database = {
         };
         Returns: undefined;
       };
+      dashboard_summary: { Args: { p_branch_id?: string }; Returns: Json };
       device_heartbeat: {
         Args: { p_app_version: string; p_device_id: string };
         Returns: undefined;
@@ -5381,6 +5383,114 @@ export type Database = {
           isOneToOne: true;
           isSetofReturn: false;
         };
+      };
+      report_attendance: {
+        Args: { p_branch_id?: string; p_from: string; p_to: string };
+        Returns: {
+          day: string;
+          members: number;
+          visits: number;
+        }[];
+      };
+      report_cash: {
+        Args: { p_branch_id?: string; p_from: string; p_to: string };
+        Returns: {
+          branch_id: string;
+          closed_at: string;
+          closed_by: string;
+          counted_iqd: number;
+          counted_usd: number;
+          difference_iqd: number;
+          difference_usd: number;
+          expected_iqd: number;
+          expected_usd: number;
+          opened_at: string;
+          opened_by: string;
+          shift_id: string;
+        }[];
+      };
+      report_discounts: {
+        Args: { p_branch_id?: string; p_from: string; p_to: string };
+        Returns: {
+          discount: number;
+          full_name: string;
+          invoices: number;
+          staff_id: string;
+        }[];
+      };
+      report_inventory: {
+        Args: { p_branch_id?: string };
+        Returns: {
+          branch_id: string;
+          low_stock_level: number;
+          name_ar: string;
+          name_ckb: string;
+          name_en: string;
+          product_id: string;
+          quantity: number;
+          unit_cost: number;
+          value: number;
+        }[];
+      };
+      report_payments: {
+        Args: { p_branch_id?: string; p_from: string; p_to: string };
+        Returns: {
+          amount: number;
+          currency: string;
+          dollars: number;
+          method: string;
+          payments: number;
+          refunds: number;
+        }[];
+      };
+      report_peak_hours: {
+        Args: { p_branch_id?: string; p_from: string; p_to: string };
+        Returns: {
+          hour: number;
+          visits: number;
+          weekday: number;
+        }[];
+      };
+      report_plans: {
+        Args: { p_branch_id?: string; p_from: string; p_to: string };
+        Returns: {
+          name_ar: string;
+          name_ckb: string;
+          name_en: string;
+          plan_id: string;
+          revenue: number;
+          sold: number;
+        }[];
+      };
+      report_retention: {
+        Args: { p_branch_id?: string; p_from: string; p_to: string };
+        Returns: {
+          ended_on: string;
+          full_name: string;
+          member_id: string;
+          member_number: number;
+          renewed_on: string;
+          subscription_id: string;
+        }[];
+      };
+      report_revenue: {
+        Args: { p_branch_id?: string; p_from: string; p_to: string };
+        Returns: {
+          amount: number;
+          day: string;
+          source: string;
+        }[];
+      };
+      report_staff: {
+        Args: { p_branch_id?: string; p_from: string; p_to: string };
+        Returns: {
+          amount: number;
+          full_name: string;
+          manual_checkins: number;
+          payments: number;
+          staff_id: string;
+          subscriptions: number;
+        }[];
       };
       reset_staff_pin: { Args: { p_staff_id: string }; Returns: undefined };
       revoke_support_access: { Args: { p_id: string }; Returns: Json };

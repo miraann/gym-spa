@@ -224,7 +224,7 @@ export function ReceiptView({
       )}
 
       <footer className="flex flex-col items-center gap-0.5 border-t border-dashed border-black pt-1 text-center">
-        <span>{t('receipt.thanks')}</span>
+        <span data-testid="receipt-footer">{receipt.footer ?? t('receipt.thanks')}</span>
         <span>{t('receipt.printedAt', { date: formatDateTime(new Date(), options) })}</span>
       </footer>
     </article>

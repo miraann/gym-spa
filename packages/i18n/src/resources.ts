@@ -9,6 +9,8 @@ import arClasses from './locales/ar/classes.json';
 import arPt from './locales/ar/pt.json';
 import arShop from './locales/ar/shop.json';
 import arNotifications from './locales/ar/notifications.json';
+import arReports from './locales/ar/reports.json';
+import arAudit from './locales/ar/audit.json';
 import arCash from './locales/ar/cash.json';
 import arCommon from './locales/ar/common.json';
 import arDates from './locales/ar/dates.json';
@@ -35,6 +37,8 @@ import ckbClasses from './locales/ckb/classes.json';
 import ckbPt from './locales/ckb/pt.json';
 import ckbShop from './locales/ckb/shop.json';
 import ckbNotifications from './locales/ckb/notifications.json';
+import ckbReports from './locales/ckb/reports.json';
+import ckbAudit from './locales/ckb/audit.json';
 import ckbCash from './locales/ckb/cash.json';
 import ckbCommon from './locales/ckb/common.json';
 import ckbDates from './locales/ckb/dates.json';
@@ -61,6 +65,8 @@ import enClasses from './locales/en/classes.json';
 import enPt from './locales/en/pt.json';
 import enShop from './locales/en/shop.json';
 import enNotifications from './locales/en/notifications.json';
+import enReports from './locales/en/reports.json';
+import enAudit from './locales/en/audit.json';
 import enCash from './locales/en/cash.json';
 import enCommon from './locales/en/common.json';
 import enDates from './locales/en/dates.json';
@@ -108,6 +114,8 @@ const ckb = {
   pt: ckbPt,
   shop: ckbShop,
   notifications: ckbNotifications,
+  reports: ckbReports,
+  audit: ckbAudit,
   cash: ckbCash,
 };
 
@@ -146,6 +154,8 @@ const en: GymResources = {
   pt: enPt,
   shop: enShop,
   notifications: enNotifications,
+  reports: enReports,
+  audit: enAudit,
   cash: enCash,
 };
 
@@ -175,6 +185,8 @@ const ar: GymResources = {
   pt: arPt,
   shop: arShop,
   notifications: arNotifications,
+  reports: arReports,
+  audit: arAudit,
   cash: arCash,
 };
 
@@ -207,6 +219,8 @@ export const NAMESPACES = [
   'shop',
   'cash',
   'notifications',
+  'reports',
+  'audit',
 ] as const satisfies readonly Namespace[];
 
 export const DEFAULT_NAMESPACE = 'common' satisfies Namespace;

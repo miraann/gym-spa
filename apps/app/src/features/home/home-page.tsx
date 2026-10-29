@@ -1,8 +1,8 @@
 import { Link } from '@tanstack/react-router';
 import {
   BanknoteIcon,
+  BathIcon,
   CalendarClockIcon,
-  ClockIcon,
   NfcIcon,
   PaletteIcon,
   UserCogIcon,
@@ -14,25 +14,23 @@ import { useTranslation } from 'react-i18next';
 import { ListGroup, ListRow, ListRowIcon } from '@gym/ui/blocks/list-group';
 import { PageHeader } from '@gym/ui/blocks/page-header';
 import { Skeleton } from '@gym/ui/components/skeleton';
-import { cn } from '@gym/ui/lib/utils';
 import { STRONG_BRAND_TOKENS } from '@/components/brand-surface';
 import { useActiveAccount } from '@/features/auth/auth-context';
 import { usePermission, usePermissions } from '@/features/auth/use-permissions';
 import type { AppPath } from '@/app/navigation';
-import { useMemberCounts } from '@/features/members/member-data';
 import { useFormat } from '@/lib/format';
-import { useBaghdadToday } from '@/lib/use-today';
+import { useDashboard } from './dashboard-data';
+import { HourlyChart } from './hourly-chart';
 
 /**
- * The dashboard (CLAUDE.md → Design: bento tiles). Member numbers are real; check-ins,
- * subscriptions and revenue get their numbers when their phases are built (4, 3 and 3), and until
- * then say which section brings them.
+ * The home page and dashboard (CLAUDE.md → Design: bento tiles; step 10a): today's numbers in every
+ * branch the staff member reaches, each tile only with its permission, and check-ins per hour.
  */
 export function HomePage() {
   const { t } = useTranslation('home');
   const format = useFormat();
   const account = useActiveAccount();
-  const canSeeMembers = usePermission('members.view');
+  const canSeeDashboard = usePermission('dashboard.view');
 
   return (
     <div className="flex flex-col gap-6">
@@ -48,40 +46,96 @@ export function HomePage() {
         </div>
       )}
 
-      <section aria-label={t('stats.label')} className="@container">
-        <div className="grid grid-cols-2 gap-3 @2xl:grid-cols-4 @2xl:gap-4">
-          {canSeeMembers && <ActiveMembersTile />}
-          <ComingTile
-            icon={NfcIcon}
-            label={t('stats.checkinsToday')}
-            comesWith={t('stats.comesWithCheckin')}
-          />
-          <ComingTile
-            icon={CalendarClockIcon}
-            label={t('stats.expiring')}
-            comesWith={t('stats.comesWithSubscriptions')}
-          />
-          <ComingTile
-            icon={BanknoteIcon}
-            label={t('stats.revenueToday')}
-            comesWith={t('stats.comesWithPayments')}
-            className="col-span-2"
-          />
-        </div>
-      </section>
+      {canSeeDashboard && <Dashboard />}
 
       <QuickActions />
     </div>
   );
 }
 
-/** Active members, with the ones registered this month: the one tile with real numbers today. */
-function ActiveMembersTile() {
+function Dashboard() {
   const { t } = useTranslation('home');
   const format = useFormat();
-  const today = useBaghdadToday();
-  // Baghdad has no daylight saving time: always UTC+3.
-  const counts = useMemberCounts(new Date(`${today.slice(0, 8)}01T00:00:00+03:00`));
+  const summary = useDashboard(true);
+  const data = summary.data;
+  const pending = summary.isPending;
+  const number = (value: number | null | undefined) =>
+    value === null || value === undefined ? null : format.number(value);
+  const money = (value: number | null | undefined) =>
+    value === null || value === undefined ? null : format.money(value);
+
+  return (
+    <section aria-label={t('stats.label')} className="@container">
+      <div className="grid grid-cols-2 gap-3 @2xl:grid-cols-4 @2xl:gap-4">
+        {(pending || (data?.activeMembers ?? null) !== null) && (
+          <ActiveMembersTile
+            active={data?.activeMembers ?? null}
+            newThisMonth={data?.newThisMonth ?? null}
+          />
+        )}
+        <StatTile
+          icon={NfcIcon}
+          label={t('stats.checkinsToday')}
+          value={number(data?.checkinsToday)}
+          note={
+            data?.insideNow == null
+              ? undefined
+              : t('stats.insideNow', { count: format.number(data.insideNow) })
+          }
+          to="/checkin/visits"
+          pending={pending}
+          testId="stat-checkins"
+        />
+        <StatTile
+          icon={CalendarClockIcon}
+          label={t('stats.expiring')}
+          value={number(data?.endingThisWeek)}
+          to="/members"
+          pending={pending}
+          testId="stat-ending"
+        />
+        <StatTile
+          icon={BanknoteIcon}
+          label={t('stats.revenueToday')}
+          value={money(data?.takingsToday)}
+          note={
+            data?.owedNow == null
+              ? undefined
+              : t('stats.owedNow', { amount: format.money(data.owedNow) })
+          }
+          to="/payments"
+          pending={pending}
+          testId="stat-takings"
+        />
+        <StatTile
+          icon={BathIcon}
+          label={t('stats.spaToday')}
+          value={number(data?.spaToday)}
+          to="/spa"
+          pending={pending}
+          testId="stat-spa"
+        />
+        {data?.hourly && (
+          <div className="col-span-2 flex flex-col gap-2 rounded-card bg-card p-4 shadow-sm ring-1 ring-foreground/6 md:p-5 @2xl:col-span-4">
+            <h2 className="text-sm font-semibold">{t('chart.title')}</h2>
+            <HourlyChart hourly={data.hourly} />
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+/** Active members, with the ones registered this month: the large brand tile. */
+function ActiveMembersTile({
+  active,
+  newThisMonth,
+}: {
+  readonly active: number | null;
+  readonly newThisMonth: number | null;
+}) {
+  const { t } = useTranslation('home');
+  const format = useFormat();
 
   return (
     <Link
@@ -100,19 +154,19 @@ function ActiveMembersTile() {
         {t('stats.activeMembers')}
       </span>
       <span className="flex flex-col gap-1">
-        {counts.data ? (
-          <span className="text-5xl leading-none font-extrabold tabular-nums @2xl:text-6xl">
-            {format.number(counts.data.active)}
-          </span>
-        ) : (
+        {active === null ? (
           <Skeleton className="h-12 w-24 bg-primary-foreground/20" />
-        )}
-        {counts.data ? (
-          <span className="text-sm opacity-85">
-            {t('stats.newThisMonth', { count: format.number(counts.data.newSince) })}
-          </span>
         ) : (
+          <span className="text-5xl leading-none font-extrabold tabular-nums @2xl:text-6xl">
+            {format.number(active)}
+          </span>
+        )}
+        {newThisMonth === null ? (
           <Skeleton className="h-4 w-36 bg-primary-foreground/15" />
+        ) : (
+          <span className="text-sm opacity-85">
+            {t('stats.newThisMonth', { count: format.number(newThisMonth) })}
+          </span>
         )}
       </span>
       <span className="inline-flex w-fit items-center gap-1 rounded-full bg-primary-foreground/15 px-3 py-1 text-sm font-semibold">
@@ -122,44 +176,46 @@ function ActiveMembersTile() {
   );
 }
 
-/** A number that comes with a later section: the tile says which one, instead of a fake zero. */
-function ComingTile({
+/** One of today's numbers; left out when the staff member may not see it. */
+function StatTile({
   icon: Icon,
   label,
-  comesWith,
-  className,
+  value,
+  note,
+  to,
+  pending,
+  testId,
 }: {
   readonly icon: LucideIcon;
   readonly label: string;
-  readonly comesWith: string;
-  readonly className?: string;
+  readonly value: string | null;
+  readonly note?: string;
+  readonly to: AppPath;
+  readonly pending: boolean;
+  readonly testId: string;
 }) {
-  const { t } = useTranslation('home');
+  if (!pending && value === null) return null;
   return (
-    <div
-      data-slot="coming-tile"
-      className={cn(
-        'flex min-h-36 flex-col justify-between gap-3 rounded-card bg-card p-4 shadow-sm ring-1 ring-foreground/6 md:p-5',
-        className,
-      )}
+    <Link
+      to={to}
+      data-testid={testId}
+      className="flex min-h-36 flex-col justify-between gap-3 rounded-card bg-card p-4 shadow-sm ring-1 ring-foreground/6 outline-none focus-visible:ring-3 focus-visible:ring-ring/50 md:p-5"
     >
       <span className="flex size-10 items-center justify-center rounded-xl bg-muted text-muted-foreground">
         <Icon aria-hidden className="size-5" />
       </span>
       <span className="flex flex-col gap-1">
         <span className="text-sm leading-snug font-semibold">{label}</span>
-        <span
-          aria-label={t('stats.noNumberYet')}
-          className="text-3xl leading-none font-extrabold text-muted-foreground/50"
-        >
-          —
-        </span>
+        {value === null ? (
+          <Skeleton className="h-8 w-16" />
+        ) : (
+          <span className="text-3xl leading-none font-extrabold tabular-nums" data-value>
+            {value}
+          </span>
+        )}
+        {note && <span className="text-xs text-muted-foreground">{note}</span>}
       </span>
-      <span className="flex items-start gap-1.5 text-xs text-muted-foreground">
-        <ClockIcon aria-hidden className="mt-0.5 size-3.5 shrink-0" />
-        {comesWith}
-      </span>
-    </div>
+    </Link>
   );
 }
 

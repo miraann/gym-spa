@@ -1,5 +1,6 @@
 import { Link, Outlet, useRouterState } from '@tanstack/react-router';
 import {
+  Building2Icon,
   MessageCircleIcon,
   MonitorSmartphoneIcon,
   NfcIcon,
@@ -16,7 +17,7 @@ import { usePermissions } from '@/features/auth/use-permissions';
 
 const TABS: readonly {
   to: AppPath;
-  key: 'display' | 'appearance' | 'cardReader' | 'printer' | 'messages' | 'support';
+  key: 'display' | 'appearance' | 'gym' | 'cardReader' | 'printer' | 'messages' | 'support';
   icon: LucideIcon;
   /** Shown only to staff with it. */
   permission?: string;
@@ -25,6 +26,7 @@ const TABS: readonly {
 }[] = [
   { to: '/settings/display', key: 'display', icon: MonitorSmartphoneIcon },
   { to: '/settings/appearance', key: 'appearance', icon: PaletteIcon },
+  { to: '/settings/gym', key: 'gym', icon: Building2Icon, permission: 'settings.edit' },
   { to: '/settings/card-reader', key: 'cardReader', icon: NfcIcon },
   { to: '/settings/printer', key: 'printer', icon: PrinterIcon, windowsOnly: true },
   {
@@ -46,6 +48,7 @@ export function SettingsLayout() {
       (tab.permission === undefined || permissions.has(tab.permission)) &&
       (!tab.windowsOnly || canPrintSilently()),
   );
+  const compact = tabs.length > 3;
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
@@ -55,20 +58,25 @@ export function SettingsLayout() {
       >
         {tabs.map(({ to, key, icon: Icon }) => {
           const selected = pathname.startsWith(to);
+          // More tabs than a phone fits: the others show only their icon there (named for screen
+          // readers and on hover), so the row never has to scroll.
+          const iconOnly = compact && !selected;
           return (
             <Link
               key={key}
               to={to}
               aria-current={selected ? 'page' : undefined}
+              title={iconOnly ? t(`tabs.${key}`) : undefined}
               className={cn(
                 'flex h-10 flex-1 items-center justify-center gap-2 rounded-full px-3 text-sm whitespace-nowrap transition-[background-color,color,box-shadow] duration-200 outline-none focus-visible:ring-3 focus-visible:ring-ring/50 sm:px-5 pointer-coarse:h-11',
+                iconOnly && 'min-w-11 flex-none md:flex-1',
                 selected
                   ? 'bg-card font-semibold text-foreground shadow-sm'
                   : 'font-medium text-muted-foreground hover:text-foreground',
               )}
             >
               <Icon aria-hidden className="size-4.5" />
-              {t(`tabs.${key}`)}
+              <span className={cn(iconOnly && 'sr-only md:not-sr-only')}>{t(`tabs.${key}`)}</span>
             </Link>
           );
         })}

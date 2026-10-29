@@ -33,6 +33,8 @@ export const SETTINGS = {
   'spa.calendar_until_hour': { min: 1, max: 24, default: 24 },
   /** The spa calendar's step in minutes. */
   'spa.slot_minutes': { min: 5, max: 60, default: 15 },
+  /** Dinars a dollar is usually taken at; 0: none. It fills in a payment in dollars. */
+  'payments.usd_rate': { min: 0, max: 10_000_000, default: 0 },
 } as const satisfies Record<string, IntegerSetting>;
 
 export type SettingKey = keyof typeof SETTINGS;
@@ -73,4 +75,27 @@ export function resolveSetting(
     parseSettingValue(key, shared?.value) ??
     SETTINGS[key].default
   );
+}
+
+/** Text settings: the receipt's bottom line, one per language (up to 200 characters). */
+export const RECEIPT_FOOTER_KEYS = {
+  ckb: 'receipts.footer_ckb',
+  en: 'receipts.footer_en',
+  ar: 'receipts.footer_ar',
+} as const;
+export const RECEIPT_FOOTER_MAX = 200;
+
+/** A text setting's value that applies in a branch (its own row, then every branch's), or null. */
+export function resolveTextSetting(
+  key: string,
+  rows: readonly SettingRow[],
+  branchId: string | null,
+): string | null {
+  const matching = rows.filter((row) => row.key === key);
+  const own = branchId ? matching.find((row) => row.branch_id === branchId) : undefined;
+  const shared = matching.find((row) => row.branch_id === null);
+  for (const row of [own, shared]) {
+    if (typeof row?.value === 'string' && row.value.trim() !== '') return row.value;
+  }
+  return null;
 }

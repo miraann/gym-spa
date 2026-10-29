@@ -11,10 +11,9 @@
     "checkinsToday": "Check-ins today",
     "expiring": "Subscriptions ending this week",
     "revenueToday": "Today's revenue",
-    "noNumberYet": "No number yet",
-    "comesWithCheckin": "Comes with the check-in section",
-    "comesWithSubscriptions": "Comes with the subscriptions section",
-    "comesWithPayments": "Comes with the payments section"
+    "insideNow": "{{count}} inside now",
+    "spaToday": "Today's spa bookings",
+    "owedNow": "Owed now: {{amount}}"
   },
   "quick": {
     "title": "Quick actions",
@@ -26,5 +25,11 @@
     "staffHint": "Staff accounts and roles",
     "appearance": "Gym look",
     "appearanceHint": "Color, logo and corner style"
+  },
+  "chart": {
+    "title": "Today's check-ins by hour",
+    "hour": "{{hour}}:00",
+    "hourColumn": "Hour",
+    "visits": "Check-ins"
   }
 }

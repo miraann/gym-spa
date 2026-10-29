@@ -19,7 +19,8 @@
     "cardReader": "Card reader",
     "printer": "Printer",
     "support": "Click Group",
-    "messages": "Messages"
+    "messages": "Messages",
+    "gym": "Gym"
   },
   "appearance": {
     "title": "Appearance",
@@ -127,5 +128,26 @@
     "silentHint": "Receipts and cash register reports print straight to this printer, without the print dialog.",
     "saved": "Saved.",
     "onlyWindows": "Choosing a printer is only in the Windows app."
+  },
+  "gym": {
+    "title": "Gym",
+    "description": "What receipts and payments use.",
+    "footerTitle": "Receipt footer",
+    "footerHint": "The line printed at the bottom of every receipt, in the receipt's language. Left empty, \"Thank you\" is printed.",
+    "usdRate": "Usual dollar rate (dinars)",
+    "usdRateHint": "Filled in when a payment is taken in dollars; staff can still change it. Empty: none.",
+    "usdRateInvalid": "Enter a whole number from 0 to 10,000,000.",
+    "save": "Save",
+    "saved": "Saved.",
+    "saveFailed": "Not saved. Try again.",
+    "loadFailed": "The settings couldn't be read."
+  },
+  "export": {
+    "title": "Export all data",
+    "description": "All of the gym's data as one zip file, a CSV file per table (they open in Excel). Photos are left out. This is not a backup that can be restored.",
+    "button": "Export all data",
+    "working": "Table {{done}} of {{total}}…",
+    "done": "The data was exported.",
+    "failed": "The export didn't work. Try again."
   }
 }

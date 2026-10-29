@@ -199,7 +199,7 @@ test('the card reader page tests a reader, and turns a reversed reader around', 
   await page.setViewportSize(PHONE);
   await signIn(page, manager, '/settings/card-reader');
 
-  // Three settings tabs fit on a phone.
+  // The settings tabs fit on a phone (the ones not open show only their icon).
   const tabs = page.getByRole('navigation', { name: 'بەشەکانی ڕێکخستن' });
   await expect(tabs.getByRole('link', { name: 'خوێنەری کارت' })).toHaveAttribute(
     'aria-current',
