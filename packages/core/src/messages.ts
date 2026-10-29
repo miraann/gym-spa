@@ -192,7 +192,8 @@ export interface ReminderDetails {
   readonly startsAt?: string;
 }
 
-function namesOf(value: unknown): MessageNames | undefined {
+/** Names in three languages as the database keeps them (`{"ckb", "en", "ar"}`). */
+export function parseMessageNames(value: unknown): MessageNames | undefined {
   if (value === null || typeof value !== 'object') return undefined;
   const names = value as Record<string, unknown>;
   if (typeof names.ckb !== 'string') return undefined;
@@ -216,12 +217,12 @@ function numberOf(value: unknown): number | undefined {
 export function parseReminderDetails(json: unknown): ReminderDetails {
   if (json === null || typeof json !== 'object' || Array.isArray(json)) return {};
   const raw = json as Record<string, unknown>;
-  const plan = namesOf(raw.plan);
+  const plan = parseMessageNames(raw.plan);
   const endDate = textOf(raw.end_date);
   const days = numberOf(raw.days);
   const amount = numberOf(raw.amount);
   const dueDate = textOf(raw.due_date);
-  const service = namesOf(raw.service);
+  const service = parseMessageNames(raw.service);
   const startsAt = textOf(raw.starts_at);
   return {
     ...(plan && { plan }),

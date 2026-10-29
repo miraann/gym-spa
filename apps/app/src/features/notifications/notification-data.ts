@@ -1,8 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   MESSAGE_TEMPLATE_KEYS,
+  baghdadDateOf,
   isMessageTemplateKey,
+  parseMessageNames,
   parseReminderDetails,
+  type MessageNames,
   type MessageTemplateKey,
   type ReminderDetails,
 } from '@gym/core';
@@ -95,6 +98,7 @@ let lastCollected = 0;
  */
 export function useReminders(day: string, today: string) {
   const { client, actor } = useActingClient();
+  const queryClient = useQueryClient();
   return useQuery({
     queryKey: [NOTIFICATIONS_QUERY, actor, 'reminders', day],
     enabled: client !== undefined,
@@ -105,6 +109,8 @@ export function useReminders(day: string, today: string) {
         const collected = await db.rpc('refresh_reminders');
         if (collected.error) throw collected.error;
         lastCollected = Date.now();
+        // Collecting may have added to the bell.
+        void queryClient.invalidateQueries({ queryKey: [NOTIFICATIONS_QUERY, actor, 'bell'] });
       }
       const { data, error } = await db
         .from('reminders')
@@ -230,5 +236,92 @@ export function useRecordMessageOpened() {
       if (error) throw error;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: [NOTIFICATIONS_QUERY] }),
+  });
+}
+
+/** One of the bell's notifications. */
+export type StaffNotification =
+  | {
+      readonly id: string;
+      readonly kind: 'reminders_ready';
+      readonly branchId: string;
+      readonly notifyOn: string;
+      readonly read: boolean;
+      readonly count: number;
+    }
+  | {
+      readonly id: string;
+      readonly kind: 'low_stock';
+      readonly branchId: string;
+      readonly notifyOn: string;
+      readonly read: boolean;
+      readonly product: MessageNames;
+      readonly quantity: number;
+    };
+
+/** How far back the bell looks. */
+const BELL_DAYS = 30;
+
+/** The bell: the last 30 days' notifications of the staff member's branches and permissions. */
+export function useStaffNotifications(enabled: boolean) {
+  const { client, actor } = useActingClient();
+  return useQuery({
+    queryKey: [NOTIFICATIONS_QUERY, actor, 'bell'],
+    enabled: enabled && client !== undefined,
+    refetchInterval: 60_000,
+    queryFn: async (): Promise<StaffNotification[]> => {
+      const since = baghdadDateOf(Date.now() - BELL_DAYS * 86_400_000);
+      const { data, error } = await requireClient(client)
+        .from('staff_notifications')
+        // The read marks are the staff member's own (RLS).
+        .select('id, kind, branch_id, notify_on, details, staff_notification_reads (id)')
+        .gte('notify_on', since)
+        .order('notify_on', { ascending: false })
+        .order('created_at', { ascending: false })
+        .limit(50);
+      if (error) throw error;
+      const notifications: StaffNotification[] = [];
+      for (const row of data) {
+        // Always an object (a check constraint).
+        const details = row.details as Record<string, unknown>;
+        const base = {
+          id: row.id,
+          branchId: row.branch_id,
+          notifyOn: row.notify_on,
+          read: row.staff_notification_reads.length > 0,
+        };
+        if (row.kind === 'reminders_ready') {
+          notifications.push({
+            ...base,
+            kind: 'reminders_ready',
+            count: Number(details.count) || 0,
+          });
+        } else if (row.kind === 'low_stock') {
+          const product = parseMessageNames(details.product);
+          if (!product) continue;
+          notifications.push({
+            ...base,
+            kind: 'low_stock',
+            product,
+            quantity: Number(details.quantity) || 0,
+          });
+        }
+      }
+      return notifications;
+    },
+  });
+}
+
+export function useMarkNotificationsRead() {
+  const { client } = useActingClient();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (ids: readonly string[]) => {
+      const { error } = await requireClient(client).rpc('mark_notifications_read', {
+        p_ids: [...ids],
+      });
+      if (error) throw error;
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: [NOTIFICATIONS_QUERY] }),
   });
 }

@@ -96,7 +96,7 @@
     "emergency": "رقم جهة الاتصال للطوارئ",
     "empty": "لا أحد للتذكير.",
     "emptyFilter": "لا توجد تذكيرات بهذا العرض.",
-    "progress": "أُنجز {{done}} من {{count}}",
+    "progress": "أُنجز {{done}} من {{total}}",
     "details": {
       "expiring": "ينتهي: {{date}}",
       "installment": "{{amount}}، {{date}}",
@@ -124,10 +124,10 @@
   },
   "bell": {
     "label": "الإشعارات",
-    "unread": "{{count}} غير مقروءة",
+    "unread": "{{total}} غير مقروءة",
     "empty": "لا توجد إشعارات.",
     "markAll": "تعليم الكل كمقروء",
-    "remindersReady": "{{count}} تذكيرًا جاهزًا لليوم",
+    "remindersReady": "{{total}} تذكيرًا جاهزًا لليوم",
     "lowStock": "{{product}} قليل في المخزن: بقي {{quantity}}"
   },
   "errors": {

@@ -96,7 +96,7 @@
     "emergency": "Emergency contact's number",
     "empty": "Nobody to remind.",
     "emptyFilter": "No reminders with this filter.",
-    "progress": "{{done}} of {{count}} done",
+    "progress": "{{done}} of {{total}} done",
     "details": {
       "expiring": "Ends: {{date}}",
       "installment": "{{amount}}, {{date}}",
@@ -124,10 +124,10 @@
   },
   "bell": {
     "label": "Notifications",
-    "unread": "{{count}} unread",
+    "unread": "{{total}} unread",
     "empty": "No notifications.",
     "markAll": "Mark all read",
-    "remindersReady": "{{count}} reminders are ready for today",
+    "remindersReady": "{{total}} reminders are ready for today",
     "lowStock": "{{product}} is low in stock: {{quantity}} left"
   },
   "errors": {

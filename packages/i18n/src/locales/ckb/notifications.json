@@ -96,7 +96,7 @@
     "emergency": "ژمارەی کەسی نزیک",
     "empty": "کەس نییە بۆ بیرخستنەوە.",
     "emptyFilter": "هیچ بیرخستنەوەیەک بەم پیشاندانە نییە.",
-    "progress": "{{done}} لە {{count}} تەواوە",
+    "progress": "{{done}} لە {{total}} تەواوە",
     "details": {
       "expiring": "کۆتایی: {{date}}",
       "installment": "{{amount}}، {{date}}",
@@ -124,10 +124,10 @@
   },
   "bell": {
     "label": "ئاگادارکردنەوەکان",
-    "unread": "{{count}} نەخوێندراوە",
+    "unread": "{{total}} نەخوێندراوە",
     "empty": "هیچ ئاگادارکردنەوەیەک نییە.",
     "markAll": "هەمووی خوێندرایەوە",
-    "remindersReady": "{{count}} بیرخستنەوە بۆ ئەمڕۆ ئامادەیە",
+    "remindersReady": "{{total}} بیرخستنەوە بۆ ئەمڕۆ ئامادەیە",
     "lowStock": "{{product}} کەمە لە کۆگا: {{quantity}} ماوە"
   },
   "errors": {

@@ -92,7 +92,7 @@ function Reminders() {
           <span className="ms-auto text-sm text-muted-foreground tabular-nums">
             {t('reminders.progress', {
               done: format.number(done),
-              count: format.number(all.length),
+              total: format.number(all.length),
             })}
           </span>
         )}

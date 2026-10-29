@@ -170,3 +170,53 @@ test("a member without a phone of their own gets the message on the emergency co
     .eq('member_id', memberId);
   expect(messages).toEqual([{ to_emergency_contact: true, language: 'en', reminder_id: null }]);
 });
+
+test("the bell shows reception today's reminders, not the stock, and opening it marks them read", async ({
+  page,
+  data,
+}) => {
+  const branchId = await data.branch();
+  const reception = await data.staff({ role: 'receptionist', branchIds: [branchId] });
+  const gym = await data.gym();
+  const today = new Date(Date.now() + 3 * 3_600_000).toISOString().slice(0, 10);
+  await write(
+    admin()
+      .from('staff_notifications')
+      .insert([
+        {
+          gym_id: gym.id,
+          branch_id: branchId,
+          kind: 'reminders_ready',
+          subject_id: branchId,
+          notify_on: today,
+          details: { count: 4 },
+        },
+        {
+          gym_id: gym.id,
+          branch_id: branchId,
+          kind: 'low_stock',
+          subject_id: randomUUID(),
+          notify_on: today,
+          details: { product: { ckb: 'ئاو', en: null, ar: null }, quantity: 2, level: 5 },
+        },
+      ]),
+  );
+  await page.setViewportSize(DESKTOP);
+  await signIn(page, reception, '/members');
+
+  const bell = page.getByTestId('notification-bell');
+  await expect(bell).toHaveAccessibleName('ئاگادارکردنەوەکان · 1 نەخوێندراوە');
+  await bell.click();
+  const item = page.locator('[data-notification="reminders_ready"]');
+  await expect(item).toHaveText(/4 بیرخستنەوە بۆ ئەمڕۆ ئامادەیە/);
+  await expect(page.locator('[data-notification="low_stock"]')).toHaveCount(0);
+  await expect(bell).toHaveAccessibleName('ئاگادارکردنەوەکان');
+  const { data: reads } = await admin()
+    .from('staff_notification_reads')
+    .select('staff_id')
+    .eq('gym_id', gym.id);
+  expect(reads).toEqual([{ staff_id: reception.id }]);
+
+  await item.click();
+  await expect(page).toHaveURL(/\/notifications$/);
+});

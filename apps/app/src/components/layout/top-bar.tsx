@@ -7,6 +7,8 @@ import { SidebarTrigger } from '@gym/ui/components/sidebar';
 import { usePageTitle } from '@gym/ui/hooks/use-page-title';
 import { cn } from '@gym/ui/lib/utils';
 import { UserMenu } from '@/features/auth/user-menu';
+import { NotificationBell } from '@/features/notifications/notification-bell';
+import { useHasBell } from '@/features/notifications/use-has-bell';
 import type { Layout } from '@gym/ui/hooks/use-layout';
 import { ConnectionStatus } from './connection-status';
 import { GymMark } from './gym-mark';
@@ -24,6 +26,7 @@ export function TopBar({
   const { t } = useTranslation();
   const gymName = useGymName();
   const pageTitle = usePageTitle();
+  const hasBell = useHasBell();
   const phone = layout === 'phone';
   // Phones: once the page's large title scrolls away, the bar shows it in small type.
   const compactTitle = phone && pageTitle.collapsed ? pageTitle.title : null;
@@ -64,13 +67,14 @@ export function TopBar({
         </div>
       )}
       {phone && (
-        // Between the gym's logo and the buttons at the end (search, connection, staff menu), so
-        // a long title is cut short instead of running under them.
+        // Between the gym's logo and the buttons at the end (search, connection, bell, staff
+        // menu), so a long title is cut short instead of running under them.
         <span
           aria-hidden
           data-slot="compact-title"
           className={cn(
-            'pointer-events-none absolute start-14 end-38 bottom-0 flex h-14 items-center justify-center truncate text-base font-bold transition-[opacity,translate] duration-200 ease-spring motion-reduce:transition-none',
+            'pointer-events-none absolute start-14 bottom-0 flex h-14 items-center justify-center truncate text-base font-bold transition-[opacity,translate] duration-200 ease-spring motion-reduce:transition-none',
+            hasBell ? 'end-48' : 'end-38',
             compactTitle === null ? 'translate-y-1 opacity-0' : 'translate-y-0 opacity-100',
           )}
         >
@@ -100,6 +104,7 @@ export function TopBar({
       </Button>
       <div className={cn('flex shrink-0 items-center gap-1', !phone && 'ms-auto')}>
         <ConnectionStatus />
+        <NotificationBell compact={phone} />
         {/* On phones, language and theme are in the staff member's menu. */}
         {!phone && (
           <>

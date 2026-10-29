@@ -388,6 +388,7 @@ export {
   isWhatsAppUrl,
   messagePhone,
   nameIn,
+  parseMessageNames,
   parseReminderDetails,
   unknownPlaceholders,
   whatsAppLink,
