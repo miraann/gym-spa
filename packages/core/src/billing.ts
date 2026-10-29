@@ -51,7 +51,8 @@ function baghdadDay(ms: number): number {
 
 const NONE: BillingNotice = { kind: 'none' };
 
-function stageFor(daysLeft: number): BillingStage | null {
+/** The warning stage for this many days left (also for offline licenses), or null when none yet. */
+export function billingStageFor(daysLeft: number): BillingStage | null {
   if (daysLeft > 30) return null;
   if (daysLeft > 7) return 30;
   if (daysLeft > 1) return 7;
@@ -82,7 +83,7 @@ export function billingNotice(gym: GymBilling, now: Date | number = Date.now()):
 
   // Active. The server says it hasn't ended; a device clock that runs ahead still shows 1 day.
   const daysLeft = Math.max(1, baghdadDay(end) - today);
-  const stage = stageFor(daysLeft);
+  const stage = billingStageFor(daysLeft);
   return stage === null ? NONE : { kind: 'ending', stage, daysLeft, lastPaidAt };
 }
 
