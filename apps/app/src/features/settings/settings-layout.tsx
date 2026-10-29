@@ -1,5 +1,6 @@
 import { Link, Outlet, useRouterState } from '@tanstack/react-router';
 import {
+  Building2Icon,
   MessageCircleIcon,
   MonitorSmartphoneIcon,
   NfcIcon,
@@ -16,7 +17,7 @@ import { usePermissions } from '@/features/auth/use-permissions';
 
 const TABS: readonly {
   to: AppPath;
-  key: 'display' | 'appearance' | 'cardReader' | 'printer' | 'messages' | 'support';
+  key: 'display' | 'appearance' | 'gym' | 'cardReader' | 'printer' | 'messages' | 'support';
   icon: LucideIcon;
   /** Shown only to staff with it. */
   permission?: string;
@@ -25,6 +26,7 @@ const TABS: readonly {
 }[] = [
   { to: '/settings/display', key: 'display', icon: MonitorSmartphoneIcon },
   { to: '/settings/appearance', key: 'appearance', icon: PaletteIcon },
+  { to: '/settings/gym', key: 'gym', icon: Building2Icon, permission: 'settings.edit' },
   { to: '/settings/card-reader', key: 'cardReader', icon: NfcIcon },
   { to: '/settings/printer', key: 'printer', icon: PrinterIcon, windowsOnly: true },
   {

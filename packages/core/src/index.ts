@@ -325,10 +325,13 @@ export {
   type OverridableReason,
 } from './checkin.ts';
 export {
+  RECEIPT_FOOTER_KEYS,
+  RECEIPT_FOOTER_MAX,
   SETTINGS,
   isSettingKey,
   parseSettingValue,
   resolveSetting,
+  resolveTextSetting,
   type SettingKey,
   type SettingRow,
 } from './settings.ts';

@@ -1,6 +1,14 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { SETTINGS, isSettingKey, parseSettingValue, resolveSetting } from './settings.ts';
+import {
+  RECEIPT_FOOTER_KEYS,
+  RECEIPT_FOOTER_MAX,
+  SETTINGS,
+  isSettingKey,
+  parseSettingValue,
+  resolveSetting,
+  resolveTextSetting,
+} from './settings.ts';
 
 describe('parseSettingValue', () => {
   it('reads whole numbers inside the allowed range', () => {
@@ -48,5 +56,30 @@ describe('the rules match the database', () => {
     );
     expect(rule.default).toBeGreaterThanOrEqual(rule.min);
     expect(rule.default).toBeLessThanOrEqual(rule.max);
+  });
+});
+
+describe('text settings', () => {
+  it("use the branch's own text, then every branch's, else none", () => {
+    const rows = [
+      { branch_id: null, key: 'receipts.footer_ckb', value: 'سوپاس' },
+      { branch_id: 'b2', key: 'receipts.footer_ckb', value: 'سوپاس، لقی دوو' },
+      { branch_id: 'b3', key: 'receipts.footer_ckb', value: '  ' },
+    ];
+    expect(resolveTextSetting('receipts.footer_ckb', rows, 'b2')).toBe('سوپاس، لقی دوو');
+    expect(resolveTextSetting('receipts.footer_ckb', rows, 'b3')).toBe('سوپاس');
+    expect(resolveTextSetting('receipts.footer_en', rows, null)).toBeNull();
+  });
+
+  it('are checked by the database the same way', () => {
+    const migrations = new URL('../../../supabase/migrations/', import.meta.url);
+    const sql = readdirSync(migrations)
+      .map((file) => readFileSync(new URL(file, migrations), 'utf8'))
+      .join('\n');
+    for (const key of Object.values(RECEIPT_FOOTER_KEYS)) {
+      expect(sql).toContain(
+        `when '${key}' then jsonb_typeof(value) = 'string' and app.is_clean_text(value #>> '{}', ${String(RECEIPT_FOOTER_MAX)})`,
+      );
+    }
   });
 });

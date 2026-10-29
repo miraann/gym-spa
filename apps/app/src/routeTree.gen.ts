@@ -47,6 +47,7 @@ import { Route as SettingsIndexRouteImport } from './routes/settings/index'
 import { Route as SettingsAppearanceRouteImport } from './routes/settings/appearance'
 import { Route as SettingsCardReaderRouteImport } from './routes/settings/card-reader'
 import { Route as SettingsDisplayRouteImport } from './routes/settings/display'
+import { Route as SettingsGymRouteImport } from './routes/settings/gym'
 import { Route as SettingsMessagesRouteImport } from './routes/settings/messages'
 import { Route as SettingsPrinterRouteImport } from './routes/settings/printer'
 import { Route as SettingsSupportRouteImport } from './routes/settings/support'
@@ -260,6 +261,11 @@ const SettingsDisplayRoute = SettingsDisplayRouteImport.update({
   path: '/display',
   getParentRoute: () => SettingsRouteRoute,
 } as any)
+const SettingsGymRoute = SettingsGymRouteImport.update({
+  id: '/gym',
+  path: '/gym',
+  getParentRoute: () => SettingsRouteRoute,
+} as any)
 const SettingsMessagesRoute = SettingsMessagesRouteImport.update({
   id: '/messages',
   path: '/messages',
@@ -401,6 +407,7 @@ export interface FileRoutesByFullPath {
   '/settings/appearance': typeof SettingsAppearanceRoute
   '/settings/card-reader': typeof SettingsCardReaderRoute
   '/settings/display': typeof SettingsDisplayRoute
+  '/settings/gym': typeof SettingsGymRoute
   '/settings/messages': typeof SettingsMessagesRoute
   '/settings/printer': typeof SettingsPrinterRoute
   '/settings/support': typeof SettingsSupportRoute
@@ -455,6 +462,7 @@ export interface FileRoutesByTo {
   '/settings/appearance': typeof SettingsAppearanceRoute
   '/settings/card-reader': typeof SettingsCardReaderRoute
   '/settings/display': typeof SettingsDisplayRoute
+  '/settings/gym': typeof SettingsGymRoute
   '/settings/messages': typeof SettingsMessagesRoute
   '/settings/printer': typeof SettingsPrinterRoute
   '/settings/support': typeof SettingsSupportRoute
@@ -518,6 +526,7 @@ export interface FileRoutesById {
   '/settings/appearance': typeof SettingsAppearanceRoute
   '/settings/card-reader': typeof SettingsCardReaderRoute
   '/settings/display': typeof SettingsDisplayRoute
+  '/settings/gym': typeof SettingsGymRoute
   '/settings/messages': typeof SettingsMessagesRoute
   '/settings/printer': typeof SettingsPrinterRoute
   '/settings/support': typeof SettingsSupportRoute
@@ -582,6 +591,7 @@ export interface FileRouteTypes {
     | '/settings/appearance'
     | '/settings/card-reader'
     | '/settings/display'
+    | '/settings/gym'
     | '/settings/messages'
     | '/settings/printer'
     | '/settings/support'
@@ -636,6 +646,7 @@ export interface FileRouteTypes {
     | '/settings/appearance'
     | '/settings/card-reader'
     | '/settings/display'
+    | '/settings/gym'
     | '/settings/messages'
     | '/settings/printer'
     | '/settings/support'
@@ -698,6 +709,7 @@ export interface FileRouteTypes {
     | '/settings/appearance'
     | '/settings/card-reader'
     | '/settings/display'
+    | '/settings/gym'
     | '/settings/messages'
     | '/settings/printer'
     | '/settings/support'
@@ -1030,6 +1042,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsDisplayRouteImport
       parentRoute: typeof SettingsRouteRoute
     }
+    '/settings/gym': {
+      id: '/settings/gym'
+      path: '/gym'
+      fullPath: '/settings/gym'
+      preLoaderRoute: typeof SettingsGymRouteImport
+      parentRoute: typeof SettingsRouteRoute
+    }
     '/settings/messages': {
       id: '/settings/messages'
       path: '/messages'
@@ -1275,6 +1294,7 @@ interface SettingsRouteRouteChildren {
   SettingsAppearanceRoute: typeof SettingsAppearanceRoute
   SettingsCardReaderRoute: typeof SettingsCardReaderRoute
   SettingsDisplayRoute: typeof SettingsDisplayRoute
+  SettingsGymRoute: typeof SettingsGymRoute
   SettingsMessagesRoute: typeof SettingsMessagesRoute
   SettingsPrinterRoute: typeof SettingsPrinterRoute
   SettingsSupportRoute: typeof SettingsSupportRoute
@@ -1285,6 +1305,7 @@ const SettingsRouteRouteChildren: SettingsRouteRouteChildren = {
   SettingsAppearanceRoute: SettingsAppearanceRoute,
   SettingsCardReaderRoute: SettingsCardReaderRoute,
   SettingsDisplayRoute: SettingsDisplayRoute,
+  SettingsGymRoute: SettingsGymRoute,
   SettingsMessagesRoute: SettingsMessagesRoute,
   SettingsPrinterRoute: SettingsPrinterRoute,
   SettingsSupportRoute: SettingsSupportRoute,
