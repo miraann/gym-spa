@@ -3,8 +3,14 @@
 -- walk-in customer or a guest, working through them, the "opened in WhatsApp" log with the
 -- emergency contact's number, the bell's notifications, and who may do what.
 begin;
-select plan(49);
+select plan(50);
 select tests.create_fixture();
+-- The scheduled job (collect-reminders) runs locally too and may have collected other gyms'
+-- reminders today; this test reads the tables whole, so it starts from none (rolled back at the end).
+delete from public.member_messages;
+delete from public.reminders;
+delete from public.staff_notification_reads;
+delete from public.staff_notifications;
 
 create function pg_temp.id(n integer) returns uuid language sql as $$
   select ('50000000-0000-4000-8000-0000000000' || lpad(n::text, 2, '0'))::uuid
@@ -21,15 +27,15 @@ $$;
 -- 4 paying in an installment, 5 with no phone of their own and a birthday today, a guest, and the
 -- walk-in customer.
 select tests.authenticate_as(tests.staff('owner'));
-select public.create_member(p_id => pg_temp.id(n), p_branch_id => tests.branch('B901'), p_full_name => 'Ø¦Û•Ù†Ø¯Ø§Ù…ÛŒ ' || n,
+select public.create_member(p_id => pg_temp.id(n), p_branch_id => tests.branch('B901'), p_full_name => 'ئەندامی ' || n,
   p_gender => 'male', p_phone => '+96475050000' || lpad(n::text, 2, '0'))
   from generate_series(1, 4) as g (n);
-select public.create_member(p_id => pg_temp.id(5), p_branch_id => tests.branch('B901'), p_full_name => 'Ø´ÛŒÙ„Ø§Ù†',
-  p_gender => 'female', p_emergency_contact_name => 'Ø¯Ø§ÛŒÚ©ÛŒ', p_emergency_phone => '+9647505000099',
+select public.create_member(p_id => pg_temp.id(5), p_branch_id => tests.branch('B901'), p_full_name => 'شیلان',
+  p_gender => 'female', p_emergency_contact_name => 'دایکی', p_emergency_phone => '+9647505000099',
   p_birth_date => (pg_temp.today() - interval '30 years')::date, p_preferred_language => 'ar');
-select public.save_plan(p_id => pg_temp.id(10), p_name_ckb => 'Ù…Ø§Ù†Ú¯Ø§Ù†Û•', p_name_en => 'Monthly', p_kind => 'time',
+select public.save_plan(p_id => pg_temp.id(10), p_name_ckb => 'مانگانە', p_name_en => 'Monthly', p_kind => 'time',
   p_price => 0, p_duration_unit => 'month', p_duration_count => 1);
-select public.save_plan(p_id => pg_temp.id(11), p_name_ckb => 'Ù…Ø§Ù†Ú¯Ø§Ù†Û•ÛŒ ØªØ§ÛŒØ¨Û•Øª', p_kind => 'time',
+select public.save_plan(p_id => pg_temp.id(11), p_name_ckb => 'مانگانەی تایبەت', p_kind => 'time',
   p_price => 30000, p_duration_unit => 'month', p_duration_count => 1);
 select public.sell_subscription(pg_temp.id(20), pg_temp.id(30), pg_temp.id(1), pg_temp.id(10), tests.branch('B901'), pg_temp.today(), 0);
 select public.sell_subscription(pg_temp.id(21), pg_temp.id(31), pg_temp.id(2), pg_temp.id(10), tests.branch('B901'), pg_temp.today(), 0);
@@ -40,25 +46,25 @@ select public.sell_subscription(pg_temp.id(22), pg_temp.id(32), pg_temp.id(2), p
 select public.sell_subscription(pg_temp.id(23), pg_temp.id(33), pg_temp.id(3), pg_temp.id(11), tests.branch('B901'), pg_temp.today(), 30000);
 select public.sell_subscription(pg_temp.id(24), pg_temp.id(34), pg_temp.id(4), pg_temp.id(11), tests.branch('B901'), pg_temp.today(), 30000,
   p_installments => jsonb_build_array(jsonb_build_object('id', pg_temp.id(40), 'due_date', pg_temp.today() + 20, 'amount', 30000)));
-select public.save_product(pg_temp.id(12), 'Ø¦Ø§Ùˆ', 500, p_low_stock_level => 5);
+select public.save_product(pg_temp.id(12), 'ئاو', 500, p_low_stock_level => 5);
 select public.receive_stock(gen_random_uuid(), tests.branch('B901'), pg_temp.id(12), 6);
 select public.sell_products(gen_random_uuid(), tests.branch('B901'),
   jsonb_build_array(jsonb_build_object('product_id', pg_temp.id(12), 'quantity', 1, 'price', 500)),
   jsonb_build_object('id', gen_random_uuid(), 'method', 'cash', 'amount', 500), null);
 select tests.clear_authentication();
 insert into public.members (id, gym_id, branch_id, full_name, gender, phone, is_guest)
-values (pg_temp.id(6), tests.gym('pgtap-a'), tests.branch('B901'), 'Ù…ÛŒÙˆØ§Ù†', 'female', '+9647505000006', true);
+values (pg_temp.id(6), tests.gym('pgtap-a'), tests.branch('B901'), 'میوان', 'female', '+9647505000006', true);
 
 -- Templates ---------------------------------------------------------------------------------------------------
 
 select tests.authenticate_as(tests.staff('reception_a'));
 select ok(app.has_permission('notifications.send'), 'the Receptionist now sends reminders');
-select throws_ok($$ select public.save_message_template('welcome', 'Ø³ÚµØ§Ùˆ {name}', null, null) $$,
+select throws_ok($$ select public.save_message_template('welcome', 'سڵاو {name}', null, null) $$,
   '42501', 'permission_denied', 'but doesn''t edit the templates (notifications.templates.manage)');
 select tests.authenticate_as(tests.staff('owner'));
-select is((public.save_message_template('welcome', E'Ø³ÚµØ§Ùˆ {name}ØŒ\nØ¨Û•Ø®ÛŽØ±Ø¨ÛŽÛŒØª Ø¨Û† {gym}', null, null)).key, 'welcome',
+select is((public.save_message_template('welcome', E'سڵاو {name}،\nبەخێربێیت بۆ {gym}', null, null)).key, 'welcome',
   'the Owner writes the gym''s welcome, with a line break');
-select is((public.save_message_template('welcome', 'Ø¨Û•Ø®ÛŽØ±Ø¨ÛŽÛŒØª {name}', null, 'Ø£Ù‡Ù„Ø§Ù‹ {name}')).body_ar, 'Ø£Ù‡Ù„Ø§Ù‹ {name}',
+select is((public.save_message_template('welcome', 'بەخێربێیت {name}', null, 'أهلاً {name}')).body_ar, 'أهلاً {name}',
   'and changes it, in another language too');
 select is((select count(*)::integer from public.message_templates), 1, 'one row per template');
 select throws_ok($$ select public.save_message_template('newsletter', 'x', null, null) $$,
@@ -66,7 +72,7 @@ select throws_ok($$ select public.save_message_template('newsletter', 'x', null,
 select throws_ok($$ select public.save_message_template('debt', E'x\u0007', null, null) $$,
   '22023', 'invalid_template', 'no control characters');
 select tests.authenticate_as(tests.staff('reception_a'));
-select is((select body_ckb from public.message_templates where key = 'welcome'), 'Ø¨Û•Ø®ÛŽØ±Ø¨ÛŽÛŒØª {name}',
+select is((select body_ckb from public.message_templates where key = 'welcome'), 'بەخێربێیت {name}',
   'reception reads it to fill messages');
 select tests.authenticate_as(tests.staff('trainer_ab'));
 select is((select count(*)::integer from public.message_templates), 0, 'a trainer doesn''t');
@@ -100,7 +106,7 @@ select is((select array_agg(r.member_id order by r.member_id) from public.remind
 select results_eq($$ select r.member_id, r.subject_id, r.details from public.reminders r, month_end
                      where r.remind_on = month_end.d - 7 and r.kind = 'expiring_7' and r.member_id = pg_temp.id(1) $$,
   $$ select pg_temp.id(1), pg_temp.id(20),
-            jsonb_build_object('plan', jsonb_build_object('ckb', 'Ù…Ø§Ù†Ú¯Ø§Ù†Û•', 'en', 'Monthly', 'ar', null), 'end_date', d, 'days', 7)
+            jsonb_build_object('plan', jsonb_build_object('ckb', 'مانگانە', 'en', 'Monthly', 'ar', null), 'end_date', d, 'days', 7)
        from month_end $$,
   'with the plan and the date');
 select app.collect_reminders(tests.gym('pgtap-a'), d - 3) from month_end;
@@ -140,18 +146,18 @@ select throws_ok($$ select public.refresh_reminders() $$, '42501', 'permission_d
 
 select tests.authenticate_as(tests.staff('reception_a'));
 select is(public.refresh_reminders(), 0, 'the reminders page collects today''s again: nothing new');
-select throws_ok($$ select public.record_message_opened(gen_random_uuid(), tests.branch('B901'), pg_temp.id(1), '+9647505000002', 'ckb', 'Ø³ÚµØ§Ùˆ') $$,
+select throws_ok($$ select public.record_message_opened(gen_random_uuid(), tests.branch('B901'), pg_temp.id(1), '+9647505000002', 'ckb', 'سڵاو') $$,
   '23514', 'wrong_phone', 'only the member''s own number');
 select results_eq($$ select channel, status, to_emergency_contact, template_key, reminder_id from public.record_message_opened(
-    pg_temp.id(50), tests.branch('B901'), pg_temp.id(1), '+9647505000001', 'ckb', E'Ø³ÚµØ§Ùˆ Ø¦Û•Ù†Ø¯Ø§Ù…ÛŒ 1ØŒ\nØ¨Û•Ø®ÛŽØ±Ø¨ÛŽÛŒØª',
+    pg_temp.id(50), tests.branch('B901'), pg_temp.id(1), '+9647505000001', 'ckb', E'سڵاو ئەندامی 1،\nبەخێربێیت',
     'welcome', (select id from welcome_1)) $$,
   $$ values ('whatsapp_link', 'opened', false, 'welcome', (select id from welcome_1)) $$,
   'opening WhatsApp is written down as opened, not sent');
 select is((public.record_message_opened(pg_temp.id(50), tests.branch('B901'), pg_temp.id(1), '+9647505000001', 'ckb', 'x')).body,
-  E'Ø³ÚµØ§Ùˆ Ø¦Û•Ù†Ø¯Ø§Ù…ÛŒ 1ØŒ\nØ¨Û•Ø®ÛŽØ±Ø¨ÛŽÛŒØª', 'the same id again returns what was saved');
-select throws_ok($$ select public.record_message_opened(gen_random_uuid(), tests.branch('B901'), pg_temp.id(5), '+9647505000005', 'ar', 'Ù…Ø±Ø­Ø¨Ø§') $$,
+  E'سڵاو ئەندامی 1،\nبەخێربێیت', 'the same id again returns what was saved');
+select throws_ok($$ select public.record_message_opened(gen_random_uuid(), tests.branch('B901'), pg_temp.id(5), '+9647505000005', 'ar', 'مرحبا') $$,
   '23514', 'wrong_phone', 'a member without a phone has no number of their own');
-select is((public.record_message_opened(gen_random_uuid(), tests.branch('B901'), pg_temp.id(5), '+9647505000099', 'ar', 'Ù…Ø±Ø­Ø¨Ø§', 'birthday')).to_emergency_contact,
+select is((public.record_message_opened(gen_random_uuid(), tests.branch('B901'), pg_temp.id(5), '+9647505000099', 'ar', 'مرحبا', 'birthday')).to_emergency_contact,
   true, 'so the emergency contact''s number is used, and marked');
 select throws_ok($$ select public.record_message_opened(gen_random_uuid(), tests.branch('B901'), pg_temp.id(2), '+9647505000002', 'ckb', 'x',
     p_reminder_id => (select id from welcome_1)) $$,
@@ -181,6 +187,12 @@ select tests.authenticate_as(tests.staff('manager_a'));
 select is(public.mark_notifications_read(array(select id from public.staff_notifications where kind = 'low_stock' and notify_on = pg_temp.today())), 1,
   'the manager reads the low stock');
 select is((select count(*)::integer from public.staff_notification_reads), 1, 'each sees only their own reads');
+
+-- The job ---------------------------------------------------------------------------------------------------
+
+select tests.clear_authentication();
+select is((select schedule || ' ' || command from cron.job where jobname = 'collect-reminders'),
+  '*/15 * * * * select app.collect_reminders()', 'pg_cron collects the reminders every 15 minutes');
 
 select * from finish();
 rollback;
