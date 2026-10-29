@@ -143,6 +143,6 @@ test('a card held to the reader never throws away unsaved changes', async ({
   // Staff choose to open the member anyway.
   // The toast keeps sliding while a busy test machine renders, so a click at its position can
   // miss it: the click goes to the button itself, as a person's would.
-  await page.getByRole('button', { name: 'کردنەوە' }).dispatchEvent('click');
+  await page.getByRole('button', { name: 'کردنەوە', exact: true }).dispatchEvent('click');
   await expect(page).toHaveURL(new RegExp(`/members/${hana}$`));
 });

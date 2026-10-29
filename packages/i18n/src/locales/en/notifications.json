@@ -1,0 +1,147 @@
+{
+  "templates": {
+    "expiring_7": {
+      "name": "Membership ends in {{days}} days",
+      "default": "Hi {name}, your membership ({plan}) ends in {days} days, on {end_date}. Visit {gym} to renew it."
+    },
+    "expiring_3": {
+      "name": "Membership ends in {{days}} days",
+      "default": "Hi {name}, only {days} days left on your membership ({plan}): it ends on {end_date}. See you at {gym} to renew!"
+    },
+    "expiring_1": {
+      "name": "Membership ends tomorrow",
+      "default": "Hi {name}, your membership ({plan}) ends tomorrow ({end_date}). Renew it today so your training doesn't stop. {gym}"
+    },
+    "expired": {
+      "name": "Membership ended",
+      "default": "Hi {name}, your membership ({plan}) ended on {end_date}. We miss you! Renew it whenever you're ready. {gym}"
+    },
+    "installment_due": {
+      "name": "Installment due",
+      "default": "Hi {name}, a reminder that an installment of {amount} is due on {due_date}. Thank you! {gym}"
+    },
+    "debt": {
+      "name": "Debt reminder",
+      "default": "Hi {name}, you still have {amount} to pay at {gym}. Please pay it on your next visit. Thank you!"
+    },
+    "spa_booking": {
+      "name": "Spa booking",
+      "default": "Hi {name}, a reminder of your spa booking: {service}, {date} at {time}, at {branch}. See you soon!"
+    },
+    "welcome": {
+      "name": "Welcome",
+      "default": "Hi {name}, welcome to {gym}! Your member number is {number}. Message us any time if you have a question."
+    },
+    "birthday": {
+      "name": "Birthday",
+      "default": "Happy birthday, {name}! Everyone at {gym} wishes you a year full of health and happiness."
+    }
+  },
+  "placeholders": {
+    "name": "Member name",
+    "gym": "Gym name",
+    "branch": "Branch",
+    "number": "Member number",
+    "plan": "Plan",
+    "end_date": "End date",
+    "days": "Days left",
+    "amount": "Amount",
+    "due_date": "Installment date",
+    "service": "Service",
+    "date": "Date",
+    "time": "Time"
+  },
+  "templatesPage": {
+    "title": "Message templates",
+    "description": "The messages opened in WhatsApp for members. A language left empty uses the default text.",
+    "changed": "Changed"
+  },
+  "editor": {
+    "language": "Language",
+    "text": "Message text",
+    "insert": "Insert info",
+    "preview": "Preview",
+    "previewNote": "With sample details.",
+    "unknown": "These aren't known and stay empty: {{names}}",
+    "invalid": "The text must be {{min}} to {{max}} characters.",
+    "save": "Save",
+    "reset": "Back to default",
+    "cancel": "Cancel",
+    "saved": "The template was saved.",
+    "resetDone": "The default text is back."
+  },
+  "sample": {
+    "name": "Aram Karim",
+    "plan": "Monthly",
+    "service": "Massage",
+    "branch": "Main branch"
+  },
+  "reminders": {
+    "title": "Reminders",
+    "description": "Members to contact today. Open WhatsApp for each one in turn and mark them done.",
+    "day": "Day",
+    "previousDay": "Previous day",
+    "nextDay": "Next day",
+    "kind": "Kind",
+    "allKinds": "All",
+    "show": "Show",
+    "open": "Not done",
+    "all": "All",
+    "done": "Done",
+    "notDone": "Not done",
+    "markDone": "Done",
+    "undo": "Undo",
+    "whatsapp": "WhatsApp",
+    "opened": "Opened in WhatsApp {{time}}",
+    "emergency": "Emergency contact's number",
+    "empty": "Nobody to remind.",
+    "emptyFilter": "No reminders with this filter.",
+    "progress": "{{done}} of {{total}} done",
+    "details": {
+      "expiring": "Ends: {{date}}",
+      "installment": "{{amount}}, {{date}}",
+      "debt": "{{amount}}",
+      "spa": "{{service}}, {{date}} {{time}}"
+    }
+  },
+  "send": {
+    "button": "Send with WhatsApp",
+    "title": "Send with WhatsApp",
+    "template": "Template",
+    "text": "Message",
+    "to": "To",
+    "toEmergency": "The member has no number of their own, so it goes to the emergency contact's number ({{name}}).",
+    "memberLanguage": "In the member's language: {{language}}",
+    "open": "Open in WhatsApp",
+    "note": "The message opens in WhatsApp. Press Send in WhatsApp yourself.",
+    "blocked": "WhatsApp didn't open. Allow new windows and try again.",
+    "noPhone": "This member has no number.",
+    "badPhone": "WhatsApp can't use this number.",
+    "opened": "Opened in WhatsApp.",
+    "notRecorded": "WhatsApp opened, but it wasn't recorded. {{error}}",
+    "lastOpened": "Last opened in WhatsApp: {{date}}",
+    "cancel": "Close"
+  },
+  "bell": {
+    "label": "Notifications",
+    "unread": "{{total}} unread",
+    "empty": "No notifications.",
+    "markAll": "Mark all read",
+    "remindersReady": "{{total}} reminders are ready for today",
+    "lowStock": "{{product}} is low in stock: {{quantity}} left"
+  },
+  "errors": {
+    "permission_denied": "You don't have permission for this.",
+    "invalid_template": "The text is not valid.",
+    "reminder_not_found": "This reminder wasn't found.",
+    "member_not_found": "This member wasn't found.",
+    "wrong_phone": "This number isn't this member's.",
+    "invalid_message": "The message is not valid.",
+    "message_exists": "This message was recorded already.",
+    "no_branch_access": "Only in your own branches.",
+    "gym_read_only": "The gym is view only; nothing can be changed.",
+    "invalid_request": "The request is not valid.",
+    "network": "No connection. Try again when it is back.",
+    "unexpected": "Something went wrong. Try again."
+  }
+}

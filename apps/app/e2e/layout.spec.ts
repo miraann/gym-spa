@@ -137,6 +137,7 @@ test("phones get a bottom tab bar with the role's tabs, and pages end above it",
     'دۆڵابەکان',
     'سپا',
     'کلاسەکان',
+    'بیرخستنەوەکان',
     'ڕێکخستنەکان',
   ]);
   await more.getByRole('link', { name: 'ڕێکخستنەکان' }).click();

@@ -202,6 +202,27 @@ insert into public.cash_shifts (id, gym_id, branch_id, opening_iqd) values
 insert into public.cash_movements (id, gym_id, shift_id, kind, currency, amount, reason) values
   ('f0000000-0000-4000-8000-0000000001a5', tests.gym('pgtap-a'), 'f0000000-0000-4000-8000-0000000001a4', 'in', 'IQD', 1000, 'x'),
   ('f0000000-0000-4000-8000-0000000001b5', tests.gym('pgtap-b'), 'f0000000-0000-4000-8000-0000000001b4', 'in', 'IQD', 1000, 'x');
+-- Messages, reminders and the bell in both gyms.
+insert into public.message_templates (id, gym_id, key, body_ckb) values
+  ('f0000000-0000-4000-8000-0000000002a1', tests.gym('pgtap-a'), 'welcome', 'بەخێربێیت {name}'),
+  ('f0000000-0000-4000-8000-0000000002b1', tests.gym('pgtap-b'), 'welcome', 'بەخێربێیت {name}');
+insert into public.reminders (id, gym_id, branch_id, member_id, kind, remind_on, subject_id) values
+  ('f0000000-0000-4000-8000-0000000002a2', tests.gym('pgtap-a'), tests.branch('B901'), 'e0000000-0000-4000-8000-0000000000a1',
+   'welcome', current_date, 'e0000000-0000-4000-8000-0000000000a1'),
+  ('f0000000-0000-4000-8000-0000000002b2', tests.gym('pgtap-b'), tests.branch('B901', 'pgtap-b'), 'e0000000-0000-4000-8000-0000000000b1',
+   'welcome', current_date, 'e0000000-0000-4000-8000-0000000000b1');
+insert into public.member_messages (id, gym_id, branch_id, member_id, phone, to_emergency_contact, language, body) values
+  ('f0000000-0000-4000-8000-0000000002a3', tests.gym('pgtap-a'), tests.branch('B901'), 'e0000000-0000-4000-8000-0000000000a1',
+   '+9647501230001', false, 'ckb', 'سڵاو'),
+  ('f0000000-0000-4000-8000-0000000002b3', tests.gym('pgtap-b'), tests.branch('B901', 'pgtap-b'), 'e0000000-0000-4000-8000-0000000000b1',
+   '+9647501230001', false, 'ckb', 'سڵاو');
+insert into public.staff_notifications (id, gym_id, branch_id, kind, subject_id, notify_on) values
+  ('f0000000-0000-4000-8000-0000000002a4', tests.gym('pgtap-a'), tests.branch('B901'), 'reminders_ready', tests.branch('B901'), current_date),
+  ('f0000000-0000-4000-8000-0000000002b4', tests.gym('pgtap-b'), tests.branch('B901', 'pgtap-b'), 'reminders_ready',
+   tests.branch('B901', 'pgtap-b'), current_date);
+insert into public.staff_notification_reads (gym_id, notification_id, staff_id) values
+  (tests.gym('pgtap-a'), 'f0000000-0000-4000-8000-0000000002a4', tests.staff('owner')),
+  (tests.gym('pgtap-b'), 'f0000000-0000-4000-8000-0000000002b4', tests.staff('owner', 'pgtap-b'));
 
 select is_empty(
   $$ select t from tests.gym_tables() t
@@ -392,6 +413,19 @@ insert into insert_cases (table_name, statement) values
   ('cash_movements', $$ insert into public.cash_movements (gym_id, id, shift_id, kind, currency, amount, reason)
                         values (tests.gym('pgtap-b'), gen_random_uuid(), 'f0000000-0000-4000-8000-0000000001b4', 'in', 'IQD', 1, 'x') $$),
   ('cash_movements', $$ select public.add_cash_movement(gen_random_uuid(), 'f0000000-0000-4000-8000-0000000001b4', 'in', 'IQD', 1, 'x') $$),
+  ('message_templates', $$ insert into public.message_templates (gym_id, id, key) values (tests.gym('pgtap-b'), gen_random_uuid(), 'debt') $$),
+  ('reminders', $$ insert into public.reminders (gym_id, branch_id, member_id, kind, remind_on, subject_id)
+                   values (tests.gym('pgtap-b'), tests.branch('B901', 'pgtap-b'), 'e0000000-0000-4000-8000-0000000000b1', 'debt', current_date, gen_random_uuid()) $$),
+  ('reminders', $$ select public.set_reminder_done('f0000000-0000-4000-8000-0000000002b2', true) $$),
+  ('member_messages', $$ insert into public.member_messages (gym_id, id, branch_id, member_id, phone, to_emergency_contact, language, body)
+                         values (tests.gym('pgtap-b'), gen_random_uuid(), tests.branch('B901', 'pgtap-b'), 'e0000000-0000-4000-8000-0000000000b1',
+                                 '+9647501230001', false, 'ckb', 'x') $$),
+  ('member_messages', $$ select public.record_message_opened(gen_random_uuid(), tests.branch('B901'), 'e0000000-0000-4000-8000-0000000000b1',
+                           '+9647501230001', 'ckb', 'x') $$),
+  ('staff_notifications', $$ insert into public.staff_notifications (gym_id, branch_id, kind, subject_id, notify_on)
+                             values (tests.gym('pgtap-b'), tests.branch('B901', 'pgtap-b'), 'low_stock', gen_random_uuid(), current_date) $$),
+  ('staff_notification_reads', $$ insert into public.staff_notification_reads (gym_id, notification_id, staff_id)
+                                  values (tests.gym('pgtap-b'), 'f0000000-0000-4000-8000-0000000002b4', tests.staff('owner')) $$),
   -- Their own gym (gym_id left to fill itself in), pointing at gym B's rows.
   ('role_permissions', $$ insert into public.role_permissions (role_id, permission_key) values (tests.role('trainer', 'pgtap-b'), 'payments.view') $$),
   ('staff_users', $$ insert into public.staff_users (id, username, full_name, role_id)

@@ -18,7 +18,8 @@
     "appearance": "Appearance",
     "cardReader": "Card reader",
     "printer": "Printer",
-    "support": "Click Group"
+    "support": "Click Group",
+    "messages": "Messages"
   },
   "appearance": {
     "title": "Appearance",

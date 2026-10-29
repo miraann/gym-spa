@@ -14,6 +14,7 @@ import { Route as BranchesRouteRouteImport } from './routes/branches/route'
 import { Route as CashRouteImport } from './routes/cash'
 import { Route as DevicesRouteRouteImport } from './routes/devices/route'
 import { Route as MembersRouteRouteImport } from './routes/members/route'
+import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as PlansRouteRouteImport } from './routes/plans/route'
 import { Route as RolesRouteRouteImport } from './routes/roles/route'
 import { Route as SettingsRouteRouteImport } from './routes/settings/route'
@@ -45,6 +46,7 @@ import { Route as SettingsIndexRouteImport } from './routes/settings/index'
 import { Route as SettingsAppearanceRouteImport } from './routes/settings/appearance'
 import { Route as SettingsCardReaderRouteImport } from './routes/settings/card-reader'
 import { Route as SettingsDisplayRouteImport } from './routes/settings/display'
+import { Route as SettingsMessagesRouteImport } from './routes/settings/messages'
 import { Route as SettingsPrinterRouteImport } from './routes/settings/printer'
 import { Route as SettingsSupportRouteImport } from './routes/settings/support'
 import { Route as ShopIndexRouteImport } from './routes/shop/index'
@@ -90,6 +92,11 @@ const DevicesRouteRoute = DevicesRouteRouteImport.update({
 const MembersRouteRoute = MembersRouteRouteImport.update({
   id: '/members',
   path: '/members',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NotificationsRoute = NotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PlansRouteRoute = PlansRouteRouteImport.update({
@@ -247,6 +254,11 @@ const SettingsDisplayRoute = SettingsDisplayRouteImport.update({
   path: '/display',
   getParentRoute: () => SettingsRouteRoute,
 } as any)
+const SettingsMessagesRoute = SettingsMessagesRouteImport.update({
+  id: '/messages',
+  path: '/messages',
+  getParentRoute: () => SettingsRouteRoute,
+} as any)
 const SettingsPrinterRoute = SettingsPrinterRouteImport.update({
   id: '/printer',
   path: '/printer',
@@ -363,6 +375,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof SettingsRouteRouteWithChildren
   '/staff': typeof StaffRouteRouteWithChildren
   '/cash': typeof CashRoute
+  '/notifications': typeof NotificationsRoute
   '/spa/setup': typeof SpaSetupRouteRouteWithChildren
   '/branches/$branchId': typeof BranchesBranchIdRoute
   '/branches/new': typeof BranchesNewRoute
@@ -381,6 +394,7 @@ export interface FileRoutesByFullPath {
   '/settings/appearance': typeof SettingsAppearanceRoute
   '/settings/card-reader': typeof SettingsCardReaderRoute
   '/settings/display': typeof SettingsDisplayRoute
+  '/settings/messages': typeof SettingsMessagesRoute
   '/settings/printer': typeof SettingsPrinterRoute
   '/settings/support': typeof SettingsSupportRoute
   '/shop/products': typeof ShopProductsRoute
@@ -415,6 +429,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/cash': typeof CashRoute
+  '/notifications': typeof NotificationsRoute
   '/branches/$branchId': typeof BranchesBranchIdRoute
   '/branches/new': typeof BranchesNewRoute
   '/checkin/door': typeof CheckinDoorRoute
@@ -432,6 +447,7 @@ export interface FileRoutesByTo {
   '/settings/appearance': typeof SettingsAppearanceRoute
   '/settings/card-reader': typeof SettingsCardReaderRoute
   '/settings/display': typeof SettingsDisplayRoute
+  '/settings/messages': typeof SettingsMessagesRoute
   '/settings/printer': typeof SettingsPrinterRoute
   '/settings/support': typeof SettingsSupportRoute
   '/shop/products': typeof ShopProductsRoute
@@ -474,6 +490,7 @@ export interface FileRoutesById {
   '/settings': typeof SettingsRouteRouteWithChildren
   '/staff': typeof StaffRouteRouteWithChildren
   '/cash': typeof CashRoute
+  '/notifications': typeof NotificationsRoute
   '/spa/setup': typeof SpaSetupRouteRouteWithChildren
   '/branches/$branchId': typeof BranchesBranchIdRoute
   '/branches/new': typeof BranchesNewRoute
@@ -492,6 +509,7 @@ export interface FileRoutesById {
   '/settings/appearance': typeof SettingsAppearanceRoute
   '/settings/card-reader': typeof SettingsCardReaderRoute
   '/settings/display': typeof SettingsDisplayRoute
+  '/settings/messages': typeof SettingsMessagesRoute
   '/settings/printer': typeof SettingsPrinterRoute
   '/settings/support': typeof SettingsSupportRoute
   '/shop/products': typeof ShopProductsRoute
@@ -535,6 +553,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/staff'
     | '/cash'
+    | '/notifications'
     | '/spa/setup'
     | '/branches/$branchId'
     | '/branches/new'
@@ -553,6 +572,7 @@ export interface FileRouteTypes {
     | '/settings/appearance'
     | '/settings/card-reader'
     | '/settings/display'
+    | '/settings/messages'
     | '/settings/printer'
     | '/settings/support'
     | '/shop/products'
@@ -587,6 +607,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/cash'
+    | '/notifications'
     | '/branches/$branchId'
     | '/branches/new'
     | '/checkin/door'
@@ -604,6 +625,7 @@ export interface FileRouteTypes {
     | '/settings/appearance'
     | '/settings/card-reader'
     | '/settings/display'
+    | '/settings/messages'
     | '/settings/printer'
     | '/settings/support'
     | '/shop/products'
@@ -645,6 +667,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/staff'
     | '/cash'
+    | '/notifications'
     | '/spa/setup'
     | '/branches/$branchId'
     | '/branches/new'
@@ -663,6 +686,7 @@ export interface FileRouteTypes {
     | '/settings/appearance'
     | '/settings/card-reader'
     | '/settings/display'
+    | '/settings/messages'
     | '/settings/printer'
     | '/settings/support'
     | '/shop/products'
@@ -705,6 +729,7 @@ export interface RootRouteChildren {
   SettingsRouteRoute: typeof SettingsRouteRouteWithChildren
   StaffRouteRoute: typeof StaffRouteRouteWithChildren
   CashRoute: typeof CashRoute
+  NotificationsRoute: typeof NotificationsRoute
   SpaSetupRouteRoute: typeof SpaSetupRouteRouteWithChildren
   CheckinDoorRoute: typeof CheckinDoorRoute
   CheckinVisitsRoute: typeof CheckinVisitsRoute
@@ -759,6 +784,13 @@ declare module '@tanstack/react-router' {
       path: '/members'
       fullPath: '/members'
       preLoaderRoute: typeof MembersRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/notifications': {
+      id: '/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof NotificationsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/plans': {
@@ -976,6 +1008,13 @@ declare module '@tanstack/react-router' {
       path: '/display'
       fullPath: '/settings/display'
       preLoaderRoute: typeof SettingsDisplayRouteImport
+      parentRoute: typeof SettingsRouteRoute
+    }
+    '/settings/messages': {
+      id: '/settings/messages'
+      path: '/messages'
+      fullPath: '/settings/messages'
+      preLoaderRoute: typeof SettingsMessagesRouteImport
       parentRoute: typeof SettingsRouteRoute
     }
     '/settings/printer': {
@@ -1216,6 +1255,7 @@ interface SettingsRouteRouteChildren {
   SettingsAppearanceRoute: typeof SettingsAppearanceRoute
   SettingsCardReaderRoute: typeof SettingsCardReaderRoute
   SettingsDisplayRoute: typeof SettingsDisplayRoute
+  SettingsMessagesRoute: typeof SettingsMessagesRoute
   SettingsPrinterRoute: typeof SettingsPrinterRoute
   SettingsSupportRoute: typeof SettingsSupportRoute
   SettingsIndexRoute: typeof SettingsIndexRoute
@@ -1225,6 +1265,7 @@ const SettingsRouteRouteChildren: SettingsRouteRouteChildren = {
   SettingsAppearanceRoute: SettingsAppearanceRoute,
   SettingsCardReaderRoute: SettingsCardReaderRoute,
   SettingsDisplayRoute: SettingsDisplayRoute,
+  SettingsMessagesRoute: SettingsMessagesRoute,
   SettingsPrinterRoute: SettingsPrinterRoute,
   SettingsSupportRoute: SettingsSupportRoute,
   SettingsIndexRoute: SettingsIndexRoute,
@@ -1280,6 +1321,7 @@ const rootRouteChildren: RootRouteChildren = {
   SettingsRouteRoute: SettingsRouteRouteWithChildren,
   StaffRouteRoute: StaffRouteRouteWithChildren,
   CashRoute: CashRoute,
+  NotificationsRoute: NotificationsRoute,
   SpaSetupRouteRoute: SpaSetupRouteRouteWithChildren,
   CheckinDoorRoute: CheckinDoorRoute,
   CheckinVisitsRoute: CheckinVisitsRoute,

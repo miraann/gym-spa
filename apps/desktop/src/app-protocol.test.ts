@@ -96,8 +96,14 @@ describe('isAppUrl', () => {
 });
 
 describe('isExternalWebLink', () => {
-  it('opens only https links in the browser', () => {
-    expect(isExternalWebLink('https://wa.me/9647500000000')).toBe(true);
+  it('opens only WhatsApp links outside the app', () => {
+    expect(isExternalWebLink('https://wa.me/9647500000000?text=hi')).toBe(true);
+    expect(isExternalWebLink('https://api.whatsapp.com/send?phone=9647500000000')).toBe(true);
+    expect(isExternalWebLink('https://example.com/')).toBe(false);
+    expect(isExternalWebLink('https://wa.me.example.com/1')).toBe(false);
+    expect(isExternalWebLink('https://user@wa.me/1')).toBe(false);
+    expect(isExternalWebLink('https://wa.me:8443/1')).toBe(false);
+    expect(isExternalWebLink('http://wa.me/9647500000000')).toBe(false);
     expect(isExternalWebLink('http://example.com/')).toBe(false);
     expect(isExternalWebLink('file:///C:/Windows/System32/calc.exe')).toBe(false);
     expect(isExternalWebLink('javascript:alert(1)')).toBe(false);

@@ -24,7 +24,7 @@
     "roles": "الأدوار والصلاحيات",
     "branches": "الفروع",
     "reports": "التقارير",
-    "notifications": "الإشعارات",
+    "notifications": "التذكيرات",
     "auditLog": "سجل النشاطات",
     "devices": "الأجهزة",
     "settings": "الإعدادات"
@@ -46,7 +46,7 @@
     "roles": "الأدوار",
     "branches": "الفروع",
     "reports": "التقارير",
-    "notifications": "الإشعارات",
+    "notifications": "التذكيرات",
     "auditLog": "السجل",
     "devices": "الأجهزة",
     "settings": "الإعدادات"

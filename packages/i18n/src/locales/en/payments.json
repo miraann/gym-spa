@@ -105,6 +105,7 @@
     "payment_exists": "This payment was already saved. Reload the page.",
     "already_voided": "This is already voided.",
     "void_too_late": "Only today's can be voided. Give money back instead.",
+    "void_whole_sale": "This is a walk-in customer's sale: void the whole sale, not just the payment.",
     "reason_required": "Write a reason.",
     "invalid_refund": "The refund details are not valid.",
     "refund_too_large": "That amount is more than was paid.",
