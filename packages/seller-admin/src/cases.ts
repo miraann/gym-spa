@@ -1,4 +1,14 @@
-import { staffEmail } from '@gym/core';
+import {
+  LicenseKeyError,
+  generateLicenseKey,
+  importLicenseSigningKey,
+  keyRingOf,
+  readLicenseCode,
+  staffEmail,
+  verifyActivationCode,
+  verifyLicenseCode,
+  type LicenseSigningKey,
+} from '@gym/core';
 import { AuthAdminError, DatabaseError, type TokenVerifier } from '@gym/staff-admin/server';
 import { SellerAdminError, type SellerAdminErrorKey } from './errors.ts';
 import { createSellerAdminHandler } from './handler.ts';
@@ -6,17 +16,27 @@ import {
   addAdmin,
   createGym,
   deactivateAdmin,
+  issueActivation,
+  issueLicense,
   reactivateAdmin,
   resetAdminPassword,
   resetAdminTwoStep,
   useRecoveryCode,
 } from './operations.ts';
 import type { SellerCallerPort } from './ports.ts';
-import { createGymRequest, sellerAdminRequest, type CreateGymRequest } from './requests.ts';
+import {
+  createGymRequest,
+  sellerAdminRequest,
+  type CreateGymRequest,
+  type IssueLicenseRequest,
+} from './requests.ts';
 import {
   ADMIN_ID,
   FakeSellerWorld,
+  LICENSE_TODAY,
+  MACHINE_CODE,
   NEW_GYM_ID,
+  OFFLINE_GYM_ID,
   RECOVERY_CODE,
   TEMPORARY_PASSWORD,
   acceptAdminTokens,
@@ -493,6 +513,196 @@ async function answer(response: Response): Promise<Answer> {
   };
 }
 
+function newLicense(changes: Partial<IssueLicenseRequest> = {}): IssueLicenseRequest {
+  return {
+    action: 'issue_license',
+    gymId: OFFLINE_GYM_ID,
+    type: 'yearly',
+    maxBranches: 2,
+    maxDevices: null,
+    validUntil: '2027-10-29',
+    ...changes,
+  };
+}
+
+const ACTIVATE = {
+  action: 'issue_activation',
+  gymId: OFFLINE_GYM_ID,
+  machineCode: MACHINE_CODE,
+} as const;
+
+/** A throwaway key, and its private JWK text (to check it never reaches a log). */
+async function testKey(): Promise<{ key: LicenseSigningKey; privateJwk: string }> {
+  const { privateJwk } = await generateLicenseKey('test-cases');
+  return { key: await importLicenseSigningKey(privateJwk), privateJwk };
+}
+
+/** The world's dependencies with this key; `loads` counts how often it is loaded. */
+function withKey(world: FakeSellerWorld, key: LicenseSigningKey, loads: string[] = []) {
+  return {
+    ...world.deps,
+    licenseKey: () => {
+      loads.push('key');
+      return Promise.resolve(key);
+    },
+  };
+}
+
+/** Fresh ids for an operation that makes several things. */
+function countingIds(): () => string {
+  let next = 0;
+  return () => `e0000000-0000-4000-8000-0000000001${String((next += 1)).padStart(2, '0')}`;
+}
+
+const licenseCases: SellerAdminCase[] = [
+  test('license: checked, signed, checked again and stored before it is answered', async () => {
+    const world = new FakeSellerWorld();
+    const { key } = await testKey();
+    const result = await issueLicense(withKey(world, key), newLicense());
+    equal(result.licenseId, NEW_GYM_ID, 'the new license id');
+    const checked = await verifyLicenseCode(result.code, keyRingOf(key));
+    equal(
+      checked.ok ? checked.value : checked.problem,
+      {
+        licenseId: NEW_GYM_ID,
+        kid: 'test-cases',
+        gymId: OFFLINE_GYM_ID,
+        gymCode: 'hawler-off',
+        gymName: 'جیمی هەولێر',
+        type: 'yearly',
+        maxBranches: 2,
+        maxDevices: null,
+        features: [],
+        issuedOn: LICENSE_TODAY,
+        expiresOn: '2027-10-29',
+        updatesUntil: null,
+      },
+      'the code verifies and carries the gym as the database answered it',
+    );
+    equal(world.calls, ['caller.prepareLicense', 'caller.issueLicense'], 'calls');
+    equal(world.licenses.get(NEW_GYM_ID)?.code, result.code, 'stored as answered');
+    equal(world.records, [`license_issued ${NEW_GYM_ID}`], 'logged');
+  }),
+
+  test('license: a perpetual one carries its updates date', async () => {
+    const world = new FakeSellerWorld();
+    const result = await issueLicense(
+      withKey(world, (await testKey()).key),
+      newLicense({ type: 'perpetual', validUntil: '2028-10-29', maxBranches: null }),
+    );
+    const license = readLicenseCode(result.code);
+    equal(
+      [license?.type, license?.expiresOn, license?.updatesUntil, license?.maxBranches],
+      ['perpetual', null, '2028-10-29', null],
+      'perpetual',
+    );
+  }),
+
+  test('license: the database refuses before the key is ever loaded', async () => {
+    const refused: [IssueLicenseRequest, SellerAdminErrorKey][] = [
+      [newLicense({ gymId: NEW_GYM_ID }), 'gym_not_found'],
+      [newLicense({ validUntil: '2030-01-01' }), 'invalid_license_date'],
+      [newLicense({ validUntil: LICENSE_TODAY }), 'invalid_license_date'],
+    ];
+    const { key } = await testKey();
+    for (const [request, expected] of refused) {
+      const world = new FakeSellerWorld();
+      const loads: string[] = [];
+      await rejectsWith(issueLicense(withKey(world, key, loads), request), expected);
+      equal([loads, world.calls], [[], ['caller.prepareLicense']], `${expected}: no signing`);
+    }
+  }),
+
+  test('license: without a signing key nothing is issued, and the rest still works', async () => {
+    const world = new FakeSellerWorld();
+    await rejectsWith(issueLicense(world.deps, newLicense()), 'license_key_missing');
+    equal(world.licenses.size, 0, 'nothing stored');
+    await createGym(world.deps, newGym());
+    check(world.gyms.has('new-gym'), 'creating a gym still works');
+  }),
+
+  test('license: a key that can not be used is logged with its reason, never the key', async () => {
+    const world = new FakeSellerWorld();
+    const { privateJwk } = await testKey();
+    const deps = {
+      ...world.deps,
+      licenseKey: () => Promise.reject(new LicenseKeyError('not_shipped')),
+    };
+    await rejectsWith(issueLicense(deps, newLicense()), 'license_key_missing');
+    equal(
+      world.logs.map((entry) => [entry.event, entry.keyProblem]),
+      [['license_key_unusable', 'not_shipped']],
+      'logged with its reason',
+    );
+    const { d } = JSON.parse(privateJwk) as { d: string };
+    check(!JSON.stringify(world.logs).includes(d), 'no part of a key is logged');
+  }),
+
+  test('license: a code the database does not store is never answered', async () => {
+    const world = new FakeSellerWorld().failNext(
+      'issueLicense',
+      new DatabaseError('license_code_mismatch', '22023', 400),
+    );
+    await rejectsWith(
+      issueLicense(withKey(world, (await testKey()).key), newLicense()),
+      'unexpected',
+    );
+    equal(world.licenses.size, 0, 'nothing stored');
+    equal(
+      world.logs.map((entry) => entry.event),
+      ['unexpected_error'],
+      'logged for an operator',
+    );
+  }),
+];
+
+const activationCases: SellerAdminCase[] = [
+  test('activation: the machine code as read (lowercase, O for 0) is signed normalized', async () => {
+    const world = new FakeSellerWorld();
+    const { key } = await testKey();
+    const deps = { ...withKey(world, key), newId: countingIds() };
+    await issueLicense(deps, newLicense());
+    const result = await issueActivation(deps, {
+      ...ACTIVATE,
+      machineCode: 'ov5q-1bd4-ts11-n9tc-94o2',
+    });
+    const checked = await verifyActivationCode(result.code, keyRingOf(key));
+    equal(
+      checked.ok
+        ? [checked.value.gymId, checked.value.machineCode, checked.value.issuedOn]
+        : checked.problem,
+      [OFFLINE_GYM_ID, MACHINE_CODE, LICENSE_TODAY],
+      'the activation names the gym and the PC',
+    );
+    equal(world.activations.get(result.activationId)?.code, result.code, 'stored');
+  }),
+
+  test('activation: a mistyped machine code is refused before anything is called', async () => {
+    const world = new FakeSellerWorld();
+    await rejectsWith(
+      issueActivation(withKey(world, (await testKey()).key), {
+        ...ACTIVATE,
+        machineCode: '0V5Q-1BD4-TS11-N9TC-9403',
+      }),
+      'invalid_machine_code',
+    );
+    equal(world.calls, [], 'nothing called');
+  }),
+
+  test('activation: no license yet, or a PC already active, is refused before signing', async () => {
+    const world = new FakeSellerWorld();
+    const { key } = await testKey();
+    const loads: string[] = [];
+    await rejectsWith(issueActivation(withKey(world, key, loads), ACTIVATE), 'no_license');
+    equal(loads, [], 'the key is not loaded');
+    const deps = { ...withKey(world, key), newId: countingIds() };
+    await issueLicense(deps, newLicense());
+    await issueActivation(deps, ACTIVATE);
+    await rejectsWith(issueActivation(deps, ACTIVATE), 'already_activated');
+    equal(world.activations.size, 1, 'one server PC');
+  }),
+];
+
 const EVERY_ACTION = [
   newGym(),
   { action: 'add_admin', email: 'sara@clickgroup.example', fullName: 'سارا' },
@@ -501,6 +711,8 @@ const EVERY_ACTION = [
   { action: 'reset_admin_two_step', userId: 'e0000000-0000-4000-8000-0000000000b2' },
   { action: 'reset_admin_password', userId: 'e0000000-0000-4000-8000-0000000000b2' },
   { action: 'use_recovery_code', code: RECOVERY_CODE },
+  newLicense(),
+  ACTIVATE,
 ];
 
 const handlerCases: SellerAdminCase[] = [
@@ -551,6 +763,11 @@ const handlerCases: SellerAdminCase[] = [
       newGym({ paidUntil: '2026-12-31' }),
       { action: 'add_admin', email: 'Sara@ClickGroup.example', fullName: 'سارا' },
       { action: 'add_admin', email: 'boss@demo.staff.gym-spa.invalid', fullName: 'سارا' },
+      newLicense({ validUntil: '29/10/2027' }),
+      newLicense({ maxBranches: 0 }),
+      { ...newLicense(), type: 'monthly' },
+      { ...newLicense(), features: ['spa'] },
+      { ...ACTIVATE, machineCode: '' },
     ]) {
       const world = new FakeSellerWorld();
       const response = await answer(await handlerFor(world, [])(post(body, 'aal2-token')));
@@ -615,6 +832,8 @@ export const SELLER_ADMIN_CASES: readonly SellerAdminCase[] = [
   ...createGymCases,
   ...adminCases,
   ...recoveryCases,
+  ...licenseCases,
+  ...activationCases,
   ...handlerCases,
   ...requestCases,
 ];

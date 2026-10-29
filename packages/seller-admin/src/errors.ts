@@ -28,6 +28,20 @@ export const SELLER_ADMIN_ERROR_STATUS = {
   wrong_code: 400,
   /** 5 wrong recovery codes in 15 minutes. */
   too_many_attempts: 429,
+  /** Offline licenses (step MT-5, migration 20261029900000_licenses). */
+  gym_not_found: 404,
+  /** Only an offline gym has licenses. */
+  online_gym: 409,
+  /** A yearly license ends within 2 years, perpetual updates within 5, both after today. */
+  invalid_license_date: 400,
+  /** The machine code has the wrong length or its check doesn't match (a typo). */
+  invalid_machine_code: 400,
+  /** Activating needs a license that isn't revoked. */
+  no_license: 409,
+  /** The gym already has an active server PC: deactivate it first. */
+  already_activated: 409,
+  /** The function has no signing key, or one it refuses to use (the reason is logged). */
+  license_key_missing: 503,
   /** Nothing was created (or the half-made login could not be removed; that is logged). */
   gym_create_failed: 500,
   admin_create_failed: 500,

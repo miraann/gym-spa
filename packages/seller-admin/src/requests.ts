@@ -2,6 +2,8 @@ import {
   GYM_CODE_MAX_LENGTH,
   GYM_CODE_MIN_LENGTH,
   GYM_CODE_PATTERN,
+  LICENSE_MAX_LIMIT,
+  LICENSE_TYPES,
   USERNAME_PATTERN,
   isValidAdminEmail,
 } from '@gym/core';
@@ -87,6 +89,31 @@ export const useRecoveryCodeRequest = z.strictObject({
   code: z.string().min(1).max(64),
 });
 
+/** A Baghdad calendar date. */
+const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+/** Null: no limit. */
+const licenseLimit = z.int().min(1).max(LICENSE_MAX_LIMIT).nullable();
+
+/**
+ * A signed license for an offline gym (spec §2.6, step MT-5). validUntil: a yearly license's last
+ * day, or the last build date a perpetual one may install.
+ */
+export const issueLicenseRequest = z.strictObject({
+  action: z.literal('issue_license'),
+  gymId: id,
+  type: z.enum(LICENSE_TYPES),
+  maxBranches: licenseLimit,
+  maxDevices: licenseLimit,
+  validUntil: date,
+});
+
+/** An activation code for the gym's server PC, from the machine code it shows (typed as read). */
+export const issueActivationRequest = z.strictObject({
+  action: z.literal('issue_activation'),
+  gymId: id,
+  machineCode: z.string().min(1).max(64),
+});
+
 export const sellerAdminRequest = z.discriminatedUnion('action', [
   createGymRequest,
   addAdminRequest,
@@ -95,6 +122,8 @@ export const sellerAdminRequest = z.discriminatedUnion('action', [
   resetAdminTwoStepRequest,
   resetAdminPasswordRequest,
   useRecoveryCodeRequest,
+  issueLicenseRequest,
+  issueActivationRequest,
 ]);
 
 export type CreateGymRequest = z.infer<typeof createGymRequest>;
@@ -104,6 +133,8 @@ export type ReactivateAdminRequest = z.infer<typeof reactivateAdminRequest>;
 export type ResetAdminTwoStepRequest = z.infer<typeof resetAdminTwoStepRequest>;
 export type ResetAdminPasswordRequest = z.infer<typeof resetAdminPasswordRequest>;
 export type UseRecoveryCodeRequest = z.infer<typeof useRecoveryCodeRequest>;
+export type IssueLicenseRequest = z.infer<typeof issueLicenseRequest>;
+export type IssueActivationRequest = z.infer<typeof issueActivationRequest>;
 export type SellerAdminRequest = z.infer<typeof sellerAdminRequest>;
 export type SellerAdminAction = SellerAdminRequest['action'];
 
@@ -144,11 +175,24 @@ export const useRecoveryCodeResult = z.strictObject({
   result: z.literal('ok'),
 });
 
+/** The license code, stored and logged before it is answered. */
+export const issueLicenseResult = z.strictObject({
+  licenseId: id,
+  code: z.string().startsWith('GSL1.'),
+});
+
+export const issueActivationResult = z.strictObject({
+  activationId: id,
+  code: z.string().startsWith('GSA1.'),
+});
+
 export type CreateGymResult = z.infer<typeof createGymResult>;
 export type AddAdminResult = z.infer<typeof addAdminResult>;
 export type AdminChangeResult = z.infer<typeof adminChangeResult>;
 export type ResetAdminPasswordResult = z.infer<typeof resetAdminPasswordResult>;
 export type UseRecoveryCodeResult = z.infer<typeof useRecoveryCodeResult>;
+export type IssueLicenseResult = z.infer<typeof issueLicenseResult>;
+export type IssueActivationResult = z.infer<typeof issueActivationResult>;
 
 /** The answer to each action. */
 export interface SellerAdminResults {
@@ -159,6 +203,8 @@ export interface SellerAdminResults {
   reset_admin_two_step: AdminChangeResult;
   reset_admin_password: ResetAdminPasswordResult;
   use_recovery_code: UseRecoveryCodeResult;
+  issue_license: IssueLicenseResult;
+  issue_activation: IssueActivationResult;
 }
 
 export const SELLER_ADMIN_RESULTS = {
@@ -169,6 +215,8 @@ export const SELLER_ADMIN_RESULTS = {
   reset_admin_two_step: adminChangeResult,
   reset_admin_password: resetAdminPasswordResult,
   use_recovery_code: useRecoveryCodeResult,
+  issue_license: issueLicenseResult,
+  issue_activation: issueActivationResult,
 } as const satisfies { [A in SellerAdminAction]: z.ZodType<SellerAdminResults[A]> };
 
 /** The body of every failed request. */

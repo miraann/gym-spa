@@ -1,3 +1,4 @@
+import type { License, LicenseType } from '@gym/core';
 import type { AdminPort, ErrorSummary } from '@gym/staff-admin/server';
 
 // What the seller operations need from the outside, as small interfaces: Supabase clients in the
@@ -41,6 +42,29 @@ export interface AdminChangePermit {
 
 export type RecoveryCodeAnswer = 'ok' | 'wrong_code' | 'too_many_attempts';
 
+/** What a license will be, for public.seller_prepare_license. */
+export interface LicenseRequest {
+  readonly gymId: string;
+  readonly type: LicenseType;
+  readonly maxBranches: number | null;
+  readonly maxDevices: number | null;
+  /** YYYY-MM-DD */
+  readonly validUntil: string;
+}
+
+/** What the code will carry besides the request: the gym as it is now, and today in Baghdad. */
+export interface PreparedLicense {
+  readonly gymCode: string;
+  readonly gymName: string;
+  readonly issuedOn: string;
+}
+
+export interface PreparedActivation {
+  /** Normalized, as it will be signed. */
+  readonly machineCode: string;
+  readonly issuedOn: string;
+}
+
 /**
  * The platform admin's side: every call runs under their own session, and every function checks
  * for an active platform admin with two-step login itself (app.require_platform_admin).
@@ -62,6 +86,23 @@ export interface SellerCallerPort {
   recordAdminChange(userId: string, action: 'reset_two_step' | 'reset_password'): Promise<void>;
   /** public.seller_use_recovery_code: for the signed-in admin. */
   useRecoveryCode(code: string): Promise<RecoveryCodeAnswer>;
+  /** public.seller_prepare_license: checks everything before the key is used. */
+  prepareLicense(request: LicenseRequest): Promise<PreparedLicense>;
+  /** public.seller_issue_license: checks again, compares the code's payload, stores and logs it. */
+  issueLicense(license: License, code: string): Promise<void>;
+  /** public.seller_prepare_activation */
+  prepareActivation(gymId: string, machineCode: string): Promise<PreparedActivation>;
+  /** public.seller_issue_activation */
+  issueActivation(
+    activation: {
+      activationId: string;
+      gymId: string;
+      machineCode: string;
+      issuedOn: string;
+      kid: string;
+    },
+    code: string,
+  ): Promise<void>;
 }
 
 /**
@@ -74,12 +115,15 @@ export interface SellerAdminLogEntry {
     | 'compensation_failed'
     | 'auth_update_failed'
     | 'record_failed'
+    | 'license_key_unusable'
     | 'unexpected_error';
   readonly action: string;
   readonly userId?: string;
   readonly gymId?: string;
   readonly email?: string;
   readonly error?: ErrorSummary;
+  /** Why the signing key can't be used (never any part of the key). */
+  readonly keyProblem?: string;
   /** What failed first, when the clean-up after it failed too. */
   readonly cause?: ErrorSummary;
 }

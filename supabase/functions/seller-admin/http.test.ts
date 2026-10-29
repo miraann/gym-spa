@@ -1,6 +1,7 @@
 // The seller-admin Edge Function over HTTP, as the local Supabase serves it (`pnpm db:functions`):
 // the real edge runtime, gateway, Auth (with TOTP and the access token hook) and database.
 // `pnpm test:deno` sets the STAFF_ADMIN_TEST_* variables; without them these tests are skipped.
+import { isTestLicenseKid, readLicenseCode } from '@gym/core';
 import {
   TestGym,
   loginResult,
@@ -78,6 +79,7 @@ Deno.test({
     const admin = await TestPlatformAdmin.create(backend, 'http-admin');
     // Set inside a step; a holder, so TypeScript doesn't narrow it to null.
     const made: { gym: TestGym | null } = { gym: null };
+    const offlineGymId = crypto.randomUUID();
     try {
       const aal2 = await admin.ready();
       const aal1 =
@@ -154,8 +156,32 @@ Deno.test({
           `got ${status} ${String(answer.error)}`,
         );
       });
+
+      await t.step('it signs a license with the local test key (pnpm db:functions)', async () => {
+        const created = await aal2.client.rpc('seller_create_offline_gym', {
+          p_gym_id: offlineGymId,
+          p_code: `${code}-off`,
+          p_name_ckb: 'جیمی ئۆفلاین',
+        });
+        check(created.error === null, `offline gym: ${String(created.error?.message)}`);
+        const today = new Date(Date.now() + 3 * 3_600_000).toISOString().slice(0, 10);
+        const { status, answer } = await call(aal2.accessToken, {
+          action: 'issue_license',
+          gymId: offlineGymId,
+          type: 'perpetual',
+          maxBranches: null,
+          maxDevices: null,
+          validUntil: `${String(Number(today.slice(0, 4)) + 1)}${today.slice(4)}`,
+        });
+        check(status === 200, `got ${status} ${JSON.stringify(answer)}`);
+        const license = readLicenseCode(String(answer.code));
+        check(license?.gymId === offlineGymId, 'the code names the gym');
+        check(isTestLicenseKid(license?.kid ?? ''), 'signed by a test key, never a real one');
+      });
     } finally {
       if (made.gym !== null) await made.gym.cleanup();
+      await localSql(`delete from platform.licenses where gym_id = '${offlineGymId}';
+        delete from public.gyms where id = '${offlineGymId}';`);
       await localSql(removePlatformAdminsSql([admin.id]));
     }
   },

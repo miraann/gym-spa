@@ -12,6 +12,8 @@ import {
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import type {
   AdminChangePermit,
+  PreparedActivation,
+  PreparedLicense,
   RecoveryCodeAnswer,
   SellerAdminPort,
   SellerCallerPort,
@@ -126,6 +128,56 @@ export function supabaseSellerCallerPort(client: Client): SellerCallerPort {
       const result = await client.rpc('seller_use_recovery_code', { p_code: code });
       if (result.error) throw databaseFailed(result);
       return recoveryAnswer(result.data);
+    },
+    async prepareLicense(request): Promise<PreparedLicense> {
+      const result = await client
+        .rpc('seller_prepare_license', {
+          p_gym_id: request.gymId,
+          p_type: request.type,
+          // Null: no limit (PostgREST sends JSON null, which the function reads as SQL null).
+          p_max_branches: request.maxBranches as number,
+          p_max_devices: request.maxDevices as number,
+          p_valid_until: request.validUntil,
+        })
+        .single();
+      if (result.error) throw databaseFailed(result);
+      return {
+        gymCode: result.data.gym_code,
+        gymName: result.data.gym_name,
+        issuedOn: result.data.issued_on,
+      };
+    },
+    async issueLicense(license, code) {
+      const result = await client.rpc('seller_issue_license', {
+        p_license_id: license.licenseId,
+        p_gym_id: license.gymId,
+        p_type: license.type,
+        p_max_branches: license.maxBranches as number,
+        p_max_devices: license.maxDevices as number,
+        p_issued_on: license.issuedOn,
+        p_valid_until: (license.expiresOn ?? license.updatesUntil) as string,
+        p_kid: license.kid,
+        p_code: code,
+      });
+      if (result.error) throw databaseFailed(result);
+    },
+    async prepareActivation(gymId, machineCode): Promise<PreparedActivation> {
+      const result = await client
+        .rpc('seller_prepare_activation', { p_gym_id: gymId, p_machine_code: machineCode })
+        .single();
+      if (result.error) throw databaseFailed(result);
+      return { machineCode: result.data.machine_code, issuedOn: result.data.issued_on };
+    },
+    async issueActivation(activation, code) {
+      const result = await client.rpc('seller_issue_activation', {
+        p_activation_id: activation.activationId,
+        p_gym_id: activation.gymId,
+        p_machine_code: activation.machineCode,
+        p_issued_on: activation.issuedOn,
+        p_kid: activation.kid,
+        p_code: code,
+      });
+      if (result.error) throw databaseFailed(result);
     },
   };
 }

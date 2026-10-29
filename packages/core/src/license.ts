@@ -79,7 +79,8 @@ export interface Activation {
 
 // Base64url and bytes ---------------------------------------------------------------------------
 
-type Bytes = Uint8Array<ArrayBuffer>;
+/** Bytes WebCrypto accepts (Uint8Array<ArrayBuffer> in newer TypeScript; not generic in Deno's). */
+type Bytes = ReturnType<InstanceType<typeof TextEncoder>['encode']>;
 /** WebCrypto's key type (named so in browsers and Deno; Node's types keep it under webcrypto). */
 type WebCryptoKey = Awaited<ReturnType<typeof crypto.subtle.importKey>>;
 
