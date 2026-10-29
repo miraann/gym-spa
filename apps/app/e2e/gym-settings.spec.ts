@@ -71,7 +71,7 @@ test("the Owner exports all the gym's data as a zip of CSV files", async ({ page
   );
   await expect(page.getByText('زانیارییەکان دەرهێنران.')).toBeVisible();
 
-  const files = unzipSync(new Uint8Array(readFileSync((await file.path()) ?? '')));
+  const files = unzipSync(new Uint8Array(readFileSync(await file.path())));
   expect(Object.keys(files)).toContain('members.csv');
   expect(Object.keys(files)).toContain('payments.csv');
   expect(Object.keys(files)).not.toContain('member_photos.csv');
