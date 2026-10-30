@@ -25,6 +25,8 @@ coverage/
 playwright-report/
 test-results/
 blob-report/
+# Who holds the local Supabase for a test run or reset (packages/local-lock)
+.tmp/
 
 # OS / editor (settings.json holds per-machine settings, e.g. from VS Code's Java extension)
 .vscode/settings.json

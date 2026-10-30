@@ -8,6 +8,8 @@ const isCI = Boolean(process.env.CI);
 // e2e), served from one origin like on Vercel. `pnpm test:e2e` (scripts/e2e.mjs) builds it first.
 export default defineConfig({
   testDir: './e2e',
+  // One run at a time on the local Supabase, also when started directly (the VS Code extension).
+  globalSetup: '../../packages/local-lock/src/playwright-setup.ts',
   // The tests share the local Auth's rate limits and the platform admins; one at a time.
   fullyParallel: false,
   workers: 1,

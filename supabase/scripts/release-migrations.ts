@@ -15,6 +15,7 @@
 import { spawnSync } from 'node:child_process';
 import { readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
+import { LocalLockError, acquireLocalLock } from '@gym/local-lock';
 import { notAdditive } from './migration-safety';
 import { fail, ScriptError } from './script-support';
 
@@ -98,6 +99,22 @@ function runScript(script: string, scriptArgs: readonly string[], env: Record<st
 }
 
 function rehearseOn(lastCloudVersion: string, pending: readonly string[]): void {
+  // It resets the local database twice: never while a test run or another reset uses it.
+  let release: () => void;
+  try {
+    release = acquireLocalLock('release:migrations --rehearse');
+  } catch (error) {
+    if (error instanceof LocalLockError) fail(error.message);
+    throw error;
+  }
+  try {
+    rehearseUnlocked(lastCloudVersion, pending);
+  } finally {
+    release();
+  }
+}
+
+function rehearseUnlocked(lastCloudVersion: string, pending: readonly string[]): void {
   console.log(`\nRehearsal on a local copy of the cloud's schema (version ${lastCloudVersion}):`);
   supabase(['db', 'reset', '--version', lastCloudVersion, '--no-seed']);
   // A gym with its Owner and a branch, as the cloud has, so migrations meet existing rows.

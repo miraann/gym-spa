@@ -79,6 +79,8 @@ First-time setup for the browser tests: `pnpm --filter @gym/app exec playwright 
 
 The database, integration, Deno and end-to-end commands need Docker running, so `pnpm check` includes none of `pnpm db:test`, `pnpm test:int`, `pnpm test:deno` and `pnpm test:e2e`. The first `pnpm test:deno` downloads the function's npm packages into Deno's cache. The end-to-end tests create their own branches and staff and remove them afterwards.
 
+**One run at a time on the local Supabase.** `pnpm db:reset`, `pnpm db:test`, `pnpm test:int`, every app's `pnpm test:e2e`, `pnpm test:offline`, `pnpm release:migrations --rehearse` and any Playwright run (also from the VS Code extension) first take `.tmp/local-supabase.lock` (`packages/local-lock`), which says which process holds it and, for Claude Code, which session. While that process lives, the next one refuses to start with that message; a lock whose process is gone is taken over. Runs started inside a held lock (the Playwright setup inside `pnpm test:e2e`) go on. Delete the file only when nothing runs any more.
+
 ## Project layout
 
 ```

@@ -7,6 +7,8 @@ const isCI = Boolean(process.env.CI);
 // and the Content-Security-Policy only exist in production builds.
 export default defineConfig({
   testDir: './e2e',
+  // One run at a time on the local Supabase, also when started directly (the VS Code extension).
+  globalSetup: '../../packages/local-lock/src/playwright-setup.ts',
   fullyParallel: true,
   forbidOnly: isCI,
   retries: isCI ? 1 : 0,

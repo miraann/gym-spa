@@ -6,6 +6,8 @@ const isCI = Boolean(process.env.CI);
 // root builds it first).
 export default defineConfig({
   testDir: './e2e',
+  // One run at a time on the local Supabase, also when started directly (the VS Code extension).
+  globalSetup: '../../packages/local-lock/src/playwright-setup.ts',
   // Each test starts its own Electron app; one at a time keeps them from competing for focus.
   workers: 1,
   forbidOnly: isCI,
