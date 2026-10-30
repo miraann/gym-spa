@@ -137,7 +137,9 @@ If the PC is lost: `pnpm android:restore-key --file E:\gym-spa-android-key-….g
 
 Updates are checked against the SHA-512 in the update file, over HTTPS. Without a code-signing certificate, Windows doesn't check the publisher, so whoever can upload to that address can ship an update: protect that account with two-step login.
 
-**Done when:** you chose one; Claude builds the release with that address and an update from version N to N+1 is tried on a test PC.
+Each version uploads three files there: `latest.yml`, the installer and its `.blockmap` (README → Windows app → Updates).
+
+**Done when:** you chose one; Claude builds the release with that address and an update from version N to N+1 is tried on a test PC (install N, publish N+1, the notice appears within an hour or at the next start, pressing it installs and reopens the app).
 
 ## 10. The offline installer test
 

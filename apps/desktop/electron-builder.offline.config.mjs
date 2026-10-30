@@ -10,6 +10,8 @@ import base from './electron-builder.config.mjs';
 /** @type {import('electron-builder').Configuration} */
 export default {
   ...base,
+  // Never updates itself, whatever GYM_UPDATE_URL says: updates come by USB, server first (OF-f).
+  publish: null,
   extraResources: [
     { from: '../app/dist-offline', to: 'web' },
     { from: '../server/dist/server', to: 'server' },

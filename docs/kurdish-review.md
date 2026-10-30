@@ -1,6 +1,6 @@
 # Kurdish texts waiting for approval
 
-Every Kurdish text Claude chose that the user has not approved yet, in one table (2026-10-30): the terms of Phases 6–10, the license texts of MT-5, and the offline edition's pairing, first setup, backups and installer texts. Already approved terms (CLAUDE.md → Sorani glossary) are left out, and so are everyday words the app already used before (save, cancel, copy, back, "something went wrong").
+Every Kurdish text Claude chose that the user has not approved yet, in one table (2026-10-30): the terms of Phases 6–10, the license texts of MT-5, and the offline edition's pairing, first setup, backups and installer texts, and the one new text of Phase 11. Already approved terms (CLAUDE.md → Sorani glossary) are left out, and so are everyday words the app already used before (save, cancel, copy, back, "something went wrong").
 
 **How to answer:** write `OK` in the last column, or the wording you want. Rows left empty count as not approved yet. Claude then changes the files, updates the glossary in `CLAUDE.md` and the spec, and moves the terms to "approved".
 
@@ -157,5 +157,6 @@ Changed already (2026-10-30, your decision): grace period = **ماوەی زیا�
 | 145 | Backups (offline) | errors | کاتێکی دروست بنووسە. / ڕێڕەوی تەواوی فۆڵدەرەکە بنووسە، بۆ نموونە E:\gym-backups. / کۆدی جیم هەڵەیە. / کۆپی یەدەگ دروست نەکرا. / گەڕاندنەوە سەرکەوتوو نەبوو؛ هیچ نەگۆڕدرا. / ئەم کۆپییە بۆ جیمێکی ترە. / کارێکی تری کۆپی یەدەگ لە کاردایە. کەمێک چاوەڕێ بکە. / ئەم کۆپییە نەدۆزرایەوە. | |
 | 146 | Versions (offline) | this PC's version differs from the server's | وەشانی ئەم کۆمپیوتەرە لەگەڵ سێرڤەرەکە یەک ناگرێتەوە — ئەم کۆمپیوتەرە وەشانی {{app}}ی لەسەرە و سێرڤەرەکە وەشانی {{server}}. هەمان وەشان لەسەر هەموو کۆمپیوتەرەکانی جیم دابمەزرێنە، پاشان بەرنامەکە دووبارە بکەرەوە. / دووبارە پشکنینەوە | |
 | 147 | Permissions (offline) | server.manage / backups.restore | بەڕێوەبردنی سێرڤەری ئۆفلاین و بەستنەوەی کۆمپیوتەرەکان / گەڕاندنەوەی کۆپی یەدەگ لەسەر سێرڤەری ئۆفلاین | |
+| 148 | Windows updates (11c) | update notice hint: the app closes, installs the new version and opens again, locked | ئەپەکە دادەخرێت، وەشانە نوێیەکە دادەمەزرێت و دووبارە دەکرێتەوە، پاشان قفڵ دەبێت. بە پینەکەت بیکەرەوە. | |
 
 The installer's own buttons (Next, Install, Finish) stay in English: NSIS has no Sorani translation.

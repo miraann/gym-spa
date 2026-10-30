@@ -44,6 +44,7 @@
     "offlineReady": "The app is ready and will open faster",
     "updateAvailable": "A new version of the app is ready",
     "updateHint": "The page reloads and the app locks. Unlock it with your PIN.",
+    "updateHintRestart": "The app closes, installs the new version and opens again, locked. Unlock it with your PIN.",
     "unsavedTitle": "Changes aren't saved yet",
     "unsavedText": "If you update now, what you typed and haven't saved is lost.",
     "updateAnyway": "Update anyway"

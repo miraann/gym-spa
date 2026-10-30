@@ -14,6 +14,7 @@ import {
 import { autoRegisterDevices, lockFromMenu } from '../../app/e2e/support/app';
 import { TestData, type TestStaff } from '../../app/e2e/support/backend';
 import { addCard, addMember } from '../../app/e2e/support/members';
+import { DESKTOP_CHANNELS } from '@gym/platform/desktop-bridge';
 import type { FakePcsc } from '../src/pcsc-fake';
 
 // path.resolve drops the trailing backslash: on Windows, `"...\desktop\"` would escape the quote.
@@ -292,6 +293,25 @@ test('keeps settings after a restart', async () => {
   page = await mainWindow();
   await expect(page.locator('html')).toHaveAttribute('lang', 'en');
   await expect(page.getByRole('heading', { level: 1, name: 'Log in' })).toBeVisible();
+});
+
+test('a downloaded update shows the notice, and only pressing it installs (step 11c)', async () => {
+  const staff = await newStaff();
+  const page = await mainWindow();
+  await signIn(page, staff);
+  const notice = page.getByTestId('update-notice');
+  // From source the app looks for no updates (no app-update.yml): the main process says a version
+  // was downloaded, as electron-updater's event does in an installed app.
+  await expect(notice).toHaveCount(0);
+  await running().evaluate(({ BrowserWindow }, channel) => {
+    BrowserWindow.getAllWindows()[0]?.webContents.send(channel, '0.2.0');
+  }, DESKTOP_CHANNELS.updateReady);
+  await expect(notice).toContainText('وەشانێکی نوێی ئەپەکە ئامادەیە');
+  await expect(notice).toContainText('ئەپەکە دادەخرێت، وەشانە نوێیەکە دادەمەزرێت');
+  // Without a downloaded version the main process installs nothing: the app keeps running.
+  await notice.getByRole('button', { name: 'نوێکردنەوە' }).click();
+  await expect(page.getByRole('heading', HOME_HEADING)).toBeVisible();
+  expect(await running().evaluate(({ app: electronApp }) => electronApp.getVersion())).toBeTruthy();
 });
 
 test('the window never leaves the app', async () => {

@@ -1,3 +1,4 @@
+import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { hostname } from 'node:os';
 import path from 'node:path';
@@ -43,6 +44,7 @@ import {
   type ServerLink,
 } from './server-link';
 import { nextZoomLevel, shortcutFor } from './shortcuts';
+import { startUpdates, type UpdateService } from './updater';
 
 /** Same id as the Android app and the installer (electron-builder.config.mjs). */
 const APP_ID = 'site.clickgroup.gymspa';
@@ -347,6 +349,33 @@ function lockDownWebContents(): void {
   servePrinting(fromApp);
   // The offline edition's server (see server-pairing.ts).
   serveServerLink();
+  // The online edition's own updates (see updater.ts).
+  serveUpdates();
+}
+
+let updates: UpdateService | null = null;
+
+function serveUpdates(): void {
+  ipcMain.on(DESKTOP_CHANNELS.updateGet, (event) => {
+    if (fromApp(event) && updates !== null && updates.ready() !== null) {
+      event.sender.send(DESKTOP_CHANNELS.updateReady);
+    }
+  });
+  ipcMain.on(DESKTOP_CHANNELS.updateInstall, (event) => {
+    if (fromApp(event)) updates?.install();
+  });
+  // Only an installed build made with an update address has app-update.yml (update-feed.mjs).
+  if (!app.isPackaged || !existsSync(path.join(process.resourcesPath, 'app-update.yml'))) return;
+  void import('electron-updater').then(({ autoUpdater }) => {
+    updates = startUpdates(autoUpdater, {
+      onReady: () => {
+        mainWindow?.webContents.send(DESKTOP_CHANNELS.updateReady);
+      },
+      log: (message) => {
+        console.warn(message);
+      },
+    });
+  });
 }
 
 /** Only the app's own pages may use the bridge. */

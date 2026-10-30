@@ -67,6 +67,19 @@ const bridge: DesktopBridge = {
       DesktopBridge['pairWithServer']
     >,
   linkThisPc: () => ipcRenderer.invoke(DESKTOP_CHANNELS.serverUseLocal) as Promise<boolean>,
+  watchUpdate: (onReady) => {
+    const listener = () => {
+      onReady();
+    };
+    ipcRenderer.on(DESKTOP_CHANNELS.updateReady, listener);
+    ipcRenderer.send(DESKTOP_CHANNELS.updateGet);
+    return () => {
+      ipcRenderer.removeListener(DESKTOP_CHANNELS.updateReady, listener);
+    };
+  },
+  installUpdate: () => {
+    ipcRenderer.send(DESKTOP_CHANNELS.updateInstall);
+  },
 };
 
 contextBridge.exposeInMainWorld(DESKTOP_BRIDGE_KEY, bridge);

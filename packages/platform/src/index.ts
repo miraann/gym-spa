@@ -20,6 +20,7 @@ export {
   type NfcReader,
 } from './nfc';
 export { CARD_INPUT_ATTRIBUTE } from './keyboard-card-reader';
+export { watchDesktopUpdate } from './updater';
 export { haptic, type HapticKind } from './haptics';
 export { saveFile, type FileToSave, type SaveResult } from './save-file';
 export { canPrint, canPrintSilently, listPrinters, printPage } from './printer';
