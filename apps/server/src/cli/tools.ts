@@ -27,7 +27,16 @@ import { Readable } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
 import { parseArgs } from 'node:util';
 import { REPO, toolPaths } from '../paths.ts';
-import { AUTH, GO, PGTAP, POSTGRES, POSTGREST, type PinnedDownload } from '../versions.ts';
+import {
+  AUTH,
+  GO,
+  NODE,
+  PGTAP,
+  POSTGRES,
+  POSTGREST,
+  WINSW,
+  type PinnedDownload,
+} from '../versions.ts';
 
 const { values: args } = parseArgs({ options: { 'downloads-from': { type: 'string' } } });
 const tools = toolPaths();
@@ -226,6 +235,30 @@ async function pgtap(): Promise<void> {
   }
 }
 
+/** Node's node.exe only, for the installed server (OF-f). */
+async function node(): Promise<void> {
+  const target = path.join(tools.root, 'node', 'node.exe');
+  const marker = path.join(tools.root, 'node', `${NODE.version}.ok`);
+  if (existsSync(target) && existsSync(marker)) return;
+  const zip = await download(NODE);
+  const unpacked = path.join(tools.root, 'tmp-node');
+  say('unpacking Node');
+  unzip(zip, unpacked);
+  mkdirSync(path.dirname(target), { recursive: true });
+  copyFileSync(path.join(unpacked, `node-${NODE.version}-win-x64`, 'node.exe'), target);
+  rmSync(unpacked, { recursive: true, force: true });
+  writeFileSync(marker, '');
+}
+
+/** WinSW, which runs gym-server as a Windows service (OF-f). */
+async function winsw(): Promise<void> {
+  const target = path.join(tools.root, 'winsw', 'WinSW-x64.exe');
+  if (existsSync(target)) return;
+  const file = await download(WINSW);
+  mkdirSync(path.dirname(target), { recursive: true });
+  copyFileSync(file, target);
+}
+
 async function main(): Promise<void> {
   say(`tools folder: ${tools.root}`);
   mkdirSync(tools.root, { recursive: true });
@@ -233,6 +266,8 @@ async function main(): Promise<void> {
   await postgrest();
   await auth();
   await pgtap();
+  await node();
+  await winsw();
   writeFileSync(
     path.join(tools.root, 'tools.json'),
     JSON.stringify(

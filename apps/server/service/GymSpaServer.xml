@@ -1,0 +1,26 @@
+<!--
+  WinSW's settings for the Windows service GymSpaServer: the offline edition's server (spec §8,
+  step OF-f). WinSW (GymSpaServer.exe, beside this file) runs gym-server with the official
+  node.exe from the same folder. Stopping sends Ctrl+C first, so gym-server stops Postgres
+  cleanly. install-server.cmd installs it and makes it run as its own virtual account.
+-->
+<service>
+  <id>GymSpaServer</id>
+  <name>Gym and Spa server</name>
+  <description>The gym's server for its PCs: Postgres, Supabase Auth and PostgREST behind gym-server (offline edition).</description>
+  <executable>%BASE%\node.exe</executable>
+  <arguments>"%BASE%\gym-server.mjs" --tools "%BASE%"</arguments>
+  <workingdirectory>%BASE%</workingdirectory>
+  <startmode>Automatic</startmode>
+  <delayedAutoStart>true</delayedAutoStart>
+  <stopparentprocessfirst>true</stopparentprocessfirst>
+  <stoptimeout>60 sec</stoptimeout>
+  <onfailure action="restart" delay="10 sec"/>
+  <onfailure action="restart" delay="60 sec"/>
+  <resetfailure>1 hour</resetfailure>
+  <logpath>%ProgramData%\gym-spa\service-logs</logpath>
+  <log mode="roll-by-size">
+    <sizeThreshold>10240</sizeThreshold>
+    <keepFiles>3</keepFiles>
+  </log>
+</service>

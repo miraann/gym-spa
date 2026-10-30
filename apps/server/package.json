@@ -6,6 +6,7 @@
   "description": "The offline edition's server PC: Postgres, Supabase Auth and PostgREST behind gym-server",
   "scripts": {
     "tools": "tsx src/cli/tools.ts",
+    "bundle": "node scripts/bundle.mjs",
     "dev": "tsx src/cli/dev.ts",
     "serve": "tsx src/cli/serve.ts",
     "admin": "tsx src/cli/admin.ts",
@@ -22,6 +23,7 @@
   },
   "devDependencies": {
     "@types/node": "^24.19.1",
+    "esbuild": "^0.28.2",
     "tsx": "^4.23.15"
   }
 }

@@ -1,3 +1,4 @@
+import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -5,8 +6,36 @@ import { fileURLToPath } from 'node:url';
 // %LOCALAPPDATA%\gym-spa (never in the repository); the installed server uses
 // C:\ProgramData\gym-spa (step OF-f).
 
+const HERE = path.dirname(fileURLToPath(import.meta.url));
+
 /** The repository root (apps/server/src → ../../..). */
-export const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
+export const REPO = path.resolve(HERE, '..', '..', '..');
+
+/** The server's own SQL: the Supabase roles, our migrations and (development only) the demo gym. */
+export interface ResourcePaths {
+  readonly compatSql: string;
+  readonly migrations: string;
+  readonly seed: string | null;
+}
+
+/**
+ * Beside the bundled gym-server.mjs once installed (`pnpm server:bundle` puts sql\ and
+ * migrations\ there); in the repository when run from source.
+ */
+export function resourcePaths(): ResourcePaths {
+  if (existsSync(path.join(HERE, 'migrations'))) {
+    return {
+      compatSql: path.join(HERE, 'sql', 'compat.sql'),
+      migrations: path.join(HERE, 'migrations'),
+      seed: null,
+    };
+  }
+  return {
+    compatSql: path.join(REPO, 'apps', 'server', 'sql', 'compat.sql'),
+    migrations: path.join(REPO, 'supabase', 'migrations'),
+    seed: path.join(REPO, 'supabase', 'seed.sql'),
+  };
+}
 
 function localAppData(): string {
   const value = process.env.LOCALAPPDATA;

@@ -43,7 +43,9 @@ async function backupRoutes(
     return { status: 200, body: { settings: service.settings(), backups: service.list() } };
   }
   if (name === 'backups-now' && method === 'POST') {
-    return { status: 201, body: await service.backUp('manual') };
+    // The installer's backup before it replaces the server's files is named for it.
+    const kind = text(body, 'kind') === 'before-update' ? 'before-update' : 'manual';
+    return { status: 201, body: await service.backUp(kind) };
   }
   if (name === 'backups-settings' && method === 'POST') {
     const copyTo =

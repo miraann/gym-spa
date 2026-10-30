@@ -3,7 +3,7 @@ import { readdirSync, rmSync, writeFileSync, appendFileSync } from 'node:fs';
 import path from 'node:path';
 import { authEnvironment } from './processes.ts';
 import type { ServerSecrets } from './keys.ts';
-import { REPO, type DataPaths, type ToolPaths } from './paths.ts';
+import { resourcePaths, type DataPaths, type ToolPaths } from './paths.ts';
 import type { StackPorts } from './ports.ts';
 
 // The server's database: made once with initdb, then the Supabase roles (sql/compat.sql),
@@ -243,7 +243,7 @@ export function applyCompat(db: Database): void {
     psql(db, 'supabase_admin', [
       '-q',
       '-f',
-      path.join(REPO, 'apps', 'server', 'sql', 'compat.sql'),
+      resourcePaths().compatSql,
       '-v',
       `authenticator_password=${db.secrets.passwords.authenticator}`,
       '-v',
@@ -314,7 +314,7 @@ export function pendingMigrations(
 
 /** Our migrations not applied yet, each in one transaction together with its record. */
 export function applyMigrations(db: Database, log?: (line: string) => void): number {
-  const folder = path.join(REPO, 'supabase', 'migrations');
+  const folder = resourcePaths().migrations;
   const all = migrationsIn(folder, readdirSync(folder));
   const applied = query(db, 'select version from supabase_migrations.schema_migrations');
   const pending = pendingMigrations(all, applied);
@@ -337,8 +337,7 @@ export function applyMigrations(db: Database, log?: (line: string) => void): num
 
 /** supabase/seed.sql (the demo gym): development and tests only, never on a gym's server. */
 export function applySeed(db: Database): void {
-  must(
-    psql(db, 'postgres', ['-q', '-1', '-f', path.join(REPO, 'supabase', 'seed.sql')]),
-    'seed.sql',
-  );
+  const { seed } = resourcePaths();
+  if (seed === null) throw new Error('The installed server has no demo gym.');
+  must(psql(db, 'postgres', ['-q', '-1', '-f', seed]), 'seed.sql');
 }

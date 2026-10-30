@@ -59,3 +59,21 @@ export const CLOUD_VERSION_FILES = {
   postgrest: 'rest-version',
   auth: 'gotrue-version',
 } as const;
+
+/** Node.js, official and signed by the OpenJS Foundation: runs gym-server on the server PC. */
+export const NODE: PinnedDownload = {
+  version: 'v24.20.0',
+  url: 'https://nodejs.org/dist/v24.20.0/node-v24.20.0-win-x64.zip',
+  sha256: '6cac9ffbca8f6a47091e4b5c772e0606049c3871cb67d900c0cedde630e545ba',
+};
+
+/**
+ * WinSW, which runs gym-server as the Windows service GymSpaServer (MIT; the self-contained x64
+ * build, which needs no .NET). GitHub gives no digest for this release: the SHA-256 is that of the
+ * file downloaded on 2026-10-30, whose size matches the release (18,243,033 bytes). Not signed.
+ */
+export const WINSW: PinnedDownload = {
+  version: 'v2.12.0',
+  url: 'https://github.com/winsw/winsw/releases/download/v2.12.0/WinSW-x64.exe',
+  sha256: '05b82d46ad331cc16bdc00de5c6332c1ef818df8ceefcd49c726553209b3a0da',
+};

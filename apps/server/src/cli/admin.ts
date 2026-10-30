@@ -10,6 +10,9 @@
 //   gym-server-admin backup                                      a backup now (OF-e)
 //   gym-server-admin backups [--time HH:MM] [--copy-to <folder>]  the backups and their settings
 //   gym-server-admin restore --name <file> --gym <code>          puts a backup back
+//   gym-server-admin check-update --build-date YYYY-MM-DD        exit 3 when a perpetual license's
+//                                                                updates ended before that build
+//   gym-server-admin backup --kind before-update                 the installer's backup
 //
 // --data <folder>  the server's data folder, for its ports (default C:\ProgramData\gym-spa\server)
 // --dev            the development server instead (pnpm server:dev start)
@@ -22,6 +25,7 @@ import path from 'node:path';
 import { parseArgs } from 'node:util';
 import { readServerConfig } from '../config.ts';
 import { dataPaths, devDataRoot } from '../paths.ts';
+import { storedLicenseCode, updatesBlocked, updatesBlockedMessage } from '../updates.ts';
 import { DEV_PORTS } from '../ports.ts';
 
 const { values: args, positionals } = parseArgs({
@@ -38,6 +42,8 @@ const { values: args, positionals } = parseArgs({
     'copy-to': { type: 'string' },
     name: { type: 'string' },
     gym: { type: 'string' },
+    'build-date': { type: 'string' },
+    kind: { type: 'string' },
   },
 });
 
@@ -112,7 +118,15 @@ async function main(): Promise<void> {
   } else if (command === 'pcs') {
     answer = await call('GET', 'pcs');
   } else if (command === 'backup') {
-    answer = await call('POST', 'backups-now');
+    answer = await call('POST', 'backups-now', args.kind ? { kind: args.kind } : undefined);
+  } else if (command === 'check-update') {
+    // Reads the license from the data folder: it works with the service stopped too.
+    const blocked = await updatesBlocked(storedLicenseCode(dataRoot()), args['build-date'] ?? null);
+    if (blocked !== null) {
+      console.log(updatesBlockedMessage(blocked));
+      process.exitCode = 3;
+    }
+    return;
   } else if (command === 'backups' && (args.time !== undefined || args['copy-to'] !== undefined)) {
     answer = await call('POST', 'backups-settings', {
       ...(args.time === undefined ? {} : { time: args.time }),

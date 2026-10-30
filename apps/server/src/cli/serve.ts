@@ -19,7 +19,8 @@ import { readServerConfig } from '../config.ts';
 import { fileLog } from '../log.ts';
 import { dataPaths, toolPaths } from '../paths.ts';
 import { createServer, startServer, type RunningServer } from '../stack.ts';
-import { SERVER_VERSION } from '../version.ts';
+import { storedLicenseCode, updatesBlocked, updatesBlockedMessage } from '../updates.ts';
+import { SERVER_BUILD_DATE, SERVER_VERSION } from '../version.ts';
 import { restrictFolder } from '../windows.ts';
 
 const { values: args } = parseArgs({
@@ -46,6 +47,14 @@ async function shutdown(reason: string): Promise<void> {
 async function main(): Promise<void> {
   log(`gym-server ${SERVER_VERSION} starting; data ${dataRoot}`);
   const config = readServerConfig(dataRoot);
+  // A build newer than a perpetual license's "updates until" never touches the data (the installer
+  // refuses it first; this is for one copied in by hand). The service tries again later.
+  const blocked = await updatesBlocked(storedLicenseCode(dataRoot), SERVER_BUILD_DATE);
+  if (blocked !== null) {
+    log(updatesBlockedMessage(blocked));
+    process.exitCode = 3;
+    return;
+  }
   const options = { dataRoot, ports: config.ports, tools, log };
   if (!existsSync(dataPaths(dataRoot).secrets)) {
     log('first start: making the database');
