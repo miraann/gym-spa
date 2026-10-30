@@ -1,6 +1,6 @@
 import { admin, write } from './support/backend';
 import { addMember } from './support/members';
-import { expect, signIn, test } from './support/app';
+import { HOME_HEADING, expect, signIn, test } from './support/app';
 
 // The cash register (step 8e): reception opens the drawer with its float, counts blind, takes
 // cash out, and closes it; the shift's report shows the difference.
@@ -52,6 +52,9 @@ test('reception opens the cash register, takes cash out and closes it', async ({
   // Away and back (a reload would lock the app), so the report is read again.
   await page.getByRole('link', { name: 'سەرەکی' }).first().click();
   await expect(page).toHaveURL(/\/$/);
+  // The home page is on screen, so the cash page has really gone (under load the URL changes
+  // first, and a page that never left reads nothing again).
+  await expect(page.getByRole('heading', HOME_HEADING)).toBeVisible();
   await page.getByRole('link', { name: 'قاسە' }).first().click();
   await expect(page).toHaveURL(/\/cash$/);
   await expect(open.getByTestId('cash-methods')).toContainText('کاش (1)');
