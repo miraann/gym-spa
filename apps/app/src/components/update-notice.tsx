@@ -9,21 +9,21 @@ import { useAppUpdate } from '@/app/app-update';
 import { hasUnsavedChanges } from '@/lib/unsaved-changes';
 
 /**
- * A new version of the web app is waiting (step 3a): says so until staff switch to it. Switching
- * reloads the page, which locks the app (`hint`: say so, where staff are logged in), so a form
- * with changes not saved asks first.
+ * A new version of the app is waiting (step 3a; the Windows app's own updates, step 11c): says so
+ * until staff switch to it. Switching reloads the page or restarts the Windows app, which locks
+ * the app (`hint`: say so, where staff are logged in), so a form with changes not saved asks first.
  */
 export function UpdateNotice({ hint = true }: { readonly hint?: boolean }) {
   const { t } = useTranslation();
-  const applyUpdate = useAppUpdate();
+  const appUpdate = useAppUpdate();
   const [confirming, setConfirming] = useState(false);
   const [updating, setUpdating] = useState(false);
-  if (applyUpdate === null) return null;
+  if (appUpdate === null) return null;
 
   const update = () => {
     setConfirming(false);
     setUpdating(true);
-    void applyUpdate();
+    void appUpdate.apply();
   };
 
   return (
@@ -32,7 +32,9 @@ export function UpdateNotice({ hint = true }: { readonly hint?: boolean }) {
         <RefreshCwIcon />
         <AlertTitle>{t('pwa.updateAvailable')}</AlertTitle>
         <AlertDescription className="flex flex-col items-start gap-2">
-          {hint && <span>{t('pwa.updateHint')}</span>}
+          {hint && (
+            <span>{t(appUpdate.restartsApp ? 'pwa.updateHintRestart' : 'pwa.updateHint')}</span>
+          )}
           <Button
             size="sm"
             disabled={updating}

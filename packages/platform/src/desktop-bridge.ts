@@ -45,6 +45,13 @@ export interface DesktopBridge {
   ) => Promise<PairResult>;
   /** Links this PC to the server running on it (the server PC itself); false: none runs here. */
   readonly linkThisPc: () => Promise<boolean>;
+  /**
+   * Calls `onReady` once a new version of the app has been downloaded (step 11c; the online
+   * edition only), also when that happened before the page loaded.
+   */
+  readonly watchUpdate: (onReady: () => void) => () => void;
+  /** Closes the app, installs the downloaded version and starts it again. */
+  readonly installUpdate: () => void;
 }
 
 /** Whether this PC is linked to a server, and whether that server runs on this PC. */
@@ -127,6 +134,12 @@ export const DESKTOP_CHANNELS = {
   serverProbe: 'gym:server-probe',
   serverPair: 'gym:server-pair',
   serverUseLocal: 'gym:server-use-local',
+  /** Page → main: say whether a new version is downloaded (answered with updateReady). */
+  updateGet: 'gym:update-get',
+  /** Main → page: a new version is downloaded and waits. */
+  updateReady: 'gym:update-ready',
+  /** Page → main: install it now (the app closes and starts again). */
+  updateInstall: 'gym:update-install',
 } as const;
 
 /** A server's address as typed: a host name or IPv4 address, with an optional port. */

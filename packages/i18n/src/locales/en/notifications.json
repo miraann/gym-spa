@@ -34,7 +34,7 @@
     },
     "birthday": {
       "name": "Birthday",
-      "default": "Happy birthday, {name}! Everyone at {gym} wishes you a year full of health and happiness."
+      "default": "Happy birthday, {name}! All the staff at {gym} wish you a year full of health and happiness."
     }
   },
   "placeholders": {

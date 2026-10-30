@@ -27,7 +27,7 @@ Var GymClientRadio
     nsExec::ExecToLog '"$0\prepare-update.cmd" ${GYM_BUILD_DATE}'
     Pop $1
     ${If} $1 == 3
-      MessageBox MB_OK|MB_ICONSTOP "ئەم وەشانە دانامەزرێت: نوێکردنەوەکانی مۆڵەتی ئەم جیمە پێش دروستکردنی ئەم وەشانە تەواو بوون. وەشانی ئێستا هەر کار دەکات و هیچ نەگۆڕدرا. بۆ کڕینی نوێکردنەوە، پەیوەندی بە کلیک گرووپ بکە."
+      MessageBox MB_OK|MB_ICONSTOP "ئەم وەشانە دانامەزرێت: نوێکردنەوەکانی مۆڵەتی ئەم جیمە پێش دروستکردنی ئەم وەشانە تەواو بوون. وەشانی ئێستا هەر کار دەکات و هیچ نەگۆڕدرا. بۆ کڕینی نوێکردنەوە، پەیوەندی بە کلیک گرووپەوە بکە."
       Quit
     ${EndIf}
   ${EndIf}
@@ -80,7 +80,7 @@ FunctionEnd
     nsExec::ExecToLog '"$INSTDIR\resources\server\install-server.cmd"'
     Pop $0
     ${If} $0 != 0
-      MessageBox MB_OK|MB_ICONEXCLAMATION "سێرڤەرەکە دەستی پێ نەکرد. کۆمپیوتەرەکە دووبارە دەستپێبکەرەوە؛ ئەگەر هەر کار نەکرد، پەیوەندی بە کلیک گرووپ بکە."
+      MessageBox MB_OK|MB_ICONEXCLAMATION "سێرڤەرەکە دەستی پێ نەکرد. کۆمپیوتەرەکە دووبارە هەڵبکەرەوە؛ ئەگەر هەر کار نەکرد، پەیوەندی بە کلیک گرووپەوە بکە."
     ${EndIf}
     WriteRegStr HKLM "${GYM_REG}" "ServerDir" "$INSTDIR\resources\server"
   ${Else}

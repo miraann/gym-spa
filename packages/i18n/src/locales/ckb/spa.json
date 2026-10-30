@@ -170,8 +170,8 @@
     "booked": "نۆرەگیراو",
     "confirmed": "دڵنیاکراوە",
     "arrived": "هاتووە",
-    "completed": "تەواوبوو",
-    "no_show": "نەهات",
+    "completed": "تەواو بووە",
+    "no_show": "نەهاتووە",
     "cancelled": "هەڵوەشێنراوە"
   },
   "paidWith": {

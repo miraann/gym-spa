@@ -299,7 +299,7 @@ test('the menu shows only what the role allows', async ({ page, staff, data }) =
 // The gym at login (spec §2.6) ------------------------------------------------------------------
 
 const WRONG_LOGIN = 'کۆدی جیم، ناوی بەکارهێنەر یان وشەی نهێنی هەڵەیە.';
-const GYM_LOCKED = 'ئەم جیمە قفڵ کراوە و بەکارناهێنرێت. پەیوەندی بە کلیک گرووپ بکە.';
+const GYM_LOCKED = 'ئەم جیمە قفڵ کراوە و بەکارناهێنرێت. پەیوەندی بە کلیک گرووپەوە بکە.';
 const GYM_READ_ONLY = 'ئەم جیمە تەنها بۆ بینینە';
 const USE_ANOTHER_GYM = { name: 'جیمێکی تر' } as const;
 

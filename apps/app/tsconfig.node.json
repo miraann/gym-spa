@@ -12,6 +12,7 @@
     "playwright.config.ts",
     "pwa-assets.config.ts",
     "e2e",
+    "scripts/**/*.ts",
     "test"
   ]
 }

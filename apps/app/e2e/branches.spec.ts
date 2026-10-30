@@ -64,7 +64,7 @@ test('the branch limit is shown and kept', async ({ page, data }) => {
   await page.getByLabel('ناو بە کوردی').fill('لقی ئازادی');
   await page.getByRole('button', { name: 'دروستکردنی لق' }).click();
   await expect(page.getByRole('alert')).toHaveText(
-    'ئەم جیمە گەیشتووەتە زۆرترین ژمارەی لق. بۆ زیادکردن، پەیوەندی بە کلیک گرووپ بکە.',
+    'ئەم جیمە گەیشتووەتە زۆرترین ژمارەی لق. بۆ زیادکردن، پەیوەندی بە کلیک گرووپەوە بکە.',
   );
   expect(await branchRow(data, 'B2')).toBeNull();
 });

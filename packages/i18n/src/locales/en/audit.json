@@ -14,8 +14,8 @@
   "unknownStaff": "Another staff member",
   "row": "Row:",
   "column": "Field",
-  "before": "Before",
-  "after": "After",
+  "before": "Before the change",
+  "after": "After the change",
   "actions": {
     "insert": "Added",
     "update": "Changed",

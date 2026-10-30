@@ -53,9 +53,12 @@ Run from the repository root:
 | `pnpm check` | Typecheck, lint, format check and unit tests together |
 | `pnpm android:apk` | Build the web app, copy it into the Android project and build a debug APK |
 | `pnpm android:open` | Open the Android project in Android Studio |
+| `pnpm android:release` | The release-signed APK and AAB in `apps/app/release/`, on Click Group's PC; asks the key's password ([Release builds](#release-builds)) |
+| `pnpm android:new-key` / `android:restore-key` | Click Group's Android release key, made once (`--backup-dir <USB stick>`) or put back from its backup (`--file <backup>`) ([Release builds](#release-builds)) |
 | `pnpm desktop:dev` | Run the Windows app against the dev server (start `pnpm dev` first) |
 | `pnpm desktop:start` | Run the Windows app with the production web build |
 | `pnpm desktop:exe` | Build the Windows installer |
+| `pnpm desktop:publish` | Publish this version of the Windows app (online edition) to the releases repository; every installed app then updates to it. Only with the user's OK ([Windows app](#windows-app)) |
 | `pnpm db:start` / `pnpm db:stop` | Start or stop local Supabase (Docker) |
 | `pnpm db:status` | Local URLs and keys: API, Studio (the database UI, http://localhost:54323), database |
 | `pnpm db:reset` | Rebuild the local database: every migration, then the demo data in `supabase/seed.sql`. Deletes local data, including your admin login |
@@ -678,7 +681,7 @@ Other changes:
 
 ## Android app
 
-- `pnpm android:apk` builds `apps/app/android/app/build/outputs/apk/debug/app-debug.apk`. Install it with `adb install -r <apk>`, or copy it to the device and allow installing unknown apps. It is signed with the debug key; release signing comes in Phase 11.
+- `pnpm android:apk` builds `apps/app/android/app/build/outputs/apk/debug/app-debug.apk`. Install it with `adb install -r <apk>`, or copy it to the device and allow installing unknown apps. It is signed with the debug key, for testing only: gyms get the release build ([Release builds](#release-builds)).
 - The APK carries the production web build and serves it from `https://localhost`. Its secure storage belongs to that origin: never change Capacitor's scheme or hostname.
 - After changing web code, run `pnpm android:apk` again. To build or debug in Android Studio instead, run `pnpm --filter @gym/app android:sync` first, then `pnpm android:open`.
 - **Against the local backend** (emulator or USB device): build with the local addresses, then forward the port so `127.0.0.1` on the device reaches your PC:
@@ -694,12 +697,24 @@ Other changes:
 - Cloud backup is turned off: a restored backup would clone this device's identity onto another device.
 - Icons: run `pnpm --filter @gym/app generate:icons` after changing `public/logo.svg`. The adaptive icon (Android 8+) is a vector, `android/app/src/main/res/drawable/ic_launcher_foreground.xml`, which has to be updated by hand.
 
+### Release builds
+
+Every release of the Android app is signed with **Click Group's release key**, forever: Android installs an update only when it is signed with the same key as the installed app. A lost key means the gyms' tablets must uninstall the app (and be registered again) to get a new version; a leaked key lets anyone make an "update". So the key is made and used only on Click Group's PC, never in CI, the repository or a chat (step 11b, spec §8).
+
+- **Making the key, once:** `pnpm android:new-key --backup-dir E:\` (the USB stick). In a terminal it asks for one password twice (hidden, at least 12 characters), makes a PKCS12 key store with the JDK's keytool (RSA 4096, valid 30 years, alias `gym-spa`) in `%USERPROFILE%\.gym-spa\android\gym-spa-release.p12` (`--keystore` for another place, never inside the repository), writes **one encrypted backup** (`gym-spa-android-key-<date>.gsakey`: the key store encrypted with the same password, scrypt and AES-256-GCM) and opens it again to check it, and writes the certificate's **public** SHA-256 fingerprint into `apps/app/android/release-signing.json`, which is committed. The password goes to keytool only through its own process's environment, never on a command line. Keep the password in a password manager, never next to the USB stick. Once `release-signing.json` exists it refuses to make another key unless `--replace` (only for a lost or leaked key: every installed app must then be uninstalled).
+- **A new PC:** `pnpm android:restore-key --file E:\gym-spa-android-key-<date>.gsakey` puts the key store back, after checking its fingerprint is the committed one.
+- **Building:** `pnpm android:release` asks the password (hidden) and checks it opens the key store holding the committed certificate. It builds the web app (`android:sync`; a build that talks to a local backend is refused) and runs Gradle once with the key store's path and password in that run's environment only (`GYM_ANDROID_KEYSTORE`, `GYM_ANDROID_KEYSTORE_PASSWORD`), without its daemon and configuration cache, so the password stays in no background process or file. Without those variables Gradle leaves a release unsigned. It then checks the APK with `apksigner` and `aapt2` (signed by exactly the release certificate, `site.clickgroup.gymspa`, the right version, not debuggable) and the AAB with `jarsigner` and `keytool`, and copies both to `apps/app/release/gym-spa-<version>.apk` and `.aab`, printing their SHA-256. It needs the Android SDK, a JDK for keytool (`JAVA_HOME`, or Android Studio's own) and the Java that Gradle already uses for debug builds (Gradle 8.14 runs on Java 17 to 24, not on Android Studio's Java 25).
+- **The version code** comes from the version: major × 1,000,000 + minor × 1,000 + patch (0.1.0 → 1000), so each release installs over the one before. Raise the version in `apps/app/package.json` for every release.
+- **Installing:** gyms get the APK directly (no Play Store yet): copy it to the tablet, open it, and allow "install unknown apps" for the file manager once ([docs/install-guide.md](docs/install-guide.md)). A device with a **debug** build must uninstall it first (another key), and is then registered again. Check with `adb logcat` that no session or refresh token appears while logging in and unlocking (spec §8, Phase 11 release checklist).
+- **Ready for the Play Store:** the AAB is what Play wants. With Play App Signing this key becomes the upload key (Google keeps the app's signing key); nothing in the build changes.
+- **Tests:** `apps/app/test/android-signing.test.ts` (the backup, the fingerprints, the version code, the release settings, and a throwaway key made and restored with the real keytool when a JDK is there).
+
 ## Windows app
 
 - `pnpm desktop:exe` builds `apps/desktop/release/gym-spa-setup-<version>.exe`. It installs for the current user without admin rights, and keeps its data in `%APPDATA%\gym-spa`.
 - If the installer step stops with NSIS's "Can't open output file", something (usually the antivirus scanning the previous file) still holds `release/gym-spa-setup-<version>.exe`: run `pnpm desktop:exe` again.
 - App ID: `site.clickgroup.gymspa` (the same as Android). Publisher: Click Group.
-- The installer is not signed until Phase 11, so Windows SmartScreen warns about an unknown publisher: click **More info → Run anyway**.
+- The installer is not code-signed (the user's decision for now, Phase 11), so Windows SmartScreen warns about an unknown publisher: click **More info → Run anyway**. Installing at a gym, step by step: [docs/install-guide.md](docs/install-guide.md).
 - The app serves the same production web build from `app://gym-spa`. Browser storage and workers work there (the e2e tests check this). Its stored data belongs to that origin: never change it.
 - No menu bar. Shortcuts: Ctrl and `=` / `-` / `0` zoom (by key position, so they also work with a Kurdish or Arabic keyboard layout), F11 full screen. When run from source (`pnpm desktop:dev`, `pnpm desktop:start`) there are also Ctrl+R (reload) and F12 or Ctrl+Shift+I (DevTools).
 - Security: the page has no Node or Electron access, only `window.gymDesktop`; the window can't navigate away from the app (https links open in the default browser); permissions such as camera or location are refused; Electron's security fuses are burned into the installed exe.
@@ -709,7 +724,13 @@ Other changes:
   - Where it can't be compiled (Vercel's Linux build, a PC without the tools), `pnpm install` skips it with a warning, and the Windows app is built without PC/SC readers: `pnpm --filter @gym/desktop build` prints "No PC/SC card readers in this build".
   - The build copies the compiled `smartcard_napi.node` into `apps/desktop/dist/native/`, and the installer keeps it outside `app.asar` (in `app.asar.unpacked`), because Windows can't load it from inside the archive.
   - It uses Node-API, so an Electron upgrade needs no rebuild. The machine that builds the release installer (Phase 11) needs the same tools.
-- Kiosk mode, start with Windows and auto-update are built in later phases. Silent receipt printing is built (step 8f, Receipts above). The offline edition (server PC on the gym's network) is planned for the offline packaging phase (spec §8, before Phase 11), which starts with step 1f.
+- Kiosk mode and start with Windows are built in a later phase. Silent receipt printing is built (step 8f, Receipts above). The offline edition (server PC on the gym's network) is in [Offline edition](#offline-edition).
+- **Updates** (step 11c, the online edition only): the installed app updates itself from the latest release of the public repository **[miraann/gym-spa-releases](https://github.com/miraann/gym-spa-releases)** (binaries only, the user's decision of 2026-10-30): `https://github.com/miraann/gym-spa-releases/releases/latest/download/`, which GitHub sends to the newest release's files. `apps/desktop/update-feed.mjs` puts that address into every online installer (`resourcesapp-update.yml`); `GYM_UPDATE_URL` names another one (HTTPS, or HTTP to `127.0.0.1` for a test), and `GYM_UPDATE_URL=off` builds one that never looks.
+  - **Publishing a version** (only with the user's OK: every installed online Windows app then updates to it): raise the version in `apps/app/package.json`, then `pnpm desktop:publish` in a terminal (`apps/desktop/scripts/publish-update.mjs`, with `gh` logged in with write access to that repository). It asks to type the version, builds the installer with the official address, checks `latest.yml` and the app's `app-update.yml`, and makes a **draft** release `v<version>` holding the installer, its `.blockmap`, the previous version's `.blockmap` (so PCs download only the changed blocks) and `latest.yml`; only when everything is uploaded does it publish the draft as the latest release, then it reads `latest.yml` back from the official address. A version that is published already is refused.
+  - The app looks at start and every hour (`apps/desktop/src/updater.ts`, electron-updater), downloads a new version in the background, and checks it against the SHA-512 in `latest.yml`. The page then shows the same notice as the web app, saying the app closes, installs and opens again, locked; pressing «نوێکردنەوە» (after asking, when a form isn't saved) installs it silently, for this Windows user without an administrator, and starts the app again. A downloaded version also installs when the app is closed. Failed checks are only logged and tried again an hour later.
+  - Without code signing Windows checks no publisher: whoever can write to the update folder can ship an update to every gym. Keep that account behind two-step login.
+  - A build without `GYM_UPDATE_URL` (and every offline build: `electron-builder.offline.config.mjs` sets no address) never looks for updates. From source (`pnpm desktop:dev`) there are none either; `e2e/desktop.spec.ts` sends the "downloaded" message itself to test the notice.
+  - Tried on 2026-10-30 with the installed-layout app (`release/win-unpacked`) and a local feed offering 0.1.1: it found, downloaded and verified it. Installing an update over an installed app is still to be tried on a test PC (go-live checklist, item 9).
 
 ## Offline edition
 

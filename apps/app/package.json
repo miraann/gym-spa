@@ -15,6 +15,9 @@
     "generate:icons": "pwa-assets-generator && node scripts/android-icons.mjs",
     "android:sync": "vite build && cap sync android",
     "android:apk": "pnpm android:sync && node scripts/gradle.mjs assembleDebug",
+    "android:release": "node scripts/android-release.ts",
+    "android:new-key": "node scripts/android-key.ts new",
+    "android:restore-key": "node scripts/android-key.ts restore",
     "android:open": "cap open android"
   },
   "dependencies": {

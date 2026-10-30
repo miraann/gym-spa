@@ -18,6 +18,8 @@ const bridge: DesktopBridge = {
   probeServer: () => Promise.resolve(null),
   pairWithServer: () => Promise.resolve({ ok: true }),
   linkThisPc: () => Promise.resolve(false),
+  watchUpdate: () => () => undefined,
+  installUpdate: () => undefined,
 };
 
 describe('detectPlatform', () => {

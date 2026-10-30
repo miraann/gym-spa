@@ -7,6 +7,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { startBackButtonHandling } from '@/app/back-button';
 import { AppProviders } from '@/app/providers';
+import { registerDesktopUpdates } from '@/app/desktop-update';
 import { registerPwa } from '@/app/pwa';
 import { AuthProvider } from '@/features/auth/auth-provider';
 import { AuthGate } from '@/features/auth/auth-gate';
@@ -18,8 +19,10 @@ import { router } from '@/router';
 startPreferenceSync();
 startBackButtonHandling();
 // The Android and Windows apps already carry every file, so only the web app needs the
-// service worker (it would also show web-only "new version" prompts there).
+// service worker (it would also show web-only "new version" prompts there). The Windows app
+// updates itself instead (the online edition, step 11c).
 if (platform === 'web') registerPwa();
+else if (platform === 'electron') registerDesktopUpdates();
 
 const container = document.getElementById('root');
 if (!container) throw new Error('Missing #root element in index.html');
