@@ -66,13 +66,7 @@ function SheetContent({
         )}
         {...props}
       >
-        {side === 'bottom' && (
-          <div
-            aria-hidden
-            data-slot="sheet-grabber"
-            className="mx-auto h-1.5 w-10 shrink-0 rounded-full bg-muted-foreground/30"
-          />
-        )}
+        {side === 'bottom' && <SheetGrabber />}
         {children}
         {showCloseButton && (
           <SheetPrimitive.Close data-slot="sheet-close" asChild>
@@ -84,6 +78,71 @@ function SheetContent({
         )}
       </SheetPrimitive.Content>
     </SheetPortal>
+  );
+}
+
+/** How far (of the sheet's height) or how fast (px per ms) a drag must go down to close it. */
+const DRAG_CLOSE_SHARE = 0.3;
+const DRAG_CLOSE_SPEED = 0.5;
+
+/**
+ * A bottom sheet's grabber: dragging it (a 48px strip along the top, so it never fights with
+ * scrolling the content) moves the sheet with the finger, and a long or quick drag down closes it,
+ * like a phone's own sheets. Esc, the close button and tapping outside still close it too.
+ */
+function SheetGrabber() {
+  const close = React.useRef<HTMLButtonElement>(null);
+  const drag = React.useRef<{ y: number; time: number; sheet: HTMLElement } | null>(null);
+
+  const offset = (event: React.PointerEvent) => Math.max(0, event.clientY - (drag.current?.y ?? 0));
+  const end = (event: React.PointerEvent, cancelled: boolean) => {
+    const current = drag.current;
+    if (!current) return;
+    drag.current = null;
+    const distance = offset(event);
+    const speed = distance / Math.max(1, event.timeStamp - current.time);
+    current.sheet.style.transition = '';
+    const closing =
+      !cancelled &&
+      (distance > current.sheet.offsetHeight * DRAG_CLOSE_SHARE ||
+        (distance > 24 && speed > DRAG_CLOSE_SPEED));
+    if (closing) {
+      close.current?.click();
+    } else {
+      current.sheet.style.translate = '';
+    }
+  };
+
+  return (
+    <>
+      <div
+        aria-hidden
+        data-slot="sheet-grabber"
+        className="absolute inset-x-0 top-0 flex h-12 cursor-grab touch-none justify-center pt-2 active:cursor-grabbing"
+        onPointerDown={(event) => {
+          const sheet = event.currentTarget.closest<HTMLElement>('[data-slot="sheet-content"]');
+          if (!sheet || event.button !== 0) return;
+          event.currentTarget.setPointerCapture(event.pointerId);
+          drag.current = { y: event.clientY, time: event.timeStamp, sheet };
+          sheet.style.transition = 'none';
+        }}
+        onPointerMove={(event) => {
+          if (drag.current) drag.current.sheet.style.translate = `0 ${offset(event)}px`;
+        }}
+        onPointerUp={(event) => {
+          end(event, false);
+        }}
+        onPointerCancel={(event) => {
+          end(event, true);
+        }}
+      >
+        <span className="h-1.5 w-10 shrink-0 rounded-full bg-muted-foreground/30" />
+      </div>
+      {/* The grabber's own way to close the sheet, which Radix then animates as usual. */}
+      <SheetPrimitive.Close ref={close} hidden tabIndex={-1} aria-hidden />
+      {/* Keeps the room the grabber had when it was part of the layout. */}
+      <div aria-hidden className="h-1.5 shrink-0" />
+    </>
   );
 }
 

@@ -65,7 +65,9 @@ export function ResponsiveDialog({
             <SheetTitle>{title}</SheetTitle>
             {description && <SheetDescription>{description}</SheetDescription>}
           </SheetHeader>
-          {children && <div className="overflow-y-auto px-4 pb-2">{children}</div>}
+          {children && (
+            <div className="overflow-y-auto overscroll-contain px-4 pb-2">{children}</div>
+          )}
           <SheetFooter className="*:w-full">{footer}</SheetFooter>
         </SheetContent>
       </Sheet>

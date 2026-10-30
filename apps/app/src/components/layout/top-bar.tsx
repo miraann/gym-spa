@@ -37,7 +37,7 @@ export function TopBar({
     <header
       data-slot="top-bar"
       className={cn(
-        'sticky top-0 z-10 box-content flex h-14 shrink-0 items-center gap-2 border-b border-transparent bg-background px-3 pt-[env(safe-area-inset-top)] transition-[border-color] duration-200 supports-backdrop-filter:bg-(--glass) supports-backdrop-filter:backdrop-blur-xl supports-backdrop-filter:backdrop-saturate-150 md:px-4',
+        'sticky top-0 z-10 box-content flex h-14 shrink-0 items-center gap-2 border-b border-transparent bg-background px-3 pt-[env(safe-area-inset-top)] transition-[border-color] duration-200 md:px-4 glass:bg-(--glass) glass:backdrop-blur-md',
         (compactTitle !== null || !phone) && 'border-border/70',
       )}
     >

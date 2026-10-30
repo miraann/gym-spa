@@ -93,7 +93,7 @@ export function SettingsLayout() {
               aria-current={selected ? 'page' : undefined}
               title={iconOnly ? t(`tabs.${key}`) : undefined}
               className={cn(
-                'flex h-10 flex-1 items-center justify-center gap-2 rounded-full px-3 text-sm whitespace-nowrap transition-[background-color,color,box-shadow] duration-200 outline-none focus-visible:ring-3 focus-visible:ring-ring/50 sm:px-5 pointer-coarse:h-11',
+                'flex h-10 flex-1 items-center justify-center gap-2 rounded-full px-3 text-sm whitespace-nowrap transition-[background-color,color,box-shadow] duration-200 outline-none focus-visible:ring-3 focus-visible:ring-ring/50 sm:px-5 pointer-coarse:h-12',
                 iconOnly && 'min-w-11 flex-none md:flex-1',
                 selected
                   ? 'bg-card font-semibold text-foreground shadow-sm'

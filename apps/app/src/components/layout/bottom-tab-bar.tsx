@@ -38,7 +38,7 @@ export function BottomTabBar() {
         aria-label={t('tabBar.label')}
         className="pointer-events-none fixed inset-x-0 bottom-0 z-30 pb-[calc(var(--tab-bar-gap)+env(safe-area-inset-bottom))]"
       >
-        <ul className="pointer-events-auto mx-auto flex h-(--tab-bar-height) max-w-md items-stretch rounded-full bg-card px-1.5 shadow-lg ring-1 ring-foreground/7 supports-backdrop-filter:bg-(--glass) supports-backdrop-filter:backdrop-blur-xl supports-backdrop-filter:backdrop-saturate-150">
+        <ul className="pointer-events-auto mx-auto flex h-(--tab-bar-height) max-w-md items-stretch rounded-full bg-card px-1.5 shadow-lg ring-1 ring-foreground/7 glass:bg-(--glass) glass:backdrop-blur-md">
           {tabs.map((item) => (
             <li key={item.key} className="flex min-w-0 flex-1">
               <Tab item={item} isActive={isNavItemActive(item, pathname)} />

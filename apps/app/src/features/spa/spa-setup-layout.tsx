@@ -38,7 +38,7 @@ export function SpaSetupLayout() {
                 to={to}
                 aria-current={selected ? 'page' : undefined}
                 className={cn(
-                  'flex h-10 flex-1 items-center justify-center gap-2 rounded-full px-3 text-sm whitespace-nowrap transition-[background-color,color,box-shadow] duration-200 outline-none focus-visible:ring-3 focus-visible:ring-ring/50 sm:px-5 pointer-coarse:h-11',
+                  'flex h-10 flex-1 items-center justify-center gap-2 rounded-full px-3 text-sm whitespace-nowrap transition-[background-color,color,box-shadow] duration-200 outline-none focus-visible:ring-3 focus-visible:ring-ring/50 sm:px-5 pointer-coarse:h-12',
                   selected
                     ? 'bg-card font-semibold text-foreground shadow-sm'
                     : 'font-medium text-muted-foreground hover:text-foreground',

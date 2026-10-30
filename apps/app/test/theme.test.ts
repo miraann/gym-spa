@@ -2,6 +2,7 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import {
+  BRAND_PRESETS,
   CONTRAST_NON_TEXT,
   CONTRAST_TEXT,
   brandVariables,
@@ -53,12 +54,26 @@ function resolve(mode: Mode, name: string, depth = 0): string {
   return value.replace(/var\((--[\w-]+)\)/g, (_, inner: string) => resolve(mode, inner, depth + 1));
 }
 
+/** `calc(a + b)` and `calc(a - b)` of plain numbers worked out, as the browser does. */
+function evaluate(value: string): string {
+  return value.replace(
+    /calc\(([\d.]+) ([+-]) ([\d.]+)\)/g,
+    (_, a: string, sign: string, b: string) =>
+      String(
+        Math.round((sign === '+' ? Number(a) + Number(b) : Number(a) - Number(b)) * 1e4) / 1e4,
+      ),
+  );
+}
+
+function oklchColor(value: string, name: string): Rgb {
+  const match = /^oklch\(\s*([\d.]+) ([\d.]+) ([\d.]+)\s*\)$/.exec(evaluate(value));
+  if (!match) throw new Error(`${name} is not an opaque oklch() color: ${value}`);
+  return oklchToRgb({ l: Number(match[1]), c: Number(match[2]), h: Number(match[3]) });
+}
+
 /** An opaque token color. */
 function color(mode: Mode, name: string): Rgb {
-  const value = resolve(mode, name);
-  const match = /^oklch\(([\d.]+) ([\d.]+) ([\d.]+)\)$/.exec(value);
-  if (!match) throw new Error(`${name} (${mode}) is not an opaque oklch() color: ${value}`);
-  return oklchToRgb({ l: Number(match[1]), c: Number(match[2]), h: Number(match[3]) });
+  return oklchColor(resolve(mode, name), `${name} (${mode})`);
 }
 
 /** `color` drawn at this opacity over `under` (what bg-warning/10 looks like on a card). */
@@ -133,6 +148,47 @@ describe.each<Mode>(['light', 'dark'])('%s mode', (mode) => {
   it('keeps status colors fixed: they never follow the brand', () => {
     for (const status of ['--success', '--warning', '--destructive']) {
       expect(resolve(mode, status)).not.toContain('--brand');
+    }
+  });
+});
+
+// The dashboard's vivid marks and its brand tile follow the gym's color: they must work with every
+// preset, in light and dark mode (a custom color gets the contrast check of Appearance settings).
+describe.each(BRAND_PRESETS)('the vivid tokens with the %s preset', (preset) => {
+  const withPreset = (mode: Mode) => {
+    const saved = TOKENS[mode];
+    TOKENS[mode] = new Map([...saved, ...Object.entries(brandVariables(preset))]);
+    return () => {
+      TOKENS[mode] = saved;
+    };
+  };
+
+  it.each<Mode>(['light', 'dark'])('marks stand out on cards and the page (%s)', (mode) => {
+    const restore = withPreset(mode);
+    try {
+      for (const surface of SURFACES) {
+        expect(contrastRatio(color(mode, '--vivid'), color(mode, surface))).toBeGreaterThanOrEqual(
+          CONTRAST_NON_TEXT,
+        );
+      }
+    } finally {
+      restore();
+    }
+  });
+
+  it('keeps text readable on both ends of the brand gradient', () => {
+    const restore = withPreset('light');
+    try {
+      const gradient = evaluate(resolve('light', '--gradient-brand'));
+      const stops = [...gradient.matchAll(/oklch\([^)]*\)/g)];
+      expect(stops).toHaveLength(2);
+      for (const [stop] of stops) {
+        expect(
+          contrastRatio(color('light', '--brand-foreground'), oklchColor(stop, 'gradient stop')),
+        ).toBeGreaterThanOrEqual(CONTRAST_TEXT);
+      }
+    } finally {
+      restore();
     }
   });
 });

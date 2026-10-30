@@ -4,6 +4,19 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Frosted glass, only on floating bars (CLAUDE.md → Design): where the browser can blur and the
+   viewer hasn't asked for less transparency. Everywhere else, including browsers that don't know
+   that setting, the bar keeps its solid background. Bars use a 12px blur (backdrop-blur-md) and
+   nothing more: it is drawn on every scroll frame, and cheap Android tablets and older reception
+   PCs feel a larger one. */
+@custom-variant glass {
+  @supports (backdrop-filter: blur(1px)) {
+    @media (prefers-reduced-transparency: no-preference) {
+      @slot;
+    }
+  }
+}
+
 /* Kurdish UI font: UniSalar_F_113 by Salar Shwani (one weight; chosen by the user in step D-3).
    It has no Latin letters or ASCII digits, and its unicode-range keeps it to Arabic-script
    characters and spaces, so digits (the Western-digit default; phone numbers, card UIDs and
@@ -200,6 +213,9 @@ body {
   --color-card: var(--card);
   --color-foreground: var(--foreground);
   --color-background: var(--background);
+  --color-vivid: var(--vivid);
+  --color-vivid-track: var(--vivid-track);
+  --color-glow: var(--glow);
   /* With the soft corners (--radius: 1rem) these are Tailwind's usual sizes: controls rounded-xl
      (12px), cards rounded-2xl (16px), sheets and dialogs rounded-3xl (24px). The medium and
      sharp corner styles shrink them all together. rounded-card (20px) is for cards and grouped
@@ -276,6 +292,21 @@ body {
   --chart-4: oklch(0.42 0.18 var(--brand-h));
   --chart-5: oklch(0.82 0.07 var(--brand-h));
 
+  /* The dashboard's live widgets (gauges, counters, sparklines, meters) and its brand tile: the
+     gym's own hue, brighter and more saturated, never a second hue, so every preset and custom
+     color stays itself and never drifts towards a status color. --vivid is for marks (arcs, bars,
+     lines), not text; --vivid-track is the empty part of a gauge or meter. The brand gradient
+     runs from the brand color to a deeper shade of it, so text on it is never lighter than on
+     the plain brand color (its contrast is tested). */
+  --vivid: oklch(calc(var(--brand-l) + 0.06) calc(var(--brand-c) + 0.03) var(--brand-h));
+  --vivid-track: oklch(0.92 0.03 var(--brand-h));
+  --glow: oklch(var(--brand-l) var(--brand-c) var(--brand-h) / 0.28);
+  --gradient-brand: linear-gradient(
+    135deg,
+    oklch(var(--brand-l) var(--brand-c) var(--brand-h)),
+    oklch(calc(var(--brand-l) - 0.09) var(--brand-c) calc(var(--brand-h) + 8))
+  );
+
   /* Corner style: soft. Every radius derives from it (see @theme inline). */
   --radius: 1rem;
 
@@ -327,6 +358,12 @@ body {
   --sidebar: oklch(0.195 0.013 var(--brand-h));
   --sidebar-accent: oklch(0.29 0.06 var(--brand-dark-h));
   --sidebar-accent-foreground: oklch(0.88 0.07 var(--brand-dark-h));
+
+  --vivid: oklch(
+    calc(var(--brand-dark-l) + 0.04) calc(var(--brand-dark-c) + 0.03) var(--brand-dark-h)
+  );
+  --vivid-track: oklch(0.3 0.03 var(--brand-dark-h));
+  --glow: oklch(var(--brand-dark-l) var(--brand-dark-c) var(--brand-dark-h) / 0.22);
 
   /* On a dark page shadows barely show: a faint light edge on top gives cards their shape. */
   --elevation-1: 0 1px 2px oklch(0 0 0 / 0.3), inset 0 1px 0 oklch(1 0 0 / 0.04);
