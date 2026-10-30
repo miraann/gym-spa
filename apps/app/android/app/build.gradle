@@ -2,6 +2,16 @@ apply plugin: 'com.android.application'
 
 // Same version as the web and desktop builds (apps/app/package.json).
 def appVersion = new groovy.json.JsonSlurper().parse(file('../../package.json')).version
+// major × 1,000,000 + minor × 1,000 + patch (0.1.0 → 1000), so every release installs over the one
+// before. scripts/android-signing.ts has the same formula and android:release checks the result.
+def versionParts = (appVersion =~ /^(\d+)\.(\d+)\.(\d+)/)[0]
+def appVersionCode = (versionParts[1] as int) * 1000000 + (versionParts[2] as int) * 1000 + (versionParts[3] as int)
+
+// Release signing (step 11b): `pnpm android:release` gives the key store and its password to this one
+// Gradle run through its environment, never through a file. Without them a release stays unsigned.
+def releaseKeyStore = System.getenv('GYM_ANDROID_KEYSTORE')
+def releaseKeyPassword = System.getenv('GYM_ANDROID_KEYSTORE_PASSWORD')
+def signRelease = releaseKeyStore && releaseKeyPassword
 
 android {
     namespace = "site.clickgroup.gymspa"
@@ -10,7 +20,7 @@ android {
         applicationId "site.clickgroup.gymspa"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
+        versionCode appVersionCode
         versionName appVersion
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
@@ -19,8 +29,22 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        if (signRelease) {
+            release {
+                storeFile file(releaseKeyStore)
+                storePassword releaseKeyPassword
+                keyAlias 'gym-spa'
+                keyPassword releaseKeyPassword
+                storeType 'pkcs12'
+            }
+        }
+    }
     buildTypes {
         release {
+            if (signRelease) {
+                signingConfig signingConfigs.release
+            }
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }

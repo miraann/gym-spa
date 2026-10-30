@@ -53,6 +53,8 @@ Run from the repository root:
 | `pnpm check` | Typecheck, lint, format check and unit tests together |
 | `pnpm android:apk` | Build the web app, copy it into the Android project and build a debug APK |
 | `pnpm android:open` | Open the Android project in Android Studio |
+| `pnpm android:release` | The release-signed APK and AAB in `apps/app/release/`, on Click Group's PC; asks the key's password ([Release builds](#release-builds)) |
+| `pnpm android:new-key` / `android:restore-key` | Click Group's Android release key, made once (`--backup-dir <USB stick>`) or put back from its backup (`--file <backup>`) ([Release builds](#release-builds)) |
 | `pnpm desktop:dev` | Run the Windows app against the dev server (start `pnpm dev` first) |
 | `pnpm desktop:start` | Run the Windows app with the production web build |
 | `pnpm desktop:exe` | Build the Windows installer |
@@ -678,7 +680,7 @@ Other changes:
 
 ## Android app
 
-- `pnpm android:apk` builds `apps/app/android/app/build/outputs/apk/debug/app-debug.apk`. Install it with `adb install -r <apk>`, or copy it to the device and allow installing unknown apps. It is signed with the debug key; release signing comes in Phase 11.
+- `pnpm android:apk` builds `apps/app/android/app/build/outputs/apk/debug/app-debug.apk`. Install it with `adb install -r <apk>`, or copy it to the device and allow installing unknown apps. It is signed with the debug key, for testing only: gyms get the release build ([Release builds](#release-builds)).
 - The APK carries the production web build and serves it from `https://localhost`. Its secure storage belongs to that origin: never change Capacitor's scheme or hostname.
 - After changing web code, run `pnpm android:apk` again. To build or debug in Android Studio instead, run `pnpm --filter @gym/app android:sync` first, then `pnpm android:open`.
 - **Against the local backend** (emulator or USB device): build with the local addresses, then forward the port so `127.0.0.1` on the device reaches your PC:
@@ -693,6 +695,18 @@ Other changes:
 - The app draws behind the status and navigation bars (Android 15+ requires it); the layout keeps content clear of them with `env(safe-area-inset-*)`.
 - Cloud backup is turned off: a restored backup would clone this device's identity onto another device.
 - Icons: run `pnpm --filter @gym/app generate:icons` after changing `public/logo.svg`. The adaptive icon (Android 8+) is a vector, `android/app/src/main/res/drawable/ic_launcher_foreground.xml`, which has to be updated by hand.
+
+### Release builds
+
+Every release of the Android app is signed with **Click Group's release key**, forever: Android installs an update only when it is signed with the same key as the installed app. A lost key means the gyms' tablets must uninstall the app (and be registered again) to get a new version; a leaked key lets anyone make an "update". So the key is made and used only on Click Group's PC, never in CI, the repository or a chat (step 11b, spec §8).
+
+- **Making the key, once:** `pnpm android:new-key --backup-dir E:\` (the USB stick). In a terminal it asks for one password twice (hidden, at least 12 characters), makes a PKCS12 key store with the JDK's keytool (RSA 4096, valid 30 years, alias `gym-spa`) in `%USERPROFILE%\.gym-spa\android\gym-spa-release.p12` (`--keystore` for another place, never inside the repository), writes **one encrypted backup** (`gym-spa-android-key-<date>.gsakey`: the key store encrypted with the same password, scrypt and AES-256-GCM) and opens it again to check it, and writes the certificate's **public** SHA-256 fingerprint into `apps/app/android/release-signing.json`, which is committed. The password goes to keytool only through its own process's environment, never on a command line. Keep the password in a password manager, never next to the USB stick. Once `release-signing.json` exists it refuses to make another key unless `--replace` (only for a lost or leaked key: every installed app must then be uninstalled).
+- **A new PC:** `pnpm android:restore-key --file E:\gym-spa-android-key-<date>.gsakey` puts the key store back, after checking its fingerprint is the committed one.
+- **Building:** `pnpm android:release` asks the password (hidden) and checks it opens the key store holding the committed certificate. It builds the web app (`android:sync`; a build that talks to a local backend is refused) and runs Gradle once with the key store's path and password in that run's environment only (`GYM_ANDROID_KEYSTORE`, `GYM_ANDROID_KEYSTORE_PASSWORD`), without its daemon and configuration cache, so the password stays in no background process or file. Without those variables Gradle leaves a release unsigned. It then checks the APK with `apksigner` and `aapt2` (signed by exactly the release certificate, `site.clickgroup.gymspa`, the right version, not debuggable) and the AAB with `jarsigner` and `keytool`, and copies both to `apps/app/release/gym-spa-<version>.apk` and `.aab`, printing their SHA-256. It needs the Android SDK, a JDK for keytool (`JAVA_HOME`, or Android Studio's own) and the Java that Gradle already uses for debug builds (Gradle 8.14 runs on Java 17 to 24, not on Android Studio's Java 25).
+- **The version code** comes from the version: major × 1,000,000 + minor × 1,000 + patch (0.1.0 → 1000), so each release installs over the one before. Raise the version in `apps/app/package.json` for every release.
+- **Installing:** gyms get the APK directly (no Play Store yet): copy it to the tablet, open it, and allow "install unknown apps" for the file manager once ([docs/install-guide.md](docs/install-guide.md)). A device with a **debug** build must uninstall it first (another key), and is then registered again. Check with `adb logcat` that no session or refresh token appears while logging in and unlocking (spec §8, Phase 11 release checklist).
+- **Ready for the Play Store:** the AAB is what Play wants. With Play App Signing this key becomes the upload key (Google keeps the app's signing key); nothing in the build changes.
+- **Tests:** `apps/app/test/android-signing.test.ts` (the backup, the fingerprints, the version code, the release settings, and a throwaway key made and restored with the real keytool when a JDK is there).
 
 ## Windows app
 
