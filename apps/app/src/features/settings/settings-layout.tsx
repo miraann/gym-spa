@@ -14,6 +14,7 @@ import { canPrintSilently } from '@gym/platform';
 import { cn } from '@gym/ui/lib/utils';
 import type { AppPath } from '@/app/navigation';
 import { usePermissions } from '@/features/auth/use-permissions';
+import { isOfflineEdition } from '@/lib/edition';
 
 const TABS: readonly {
   to: AppPath;
@@ -23,6 +24,8 @@ const TABS: readonly {
   permission?: string;
   /** Shown only in the Windows app. */
   windowsOnly?: boolean;
+  /** Needs the internet: not in the offline edition (WhatsApp messages, Click Group's support). */
+  onlineOnly?: boolean;
 }[] = [
   { to: '/settings/display', key: 'display', icon: MonitorSmartphoneIcon },
   { to: '/settings/appearance', key: 'appearance', icon: PaletteIcon },
@@ -34,8 +37,15 @@ const TABS: readonly {
     key: 'messages',
     icon: MessageCircleIcon,
     permission: 'notifications.templates.manage',
+    onlineOnly: true,
   },
-  { to: '/settings/support', key: 'support', icon: ShieldCheckIcon, permission: 'support.grant' },
+  {
+    to: '/settings/support',
+    key: 'support',
+    icon: ShieldCheckIcon,
+    permission: 'support.grant',
+    onlineOnly: true,
+  },
 ];
 
 /** Settings: one page per topic, picked with a segmented control like a native app's. */
@@ -46,7 +56,8 @@ export function SettingsLayout() {
   const tabs = TABS.filter(
     (tab) =>
       (tab.permission === undefined || permissions.has(tab.permission)) &&
-      (!tab.windowsOnly || canPrintSilently()),
+      (!tab.windowsOnly || canPrintSilently()) &&
+      !(tab.onlineOnly && isOfflineEdition),
   );
   const compact = tabs.length > 3;
 

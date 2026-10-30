@@ -7,6 +7,7 @@ import {
   ipcMain,
   Menu,
   nativeTheme,
+  net,
   protocol,
   safeStorage,
   session,
@@ -24,6 +25,15 @@ import {
 import { serveCardReaders } from './card-readers';
 import { servePrinting } from './printing';
 import { createSecureStore } from './secure-store';
+import {
+  checkServerLink,
+  forwardedHeaders,
+  isPairedCertificate,
+  isServerRequest,
+  parseServerLink,
+  serverTarget,
+  type ServerLink,
+} from './server-link';
 import { nextZoomLevel, shortcutFor } from './shortcuts';
 
 /** Same id as the Android app and the installer (electron-builder.config.mjs). */
@@ -63,9 +73,68 @@ function webRoot(): string {
   return process.env.GYM_WEB_ROOT ?? path.resolve(__dirname, '../../app/dist');
 }
 
+// The offline edition's server (see server-link.ts). Its own encrypted store, which the page's
+// secure-storage bridge can't reach, so the pairing token never gets to the page.
+const serverLinkStore = createSecureStore(
+  path.join(app.getPath('userData'), 'server-link'),
+  safeStorage,
+);
+let serverLink: ServerLink | null = null;
+
+/** The link to the server: GYM_SERVER_URL when run from source (tests), else the stored one. */
+async function readServerLink(): Promise<ServerLink | null> {
+  const fromEnvironment = app.isPackaged ? undefined : process.env.GYM_SERVER_URL;
+  if (fromEnvironment) {
+    return checkServerLink({
+      url: fromEnvironment,
+      fingerprint: process.env.GYM_SERVER_FINGERPRINT ?? null,
+      token: process.env.GYM_SERVER_TOKEN ?? null,
+    });
+  }
+  try {
+    return parseServerLink(await serverLinkStore.get('link'));
+  } catch {
+    return null;
+  }
+}
+
+/** A request for app://gym-spa/server/…, sent on to the server. */
+async function forwardToServer(request: Request): Promise<Response> {
+  const link = serverLink;
+  if (link === null) return Response.json({ message: 'server_not_linked' }, { status: 503 });
+  const withBody = request.method !== 'GET' && request.method !== 'HEAD';
+  try {
+    return await net.fetch(serverTarget(request.url, link), {
+      method: request.method,
+      headers: forwardedHeaders(request.headers, link),
+      ...(withBody ? { body: request.body, duplex: 'half' } : {}),
+      bypassCustomProtocolHandlers: true,
+    });
+  } catch {
+    return Response.json({ message: 'server_unreachable' }, { status: 502 });
+  }
+}
+
+/**
+ * The server's certificate is its own (no authority signs it): it is accepted only when it is
+ * the one this PC paired with, and only for the server's address. Everything else is checked as
+ * Chromium always does.
+ */
+function pinServerCertificate(): void {
+  session.defaultSession.setCertificateVerifyProc((request, callback) => {
+    const link = serverLink;
+    if (link?.fingerprint && new URL(link.url).hostname === request.hostname) {
+      callback(isPairedCertificate(request.certificate.data, link.fingerprint) ? 0 : -2);
+      return;
+    }
+    callback(-3);
+  });
+}
+
 function serveWebApp(): void {
   const root = webRoot();
   protocol.handle(APP_SCHEME, async (request) => {
+    if (isServerRequest(request.url)) return forwardToServer(request);
     const file = await resolveAppFile(root, request.url);
     if (!file) return new Response(null, { status: 404 });
     return new Response(await readFile(file), {
@@ -245,9 +314,11 @@ if (app.requestSingleInstanceLock()) {
   });
 
   app.setAppUserModelId(APP_ID);
-  void app.whenReady().then(() => {
+  void app.whenReady().then(async () => {
     // No menu bar: its labels would be English, and the shortcuts above replace it.
     Menu.setApplicationMenu(null);
+    serverLink = await readServerLink();
+    pinServerCertificate();
     serveWebApp();
     lockDownWebContents();
     createMainWindow();

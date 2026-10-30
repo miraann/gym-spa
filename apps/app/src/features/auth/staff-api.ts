@@ -39,6 +39,8 @@ export type AuthErrorKey =
   | 'password_login_required'
   /** Click Group locked the gym: nobody of it can use the app. */
   | 'gym_locked'
+  /** The offline edition's server has no gym yet: its license isn't installed. */
+  | 'server_no_gym'
   /** The gym is read-only (suspended, or its subscription ended): nothing can be added or changed. */
   | 'gym_read_only'
   /** This device isn't registered, and the staff member can't register it (devices.manage). */

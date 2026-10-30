@@ -4,12 +4,22 @@ import type { Plugin } from 'vite';
 // Shared by the Vite configs of the gym app (apps/app) and the seller panel (apps/seller), at
 // build time only: nothing here reaches a bundle.
 
+/**
+ * The origin of a configured http(s) address. The offline edition's Windows build talks to
+ * `app://gym-spa/server`, the page's own origin, which 'self' already allows (and whose URL origin
+ * reads "null"), so it adds nothing.
+ */
+function serverOrigin(address: string | undefined): string | null {
+  if (!address) return null;
+  const url = new URL(address);
+  return url.protocol === 'http:' || url.protocol === 'https:' ? url.origin : null;
+}
+
 /** http(s) and the matching ws(s) origin of a configured address, for connect-src. */
 function connectOrigins(address: string | undefined): string[] {
-  if (!address) return [];
-  const { origin } = new URL(address);
+  const origin = serverOrigin(address);
   // https → wss, http → ws
-  return [origin, origin.replace(/^http/, 'ws')];
+  return origin === null ? [] : [origin, origin.replace(/^http/, 'ws')];
 }
 
 /**
@@ -45,7 +55,7 @@ export function contentSecurityPolicy(
               .digest('base64')}'`,
         );
         const servers = connectOrigins(env.VITE_SUPABASE_URL);
-        const supabase = env.VITE_SUPABASE_URL ? [new URL(env.VITE_SUPABASE_URL).origin] : [];
+        const supabase = [serverOrigin(env.VITE_SUPABASE_URL)].filter((origin) => origin !== null);
         const policy = [
           "default-src 'self'",
           `script-src 'self' ${inlineScripts.join(' ')}`,

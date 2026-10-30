@@ -119,7 +119,8 @@ export function startPostgres(stack: Stack): ChildProcess {
     stack,
     'postgres',
     path.join(stack.tools.pgBin, 'postgres.exe'),
-    ['-D', stack.data.database],
+    // The port on the command line, so a changed server.json applies at the next start.
+    ['-D', stack.data.database, '-p', String(stack.ports.postgres)],
     { SystemRoot: process.env.SystemRoot, TEMP: process.env.TEMP, TMP: process.env.TMP },
   );
 }

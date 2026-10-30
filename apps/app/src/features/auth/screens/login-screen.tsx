@@ -15,7 +15,9 @@ import {
 } from '@gym/ui/components/field';
 import { Input } from '@gym/ui/components/input';
 import { Spinner } from '@gym/ui/components/spinner';
+import { useServerInfo } from '@/features/server/server-info';
 import { useConnection } from '@/lib/connection';
+import { isOfflineEdition } from '@/lib/edition';
 import { useAuthController, useAuthState } from '../auth-context';
 import type { AuthStep } from '../auth-controller';
 import { authErrorKey, type AuthErrorKey } from '../staff-api';
@@ -43,8 +45,9 @@ const loginSchema = z.object({
 type LoginValues = z.infer<typeof loginSchema>;
 
 /**
- * Username and password login (online only). On a device's first login it asks for the gym code
- * too (a `?gym=` link fills it in); after that the device remembers its gym.
+ * Username and password login. On a device's first login the online edition asks for the gym code
+ * too (a `?gym=` link fills it in); after that the device remembers its gym. The offline edition
+ * never asks: its server has exactly one gym and says which (GET /server/v1/info).
  */
 export function LoginScreen({
   username,
@@ -59,7 +62,8 @@ export function LoginScreen({
   const { t } = useTranslation('auth');
   const controller = useAuthController();
   const { gym, accounts } = useAuthState();
-  const askGymCode = gym === null;
+  const askGymCode = gym === null && !isOfflineEdition;
+  const serverInfo = useServerInfo();
   const { state: connection } = useConnection();
   const online = connection !== 'offline' && connection !== 'unreachable';
   const [error, setError] = useState<AuthErrorKey | null>(
@@ -85,14 +89,21 @@ export function LoginScreen({
       form.setError('gymCode', { message: 'gym_code_required' }, { shouldFocus: true });
       return;
     }
+    let gymCode: string | null = askGymCode ? values.gymCode : null;
+    if (isOfflineEdition && gym === null) {
+      const info = serverInfo.data ?? (await serverInfo.refetch()).data;
+      if (!info) {
+        setError('network');
+        return;
+      }
+      if (info.gym === null) {
+        setError('server_no_gym');
+        return;
+      }
+      gymCode = info.gym.code;
+    }
     try {
-      onStep(
-        await controller.passwordLogin(
-          askGymCode ? values.gymCode : null,
-          values.username,
-          values.password,
-        ),
-      );
+      onStep(await controller.passwordLogin(gymCode, values.username, values.password));
     } catch (thrown) {
       const key = authErrorKey(thrown, 'login');
       // One message for a wrong gym code, username or password: it never says which.
@@ -190,7 +201,7 @@ export function LoginScreen({
             </Button>
           )}
           {/* Everyone on a device belongs to its gym, so the gym changes only on an empty device. */}
-          {!askGymCode && accounts.length === 0 && (
+          {!askGymCode && !isOfflineEdition && accounts.length === 0 && (
             <Button
               type="button"
               variant="ghost"

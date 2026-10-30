@@ -10,6 +10,7 @@ export default defineConfig(
   globalIgnores([
     '**/node_modules/',
     '**/dist/',
+    '**/dist-offline/',
     '**/dev-dist/',
     '**/playwright-report/',
     '**/test-results/',

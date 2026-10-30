@@ -24,7 +24,7 @@ import { createServer, startServer, type RunningServer } from '../src/stack.ts';
 // that makes the gym (read-only until activated), the first Owner, the activation, a renewal, the
 // clock set back and accepted again. A throwaway test key signs the codes.
 
-const PORTS: StackPorts = { postgres: 56432, auth: 56499, rest: 56430, gateway: 56421 };
+const PORTS: StackPorts = { postgres: 46432, auth: 46499, rest: 46430, gateway: 46421 };
 const MACHINE = '0V5Q-1BD4-TS11-N9TC-9402';
 const tools = toolPaths();
 const ready = existsSync(tools.authExe) && existsSync(tools.postgrestExe);

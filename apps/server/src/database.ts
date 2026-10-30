@@ -169,7 +169,18 @@ export function postgresReady(db: Pick<Database, 'tools' | 'ports'>): boolean {
 export function pgCtlStart(db: Database, logFile: string): void {
   const result = spawnSync(
     exe(db.tools, 'pg_ctl'),
-    ['start', '-w', '-t', '60', '-D', db.data.database, '-l', logFile],
+    [
+      'start',
+      '-w',
+      '-t',
+      '60',
+      '-D',
+      db.data.database,
+      '-l',
+      logFile,
+      '-o',
+      `-p ${String(db.ports.postgres)}`,
+    ],
     { stdio: 'ignore' },
   );
   if (result.status !== 0) throw new Error(`Postgres did not start (see ${logFile}).`);
@@ -212,7 +223,6 @@ export function initdb(db: Database): void {
   appendFileSync(
     path.join(db.data.database, 'postgresql.auto.conf'),
     [
-      `port = ${String(db.ports.postgres)}`,
       "listen_addresses = '127.0.0.1'",
       "timezone = 'UTC'",
       // pg_dump and the e2e suite open many connections at once; Auth and PostgREST keep pools.

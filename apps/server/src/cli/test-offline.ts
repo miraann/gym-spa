@@ -7,14 +7,17 @@
 //   pnpm test:offline --pgtap      pgTAP only
 //   pnpm test:offline --e2e        e2e only
 //   pnpm test:offline --int        the integration tests only (they make their own server)
+//   pnpm test:offline --desktop    the offline edition's Windows build (apps/desktop/e2e/offline.spec.ts)
+//                                  against a server of its own with one gym
 //   pnpm test:offline --keep       reuse the server as it is instead of making it again
 //
 // Extra arguments after `--` go to Playwright (e.g. -- e2e/staff.spec.ts).
 import { spawn } from 'node:child_process';
+import path from 'node:path';
 import { existsSync } from 'node:fs';
 import { parseArgs } from 'node:util';
 import { runPgTap } from '../pgtap.ts';
-import { dataPaths, devDataRoot } from '../paths.ts';
+import { dataPaths, devDataRoot, REPO } from '../paths.ts';
 import { DEV_PORTS } from '../ports.ts';
 import {
   createServer,
@@ -31,9 +34,12 @@ const { values: flags, positionals } = parseArgs({
     e2e: { type: 'boolean', default: false },
     keep: { type: 'boolean', default: false },
     int: { type: 'boolean', default: false },
+    desktop: { type: 'boolean', default: false },
   },
 });
-const all = !flags.pgtap && !flags.e2e && !flags.int;
+const all = !flags.pgtap && !flags.e2e && !flags.int && !flags.desktop;
+/** The desktop test's own server, on other ports and with no demo gym: its one gym is the test's. */
+const DESKTOP_PORTS = { postgres: 44432, auth: 44499, rest: 44430, gateway: 44421 };
 const root = devDataRoot();
 const log = (line: string) => {
   console.log(line);
@@ -70,6 +76,34 @@ function integration(): Promise<number> {
   return pnpm(['--filter', '@gym/server', 'test:int'], {});
 }
 
+/** The offline edition's Windows build against a fresh server with no gym but the test's. */
+async function desktop(): Promise<number> {
+  const desktopRoot = `${root}-desktop`;
+  const desktopOptions = { dataRoot: desktopRoot, ports: DESKTOP_PORTS, log };
+  stopLeftovers(desktopOptions);
+  removeServer(desktopRoot);
+  createServer({ ...desktopOptions, seed: false });
+  const server = await startServer(desktopOptions);
+  try {
+    log('\nbuilding the offline edition (apps/app/dist-offline) and the Windows shell');
+    const built =
+      (await pnpm(['--filter', '@gym/app', 'build:offline'], {})) ||
+      (await pnpm(['--filter', '@gym/desktop', 'build'], {}));
+    if (built !== 0) return built;
+    log('\nthe offline edition in the Windows app');
+    return await pnpm(
+      ['--filter', '@gym/desktop', 'exec', 'playwright', 'test', 'e2e/offline.spec.ts'],
+      {
+        GYM_OFFLINE_WEB_ROOT: path.join(REPO, 'apps', 'app', 'dist-offline'),
+        GYM_SERVER_URL: server.url,
+        GYM_E2E_BACKEND: server.db.data.backendFile,
+      },
+    );
+  } finally {
+    await server.stop();
+  }
+}
+
 /** The app's e2e suite, built for and run against this server. */
 async function e2e(server: RunningServer): Promise<number> {
   const env = {
@@ -86,7 +120,9 @@ async function e2e(server: RunningServer): Promise<number> {
 }
 
 async function main(): Promise<number> {
-  if (flags.int && !flags.pgtap && !flags.e2e) return integration();
+  if (!all && !flags.pgtap && !flags.e2e) {
+    return (flags.int ? await integration() : 0) + (flags.desktop ? await desktop() : 0);
+  }
   stopLeftovers(options);
   if (!flags.keep || !existsSync(dataPaths(root).secrets)) {
     removeServer(root);
@@ -105,6 +141,7 @@ async function main(): Promise<number> {
     await server.stop();
   }
   if (all || flags.int) failures += await integration();
+  if (all || flags.desktop) failures += await desktop();
   return failures;
 }
 

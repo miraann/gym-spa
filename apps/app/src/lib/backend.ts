@@ -25,6 +25,32 @@ export function readBackendConfig(env: BackendEnv = BUILD_ENV): BackendConfig | 
   return { supabaseUrl, supabaseKey };
 }
 
+/**
+ * supabase-js takes only http(s) addresses, but the offline edition's Windows build talks to
+ * app://gym-spa/server (its own origin, forwarded by the Windows app to the server PC). Such an
+ * address goes into supabase-js as this stand-in, and the client's fetch turns it back; the
+ * stand-in itself is never fetched.
+ */
+export const STAND_IN_URL = 'http://server.gym-spa.invalid';
+
+/** The address and fetch a supabase-js client is made with. */
+export function clientAddress(config: BackendConfig): {
+  readonly url: string;
+  readonly fetch?: typeof fetch;
+} {
+  if (/^https?:\/\//i.test(config.supabaseUrl)) return { url: config.supabaseUrl };
+  const base = config.supabaseUrl.replace(/\/+$/, '');
+  const real = (address: string) =>
+    address.startsWith(STAND_IN_URL) ? base + address.slice(STAND_IN_URL.length) : address;
+  return {
+    url: STAND_IN_URL,
+    fetch: (input, init) => {
+      if (input instanceof Request) return fetch(new Request(real(input.url), input), init);
+      return fetch(real(input instanceof URL ? input.href : input), init);
+    },
+  };
+}
+
 export type AppSupabaseClient = SupabaseClient<Database>;
 
 /** Where a client keeps its session (supabase-js' storage API). */
@@ -47,7 +73,8 @@ export interface ClientOptions {
  * timer: a device may hold several staff members' sessions, and most of them sit idle.
  */
 export function createAppClient(config: BackendConfig, options: ClientOptions): AppSupabaseClient {
-  return createClient<Database>(config.supabaseUrl, config.supabaseKey, {
+  const address = clientAddress(config);
+  return createClient<Database>(address.url, config.supabaseKey, {
     auth: {
       storageKey: options.storageKey,
       persistSession: options.storage !== undefined,
@@ -56,6 +83,9 @@ export function createAppClient(config: BackendConfig, options: ClientOptions): 
       detectSessionInUrl: false,
     },
     // The audit log records which device made each change.
-    global: { headers: { 'X-Device-Id': options.deviceId } },
+    global: {
+      headers: { 'X-Device-Id': options.deviceId },
+      ...(address.fetch ? { fetch: address.fetch } : {}),
+    },
   });
 }

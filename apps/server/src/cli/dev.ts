@@ -1,6 +1,6 @@
 // pnpm server:dev: an offline server on this PC for development and tests (spec §8, step 1f).
-// Its data is in %LOCALAPPDATA%\gym-spa\server-dev (GYM_SERVER_DATA); it uses ports 55421
-// (gym-server), 55432, 55499 and 55430, next to the local Supabase in Docker.
+// Its data is in %LOCALAPPDATA%\gym-spa\server-dev (GYM_SERVER_DATA); it uses ports 45421
+// (gym-server), 45432, 45499 and 45430, next to the local Supabase in Docker.
 //
 //   pnpm server:dev init     a new server with the demo gym (seed.sql); --no-seed for an empty one
 //   pnpm server:dev start    runs it in the foreground (Ctrl+C stops it); prints the address and
