@@ -176,6 +176,25 @@ describe.each(BRAND_PRESETS)('the vivid tokens with the %s preset', (preset) => 
     }
   });
 
+  it.each<Mode>(['light', 'dark'])(
+    'keeps button text readable on both ends of the button gradient (%s)',
+    (mode) => {
+      const restore = withPreset(mode);
+      try {
+        const gradient = evaluate(resolve(mode, '--gradient-primary'));
+        const stops = [...gradient.matchAll(/oklch\([^)]*\)/g)];
+        expect(stops).toHaveLength(2);
+        for (const [stop] of stops) {
+          expect(
+            contrastRatio(color(mode, '--primary-foreground'), oklchColor(stop, 'gradient stop')),
+          ).toBeGreaterThanOrEqual(CONTRAST_TEXT);
+        }
+      } finally {
+        restore();
+      }
+    },
+  );
+
   it('keeps text readable on both ends of the brand gradient', () => {
     const restore = withPreset('light');
     try {

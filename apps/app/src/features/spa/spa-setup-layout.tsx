@@ -28,7 +28,7 @@ export function SpaSetupLayout() {
         <PageHeader title={t('setup.title')} description={t('setup.description')} />
         <nav
           aria-label={t('setup.tabs.label')}
-          className="flex w-full overflow-x-auto rounded-full bg-muted p-1 sm:w-fit dark:bg-muted/70"
+          className="flex w-full gap-1 overflow-x-auto rounded-2xl bg-card p-1.5 shadow-sm ring-1 ring-foreground/6 sm:w-fit dark:ring-foreground/7"
         >
           {TABS.map(({ to, key, icon: Icon }) => {
             const selected = pathname.startsWith(to);
@@ -38,10 +38,10 @@ export function SpaSetupLayout() {
                 to={to}
                 aria-current={selected ? 'page' : undefined}
                 className={cn(
-                  'flex h-10 flex-1 items-center justify-center gap-2 rounded-full px-3 text-sm whitespace-nowrap transition-[background-color,color,box-shadow] duration-200 outline-none focus-visible:ring-3 focus-visible:ring-ring/50 sm:px-5 pointer-coarse:h-12',
+                  'flex h-10 flex-1 items-center justify-center gap-2 rounded-xl px-3 text-sm whitespace-nowrap transition-[background-color,color,box-shadow] duration-200 outline-none focus-visible:ring-3 focus-visible:ring-ring/50 sm:px-5 pointer-coarse:h-12',
                   selected
-                    ? 'bg-card font-semibold text-foreground shadow-sm'
-                    : 'font-medium text-muted-foreground hover:text-foreground',
+                    ? 'bg-primary bg-(image:--gradient-primary) font-semibold text-primary-foreground shadow-md'
+                    : 'font-medium text-muted-foreground hover:bg-muted hover:text-foreground',
                 )}
               >
                 <Icon aria-hidden className="size-4.5" />

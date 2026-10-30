@@ -214,6 +214,12 @@ body {
   --color-foreground: var(--foreground);
   --color-background: var(--background);
   --color-vivid: var(--vivid);
+  --color-tone-blue: var(--tone-blue);
+  --color-tone-pink: var(--tone-pink);
+  --color-tone-indigo: var(--tone-indigo);
+  --color-tone-cyan: var(--tone-cyan);
+  --color-tone-violet: var(--tone-violet);
+  --color-tone-foreground: var(--tone-foreground);
   --color-vivid-track: var(--vivid-track);
   --color-glow: var(--glow);
   /* With the soft corners (--radius: 1rem) these are Tailwind's usual sizes: controls rounded-xl
@@ -279,6 +285,18 @@ body {
   --input: oklch(0.885 0.014 var(--brand-h));
   --ring: var(--primary);
 
+  /* Section tones (step D-4, the user's choice of 2026-10-30): each part of the app has its own
+     color on the dashboard's tiles and the cards' icon tiles. Fixed, never the brand; never a
+     status hue (green, amber, red keep their meaning); in this order, which keeps neighbours
+     apart for color-blind staff (checked with the dataviz palette validator, light and dark).
+     White icons on them; a tone as text only for big numbers (3:1). */
+  --tone-blue: oklch(0.57 0.2 255);
+  --tone-pink: oklch(0.58 0.22 338);
+  --tone-indigo: oklch(0.53 0.22 280);
+  --tone-cyan: oklch(0.58 0.12 220);
+  --tone-violet: oklch(0.56 0.22 305);
+  --tone-foreground: oklch(0.99 0 0);
+
   --success: oklch(0.49 0.13 150);
   --success-foreground: oklch(0.985 0 0);
   --warning: oklch(0.52 0.12 55);
@@ -305,6 +323,13 @@ body {
     135deg,
     oklch(var(--brand-l) var(--brand-c) var(--brand-h)),
     oklch(calc(var(--brand-l) - 0.09) var(--brand-c) calc(var(--brand-h) + 8))
+  );
+  /* Filled main buttons, the selected tab and the add tile's plus: the mode's own brand color
+     running into a slightly deeper shade, so their text keeps the plain button's contrast. */
+  --gradient-primary: linear-gradient(
+    135deg,
+    var(--primary),
+    oklch(calc(var(--brand-l) - 0.07) var(--brand-c) calc(var(--brand-h) + 8))
   );
 
   /* Corner style: soft. Every radius derives from it (see @theme inline). */
@@ -348,6 +373,12 @@ body {
   --border: oklch(1 0 0 / 8%);
   --input: oklch(1 0 0 / 13%);
 
+  --tone-blue: oklch(0.63 0.17 255);
+  --tone-pink: oklch(0.65 0.2 338);
+  --tone-indigo: oklch(0.58 0.19 282);
+  --tone-cyan: oklch(0.635 0.12 212);
+  --tone-violet: oklch(0.62 0.2 308);
+
   --success: oklch(0.72 0.15 150);
   --success-foreground: oklch(0.2 0.03 150);
   --warning: oklch(0.79 0.14 75);
@@ -364,6 +395,11 @@ body {
   );
   --vivid-track: oklch(0.3 0.03 var(--brand-dark-h));
   --glow: oklch(var(--brand-dark-l) var(--brand-dark-c) var(--brand-dark-h) / 0.22);
+  --gradient-primary: linear-gradient(
+    135deg,
+    var(--primary),
+    oklch(calc(var(--brand-dark-l) - 0.06) var(--brand-dark-c) calc(var(--brand-dark-h) + 8))
+  );
 
   /* On a dark page shadows barely show: a faint light edge on top gives cards their shape. */
   --elevation-1: 0 1px 2px oklch(0 0 0 / 0.3), inset 0 1px 0 oklch(1 0 0 / 0.04);

@@ -200,7 +200,8 @@ test('switching staff with a PIN never shows the previous staff member their lis
   await expect(page.locator('[data-auth-screen]')).toHaveCount(0);
 
   // The Owner opens the staff list (in the app, so its data stays in memory).
-  await page.getByRole('link', { name: 'کارمەندان', exact: true }).click();
+  await page.locator('[data-nav-group="management"]').click();
+  await page.getByRole('menuitem', { name: 'کارمەندان', exact: true }).click();
   await expect(page.locator(`[data-staff="${hidden.username}"]`)).toBeVisible();
 
   // Locking keeps the page open behind the lock; the manager unlocks with their PIN.

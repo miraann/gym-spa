@@ -8,6 +8,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@gym/ui/components/tool
 import { usePermissions } from '@/features/auth/use-permissions';
 import { usePreferences } from '@/lib/preferences';
 import { cn } from '@gym/ui/lib/utils';
+import { NavArt } from './nav-art';
 import { GymMark } from './gym-mark';
 import { useGymName } from './use-gym-name';
 
@@ -52,7 +53,6 @@ function RailItem({ item }: { readonly item: OpenNavItem }) {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const label = t(`items.${item.key}`);
   const isActive = isNavItemActive(item, pathname);
-  const Icon = item.icon;
   // Radix sides are physical: the tooltip opens towards the page, away from the rail.
   const tooltipSide = getDirection(language) === 'rtl' ? 'left' : 'right';
 
@@ -60,13 +60,13 @@ function RailItem({ item }: { readonly item: OpenNavItem }) {
     <>
       <span
         className={cn(
-          'flex h-9 w-14 items-center justify-center rounded-full transition-colors duration-150 motion-reduce:transition-none',
+          'flex h-11 w-14 items-center justify-center rounded-full transition-colors duration-150 motion-reduce:transition-none',
           isActive
-            ? 'bg-primary text-primary-foreground shadow-sm'
-            : 'text-muted-foreground group-hover/rail:bg-sidebar-accent group-hover/rail:text-foreground',
+            ? 'bg-primary bg-(image:--gradient-primary) shadow-[0_6px_16px_-6px_var(--glow)]'
+            : 'group-hover/rail:bg-sidebar-accent',
         )}
       >
-        <Icon aria-hidden className="size-5.5" />
+        <NavArt art={item.art} className={isActive ? 'size-7' : 'size-8'} />
       </span>
       <span
         data-slot="rail-label"

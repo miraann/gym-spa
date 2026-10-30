@@ -2,8 +2,6 @@ import { SearchIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@gym/ui/components/button';
 import { Kbd } from '@gym/ui/components/kbd';
-import { Separator } from '@gym/ui/components/separator';
-import { SidebarTrigger } from '@gym/ui/components/sidebar';
 import { usePageTitle } from '@gym/ui/hooks/use-page-title';
 import { cn } from '@gym/ui/lib/utils';
 import { UserMenu } from '@/features/auth/user-menu';
@@ -16,6 +14,7 @@ import { LanguageMenu } from './language-menu';
 import { ThemeMenu } from './theme-menu';
 import { useGymName } from './use-gym-name';
 
+/** Phones and tablets; desktops have the top nav (top-nav.tsx). */
 export function TopBar({
   layout,
   onOpenSearch,
@@ -41,15 +40,6 @@ export function TopBar({
         (compactTitle !== null || !phone) && 'border-border/70',
       )}
     >
-      {layout === 'desktop' && (
-        <>
-          <SidebarTrigger />
-          <Separator
-            orientation="vertical"
-            className="data-vertical:h-5 data-vertical:self-center"
-          />
-        </>
-      )}
       {phone && (
         // Phones have no sidebar: the gym's logo and name tell staff where they are, until the
         // page's own title takes the bar's middle.

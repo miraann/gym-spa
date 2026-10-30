@@ -8,6 +8,7 @@ import { isNavItemActive, navTabItems, type OpenNavItem } from '@/app/navigation
 import { useActiveAccount } from '@/features/auth/auth-context';
 import { usePermissions } from '@/features/auth/use-permissions';
 import { cn } from '@gym/ui/lib/utils';
+import { NavArt } from './nav-art';
 import { MoreSheet } from './more-sheet';
 
 /**
@@ -89,7 +90,14 @@ function Tab({ item, isActive }: { readonly item: OpenNavItem; readonly isActive
       className={TAB_CLASS}
     >
       <TabContent
-        icon={<Icon aria-hidden className={raised ? 'size-7' : 'size-6'} />}
+        icon={
+          // The raised check-in button keeps its plain icon, white on the brand color.
+          raised ? (
+            <Icon aria-hidden className="size-7" />
+          ) : (
+            <NavArt art={item.art} className="size-7" />
+          )
+        }
         label={t(`short.${item.key}`)}
         isActive={isActive}
         raised={raised}

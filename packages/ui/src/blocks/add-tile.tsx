@@ -27,11 +27,11 @@ export function AddTile({
       <span
         aria-hidden
         className={cn(
-          'flex shrink-0 items-center justify-center rounded-full bg-primary/12 text-primary transition-transform duration-200 ease-spring group-hover/add:scale-105 group-active/add:scale-95 motion-reduce:transition-none',
-          shape === 'tile' ? 'size-16' : 'size-10',
+          'flex shrink-0 items-center justify-center rounded-full bg-primary bg-(image:--gradient-primary) text-primary-foreground shadow-[0_8px_20px_-6px_var(--glow)] transition-transform duration-200 ease-spring group-hover/add:scale-105 group-active/add:scale-95 motion-reduce:transition-none',
+          shape === 'tile' ? 'size-18' : 'size-10',
         )}
       >
-        <PlusIcon className={shape === 'tile' ? 'size-8' : 'size-6'} strokeWidth={2.5} />
+        <PlusIcon className={shape === 'tile' ? 'size-9' : 'size-6'} strokeWidth={2.5} />
       </span>
       <span className={cn('min-w-0 text-primary', shape === 'tile' ? 'text-lg' : 'text-base')}>
         {label}

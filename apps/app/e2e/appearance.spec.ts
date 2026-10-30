@@ -166,7 +166,7 @@ test('the logo is resized to at most 300 KB and shows on the lock screen', async
     .click();
   await expect(page.getByText('لۆگۆکە لابرا')).toBeVisible();
   expect(await settingValue(data, 'appearance.logo')).toBeNull();
-  await expect(page.locator('header img')).toHaveCount(0);
+  await expect(page.locator('header [data-slot="gym-logo"]')).toHaveCount(0);
 });
 
 test('staff without the right see the gym look as a note, and set their own look', async ({

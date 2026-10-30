@@ -122,6 +122,33 @@ export async function lockFromMenu(page: Page): Promise<void> {
 }
 
 /**
+ * Opens a page from the menu, in the app (so loaded data stays): on desktops its own place in the
+ * top bar, or the group whose menu holds it (step D-4).
+ */
+export async function openFromMenu(page: Page, name: string): Promise<void> {
+  const nav = page.locator('[data-slot="top-nav"]');
+  const direct = nav.getByRole('link', { name, exact: true });
+  if ((await direct.count()) > 0) {
+    await direct.click();
+    return;
+  }
+  for (const group of await nav.locator('[data-nav-group]').all()) {
+    await group.click();
+    const item = page.getByRole('menuitem', { name, exact: true });
+    const found = await item.waitFor({ state: 'visible', timeout: 1000 }).then(
+      () => true,
+      () => false,
+    );
+    if (found) {
+      await item.click();
+      return;
+    }
+    await page.keyboard.press('Escape');
+  }
+  throw new Error(`No menu item ${name}`);
+}
+
+/**
  * Holds a card to a keyboard-type reader: the UID's keys and Enter, 5 ms apart. The keys go through
  * the browser's own input (real key events, typed into a focused field), stamped with the times a
  * reader would type them: a busy test machine may deliver them later, but a reader's keys keep the

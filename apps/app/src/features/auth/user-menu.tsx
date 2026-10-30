@@ -58,7 +58,12 @@ export function UserMenu({ compact = false }: { readonly compact?: boolean }) {
             >
               {account.fullName.charAt(0)}
             </span>
-            {!compact && <span className="hidden truncate md:inline">{account.fullName}</span>}
+            {compact ? (
+              // Who is signed in, for screen readers (the menu holds the name too).
+              <span className="sr-only">{account.fullName}</span>
+            ) : (
+              <span className="hidden truncate md:inline">{account.fullName}</span>
+            )}
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="min-w-56">

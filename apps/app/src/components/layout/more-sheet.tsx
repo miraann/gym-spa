@@ -4,7 +4,7 @@ import { PencilIcon } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { isNavItemActive, visibleNavGroups, type OpenNavItem } from '@/app/navigation';
-import { ListGroup, ListRow, ListRowIcon } from '@gym/ui/blocks/list-group';
+import { ListGroup, ListRow } from '@gym/ui/blocks/list-group';
 import { Button } from '@gym/ui/components/button';
 import {
   Sheet,
@@ -17,6 +17,7 @@ import {
 import { useActiveAccount } from '@/features/auth/auth-context';
 import { usePermissions } from '@/features/auth/use-permissions';
 import { cn } from '@gym/ui/lib/utils';
+import { NavArt } from './nav-art';
 import { TabEditor } from './tab-editor';
 
 /** Phones: "More" opens the whole menu as a bottom sheet, and the staff member's tab choice. */
@@ -120,16 +121,11 @@ function MenuRow({
   readonly onNavigate: () => void;
 }) {
   const { t } = useTranslation('nav');
-  const Icon = item.icon;
   return (
     <ListRow
       asChild
       title={t(`items.${item.key}`)}
-      leading={
-        <ListRowIcon>
-          <Icon aria-hidden />
-        </ListRowIcon>
-      }
+      leading={<NavArt art={item.art} className="size-9" />}
       className={cn(isActive && 'bg-accent')}
     >
       <Link to={item.to} aria-current={isActive ? 'page' : undefined} onClick={onNavigate} />

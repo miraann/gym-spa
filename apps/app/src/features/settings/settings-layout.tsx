@@ -79,7 +79,7 @@ export function SettingsLayout() {
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
       <nav
         aria-label={t('tabs.label')}
-        className="flex w-full overflow-x-auto rounded-full bg-muted p-1 sm:w-fit dark:bg-muted/70"
+        className="flex w-full gap-1 overflow-x-auto rounded-2xl bg-card p-1.5 shadow-sm ring-1 ring-foreground/6 sm:w-fit dark:ring-foreground/7"
       >
         {tabs.map(({ to, key, icon: Icon }) => {
           const selected = pathname.startsWith(to);
@@ -93,15 +93,17 @@ export function SettingsLayout() {
               aria-current={selected ? 'page' : undefined}
               title={iconOnly ? t(`tabs.${key}`) : undefined}
               className={cn(
-                'flex h-10 flex-1 items-center justify-center gap-2 rounded-full px-3 text-sm whitespace-nowrap transition-[background-color,color,box-shadow] duration-200 outline-none focus-visible:ring-3 focus-visible:ring-ring/50 sm:px-5 pointer-coarse:h-12',
+                'flex h-10 flex-1 items-center justify-center gap-2 rounded-xl px-3 text-sm whitespace-nowrap transition-[background-color,color,box-shadow] duration-200 outline-none focus-visible:ring-3 focus-visible:ring-ring/50 sm:px-4 pointer-coarse:h-12',
                 iconOnly && 'min-w-11 flex-none md:flex-1',
                 selected
-                  ? 'bg-card font-semibold text-foreground shadow-sm'
-                  : 'font-medium text-muted-foreground hover:text-foreground',
+                  ? 'bg-primary bg-(image:--gradient-primary) font-semibold text-primary-foreground shadow-md'
+                  : 'font-medium text-muted-foreground hover:bg-muted hover:text-foreground',
               )}
             >
               <Icon aria-hidden className="size-4.5" />
-              <span className={cn(iconOnly && 'sr-only md:not-sr-only')}>{t(`tabs.${key}`)}</span>
+              <span className={cn(iconOnly && 'sr-only md:not-sr-only md:whitespace-nowrap')}>
+                {t(`tabs.${key}`)}
+              </span>
             </Link>
           );
         })}
