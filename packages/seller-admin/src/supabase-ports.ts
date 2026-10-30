@@ -66,6 +66,14 @@ function recoveryAnswer(data: unknown): RecoveryCodeAnswer {
   return answer;
 }
 
+/**
+ * A SQL argument that may be null (a license's "no limit"). The generated types can't say so for
+ * parameters without a default; PostgREST sends JSON null, which the function reads as SQL null.
+ */
+function sqlNull<T>(value: T | null): T {
+  return value as T;
+}
+
 /** A caller port with a client that sends the platform admin's own token. */
 export function supabaseSellerCallerPort(client: Client): SellerCallerPort {
   return {
@@ -134,9 +142,8 @@ export function supabaseSellerCallerPort(client: Client): SellerCallerPort {
         .rpc('seller_prepare_license', {
           p_gym_id: request.gymId,
           p_type: request.type,
-          // Null: no limit (PostgREST sends JSON null, which the function reads as SQL null).
-          p_max_branches: request.maxBranches as number,
-          p_max_devices: request.maxDevices as number,
+          p_max_branches: sqlNull(request.maxBranches),
+          p_max_devices: sqlNull(request.maxDevices),
           p_valid_until: request.validUntil,
         })
         .single();
@@ -152,10 +159,10 @@ export function supabaseSellerCallerPort(client: Client): SellerCallerPort {
         p_license_id: license.licenseId,
         p_gym_id: license.gymId,
         p_type: license.type,
-        p_max_branches: license.maxBranches as number,
-        p_max_devices: license.maxDevices as number,
+        p_max_branches: sqlNull(license.maxBranches),
+        p_max_devices: sqlNull(license.maxDevices),
         p_issued_on: license.issuedOn,
-        p_valid_until: (license.expiresOn ?? license.updatesUntil) as string,
+        p_valid_until: sqlNull(license.expiresOn ?? license.updatesUntil),
         p_kid: license.kid,
         p_code: code,
       });

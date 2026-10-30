@@ -182,8 +182,9 @@ create trigger append_only_truncate
 alter table platform.licenses enable row level security;
 alter table platform.activations enable row level security;
 alter table platform.license_events enable row level security;
-revoke all on platform.licenses, platform.activations, platform.license_events
-  from public, anon, authenticated, service_role;
+revoke all on table platform.licenses from public, anon, authenticated, service_role;
+revoke all on table platform.activations from public, anon, authenticated, service_role;
+revoke all on table platform.license_events from public, anon, authenticated, service_role;
 
 -- Helpers ------------------------------------------------------------------------------------------
 

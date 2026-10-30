@@ -13,6 +13,8 @@
     "lint": "supabase db lint --workdir .. --local --schema public,app,auth_hooks --level warning --fail-on warning",
     "types": "supabase gen types typescript --local --workdir .. --schema public > ../packages/db/src/database.types.ts",
     "bootstrap:admin": "tsx scripts/bootstrap-admin.ts",
+    "license:new-key": "tsx scripts/license-key.ts new",
+    "license:restore-key": "tsx scripts/license-key.ts restore",
     "bootstrap:platform-admin": "tsx scripts/bootstrap-platform-admin.ts",
     "platform-admin:reset-2fa": "tsx scripts/reset-platform-admin.ts",
     "staff-logins:move": "tsx scripts/move-staff-logins.ts",
