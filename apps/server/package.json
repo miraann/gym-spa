@@ -1,0 +1,22 @@
+{
+  "name": "@gym/server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "The offline edition's server PC: Postgres, Supabase Auth and PostgREST behind gym-server",
+  "scripts": {
+    "tools": "tsx src/cli/tools.ts",
+    "dev": "tsx src/cli/dev.ts",
+    "pgtap": "tsx src/cli/pgtap.ts",
+    "test:offline": "tsx src/cli/test-offline.ts",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@gym/core": "workspace:*",
+    "@gym/staff-admin": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.1",
+    "tsx": "^4.23.15"
+  }
+}

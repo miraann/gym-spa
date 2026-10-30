@@ -42,7 +42,11 @@
     "smoke:staff-admin": "pnpm --filter @gym/supabase smoke:staff-admin",
     "smoke:license": "pnpm --filter @gym/supabase smoke:license",
     "release:migrations": "pnpm --filter @gym/supabase release:migrations",
-    "release:check-live": "pnpm --filter @gym/app check-live"
+    "release:check-live": "pnpm --filter @gym/app check-live",
+    "server:tools": "pnpm --filter @gym/server tools",
+    "server:dev": "pnpm --filter @gym/server dev",
+    "server:pgtap": "pnpm --filter @gym/server pgtap",
+    "test:offline": "pnpm --filter @gym/server test:offline"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

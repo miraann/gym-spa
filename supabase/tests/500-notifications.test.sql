@@ -191,8 +191,11 @@ select is((select count(*)::integer from public.staff_notification_reads), 1, 'e
 -- The job ---------------------------------------------------------------------------------------------------
 
 select tests.clear_authentication();
-select is((select schedule || ' ' || command from cron.job where jobname = 'collect-reminders'),
-  '*/15 * * * * select app.collect_reminders()', 'pg_cron collects the reminders every 15 minutes');
+-- Without pg_cron (the offline server) the migration skips the job, and gym-server runs it instead.
+select case when tests.has_pg_cron()
+  then is((select schedule || ' ' || command from tests.cron_job('collect-reminders')),
+    '*/15 * * * * select app.collect_reminders()', 'pg_cron collects the reminders every 15 minutes')
+  else skip('no pg_cron here: the offline server runs it itself', 1) end;
 
 select * from finish();
 rollback;

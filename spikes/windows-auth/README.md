@@ -8,7 +8,7 @@ Throwaway code from 2026-10-09/10. It answers three questions before the design 
    staff screens are built once?
 3. Are the web e2e tests still flaky now that PowerSync is gone?
 
-Nothing here is used by the app. The tools live in `F:\spikes-tools` (portable, no services, nothing
+Nothing here is used by the app. Step 1f (2026-10-30) turned it into `apps/server` (`pnpm server:tools`, `pnpm server:dev`, `pnpm test:offline`; README → Offline edition) and moved `auth-windows.patch` and `compat.sql` there. The tools live in `F:\spikes-tools` (portable, no services, nothing
 in startup, Postgres on port 55432). See "Removing everything" at the end.
 
 ## Answers
@@ -117,8 +117,8 @@ pool fix, and that cause is understood and fixed.
 | File | What it is |
 |---|---|
 | `build-auth.ps1` | builds Supabase Auth for Windows (applies `auth-windows.patch`); Go caches stay in `F:\spikes-tools` |
-| `auth-windows.patch` | the `SO_REUSEPORT` patch for Auth v2.197.0 |
-| `compat.sql` | the Supabase roles, schemas and privileges, copied from the supabase/postgres image |
+| `auth-windows.patch` | moved to `apps/server/auth/` (the `SO_REUSEPORT` patch for Auth v2.197.0) |
+| `compat.sql` | moved to `apps/server/sql/` (the Supabase roles, schemas and privileges) |
 | `spike.mjs` | `init` / `start` / `stop` / `keys` / `pgtap` / `psql` for the stack (ports 55432, 55499, 55430, proxy 55421) |
 | `e2e-windows-stack.mjs` | copies `apps/app/e2e` to `F:\spikes-tools\e2e`, points it at the stack, builds, runs Playwright |
 | `staff-admin-a.sql` | design A functions (loaded and dropped again by the test) |

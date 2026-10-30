@@ -454,6 +454,30 @@ exception
 end
 $$;
 
+-- A pg_cron job's schedule and command, or no row when pg_cron isn't installed: the offline
+-- server has no pg_cron and runs the jobs itself (spec §8, step 1f). Dynamic SQL, so a test that
+-- calls it still runs where cron.job doesn't exist.
+create or replace function tests.cron_job(job_name text)
+returns table (schedule text, command text)
+language plpgsql
+set search_path = ''
+as $$
+begin
+  if exists (select from pg_extension where extname = 'pg_cron') then
+    return query execute 'select schedule, command from cron.job where jobname = $1' using job_name;
+  end if;
+end
+$$;
+
+-- Whether this database has pg_cron (the cloud and the local Supabase do; the offline server doesn't).
+create or replace function tests.has_pg_cron()
+returns boolean
+language sql
+set search_path = ''
+as $$
+  select exists (select from pg_extension where extname = 'pg_cron')
+$$;
+
 grant execute on all functions in schema tests to anon, authenticated, service_role;
 
 select ok(true, 'test helpers are installed');
