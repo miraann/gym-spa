@@ -160,7 +160,7 @@ Deno.test({
       await t.step('it signs a license with the local test key (pnpm db:functions)', async () => {
         const created = await aal2.client.rpc('seller_create_offline_gym', {
           p_gym_id: offlineGymId,
-          p_code: `${code}-off`,
+          p_code: `http-off-${run}`,
           p_name_ckb: 'جیمی ئۆفلاین',
         });
         check(created.error === null, `offline gym: ${String(created.error?.message)}`);
