@@ -19,6 +19,7 @@
     "platform-admin:reset-2fa": "tsx scripts/reset-platform-admin.ts",
     "staff-logins:move": "tsx scripts/move-staff-logins.ts",
     "smoke:staff-admin": "tsx scripts/smoke-staff-admin.ts",
+    "smoke:license": "tsx scripts/smoke-license.ts",
     "functions": "tsx scripts/license-test-key.ts && supabase functions serve --workdir ..",
     "test:deno": "tsx scripts/test-deno.ts",
     "typecheck": "tsc -p tsconfig.json",
@@ -27,6 +28,7 @@
   "dependencies": {
     "@gym/core": "workspace:*",
     "@gym/db": "workspace:*",
+    "@gym/seller-admin": "workspace:*",
     "@gym/staff-admin": "workspace:*",
     "@supabase/supabase-js": "^2.117.2",
     "zod": "^4.6.5"
