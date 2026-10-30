@@ -1,4 +1,4 @@
-import { spawnSync, type SpawnSyncReturns } from 'node:child_process';
+import { spawn, spawnSync, type SpawnSyncReturns } from 'node:child_process';
 import { readdirSync, rmSync, writeFileSync, appendFileSync } from 'node:fs';
 import path from 'node:path';
 import { authEnvironment } from './processes.ts';
@@ -76,6 +76,59 @@ function must(result: SpawnSyncReturns<string>, what: string): SpawnSyncReturns<
 export function query(db: Database, sql: string, user: DatabaseUser = 'postgres'): string[] {
   const result = must(psql(db, user, ['-q', '-t', '-A', '-F', '\t', '-c', sql]), 'A query');
   return result.stdout.split(/\r?\n/).filter((line) => line !== '');
+}
+
+/**
+ * A query's rows as tab-separated lines, without blocking: gym-server answers requests in the same
+ * process while its scheduled jobs and checks run.
+ */
+export function queryAsync(
+  db: Database,
+  sql: string,
+  user: DatabaseUser = 'postgres',
+): Promise<string[]> {
+  return new Promise((resolve, reject) => {
+    const child = spawn(
+      exe(db.tools, 'psql'),
+      [
+        '-X',
+        '-q',
+        '-t',
+        '-A',
+        '-F',
+        '\t',
+        '-h',
+        '127.0.0.1',
+        '-p',
+        String(db.ports.postgres),
+        '-U',
+        user,
+        '-d',
+        'postgres',
+        '-v',
+        'ON_ERROR_STOP=1',
+        '-c',
+        sql,
+      ],
+      {
+        env: { ...process.env, PGPASSWORD: passwordOf(db.secrets, user), PGCLIENTENCODING: 'UTF8' },
+        windowsHide: true,
+      },
+    );
+    let stdout = '';
+    let stderr = '';
+    child.stdout.setEncoding('utf8').on('data', (chunk: string) => {
+      stdout += chunk;
+    });
+    child.stderr.setEncoding('utf8').on('data', (chunk: string) => {
+      stderr += chunk;
+    });
+    child.on('error', reject);
+    child.on('close', (code) => {
+      if (code === 0) resolve(stdout.split(/\r?\n/).filter((line) => line !== ''));
+      else reject(new Error(stderr.trim() || `psql exited with ${String(code)}`));
+    });
+  });
 }
 
 /** Whether Postgres answers on its port. */

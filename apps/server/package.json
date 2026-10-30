@@ -7,6 +7,7 @@
   "scripts": {
     "tools": "tsx src/cli/tools.ts",
     "dev": "tsx src/cli/dev.ts",
+    "serve": "tsx src/cli/serve.ts",
     "pgtap": "tsx src/cli/pgtap.ts",
     "test:offline": "tsx src/cli/test-offline.ts",
     "typecheck": "tsc -p tsconfig.json"

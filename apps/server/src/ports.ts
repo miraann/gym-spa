@@ -12,3 +12,14 @@ export interface StackPorts {
  * on the PC and to the local Supabase in Docker, which run at the same time.
  */
 export const DEV_PORTS: StackPorts = { postgres: 55432, auth: 55499, rest: 55430, gateway: 55421 };
+
+/** The installed server's ports (`server.json` in its data folder may change them). */
+export const SERVER_PORTS: StackPorts = {
+  postgres: 47210,
+  auth: 47211,
+  rest: 47212,
+  gateway: 47213,
+};
+
+/** HTTPS for the other PCs of the gym: the one port the firewall opens (TCP, private networks). */
+export const LAN_PORT = 47200;

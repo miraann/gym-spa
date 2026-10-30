@@ -32,6 +32,8 @@ describe('route', () => {
   it('knows the staff module and its health, and nothing else', () => {
     expect(route('/functions/v1/staff-admin')).toEqual({ kind: 'staff-admin' });
     expect(route('/server/v1/health')).toEqual({ kind: 'health' });
+    expect(route('/server/v1/info')).toEqual({ kind: 'info' });
+    expect(route('/server/v1/info?x=1')).toEqual({ kind: 'info' });
     expect(route('/functions/v1/seller-admin')).toEqual({ kind: 'not_found' });
     expect(route('/auth/v10/token')).toEqual({ kind: 'not_found' });
     expect(route('/rest/v1x')).toEqual({ kind: 'not_found' });

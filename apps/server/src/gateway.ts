@@ -15,6 +15,7 @@ export type Route =
   | { readonly kind: 'rest'; readonly path: string }
   | { readonly kind: 'staff-admin' }
   | { readonly kind: 'health' }
+  | { readonly kind: 'info' }
   | { readonly kind: 'not_found' };
 
 function under(url: string, prefix: string): string | null {
@@ -35,6 +36,7 @@ export function route(url: string): Route {
   const pathOnly = url.split('?')[0];
   if (pathOnly === '/functions/v1/staff-admin') return { kind: 'staff-admin' };
   if (pathOnly === '/server/v1/health') return { kind: 'health' };
+  if (pathOnly === '/server/v1/info') return { kind: 'info' };
   return { kind: 'not_found' };
 }
 
@@ -129,7 +131,10 @@ export interface GatewayOptions {
   readonly authPort: number;
   readonly restPort: number;
   readonly staffAdmin: FetchHandler;
+  /** Whether every program runs: answered to anyone, it holds no data. */
   readonly health: () => unknown;
+  /** Which gym and version this is: what a PC shows before it pairs (OF-d). */
+  readonly info: () => Promise<unknown>;
 }
 
 /** Hop-by-hop headers never go on (RFC 9110), nor the client's own Host. */
@@ -222,6 +227,17 @@ export function createGateway(options: GatewayOptions): http.RequestListener {
     }
     if (target.kind === 'health') {
       sendJson(request, response, 200, options.health());
+      return;
+    }
+    if (target.kind === 'info') {
+      options.info().then(
+        (info) => {
+          sendJson(request, response, 200, info);
+        },
+        () => {
+          sendJson(request, response, 503, { message: 'info_unavailable' });
+        },
+      );
       return;
     }
     if (target.kind === 'auth' && authPathIsPublic(target.path)) {

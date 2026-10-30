@@ -4,7 +4,8 @@
 //
 //   pnpm server:dev init     a new server with the demo gym (seed.sql); --no-seed for an empty one
 //   pnpm server:dev start    runs it in the foreground (Ctrl+C stops it); prints the address and
-//                            writes backend.json for the e2e helpers (GYM_E2E_BACKEND)
+//                            writes backend.json for the e2e helpers (GYM_E2E_BACKEND); --lan also
+//                            opens HTTPS on port 47200 for other PCs, --jobs runs the scheduled jobs
 //   pnpm server:dev reset    deletes it and makes a new one
 //   pnpm server:dev stop     stops what an interrupted run left running (its own programs only)
 //   pnpm server:dev psql     psql as postgres (more arguments are passed on)
@@ -12,13 +13,17 @@ import { existsSync } from 'node:fs';
 import { parseArgs } from 'node:util';
 import { psql } from '../database.ts';
 import { dataPaths, devDataRoot } from '../paths.ts';
-import { DEV_PORTS } from '../ports.ts';
+import { DEV_PORTS, LAN_PORT } from '../ports.ts';
 import { createServer, openDatabase, removeServer, startServer, stopLeftovers } from '../stack.ts';
 
 const { values: flags, positionals } = parseArgs({
   allowPositionals: true,
   strict: false,
-  options: { 'no-seed': { type: 'boolean', default: false } },
+  options: {
+    'no-seed': { type: 'boolean', default: false },
+    lan: { type: 'boolean', default: false },
+    jobs: { type: 'boolean', default: false },
+  },
 });
 const command = positionals[0];
 const root = devDataRoot();
@@ -37,7 +42,11 @@ function init(): void {
 
 async function start(): Promise<void> {
   if (!existsSync(dataPaths(root).secrets)) init();
-  const server = await startServer(options);
+  const server = await startServer({
+    ...options,
+    ...(flags.lan === true ? { lanPort: LAN_PORT } : {}),
+    jobs: flags.jobs === true,
+  });
   console.log(`gym-server: ${server.url}`);
   console.log(`e2e: GYM_E2E_BACKEND=${server.db.data.backendFile}`);
   let stopping = false;
@@ -62,7 +71,9 @@ try {
   } else if (command === 'stop') {
     stopLeftovers(options);
   } else if (command === 'psql') {
-    const result = psql(openDatabase(options), 'postgres', positionals.slice(1), { inherit: true });
+    // Everything after "psql" goes to psql as it was typed (parseArgs would take -c for itself).
+    const rest = process.argv.slice(process.argv.indexOf('psql') + 1);
+    const result = psql(openDatabase(options), 'postgres', rest, { inherit: true });
     process.exitCode = result.status ?? 1;
   } else {
     console.log('usage: pnpm server:dev init | start | reset | stop | psql');
