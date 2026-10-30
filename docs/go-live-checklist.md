@@ -114,6 +114,8 @@ Never rotated, because they were never exposed: the license signing key (only on
 
 ## 8. The Android signing key and the release APK
 
+**Status (2026-10-30):** steps 1–4 are done: the key is in `%USERPROFILE%\.gym-spa\android\`, its encrypted backup is on the USB stick, and its fingerprint (`AF:03:FA:A9:…:83:6B`) is committed in `apps/app/android/release-signing.json`. Step 5 (a real device) is still to do.
+
 **Who:** you make the key and build; Claude built the scripts (Phase 11, step 11b). **Why:** every update of the Android app must be signed with the same key forever. A lost key means the app can't be updated on the gyms' tablets (they would have to uninstall it, which deletes the device's login). A leaked key lets anyone make an "update" of the app.
 
 **How (you, on your own PC, in a terminal):**
