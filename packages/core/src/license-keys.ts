@@ -8,7 +8,9 @@
 // after every license and activation has been issued again with a new key.
 
 /** kid → the raw 32-byte Ed25519 public key, base64url. Never a `test-` kid (a test checks). */
-export const LICENSE_PUBLIC_KEYS: Readonly<Record<string, string>> = {};
+export const LICENSE_PUBLIC_KEYS: Readonly<Record<string, string>> = {
+  '2026-1': 'kc8wPUY_UVmvfpNMKXqjaNDAMGO04-rFiC2okyiCuVY',
+};
 
 /** Kids that must never be accepted again (a leaked key). */
 export const REVOKED_LICENSE_KIDS: readonly string[] = [];
