@@ -15,6 +15,7 @@ import { RequirePermission } from '@/components/no-access';
 import { useActingClient } from '@/features/staff/admin-data';
 import type { AppSupabaseClient } from '@/lib/backend';
 import { useFormat } from '@/lib/format';
+import { BackupsCard } from './backups-card';
 import {
   fetchPairedPcs,
   newPairingCode,
@@ -23,9 +24,9 @@ import {
   type PairingCode,
 } from './server-admin';
 
-// Settings → سێرڤەر (step OF-d): on the server PC of the offline edition, for staff with
+// Settings → سێرڤەر (steps OF-d, OF-e): on the server PC of the offline edition, for staff with
 // server.manage. A new code pairs one PC (10 minutes; the PC shows the same identity as here); the
-// paired PCs can be removed, which refuses them at once.
+// paired PCs can be removed, which refuses them at once; the backups and putting one back.
 
 const PCS_KEY = 'server-pcs';
 
@@ -120,6 +121,8 @@ function ServerPageContent() {
           )}
         </CardContent>
       </Card>
+
+      <BackupsCard token={() => sessionToken(client)} />
 
       <section aria-labelledby="paired-pcs" className="flex flex-col gap-3">
         <h2 id="paired-pcs" className="text-lg text-foreground">

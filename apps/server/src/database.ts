@@ -101,7 +101,12 @@ export function setVariable(name: string, value: string): string {
 export function queryAsync(
   db: Database,
   sql: string,
-  options: { readonly user?: DatabaseUser; readonly variables?: Record<string, string> } = {},
+  options: {
+    readonly user?: DatabaseUser;
+    readonly variables?: Record<string, string>;
+    /** Another database of the server (restoring uses template1 and gym_restore). */
+    readonly database?: string;
+  } = {},
 ): Promise<string[]> {
   const user = options.user ?? 'postgres';
   const script = `${Object.entries(options.variables ?? {})
@@ -124,7 +129,7 @@ export function queryAsync(
         '-U',
         user,
         '-d',
-        'postgres',
+        options.database ?? 'postgres',
         '-v',
         'ON_ERROR_STOP=1',
         '-f',

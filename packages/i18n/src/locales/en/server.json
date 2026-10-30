@@ -87,5 +87,34 @@
     "removed": "Removed.",
     "error": "The server didn't answer. Try again.",
     "cancel": "Cancel"
+  },
+  "backups": {
+    "title": "Backups",
+    "description": "A backup of all the data is made every day, and the last 30 are kept.",
+    "time": "Daily backup time",
+    "copyTo": "Second folder (for example a USB stick)",
+    "copyToHint": "Every backup is put here too. Empty: it stays on the server only.",
+    "save": "Save",
+    "saved": "Saved.",
+    "now": "Back up now",
+    "made": "The backup was made.",
+    "none": "There is no backup yet.",
+    "size": "{{size}} MB",
+    "restore": "Restore",
+    "restoreTitle": "Restore a backup",
+    "restoreText": "All the gym's data now is replaced by this backup. A backup of the data now is made first, so you can go back to it.",
+    "confirmCode": "To be sure, type the gym code: {{code}}",
+    "restored": "The backup was restored.",
+    "errors": {
+      "invalid_time": "Type a valid time.",
+      "invalid_folder": "Type the folder's full path, for example E:\\gym-backups.",
+      "confirm_mismatch": "The gym code is wrong.",
+      "backup_failed": "The backup was not made.",
+      "restore_failed": "The restore failed; nothing was changed.",
+      "backup_other_gym": "This backup is of another gym.",
+      "busy": "Another backup task is running. Wait a little.",
+      "backup_not_found": "This backup was not found.",
+      "unexpected": "Something went wrong. Try again."
+    }
   }
 }

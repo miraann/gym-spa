@@ -18,6 +18,7 @@ import {
   type Database,
 } from './database.ts';
 import { adminAccess } from './access.ts';
+import { startBackupService, type BackupService } from './backups.ts';
 import { adminHandler, pairAnswer } from './admin.ts';
 import { answerDiscovery } from './discovery.ts';
 import { createGateway } from './gateway.ts';
@@ -172,6 +173,8 @@ export interface StartOptions extends StackOptions {
   readonly license?: { readonly keys?: LicenseKeyRing; readonly machineCode?: string };
   /** UDP port of discovery (with lanPort); default 47201. */
   readonly discoveryPort?: number;
+  /** Backups on request and restore (OF-e); `schedule` adds the daily one. */
+  readonly backups?: { readonly schedule: boolean };
 }
 
 export interface ServerStatus {
@@ -204,6 +207,8 @@ export interface RunningServer {
   status(): ServerStatus;
   /** The license service, when this server checks a license. */
   readonly license: LicenseService | null;
+  /** The backups, when this server makes them. */
+  readonly backups: BackupService | null;
   info(): Promise<ServerInfo>;
   stop(): Promise<void>;
 }
@@ -254,8 +259,10 @@ export async function startServer(options: StartOptions): Promise<RunningServer>
   let license: LicenseService | null = null;
   let pairing: PairingService | null = null;
   let discovery: { stop: () => void } | null = null;
+  let backups: BackupService | null = null;
   const stop = async () => {
     jobs?.stop();
+    backups?.stop();
     license?.stop();
     pairing?.stop();
     discovery?.stop();
@@ -295,26 +302,31 @@ export async function startServer(options: StartOptions): Promise<RunningServer>
     if (applied > 0) log(`${String(applied)} new migration(s) applied`);
 
     const authHealth = `http://127.0.0.1:${String(db.ports.auth)}/health`;
-    programs.push(
-      supervise({
-        name: 'auth',
-        start: () => startAuth(db),
-        ready: ready('Supabase Auth', () => httpOk(authHealth)),
-        log,
-      }),
-    );
-    await waitFor('Supabase Auth', () => httpOk(authHealth));
-
     const restRoot = `http://127.0.0.1:${String(db.ports.rest)}/`;
-    programs.push(
-      supervise({
-        name: 'postgrest',
-        start: () => startPostgrest(db),
-        ready: ready('PostgREST', () => httpOk(restRoot)),
-        log,
-      }),
-    );
-    await waitFor('PostgREST', () => httpOk(restRoot));
+    /** Auth, then PostgREST, each kept running; again after a restore swapped the database. */
+    const startApi = async () => {
+      for (const [name, label, start, check] of [
+        ['auth', 'Supabase Auth', () => startAuth(db), () => httpOk(authHealth)],
+        ['postgrest', 'PostgREST', () => startPostgrest(db), () => httpOk(restRoot)],
+      ] as const) {
+        const program = supervise({ name, start, ready: ready(label, check), log });
+        programs.push(program);
+        // Until the supervisor counts it as running too, so the health check says so at once.
+        await waitFor(label, () => program.status().state === 'running');
+      }
+    };
+    /** Stops PostgREST and Auth (Postgres stays): a restore swaps the database under them. */
+    const pauseApi = async () => {
+      while (programs.length > 1) await programs.pop()?.stop();
+    };
+    /** After a restore: Auth's and our newer migrations on the restored data, then the API again. */
+    const resumeApi = async () => {
+      migrateAuth(db);
+      const newer = applyMigrations(db, log);
+      if (newer > 0) log(`${String(newer)} newer migration(s) applied to the restored data`);
+      await startApi();
+    };
+    await startApi();
 
     const url = gatewayUrl(db.ports);
     const certificate = options.lanPort === undefined ? null : serverCertificate(options.dataRoot);
@@ -346,6 +358,18 @@ export async function startServer(options: StartOptions): Promise<RunningServer>
       });
     }
     const pairingService = pairing;
+    if (options.backups !== undefined) {
+      backups = startBackupService({
+        db,
+        dataRoot: options.dataRoot,
+        log,
+        schedule: options.backups.schedule,
+        licenseGymId: () => licenseService?.gymId() ?? null,
+        pauseApi,
+        resumeApi,
+      });
+    }
+    const backupService = backups;
     const info = async (): Promise<ServerInfo> => {
       const gym = await serverGym(db);
       return {
@@ -378,10 +402,14 @@ export async function startServer(options: StartOptions): Promise<RunningServer>
       ),
       health: status,
       info,
-      ...(licenseService === null && pairingService === null
+      ...(licenseService === null && pairingService === null && backupService === null
         ? {}
         : {
-            admin: adminHandler({ license: licenseService, pairing: pairingService }),
+            admin: adminHandler({
+              license: licenseService,
+              pairing: pairingService,
+              backups: backupService,
+            }),
             adminAccess: adminAccess(db, url),
           }),
       ...(pairingService === null
@@ -434,6 +462,7 @@ export async function startServer(options: StartOptions): Promise<RunningServer>
       status,
       info,
       license: licenseService,
+      backups: backupService,
       stop,
     };
   } catch (error) {

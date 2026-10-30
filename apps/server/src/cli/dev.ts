@@ -49,6 +49,8 @@ async function start(): Promise<void> {
     ...(flags.lan === true ? { lanPort: LAN_PORT } : {}),
     jobs: flags.jobs === true,
     ...(flags.license === true ? { license: {} } : {}),
+    // Backups on request only (gym-server-admin --dev backup); the installed server makes them daily.
+    backups: { schedule: false },
   });
   console.log(`gym-server: ${server.url}`);
   console.log(`e2e: GYM_E2E_BACKEND=${server.db.data.backendFile}`);

@@ -8,7 +8,8 @@ import { queryAsync, type Database } from './database.ts';
 //   - the server's secret key: gym-server-admin, run by someone who can read the data folder
 //     (only the server's account and Administrators can);
 //   - nobody yet, while the gym has no staff: the first setup (license, first Owner);
-//   - otherwise a staff session (bearer token) with server.manage, checked in the database.
+//   - otherwise a staff session (bearer token) with server.manage (restoring a backup:
+//     backups.restore), checked in the database.
 
 function header(headers: IncomingHttpHeaders, name: string): string | undefined {
   const value = headers[name];
@@ -17,12 +18,17 @@ function header(headers: IncomingHttpHeaders, name: string): string | undefined 
 
 export const SERVER_MANAGE = 'server.manage';
 
+/** The permission each of the server's settings needs. */
+export function permissionFor(name: string): string {
+  return name === 'backups-restore' ? 'backups.restore' : SERVER_MANAGE;
+}
+
 export function adminAccess(
   db: Database,
   url: string,
-): (headers: IncomingHttpHeaders) => Promise<boolean> {
+): (headers: IncomingHttpHeaders, name: string) => Promise<boolean> {
   const verify = projectTokenVerifier(url);
-  return async (headers) => {
+  return async (headers, name) => {
     const apikey = header(headers, 'apikey');
     const bearer = /^Bearer\s+(\S+)$/i.exec(header(headers, 'authorization') ?? '')?.[1];
     if (apikey === db.secrets.secretKey || bearer === db.secrets.secretKey) return true;
@@ -38,7 +44,7 @@ export function adminAccess(
          json_build_object('sub', :'user_id', 'role', 'authenticated')::text, true) is null;
        select app.has_permission(:'permission');
        commit;`,
-      { variables: { user_id: check.userId, permission: SERVER_MANAGE } },
+      { variables: { user_id: check.userId, permission: permissionFor(name) } },
     );
     return rows.at(-1) === 't';
   };

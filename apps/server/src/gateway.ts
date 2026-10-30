@@ -147,7 +147,7 @@ export interface GatewayOptions {
    * gym has no staff yet (the first setup), otherwise staff with server.manage. Absent: anyone on
    * the server PC.
    */
-  readonly adminAccess?: (headers: IncomingHttpHeaders) => Promise<boolean>;
+  readonly adminAccess?: (headers: IncomingHttpHeaders, name: string) => Promise<boolean>;
   /**
    * The paired PCs (OF-d). When set, every request from another PC needs its pairing token, except
    * the health check, the info, pairing itself and Auth's public paths.
@@ -325,7 +325,7 @@ export function createGateway(options: GatewayOptions): http.RequestListener {
         return;
       }
       answerJson(request, response, async (body) => {
-        if (adminAccess && !(await adminAccess(request.headers))) {
+        if (adminAccess && !(await adminAccess(request.headers, target.name))) {
           return { status: 403, body: { error: 'not_allowed' } };
         }
         return admin(request.method ?? 'GET', target.name, body);

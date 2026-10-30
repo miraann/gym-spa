@@ -100,3 +100,36 @@ export function removePairedPc(id: string, token: string | null) {
     token,
   });
 }
+
+export const backupsSchema = z.object({
+  settings: z.object({ time: z.string(), copyTo: z.string().nullable() }),
+  backups: z.array(z.object({ name: z.string(), size: z.number(), createdAt: z.string() })),
+});
+export type Backups = z.infer<typeof backupsSchema>;
+
+export function fetchBackups(token: string | null): Promise<Backups> {
+  return call('backups', backupsSchema, { token });
+}
+
+export function backUpNow(token: string | null) {
+  return call('backups-now', z.object({ name: z.string() }), { method: 'POST', token });
+}
+
+export function saveBackupSettings(
+  settings: { time: string; copyTo: string | null },
+  token: string | null,
+) {
+  return call('backups-settings', backupsSchema.shape.settings, {
+    method: 'POST',
+    body: settings,
+    token,
+  });
+}
+
+export function restoreBackup(name: string, gymCode: string, token: string | null) {
+  return call('backups-restore', z.object({ restored: z.boolean() }), {
+    method: 'POST',
+    body: { name, gymCode },
+    token,
+  });
+}

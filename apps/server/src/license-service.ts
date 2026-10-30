@@ -53,6 +53,8 @@ export interface LicenseServiceOptions {
 export interface LicenseService {
   readonly machineCode: string;
   summary(): LicenseSummary;
+  /** The gym the installed license is for (even when it no longer verifies); null: none. */
+  gymId(): string | null;
   install(input: { license?: string; activation?: string }): Promise<LicenseSummary>;
   createOwner(input: { username: string; fullName: string }): Promise<{
     username: string;
@@ -163,6 +165,7 @@ export async function startLicenseService(options: LicenseServiceOptions): Promi
   const codesFile = path.join(options.dataRoot, 'license.json');
   const clockFile = path.join(options.dataRoot, 'clock.json');
   let summary: LicenseSummary = summarize({ kind: 'none' }, false, now());
+  let licensedGym: string | null = null;
   let running: Promise<void> | null = null;
 
   const check = async () => {
@@ -171,6 +174,7 @@ export async function startLicenseService(options: LicenseServiceOptions): Promi
     writeFileSync(clockFile, JSON.stringify(clockCheck.next));
     const server = await readServerLicense(readCodes(codesFile), options.machineCode, keys);
     const target = gymTarget(server, clockCheck.behind);
+    licensedGym = target?.gymId ?? null;
     if (target !== null) await applyTarget(db, target);
     const next = summarize(server, clockCheck.behind, now());
     if (next.kind !== summary.kind || next.clockBehind !== summary.clockBehind) {
@@ -197,6 +201,7 @@ export async function startLicenseService(options: LicenseServiceOptions): Promi
   return {
     machineCode: options.machineCode,
     summary: () => summary,
+    gymId: () => licensedGym,
     install: async (input) => {
       const codes = await installCodes(input, readCodes(codesFile), options.machineCode, keys);
       const server = await readServerLicense(codes, options.machineCode, keys);

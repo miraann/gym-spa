@@ -19,6 +19,7 @@ export const PERMISSIONS = [
   { key: 'billing.view', module: 'settings' },
   { key: 'support.grant', module: 'settings' },
   { key: 'server.manage', module: 'settings' },
+  { key: 'backups.restore', module: 'settings' },
   { key: 'members.view', module: 'members' },
   { key: 'members.create', module: 'members' },
   { key: 'members.edit', module: 'members' },

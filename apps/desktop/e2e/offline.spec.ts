@@ -201,6 +201,19 @@ test('the server PC links to itself, and makes pairing codes on its server page'
   await page.getByRole('button', { name: 'کۆدی نوێی بەستنەوە' }).click();
   await expect(page.locator('[data-pairing-code]')).toHaveText(/^\d{6}$/);
   await expect(page.locator('[data-server-identity]')).toHaveText(/^[0-9A-Z]{4}-[0-9A-Z]{4}$/);
+
+  // Backups (OF-e): one now, then put back, confirmed with the gym code.
+  await page.getByRole('button', { name: 'ئێستا کۆپی یەدەگ بکە' }).click();
+  await expect(page.getByText('کۆپی یەدەگ دروست کرا.')).toBeVisible();
+  await page.getByRole('button', { name: 'گەڕاندنەوە' }).first().click();
+  const restore = page.getByRole('dialog');
+  await expect(restore.getByRole('button', { name: 'گەڕاندنەوە' })).toBeDisabled();
+  await restore.getByLabel(/کۆدی جیم/).fill(owner.gymCode);
+  await restore.getByRole('button', { name: 'گەڕاندنەوە' }).click();
+  // The data changed under every screen: the app starts again, locked.
+  await expect(page.getByRole('heading', { level: 1, name: 'کێ کار دەکات؟' })).toBeVisible({
+    timeout: 30_000,
+  });
 });
 
 test("sets up a new server on its own PC: the license, then the gym's first Owner", async () => {

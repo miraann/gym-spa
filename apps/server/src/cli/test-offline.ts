@@ -99,6 +99,7 @@ async function desktop(): Promise<number> {
     ...desktopOptions,
     lanPort: DESKTOP_LAN_PORT,
     discoveryPort: DESKTOP_LAN_PORT + 1,
+    backups: { schedule: false },
   });
   // A second server, new and unlicensed, for the first setup on the server PC (OF-d): it takes a
   // license signed with a throwaway key, made here.

@@ -7,6 +7,9 @@
 //   gym-server-admin clock-accept                                after a wrong clock was corrected
 //   gym-server-admin pairing-code                                a code to pair a new PC (OF-d)
 //   gym-server-admin pcs [--remove <id>]                         the paired PCs
+//   gym-server-admin backup                                      a backup now (OF-e)
+//   gym-server-admin backups [--time HH:MM] [--copy-to <folder>]  the backups and their settings
+//   gym-server-admin restore --name <file> --gym <code>          puts a backup back
 //
 // --data <folder>  the server's data folder, for its ports (default C:\ProgramData\gym-spa\server)
 // --dev            the development server instead (pnpm server:dev start)
@@ -31,6 +34,10 @@ const { values: args, positionals } = parseArgs({
     username: { type: 'string' },
     'full-name': { type: 'string' },
     remove: { type: 'string' },
+    time: { type: 'string' },
+    'copy-to': { type: 'string' },
+    name: { type: 'string' },
+    gym: { type: 'string' },
   },
 });
 
@@ -104,9 +111,23 @@ async function main(): Promise<void> {
     answer = await call('POST', 'pcs-remove', { id: args.remove });
   } else if (command === 'pcs') {
     answer = await call('GET', 'pcs');
+  } else if (command === 'backup') {
+    answer = await call('POST', 'backups-now');
+  } else if (command === 'backups' && (args.time !== undefined || args['copy-to'] !== undefined)) {
+    answer = await call('POST', 'backups-settings', {
+      ...(args.time === undefined ? {} : { time: args.time }),
+      ...(args['copy-to'] === undefined ? {} : { copyTo: args['copy-to'] || null }),
+    });
+  } else if (command === 'backups') {
+    answer = await call('GET', 'backups');
+  } else if (command === 'restore') {
+    answer = await call('POST', 'backups-restore', {
+      name: args.name ?? '',
+      gymCode: args.gym ?? '',
+    });
   } else {
     console.log(
-      'usage: gym-server-admin license | owner | clock-accept | pairing-code | pcs (see the file header)',
+      'usage: gym-server-admin license | owner | clock-accept | pairing-code | pcs | backup | backups | restore (see the file header)',
     );
     process.exitCode = 1;
     return;

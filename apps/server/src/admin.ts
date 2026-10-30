@@ -1,6 +1,7 @@
 import type { AdminAnswer, AdminHandler } from './gateway.ts';
 import { LicenseInstallError } from './license.ts';
 import { OwnerError, type LicenseService } from './license-service.ts';
+import { BackupError, type BackupService } from './backups.ts';
 import { PairingError, type PairingService } from './pairing-service.ts';
 
 // The server's own settings, answered only to the server PC itself (the gateway checks that, and
@@ -13,6 +14,10 @@ import { PairingError, type PairingService } from './pairing-service.ts';
 //   POST /server/v1/admin/pairing-code  a new 6-digit code (10 minutes) with the server identity
 //   GET  /server/v1/admin/pcs           the paired PCs
 //   POST /server/v1/admin/pcs-remove    { id }: refuses that PC from now on
+//   GET  /server/v1/admin/backups       the backups and their settings
+//   POST /server/v1/admin/backups-now   a backup now
+//   POST /server/v1/admin/backups-settings  { time?, copyTo? }
+//   POST /server/v1/admin/backups-restore   { name, gymCode }: puts a backup back (backups.restore)
 
 function text(body: unknown, name: string): string | undefined {
   if (typeof body !== 'object' || body === null || !(name in body)) return undefined;
@@ -25,6 +30,40 @@ const notFound: AdminAnswer = { status: 404, body: { error: 'no_route' } };
 export interface AdminServices {
   readonly license: LicenseService | null;
   readonly pairing: PairingService | null;
+  readonly backups: BackupService | null;
+}
+
+async function backupRoutes(
+  service: BackupService,
+  method: string,
+  name: string,
+  body: unknown,
+): Promise<AdminAnswer | null> {
+  if (name === 'backups' && method === 'GET') {
+    return { status: 200, body: { settings: service.settings(), backups: service.list() } };
+  }
+  if (name === 'backups-now' && method === 'POST') {
+    return { status: 201, body: await service.backUp('manual') };
+  }
+  if (name === 'backups-settings' && method === 'POST') {
+    const copyTo =
+      typeof body === 'object' && body !== null && 'copyTo' in body
+        ? ((body as Record<string, unknown>).copyTo as string | null)
+        : undefined;
+    const time = text(body, 'time');
+    return {
+      status: 200,
+      body: service.setSettings({
+        ...(time === undefined ? {} : { time }),
+        ...(copyTo === undefined ? {} : { copyTo: typeof copyTo === 'string' ? copyTo : null }),
+      }),
+    };
+  }
+  if (name === 'backups-restore' && method === 'POST') {
+    await service.restore(text(body, 'name') ?? '', text(body, 'gymCode') ?? '');
+    return { status: 200, body: { restored: true } };
+  }
+  return null;
 }
 
 async function licenseRoutes(
@@ -80,11 +119,16 @@ export function adminHandler(services: AdminServices): AdminHandler {
     try {
       const answer =
         (services.license && (await licenseRoutes(services.license, method, name, body))) ??
-        (services.pairing && pairingRoutes(services.pairing, method, name, body));
+        (services.pairing && pairingRoutes(services.pairing, method, name, body)) ??
+        (services.backups && (await backupRoutes(services.backups, method, name, body)));
       return answer ?? notFound;
     } catch (error) {
       if (error instanceof LicenseInstallError) {
         return { status: 400, body: { error: error.key, detail: error.detail } };
+      }
+      if (error instanceof BackupError) {
+        const status = error.key === 'busy' ? 409 : error.key === 'backup_not_found' ? 404 : 400;
+        return { status, body: { error: error.key } };
       }
       if (error instanceof OwnerError) {
         return {
