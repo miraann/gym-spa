@@ -1,4 +1,5 @@
 import { localizedName } from '@gym/i18n';
+import { AddTile } from '@gym/ui/blocks/add-tile';
 import { MasterDetail } from '@gym/ui/blocks/master-detail';
 import {
   GroupedList,
@@ -9,10 +10,9 @@ import {
 import { groupedRowClass } from '@gym/ui/lib/grouped-list';
 import { PageHeader } from '@gym/ui/blocks/page-header';
 import { Badge } from '@gym/ui/components/badge';
-import { Button } from '@gym/ui/components/button';
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia } from '@gym/ui/components/empty';
 import { Link, Outlet, useRouterState } from '@tanstack/react-router';
-import { PlusIcon, ShieldCheckIcon } from 'lucide-react';
+import { ShieldCheckIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { RequirePermission } from '@/components/no-access';
 import { useRoleOverview } from '@/features/staff/admin-data';
@@ -41,18 +41,10 @@ function RoleList() {
 
   return (
     <div className="flex flex-col gap-4">
-      <PageHeader
-        title={t('roles.title')}
-        description={t('roles.description')}
-        actions={
-          <Button asChild size="lg">
-            <Link to="/roles/new">
-              <PlusIcon data-icon="inline-start" />
-              {t('roles.add')}
-            </Link>
-          </Button>
-        }
-      />
+      <PageHeader title={t('roles.title')} description={t('roles.description')} />
+      <AddTile asChild label={t('roles.add')}>
+        <Link to="/roles/new" />
+      </AddTile>
       {roles.isPending ? (
         <GroupedListSkeleton rows={3} />
       ) : roles.isError ? (

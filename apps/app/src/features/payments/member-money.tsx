@@ -1,7 +1,8 @@
 import { baghdadDateOf } from '@gym/core';
+import { AddTile } from '@gym/ui/blocks/add-tile';
 import { Badge } from '@gym/ui/components/badge';
 import { Button } from '@gym/ui/components/button';
-import { Card, CardAction, CardContent, CardHeader, CardTitle } from '@gym/ui/components/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@gym/ui/components/card';
 import { Skeleton } from '@gym/ui/components/skeleton';
 import {
   BanIcon,
@@ -9,7 +10,6 @@ import {
   CircleCheckIcon,
   CircleDashedIcon,
   CircleDotIcon,
-  PlusIcon,
   Undo2Icon,
   type LucideIcon,
 } from 'lucide-react';
@@ -75,21 +75,16 @@ export function MemberMoneyCard({ member }: { readonly member: Member }) {
     <Card data-testid="member-money">
       <CardHeader>
         <CardTitle>{t('member.title')}</CardTitle>
-        {canCharge && (
-          <CardAction>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setDialog({ kind: 'charge' });
-              }}
-            >
-              <PlusIcon data-icon="inline-start" />
-              {t('member.newInvoice')}
-            </Button>
-          </CardAction>
-        )}
       </CardHeader>
       <CardContent className="flex flex-col gap-2">
+        {canCharge && (
+          <AddTile
+            label={t('member.newInvoice')}
+            onClick={() => {
+              setDialog({ kind: 'charge' });
+            }}
+          />
+        )}
         {invoices.isPending ? (
           <Skeleton className="h-16 rounded-xl" />
         ) : invoices.isError ? (

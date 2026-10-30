@@ -1,14 +1,14 @@
 import { matchesSearch } from '@gym/core';
 import { localizedName } from '@gym/i18n';
+import { AddTile } from '@gym/ui/blocks/add-tile';
 import { Chip, ChipRow } from '@gym/ui/blocks/chip-row';
 import { PageHeader } from '@gym/ui/blocks/page-header';
-import { Button } from '@gym/ui/components/button';
 import { Card } from '@gym/ui/components/card';
 import { Input } from '@gym/ui/components/input';
 import { Skeleton } from '@gym/ui/components/skeleton';
 import { useLayout } from '@gym/ui/hooks/use-layout';
 import { Link } from '@tanstack/react-router';
-import { Building2Icon, PlusIcon, SearchIcon } from 'lucide-react';
+import { Building2Icon, SearchIcon } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useGyms, useLicenses, type GymRow, type LicenseRow } from '@/lib/api';
@@ -89,17 +89,10 @@ export function GymsPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <PageHeader
-        title={t('gyms.title')}
-        actions={
-          <Button asChild size="lg">
-            <Link to="/gyms/new">
-              <PlusIcon data-icon="inline-start" />
-              {t('gyms.new')}
-            </Link>
-          </Button>
-        }
-      />
+      <PageHeader title={t('gyms.title')} />
+      <AddTile asChild label={t('gyms.new')}>
+        <Link to="/gyms/new" />
+      </AddTile>
       <div className="relative max-w-md">
         <SearchIcon className="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
         <Input

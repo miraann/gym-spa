@@ -1,8 +1,8 @@
+import { AddTile } from '@gym/ui/blocks/add-tile';
 import { GroupedListSkeleton } from '@gym/ui/blocks/list-group';
 import { Badge } from '@gym/ui/components/badge';
-import { Button } from '@gym/ui/components/button';
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia } from '@gym/ui/components/empty';
-import { CircleOffIcon, PlusIcon } from 'lucide-react';
+import { CircleOffIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SpaError } from './spa-error';
@@ -38,15 +38,8 @@ export function SetupSection({
 }) {
   return (
     <section className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        {toolbar ?? <span />}
-        {canAdd && (
-          <Button onClick={onAdd}>
-            <PlusIcon data-icon="inline-start" />
-            {addLabel}
-          </Button>
-        )}
-      </div>
+      {toolbar}
+      {canAdd && <AddTile label={addLabel} onClick={onAdd} />}
       {pending ? (
         <GroupedListSkeleton rows={3} />
       ) : error ? (

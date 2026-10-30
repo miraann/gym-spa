@@ -1,4 +1,5 @@
 import { isValidAdminEmail, normalizeAdminEmail } from '@gym/core';
+import { AddTile } from '@gym/ui/blocks/add-tile';
 import { CopyableSecret } from '@gym/ui/blocks/copyable-secret';
 import { PageHeader } from '@gym/ui/blocks/page-header';
 import { ResponsiveDialog } from '@gym/ui/blocks/responsive-dialog';
@@ -24,7 +25,6 @@ import {
   ShieldAlertIcon,
   ShieldCheckIcon,
   TriangleAlertIcon,
-  UserPlusIcon,
 } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -328,19 +328,12 @@ export function AdminsPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <PageHeader
-        title={t('admins.title')}
-        actions={
-          <Button
-            size="lg"
-            onClick={() => {
-              setAdding(true);
-            }}
-          >
-            <UserPlusIcon data-icon="inline-start" />
-            {t('admins.add')}
-          </Button>
-        }
+      <PageHeader title={t('admins.title')} />
+      <AddTile
+        label={t('admins.add')}
+        onClick={() => {
+          setAdding(true);
+        }}
       />
       {admins.data && activeCount < 2 && (
         <Alert variant="warning" data-testid="only-one-admin">

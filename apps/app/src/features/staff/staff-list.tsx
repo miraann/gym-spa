@@ -1,5 +1,6 @@
 import { matchesSearch } from '@gym/core';
 import { localizedName } from '@gym/i18n';
+import { AddTile } from '@gym/ui/blocks/add-tile';
 import { Chip, ChipRow } from '@gym/ui/blocks/chip-row';
 import {
   GroupedList,
@@ -13,7 +14,7 @@ import { Button } from '@gym/ui/components/button';
 import { Card } from '@gym/ui/components/card';
 import { Input } from '@gym/ui/components/input';
 import { Link, useRouterState } from '@tanstack/react-router';
-import { CalendarRangeIcon, ClockIcon, SearchIcon, UserPlusIcon, UsersIcon } from 'lucide-react';
+import { CalendarRangeIcon, ClockIcon, SearchIcon, UsersIcon } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { usePermission } from '@/features/auth/use-permissions';
@@ -78,14 +79,6 @@ export function StaffList() {
                 </Button>
               </>
             )}
-            {canManage && (
-              <Button asChild size="lg">
-                <Link to="/staff/new">
-                  <UserPlusIcon data-icon="inline-start" />
-                  {t('list.add')}
-                </Link>
-              </Button>
-            )}
           </>
         }
       />
@@ -116,6 +109,12 @@ export function StaffList() {
           </Chip>
         ))}
       </ChipRow>
+
+      {canManage && (
+        <AddTile asChild label={t('list.add')}>
+          <Link to="/staff/new" />
+        </AddTile>
+      )}
 
       {staff.isPending ? (
         <GroupedListSkeleton avatar />
