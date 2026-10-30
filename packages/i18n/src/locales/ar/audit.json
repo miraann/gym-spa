@@ -14,8 +14,8 @@
   "unknownStaff": "موظف آخر",
   "row": "السطر:",
   "column": "الحقل",
-  "before": "قبل",
-  "after": "بعد",
+  "before": "قبل التغيير",
+  "after": "بعد التغيير",
   "actions": {
     "insert": "أُضيف",
     "update": "عُدّل",

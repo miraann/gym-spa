@@ -11,7 +11,7 @@ import { backend, expect, run, signInReady, test } from './support/panel';
 // Gyms in the seller panel (spec §2.6): created with their first Owner, then subscription,
 // limits, suspend, lock and reactivate, and what the gym's own staff see of it.
 
-const GYM_LOCKED = 'ئەم جیمە قفڵ کراوە و بەکارناهێنرێت. پەیوەندی بە کلیک گرووپ بکە.';
+const GYM_LOCKED = 'ئەم جیمە قفڵ کراوە و بەکارناهێنرێت. پەیوەندی بە کلیک گرووپەوە بکە.';
 
 test('creates a gym with its Owner, who then logs in to the gym app', async ({
   page,

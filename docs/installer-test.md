@@ -50,7 +50,7 @@ The server's firewall rules allow only private networks, so on a "Public" networ
 | 4.4 | In that gym: **«دەرکردنی مۆڵەت»**, yearly, last day about two months from today. | The license code, with "copy" and "download as file". |
 | 4.5 | In the gym's **«کۆمپیوتەری سێرڤەر»** part: paste the machine code from 4.2. | "کۆدەکە دروستە" and an **activation code**. |
 | 4.6 | Back on the server PC: paste the license code and the activation code (or open the downloaded files with «کردنەوە لە فایل»), then **«دانان»**. | **«مۆڵەتەکە دانرا.»**, then **«خاوەنی جیم»**. |
-| 4.7 | Type a username (e.g. `owner`) and a full name, **«دروستکردن»**. | **«وشەی نهێنی کاتی»**: the temporary password, shown only now. Write it down. |
+| 4.7 | Type a username (e.g. `owner`) and a full name, **«دروستکردن»**. | **«وشەی نهێنیی کاتی»**: the temporary password, shown only now. Write it down. |
 | 4.8 | **«بڕۆ بۆ چوونەژوورەوە»**, log in as `owner` with that password. | **No gym code** is asked (the offline edition never asks). You choose a new password, register this PC as a device, and see the dashboard in Kurdish. No license warning (the license runs for two months). |
 | 4.9 | **Settings → سێرڤەر**. | **«ناسنامەی سێرڤەر»** (`XXXX-XXXX`), **«کۆدی نوێی بەستنەوە»**, **«کۆمپیوتەرە بەستراوەکان»** (empty), and **«کۆپی یەدەگ»**. |
 

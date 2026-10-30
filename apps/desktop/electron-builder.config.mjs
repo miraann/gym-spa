@@ -1,7 +1,7 @@
 // Packages the Windows installer: `pnpm desktop:exe` from the repo root.
 import ckb from '../../packages/i18n/src/locales/ckb/common.json' with { type: 'json' };
 import appPackage from '../app/package.json' with { type: 'json' };
-import { updatePublish } from './update-feed.mjs';
+import { updateAddress, updatePublish } from './update-feed.mjs';
 
 /** @type {import('electron-builder').Configuration} */
 export default {
@@ -25,8 +25,9 @@ export default {
   // The same production web build as the PWA, served over app:// (see src/main.ts).
   extraResources: [{ from: '../app/dist', to: 'web' }],
   npmRebuild: false,
-  // The address the app updates itself from (update-feed.mjs), or none.
-  publish: updatePublish(process.env.GYM_UPDATE_URL),
+  // The address the app updates itself from (update-feed.mjs): the releases repository, unless
+  // GYM_UPDATE_URL names another one or is `off`.
+  publish: updatePublish(updateAddress(process.env.GYM_UPDATE_URL)),
   // Electron's security fuses, burned into the installed exe: it can't be started as plain Node,
   // with Node options or a debugger, and it only runs the app code from its own app.asar, after
   // checking that file's integrity. (The e2e tests run the unpackaged app, which keeps the defaults.)

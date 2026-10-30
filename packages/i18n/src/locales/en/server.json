@@ -93,7 +93,7 @@
     "description": "A backup of all the data is made every day, and the last 30 are kept.",
     "time": "Daily backup time",
     "copyTo": "Second folder (for example a USB stick)",
-    "copyToHint": "Every backup is put here too. Empty: it stays on the server only.",
+    "copyToHint": "Every backup is put here too. If it is empty, backups stay on the server only.",
     "save": "Save",
     "saved": "Saved.",
     "now": "Back up now",

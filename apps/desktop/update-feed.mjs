@@ -1,8 +1,24 @@
-// Where the online edition's Windows app looks for new versions (spec §8, step 11c): the folder
-// named by GYM_UPDATE_URL when the installer is built. electron-builder then writes
-// resources\app-update.yml into the app, and latest.yml next to the installer in release/ (upload
-// both latest.yml and the installer to that folder). Without GYM_UPDATE_URL the app never looks
-// for updates. The offline edition never has one: it is updated by USB (step OF-f).
+// Where the online edition's Windows app looks for new versions (spec §8, step 11c): the latest
+// release of the public repository miraann/gym-spa-releases (binaries only; decided by the user on
+// 2026-10-30), or the folder named by GYM_UPDATE_URL when the installer is built (`off`: none, a
+// build that never looks). electron-builder writes resources\app-update.yml into the app and
+// latest.yml next to the installer in release/; `pnpm desktop:publish` uploads them
+// (scripts/publish-update.mjs). The offline edition never has one: it is updated by USB (OF-f).
+
+/** The repository whose releases hold the installers. */
+export const RELEASES_REPO = 'miraann/gym-spa-releases';
+/** GitHub sends this to the newest (non-draft, non-prerelease) release's file of the same name. */
+export const OFFICIAL_UPDATE_URL = `https://github.com/${RELEASES_REPO}/releases/latest/download/`;
+
+/**
+ * The update address for this build: GYM_UPDATE_URL, `off` for none, or the official one.
+ * @param {string | undefined} variable
+ * @returns {string | undefined}
+ */
+export function updateAddress(variable) {
+  if (variable === undefined || variable.trim() === '') return OFFICIAL_UPDATE_URL;
+  return variable.trim() === 'off' ? undefined : variable;
+}
 
 /**
  * electron-builder's `publish` setting for this address, or null without one. Only HTTPS, except

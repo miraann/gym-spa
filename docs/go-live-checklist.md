@@ -14,7 +14,7 @@ Everything that must be done before a real gym gets the app (online or offline).
 | 6 | [A custom domain](#6-a-custom-domain) | You, then Claude | Yes (the domain, if not owned yet) |
 | 7 | [Check the cloud project's settings](#7-check-the-cloud-projects-settings) | You, with Claude | No |
 | 8 | [The Android signing key and the release APK](#8-the-android-signing-key-and-the-release-apk) | You, then Claude | No |
-| 9 | [Where Windows updates are published](#9-where-windows-updates-are-published) | You decide, Claude builds | No |
+| 9 | [Where Windows updates are published](#9-where-windows-updates-are-published) | Decided; Claude publishes with your OK | No |
 | 10 | [The offline installer test](#10-the-offline-installer-test) | You, then Claude | No |
 | 11 | [A real 80mm printer and ACR122U with the final EXE](#11-a-real-80mm-printer-and-acr122u-with-the-final-exe) | You, then Claude | Only if you don't have them |
 | 12 | [The Kurdish review](#12-the-kurdish-review) | You, then Claude | No |
@@ -75,7 +75,7 @@ Never rotated, because they were never exposed: the license signing key (only on
 **Who:** you. **Why:** `gh` uses a classic token today, which can delete repositories and manage organizations. Releases need much less.
 
 **How:**
-1. github.com → Settings → Developer settings → **Fine-grained tokens → Generate new token**. Name `gym-spa claude`, expiry 90 days, **Only select repositories: miraann/gym-spa**. Repository permissions:
+1. github.com → Settings → Developer settings → **Fine-grained tokens → Generate new token**. Name `gym-spa claude`, expiry 90 days, **Only select repositories: miraann/gym-spa and miraann/gym-spa-releases** (the second for publishing Windows updates, item 9). Repository permissions:
    - **Contents: Read and write** (push branches)
    - **Pull requests: Read and write** (open and merge the release pull request)
    - **Workflows: Read and write** (only needed when `.github/workflows` changes; leave it out and add it when needed if you prefer)
@@ -129,17 +129,13 @@ If the PC is lost: `pnpm android:restore-key --file E:\gym-spa-android-key-….g
 
 ## 9. Where Windows updates are published
 
-**Who:** you decide; Claude sets it up. **Why:** the online edition's Windows app updates itself (Phase 11, step 11c): it downloads new versions from one fixed HTTPS address. It must be free, reliable and reachable from Iraq, and nobody but you may be able to put files there. The offline edition never updates itself (USB only).
+**Decided by the user on 2026-10-30:** GitHub Releases of the separate **public** repository [miraann/gym-spa-releases](https://github.com/miraann/gym-spa-releases), binaries only (Claude made it the same day, with only a README). Every online Windows installer looks at `https://github.com/miraann/gym-spa-releases/releases/latest/download/` (README → Windows app → Updates). The offline edition never updates itself (USB only).
 
-**Options** (Claude's recommendation first):
-1. **GitHub Releases of a separate public repository** (e.g. `miraann/gym-spa-releases`, holding only installers, no code): free, fast, and the token in item 5 would also need that repository. The app gets a fixed address like `https://github.com/miraann/gym-spa-releases/releases/latest/download/`.
-2. A folder on your Vercel domain (`https://app.<domain>/downloads/windows/`): simple, but each installer (about 110 MB) counts against Vercel's bandwidth.
+**Who publishes:** Claude, with `pnpm desktop:publish`, and **only with your OK for that version**: once published, every installed online Windows app updates to it. Nothing is published yet.
 
-Updates are checked against the SHA-512 in the update file, over HTTPS. Without a code-signing certificate, Windows doesn't check the publisher, so whoever can upload to that address can ship an update: protect that account with two-step login.
+Without a code-signing certificate Windows doesn't check the publisher, so whoever can upload a release to that repository can ship an update to every gym: keep the GitHub account behind two-step login, and give the token in item 5 access to that repository too.
 
-Each version uploads three files there: `latest.yml`, the installer and its `.blockmap` (README → Windows app → Updates).
-
-**Done when:** you chose one; Claude builds the release with that address and an update from version N to N+1 is tried on a test PC (install N, publish N+1, the notice appears within an hour or at the next start, pressing it installs and reopens the app).
+**Done when:** an update from version N to N+1 was tried on a test PC: install N, publish N+1, the notice appears within an hour or at the next start, pressing it installs and reopens the app.
 
 ## 10. The offline installer test
 

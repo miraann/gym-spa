@@ -237,7 +237,7 @@ test("sets up a new server on its own PC: the license, then the gym's first Owne
   await page.getByLabel('ناوی بەکارهێنەر').fill('owner');
   await page.getByLabel('ناوی تەواو').fill('خاوەنی جیم');
   await page.getByRole('button', { name: 'دروستکردن' }).click();
-  await expect(page.getByRole('heading', { level: 1, name: 'وشەی نهێنی کاتی' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: 'وشەی نهێنیی کاتی' })).toBeVisible();
   await page.getByRole('button', { name: 'بڕۆ بۆ چوونەژوورەوە' }).click();
   await expect(page.getByRole('heading', LOGIN_HEADING)).toBeVisible();
   await expect(page.getByLabel('کۆدی جیم')).toHaveCount(0);

@@ -42,7 +42,7 @@ export function storedLicenseCode(dataRoot: string): string | null {
 export function updatesBlockedMessage(blocked: UpdatesBlocked): string {
   return [
     `ئەم وەشانە لە ${blocked.buildDate} دروستکراوە، بەڵام نوێکردنەوەکانی ئەم جیمە تا ${blocked.updatesUntil} بوون.`,
-    'وەشانی ئێستا هەر کار دەکات و هیچ نەگۆڕدرا. بۆ کڕینی نوێکردنەوە، پەیوەندی بە کلیک گرووپ بکە.',
+    'وەشانی ئێستا هەر کار دەکات و هیچ نەگۆڕدرا. بۆ کڕینی نوێکردنەوە، پەیوەندی بە کلیک گرووپەوە بکە.',
     `This build is from ${blocked.buildDate}, after this gym's updates ended on ${blocked.updatesUntil}. Nothing was changed.`,
   ].join('\n');
 }
