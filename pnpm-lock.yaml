@@ -527,6 +527,12 @@ importers:
         specifier: ^26.4.2
         version: 26.4.2(typescript@6.0.3)
 
+  packages/local-lock:
+    devDependencies:
+      '@types/node':
+        specifier: ^24.19.1
+        version: 24.19.1
+
   packages/platform:
     dependencies:
       '@aparajita/capacitor-secure-storage':
@@ -661,6 +667,9 @@ importers:
       '@gym/db':
         specifier: workspace:*
         version: link:../packages/db
+      '@gym/local-lock':
+        specifier: workspace:*
+        version: link:../packages/local-lock
       '@gym/seller-admin':
         specifier: workspace:*
         version: link:../packages/seller-admin

@@ -11,7 +11,7 @@
     "serve": "tsx src/cli/serve.ts",
     "admin": "tsx src/cli/admin.ts",
     "pgtap": "tsx src/cli/pgtap.ts",
-    "test:offline": "tsx src/cli/test-offline.ts",
+    "test:offline": "node ../../packages/local-lock/src/cli.ts test:offline \"tsx src/cli/test-offline.ts\"",
     "test:int": "vitest run --config vitest.int.config.ts",
     "typecheck": "tsc -p tsconfig.json"
   },

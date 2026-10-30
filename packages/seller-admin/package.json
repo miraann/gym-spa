@@ -10,7 +10,7 @@
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json",
-    "test:int": "vitest run --config vitest.int.config.ts"
+    "test:int": "node ../../packages/local-lock/src/cli.ts \"seller-admin test:int\" \"vitest run --config vitest.int.config.ts\""
   },
   "dependencies": {
     "@gym/core": "workspace:*",

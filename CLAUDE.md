@@ -1,5 +1,7 @@
 # Gym & Spa Management System
 
+**One Claude session per project folder** (decided by the user on 2026-10-30). Never run a second Claude session in `F:\gym-spa`, and don't run tests from the VS Code Playwright extension while Claude works: they all share one local Supabase, one `apps/app/dist` and the same ports, and on 2026-10-30 two sessions made the e2e suite fail in a different place on every run (and both released Phase 11). Before a release or a full test run, check that no other session is listed (ListAgents). The guard (`packages/local-lock`): test runs, `db:reset` and the migration rehearsal take `.tmp/local-supabase.lock` and refuse to start while another live process holds it; never delete that file while its process runs.
+
 Multi-branch gym & spa system with NFC check-in, sold in **two editions** (see below). Targets: Web/PWA, Android, Windows (iOS later).
 
 **Repository:** https://github.com/miraann/gym-spa (git remote `origin`). **It is public today** (checked 2026-10-30; the history holds no secret): making it private is item 3 of `docs/go-live-checklist.md`, done by the user.
