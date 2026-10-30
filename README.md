@@ -713,7 +713,7 @@ Every release of the Android app is signed with **Click Group's release key**, f
 - `pnpm desktop:exe` builds `apps/desktop/release/gym-spa-setup-<version>.exe`. It installs for the current user without admin rights, and keeps its data in `%APPDATA%\gym-spa`.
 - If the installer step stops with NSIS's "Can't open output file", something (usually the antivirus scanning the previous file) still holds `release/gym-spa-setup-<version>.exe`: run `pnpm desktop:exe` again.
 - App ID: `site.clickgroup.gymspa` (the same as Android). Publisher: Click Group.
-- The installer is not signed until Phase 11, so Windows SmartScreen warns about an unknown publisher: click **More info → Run anyway**.
+- The installer is not code-signed (the user's decision for now, Phase 11), so Windows SmartScreen warns about an unknown publisher: click **More info → Run anyway**. Installing at a gym, step by step: [docs/install-guide.md](docs/install-guide.md).
 - The app serves the same production web build from `app://gym-spa`. Browser storage and workers work there (the e2e tests check this). Its stored data belongs to that origin: never change it.
 - No menu bar. Shortcuts: Ctrl and `=` / `-` / `0` zoom (by key position, so they also work with a Kurdish or Arabic keyboard layout), F11 full screen. When run from source (`pnpm desktop:dev`, `pnpm desktop:start`) there are also Ctrl+R (reload) and F12 or Ctrl+Shift+I (DevTools).
 - Security: the page has no Node or Electron access, only `window.gymDesktop`; the window can't navigate away from the app (https links open in the default browser); permissions such as camera or location are refused; Electron's security fuses are burned into the installed exe.
