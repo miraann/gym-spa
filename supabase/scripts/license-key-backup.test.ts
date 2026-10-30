@@ -134,19 +134,28 @@ describe('the public key in packages/core', () => {
     new URL('../../packages/core/src/license-keys.ts', import.meta.url),
     'utf8',
   );
+  const KEYS = /(LICENSE_PUBLIC_KEYS: Readonly<Record<string, string>> = )\{[\s\S]*?\};/;
+  // The file as it was before any key, so these tests don't depend on the keys shipped since.
+  const empty = source.replace(KEYS, '$1{};');
 
   it('is added to LICENSE_PUBLIC_KEYS and nothing else changes', () => {
-    const once = withPublicKey(source, '2026-1', 'PUBLIC_ONE');
+    const once = withPublicKey(empty, '2091-1', 'PUBLIC_ONE');
     expect(once).toContain(
-      "export const LICENSE_PUBLIC_KEYS: Readonly<Record<string, string>> = {\n  '2026-1': 'PUBLIC_ONE',\n};",
+      "export const LICENSE_PUBLIC_KEYS: Readonly<Record<string, string>> = {\n  '2091-1': 'PUBLIC_ONE',\n};",
     );
-    const twice = withPublicKey(once, '2027-1', 'PUBLIC_TWO');
-    expect(twice).toContain("  '2026-1': 'PUBLIC_ONE',\n  '2027-1': 'PUBLIC_TWO',\n};");
-    expect(twice.replace(/\{\n[\s\S]*?\};/, '{};')).toBe(source);
+    const twice = withPublicKey(once, '2092-1', 'PUBLIC_TWO');
+    expect(twice).toContain("  '2091-1': 'PUBLIC_ONE',\n  '2092-1': 'PUBLIC_TWO',\n};");
+    expect(twice.replace(KEYS, '$1{};')).toBe(empty);
+  });
+
+  it('keeps the keys already shipped', () => {
+    const shipped = KEYS.exec(source)?.[0] ?? '';
+    const added = withPublicKey(source, '2091-1', 'PUBLIC_ONE');
+    expect(added).toContain(shipped.replace(/\n\};$/, "\n  '2091-1': 'PUBLIC_ONE',\n};"));
   });
 
   it('never adds a kid twice', () => {
-    expect(() => withPublicKey(withPublicKey(source, '2026-1', 'A'), '2026-1', 'B')).toThrow(
+    expect(() => withPublicKey(withPublicKey(empty, '2091-1', 'A'), '2091-1', 'B')).toThrow(
       'already there',
     );
   });
