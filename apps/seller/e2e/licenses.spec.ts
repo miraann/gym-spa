@@ -34,10 +34,10 @@ test('an offline gym gets a license and a server PC, then both are ended with a 
   await expect(page.getByRole('button', { name: 'چالاککردنی کۆمپیوتەر' })).toBeDisabled();
 
   // A yearly license, signed and stored before it is shown.
-  await page.getByRole('button', { name: 'دەرکردنی لایسنس' }).click();
+  await page.getByRole('button', { name: 'دەرکردنی مۆڵەت' }).click();
   const issue = page.getByRole('dialog');
   await issue.getByLabel('دوایین ڕۆژی کارکردن').fill('2099-01-01');
-  await expect(issue.getByText('لایسنسی ساڵانە زۆرترین 2 ساڵ دەبێت.')).toBeVisible();
+  await expect(issue.getByText('مۆڵەتی ساڵانە زۆرترین 2 ساڵ دەبێت.')).toBeVisible();
   await issue.getByRole('button', { name: '+12 مانگ' }).click();
   await issue.getByRole('button', { name: 'دەرکردن' }).click();
   const licenseCode = (await page.getByTestId('issued-license').textContent()) ?? '';
