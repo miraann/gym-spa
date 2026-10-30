@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:offline": "vite build --mode offline --outDir dist-offline",
     "build:web": "node scripts/build-web.mjs",
     "check-live": "node scripts/check-live.mjs",
     "preview": "vite preview",

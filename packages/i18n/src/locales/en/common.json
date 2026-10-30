@@ -94,6 +94,31 @@
     "endedText": "This gym's subscription has ended: you can see all its data, but nothing can be added or changed. To renew the subscription, contact Click Group.",
     "hide": "Hide this notice"
   },
+  "license": {
+    "endingTitle": "The license ends soon",
+    "endingText": "This gym's license ends on {{date}} ({{days}} days left). To renew it, contact Click Group and put the new code on the server PC.",
+    "graceTitle": "The license has ended",
+    "graceText": "This gym's license ended on {{endedOn}}. From {{readOnlyOn}} the gym is view-only ({{days}} days left). To renew it, contact Click Group.",
+    "endedTitle": "The gym is view-only",
+    "endedText": "This gym's license has ended: you can see everything, but nothing can be added or changed. To renew the license, contact Click Group.",
+    "notActivatedTitle": "The server PC is not activated",
+    "notActivatedText": "Until the activation code is put on the server PC, the gym is view-only. Send the machine code to Click Group.",
+    "wrongMachineTitle": "The activation code is not for this PC",
+    "wrongMachineText": "The activation code is for another PC (for example, Windows was installed again). Until a new code is put on it, the gym is view-only. Contact Click Group.",
+    "clockTitle": "The server PC's clock is wrong",
+    "clockText": "The server PC's clock went back more than two days. Until it is right again, the gym is view-only.",
+    "brokenTitle": "The license no longer works",
+    "brokenText": "This version does not accept the license. Contact Click Group for a new one.",
+    "updatesEndingTitle": "Updates end soon",
+    "updatesEndingText": "Updates to the program last until {{date}} ({{days}} days left). After that this version keeps working, but newer versions cannot be installed. To buy more updates, contact Click Group.",
+    "updatesEndedTitle": "Updates have ended",
+    "updatesEndedText": "This version keeps working, but newer versions cannot be installed until you buy updates. Contact Click Group."
+  },
+  "serverVersion": {
+    "title": "This PC's version doesn't match the server",
+    "text": "This PC has version {{app}} and the server has version {{server}}. Install the same version on every PC of the gym, then open the app again.",
+    "checkAgain": "Check again"
+  },
   "noAccess": {
     "title": "You can't open this page",
     "description": "Your role doesn't include this. Ask your manager if you need it."

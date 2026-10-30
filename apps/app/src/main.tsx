@@ -10,6 +10,8 @@ import { AppProviders } from '@/app/providers';
 import { registerPwa } from '@/app/pwa';
 import { AuthProvider } from '@/features/auth/auth-provider';
 import { AuthGate } from '@/features/auth/auth-gate';
+import { ServerLinkGate } from '@/features/server/server-link-gate';
+import { VersionGate } from '@/features/server/version-gate';
 import { startPreferenceSync } from '@/lib/i18n';
 import { router } from '@/router';
 
@@ -26,9 +28,13 @@ createRoot(container).render(
   <StrictMode>
     <AppProviders>
       <AuthProvider>
-        <AuthGate>
-          <RouterProvider router={router} />
-        </AuthGate>
+        <ServerLinkGate>
+          <VersionGate>
+            <AuthGate>
+              <RouterProvider router={router} />
+            </AuthGate>
+          </VersionGate>
+        </ServerLinkGate>
       </AuthProvider>
     </AppProviders>
   </StrictMode>,

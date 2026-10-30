@@ -13,6 +13,11 @@ const bridge: DesktopBridge = {
   signalCard: () => undefined,
   listPrinters: () => Promise.resolve([]),
   printSilently: () => Promise.resolve(true),
+  serverStatus: () => Promise.resolve({ linked: false, local: false, computerName: 'PC' }),
+  findServers: () => Promise.resolve([]),
+  probeServer: () => Promise.resolve(null),
+  pairWithServer: () => Promise.resolve({ ok: true }),
+  linkThisPc: () => Promise.resolve(false),
 };
 
 describe('detectPlatform', () => {

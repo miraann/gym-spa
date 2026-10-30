@@ -374,6 +374,9 @@ importers:
 
   apps/desktop:
     devDependencies:
+      '@gym/core':
+        specifier: workspace:*
+        version: link:../../packages/core
       '@gym/platform':
         specifier: workspace:*
         version: link:../../packages/platform
@@ -481,6 +484,31 @@ importers:
       vite:
         specifier: ^8.3.2
         version: 8.3.2(@types/node@24.19.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.15)
+
+  apps/server:
+    dependencies:
+      '@gym/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@gym/db':
+        specifier: workspace:*
+        version: link:../../packages/db
+      '@gym/staff-admin':
+        specifier: workspace:*
+        version: link:../../packages/staff-admin
+      '@supabase/supabase-js':
+        specifier: ^2.117.2
+        version: 2.117.2
+    devDependencies:
+      '@types/node':
+        specifier: ^24.19.1
+        version: 24.19.1
+      esbuild:
+        specifier: ^0.28.2
+        version: 0.28.2
+      tsx:
+        specifier: ^4.23.15
+        version: 4.23.15
 
   packages/core: {}
 

@@ -38,7 +38,8 @@
       "edit": "Change settings"
     },
     "backups": {
-      "export": "Export data backups"
+      "export": "Export data backups",
+      "restore": "Restore a backup on the offline server"
     },
     "audit": {
       "view": "View the audit log"
@@ -48,6 +49,9 @@
     },
     "support": {
       "grant": "Let Click Group see the gym's data"
+    },
+    "server": {
+      "manage": "Manage the offline server and connect PCs"
     },
     "members": {
       "view": "View members",

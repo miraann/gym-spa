@@ -118,10 +118,15 @@ select tests.clear_authentication();
 
 -- The schedule ------------------------------------------------------------------------------------------------
 
-select is((select schedule from cron.job where jobname = 'release-daily-lockers'), '*/5 * * * *',
-  'the cloud runs it every 5 minutes');
-select is((select command from cron.job where jobname = 'release-daily-lockers'),
-  'select app.release_daily_lockers_at_night()', 'with the current time');
+-- Without pg_cron (the offline server) the migration skips the job, and gym-server runs it instead.
+select case when tests.has_pg_cron()
+  then is((select schedule from tests.cron_job('release-daily-lockers')), '*/5 * * * *',
+    'the cloud runs it every 5 minutes')
+  else skip('no pg_cron here: the offline server runs it itself', 1) end;
+select case when tests.has_pg_cron()
+  then is((select command from tests.cron_job('release-daily-lockers')),
+    'select app.release_daily_lockers_at_night()', 'with the current time')
+  else skip('no pg_cron here: the offline server runs it itself', 1) end;
 
 select * from finish();
 rollback;

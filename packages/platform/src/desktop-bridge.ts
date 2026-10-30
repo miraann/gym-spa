@@ -31,7 +31,62 @@ export interface DesktopBridge {
    * Resolves false when it couldn't (the printer is gone, out of paper, ...).
    */
   readonly printSilently: (printer: string) => Promise<boolean>;
+  /** The offline edition's link to the gym's server (step OF-d). */
+  readonly serverStatus: () => Promise<ServerLinkStatus>;
+  /** Asks the network which offline servers there are (UDP broadcast, about 1.5 s). */
+  readonly findServers: () => Promise<readonly FoundServer[]>;
+  /** Connects to a server by address and says which it is and what its certificate is; null: none. */
+  readonly probeServer: (address: string) => Promise<ProbedServer | null>;
+  /** Pairs this PC with a probed server using the code on the server's screen. */
+  readonly pairWithServer: (
+    server: Pick<ProbedServer, 'address' | 'port' | 'fingerprint'>,
+    code: string,
+    name: string,
+  ) => Promise<PairResult>;
+  /** Links this PC to the server running on it (the server PC itself); false: none runs here. */
+  readonly linkThisPc: () => Promise<boolean>;
 }
+
+/** Whether this PC is linked to a server, and whether that server runs on this PC. */
+export interface ServerLinkStatus {
+  readonly linked: boolean;
+  readonly local: boolean;
+  /** Windows' name for this PC, the default name it pairs under. */
+  readonly computerName: string;
+}
+
+/** The gym of a server, as it says. */
+export interface ServerGym {
+  readonly code: string;
+  readonly name: string;
+}
+
+/** A server that answered on the network. */
+export interface FoundServer {
+  readonly address: string;
+  readonly port: number;
+  readonly identity: string;
+  readonly gym: ServerGym | null;
+  readonly version: string;
+}
+
+/** A server reached by its address, with the certificate it showed. */
+export interface ProbedServer extends FoundServer {
+  /** SHA-256 of its certificate (AB:CD:…): what this PC pins once paired. */
+  readonly fingerprint: string;
+}
+
+export type PairError =
+  | 'code_wrong'
+  | 'code_expired'
+  | 'no_code'
+  | 'too_many_tries'
+  | 'invalid_name'
+  /** The server showed another certificate than when it was checked: someone may be in between. */
+  | 'certificate_changed'
+  | 'unreachable';
+
+export type PairResult = { readonly ok: true } | { readonly ok: false; readonly error: PairError };
 
 /** A card a PC/SC reader read: its UID in hex, as the card gave it, and the reader's name. */
 export interface PcscCard {
@@ -66,7 +121,23 @@ export const DESKTOP_CHANNELS = {
   printersGet: 'gym:printers-get',
   /** Page → main: print the page to a printer, without the dialog. */
   printSilent: 'gym:print-silent',
+  /** Page → main: the offline edition's server link (OF-d). */
+  serverStatus: 'gym:server-status',
+  serverFind: 'gym:server-find',
+  serverProbe: 'gym:server-probe',
+  serverPair: 'gym:server-pair',
+  serverUseLocal: 'gym:server-use-local',
 } as const;
+
+/** A server's address as typed: a host name or IPv4 address, with an optional port. */
+export function isServerAddress(value: unknown): value is string {
+  return (
+    typeof value === 'string' &&
+    /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)*(?::\d{1,5})?$/i.test(
+      value.trim(),
+    )
+  );
+}
 
 /** A printer's name as Windows gives it: 1 to 256 characters, no control characters. */
 export function isPrinterName(value: unknown): value is string {

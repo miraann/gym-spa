@@ -1,7 +1,7 @@
--- Auth spike (throwaway). The roles, schemas and privileges our migrations and Supabase Auth expect,
--- copied from the supabase/postgres image (17.11.0.002) that the local Supabase CLI runs.
--- Run once on a new database as the superuser supabase_admin, before Auth's and our migrations.
--- spike.mjs passes the passwords as psql variables.
+-- The roles, schemas and privileges that our migrations and Supabase Auth expect, as the
+-- supabase/postgres image (17.11) gives them (from the auth spike, spikes/windows-auth). Run once
+-- on a new database as the superuser supabase_admin, before Auth's and our migrations. gym-server
+-- passes the passwords as psql variables; they are never written into this file.
 \set ON_ERROR_STOP on
 
 -- API roles. PostgREST logs in as authenticator and switches to anon / authenticated / service_role.
@@ -51,3 +51,12 @@ alter default privileges for role postgres in schema public
 alter default privileges for role postgres in schema public
   grant update on sequences to anon, authenticated, service_role;
 alter default privileges for role postgres in schema public revoke execute on functions from public;
+
+-- Which of our migrations ran, like the Supabase CLI keeps it.
+create schema supabase_migrations authorization postgres;
+create table supabase_migrations.schema_migrations (
+  version text primary key,
+  name text,
+  statements text[]
+);
+alter table supabase_migrations.schema_migrations owner to postgres;

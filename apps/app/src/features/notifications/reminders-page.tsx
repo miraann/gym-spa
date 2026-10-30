@@ -25,6 +25,7 @@ import { useReminders, useSetReminderDone, type Reminder } from './notification-
 import { notificationErrorKey } from './notification-errors';
 import { SendWhatsAppDialog } from './send-whatsapp-dialog';
 import { useTemplateName } from './template-name';
+import { isOfflineEdition } from '@/lib/edition';
 import { NotificationError } from './templates-page';
 
 /** The day before a `YYYY-MM-DD` date. */
@@ -274,15 +275,18 @@ function ReminderRow({
       }
       trailing={
         <>
-          <Button
-            size="sm"
-            variant={isDone ? 'outline' : 'default'}
-            disabled={!online || readOnly}
-            onClick={onSend}
-          >
-            <MessageCircleIcon data-icon="inline-start" />
-            {t('reminders.whatsapp')}
-          </Button>
+          {/* WhatsApp needs the internet: the offline edition keeps the list and "done" only. */}
+          {!isOfflineEdition && (
+            <Button
+              size="sm"
+              variant={isDone ? 'outline' : 'default'}
+              disabled={!online || readOnly}
+              onClick={onSend}
+            >
+              <MessageCircleIcon data-icon="inline-start" />
+              {t('reminders.whatsapp')}
+            </Button>
+          )}
           <Button
             size="sm"
             variant="outline"

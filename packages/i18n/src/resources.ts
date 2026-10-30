@@ -26,6 +26,7 @@ import arSettings from './locales/ar/settings.json';
 import arStaff from './locales/ar/staff.json';
 import arSubscriptions from './locales/ar/subscriptions.json';
 import arSupport from './locales/ar/support.json';
+import arServer from './locales/ar/server.json';
 import ckbAuth from './locales/ckb/auth.json';
 import ckbBranches from './locales/ckb/branches.json';
 import ckbCards from './locales/ckb/cards.json';
@@ -54,6 +55,7 @@ import ckbSettings from './locales/ckb/settings.json';
 import ckbStaff from './locales/ckb/staff.json';
 import ckbSubscriptions from './locales/ckb/subscriptions.json';
 import ckbSupport from './locales/ckb/support.json';
+import ckbServer from './locales/ckb/server.json';
 import enAuth from './locales/en/auth.json';
 import enBranches from './locales/en/branches.json';
 import enCards from './locales/en/cards.json';
@@ -82,6 +84,7 @@ import enSettings from './locales/en/settings.json';
 import enStaff from './locales/en/staff.json';
 import enSubscriptions from './locales/en/subscriptions.json';
 import enSupport from './locales/en/support.json';
+import enServer from './locales/en/server.json';
 import type { Language } from './languages';
 // Types only (erased from every bundle): the seller panel's texts load from ./seller.ts, which the
 // gym app never imports, so its bundle never contains them.
@@ -107,6 +110,7 @@ const ckb = {
   subscriptions: ckbSubscriptions,
   payments: ckbPayments,
   support: ckbSupport,
+  server: ckbServer,
   lockers: ckbLockers,
   spa: ckbSpa,
   hr: ckbHr,
@@ -147,6 +151,7 @@ const en: GymResources = {
   subscriptions: enSubscriptions,
   payments: enPayments,
   support: enSupport,
+  server: enServer,
   lockers: enLockers,
   spa: enSpa,
   hr: enHr,
@@ -178,6 +183,7 @@ const ar: GymResources = {
   subscriptions: arSubscriptions,
   payments: arPayments,
   support: arSupport,
+  server: arServer,
   lockers: arLockers,
   spa: arSpa,
   hr: arHr,
@@ -211,6 +217,7 @@ export const NAMESPACES = [
   'subscriptions',
   'payments',
   'support',
+  'server',
   'lockers',
   'spa',
   'hr',

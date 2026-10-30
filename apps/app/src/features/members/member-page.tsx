@@ -45,6 +45,7 @@ import {
 import { memberErrorKey, type MemberErrorKey } from './member-errors';
 import { MemberError } from './member-error';
 import { MemberPhotoCard } from './member-photo';
+import { isOfflineEdition } from '@/lib/edition';
 import { MemberStatusCard } from './member-status';
 
 /** One member: who they are, their health info (for those allowed), and their status. */
@@ -119,7 +120,8 @@ function MemberProfile({ member }: { readonly member: Member }) {
           </p>
         </div>
         {member.isGuest && <MakeMemberButton member={member} />}
-        <MemberWhatsAppButton member={member} />
+        {/* WhatsApp needs the internet: not in the offline edition. */}
+        {!isOfflineEdition && <MemberWhatsAppButton member={member} />}
         {!phone && editButton}
       </div>
 

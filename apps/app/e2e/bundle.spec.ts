@@ -10,6 +10,8 @@ import { expect, test } from '@playwright/test';
 const DIST = fileURLToPath(new URL('../dist', import.meta.url));
 /** From .env.e2e: a variable the app never reads. */
 const UNUSED = { name: 'VITE_E2E_UNUSED', value: 'unused-variable-must-not-reach-the-bundle' };
+/** The backend the build was made for: .env.e2e's, or the offline server's (`pnpm test:offline`). */
+const BACKEND = process.env.VITE_SUPABASE_URL ?? 'http://127.0.0.1:54321';
 
 /** Every file the browser can load: pages, scripts, the service worker and the manifest. */
 async function builtFiles(): Promise<string[]> {
@@ -30,7 +32,7 @@ test('only the variables the app reads reach the browser', async () => {
     if (text.includes(UNUSED.value) || text.includes(UNUSED.name)) {
       leaks.push(path.relative(DIST, file));
     }
-    if (text.includes('http://127.0.0.1:54321')) readsBackend = true;
+    if (text.includes(BACKEND)) readsBackend = true;
   }
 
   // The scan sees the real e2e build: the backend address the app reads is in it.

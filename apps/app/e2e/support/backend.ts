@@ -1,8 +1,10 @@
-// Test data in the local Supabase (`pnpm db:start`) for the end-to-end tests of
-// the web and Windows apps. Each test creates its own gym (with branches and staff) and removes it
-// after, so tests don't depend on the demo data, on your local accounts, or on each other.
+// Test data in the local Supabase (`pnpm db:start`, or the offline server of `pnpm test:offline`)
+// for the end-to-end tests of the web and Windows apps. Each test creates its own gym (with
+// branches and staff) and removes it after, so tests don't depend on the demo data, on your local
+// accounts, or on each other.
 import { execSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
+import { readFileSync } from 'node:fs';
 import { staffEmail } from '@gym/core';
 import type { Database } from '@gym/db';
 import { createClient } from '@supabase/supabase-js';
@@ -18,6 +20,12 @@ let localStatus: LocalStatus | undefined;
 
 function status(): LocalStatus {
   if (localStatus) return localStatus;
+  // An offline server on this PC (`pnpm test:offline`) instead of the local Supabase.
+  const offline = process.env.GYM_E2E_BACKEND;
+  if (offline) {
+    localStatus = JSON.parse(readFileSync(offline, 'utf8')) as LocalStatus;
+    return localStatus;
+  }
   let output: string;
   try {
     output = execSync(

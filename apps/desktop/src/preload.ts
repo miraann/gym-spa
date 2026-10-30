@@ -54,6 +54,19 @@ const bridge: DesktopBridge = {
   listPrinters: () => ipcRenderer.invoke(DESKTOP_CHANNELS.printersGet) as Promise<string[]>,
   printSilently: (printer) =>
     ipcRenderer.invoke(DESKTOP_CHANNELS.printSilent, printer) as Promise<boolean>,
+  serverStatus: () =>
+    ipcRenderer.invoke(DESKTOP_CHANNELS.serverStatus) as ReturnType<DesktopBridge['serverStatus']>,
+  findServers: () =>
+    ipcRenderer.invoke(DESKTOP_CHANNELS.serverFind) as ReturnType<DesktopBridge['findServers']>,
+  probeServer: (address) =>
+    ipcRenderer.invoke(DESKTOP_CHANNELS.serverProbe, address) as ReturnType<
+      DesktopBridge['probeServer']
+    >,
+  pairWithServer: (server, code, name) =>
+    ipcRenderer.invoke(DESKTOP_CHANNELS.serverPair, server, code, name) as ReturnType<
+      DesktopBridge['pairWithServer']
+    >,
+  linkThisPc: () => ipcRenderer.invoke(DESKTOP_CHANNELS.serverUseLocal) as Promise<boolean>,
 };
 
 contextBridge.exposeInMainWorld(DESKTOP_BRIDGE_KEY, bridge);

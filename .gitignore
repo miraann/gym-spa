@@ -3,6 +3,7 @@ node_modules/
 
 # Build output
 dist/
+dist-offline/
 # Desktop installers (apps/desktop)
 release/
 dev-dist/
@@ -17,6 +18,7 @@ dev-dist/
 !.env.example
 # Local Supabase addresses for the end-to-end tests (no secrets)
 !apps/app/.env.e2e
+!apps/app/.env.offline
 
 # Tests
 coverage/

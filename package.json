@@ -25,6 +25,7 @@
     "desktop:dev": "pnpm --filter @gym/desktop dev",
     "desktop:start": "pnpm build && pnpm --filter @gym/desktop start",
     "desktop:exe": "pnpm build && pnpm --filter @gym/desktop exe",
+    "desktop:exe:offline": "pnpm server:bundle && pnpm --filter @gym/app build:offline && pnpm --filter @gym/desktop exe:offline",
     "db:start": "pnpm --filter @gym/supabase start",
     "db:stop": "pnpm --filter @gym/supabase stop",
     "db:status": "pnpm --filter @gym/supabase status",
@@ -42,7 +43,12 @@
     "smoke:staff-admin": "pnpm --filter @gym/supabase smoke:staff-admin",
     "smoke:license": "pnpm --filter @gym/supabase smoke:license",
     "release:migrations": "pnpm --filter @gym/supabase release:migrations",
-    "release:check-live": "pnpm --filter @gym/app check-live"
+    "release:check-live": "pnpm --filter @gym/app check-live",
+    "server:tools": "pnpm --filter @gym/server tools",
+    "server:bundle": "pnpm --filter @gym/server bundle",
+    "server:dev": "pnpm --filter @gym/server dev",
+    "server:pgtap": "pnpm --filter @gym/server pgtap",
+    "test:offline": "pnpm --filter @gym/server test:offline"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

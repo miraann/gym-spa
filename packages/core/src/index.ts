@@ -452,3 +452,11 @@ export {
   type LicenseUpdates,
 } from './license.ts';
 export { LICENSE_PUBLIC_KEYS, REVOKED_LICENSE_KIDS } from './license-keys.ts';
+export {
+  PAIRING_CODE_MINUTES,
+  PAIRING_CODE_TRIES,
+  isFingerprint,
+  normalizePairingCode,
+  pairingProof,
+  serverIdentity,
+} from './pairing.ts';
