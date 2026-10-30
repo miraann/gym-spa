@@ -6,6 +6,7 @@ import {
   NfcIcon,
   PaletteIcon,
   PrinterIcon,
+  ServerIcon,
   ShieldCheckIcon,
   type LucideIcon,
 } from 'lucide-react';
@@ -14,11 +15,13 @@ import { canPrintSilently } from '@gym/platform';
 import { cn } from '@gym/ui/lib/utils';
 import type { AppPath } from '@/app/navigation';
 import { usePermissions } from '@/features/auth/use-permissions';
+import { useServerLink } from '@/features/server/server-link';
 import { isOfflineEdition } from '@/lib/edition';
 
 const TABS: readonly {
   to: AppPath;
-  key: 'display' | 'appearance' | 'gym' | 'cardReader' | 'printer' | 'messages' | 'support';
+  key:
+    'display' | 'appearance' | 'gym' | 'cardReader' | 'printer' | 'messages' | 'support' | 'server';
   icon: LucideIcon;
   /** Shown only to staff with it. */
   permission?: string;
@@ -26,6 +29,8 @@ const TABS: readonly {
   windowsOnly?: boolean;
   /** Needs the internet: not in the offline edition (WhatsApp messages, Click Group's support). */
   onlineOnly?: boolean;
+  /** Only on the offline edition's server PC itself (its pairing codes and paired PCs). */
+  serverPcOnly?: boolean;
 }[] = [
   { to: '/settings/display', key: 'display', icon: MonitorSmartphoneIcon },
   { to: '/settings/appearance', key: 'appearance', icon: PaletteIcon },
@@ -46,6 +51,13 @@ const TABS: readonly {
     permission: 'support.grant',
     onlineOnly: true,
   },
+  {
+    to: '/settings/server',
+    key: 'server',
+    icon: ServerIcon,
+    permission: 'server.manage',
+    serverPcOnly: true,
+  },
 ];
 
 /** Settings: one page per topic, picked with a segmented control like a native app's. */
@@ -53,11 +65,13 @@ export function SettingsLayout() {
   const { t } = useTranslation('settings');
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const permissions = usePermissions();
+  const onServerPc = useServerLink().data?.local === true;
   const tabs = TABS.filter(
     (tab) =>
       (tab.permission === undefined || permissions.has(tab.permission)) &&
       (!tab.windowsOnly || canPrintSilently()) &&
-      !(tab.onlineOnly && isOfflineEdition),
+      !(tab.onlineOnly && isOfflineEdition) &&
+      (!tab.serverPcOnly || onServerPc),
   );
   const compact = tabs.length > 3;
 

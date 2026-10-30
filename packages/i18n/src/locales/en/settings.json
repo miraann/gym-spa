@@ -20,7 +20,8 @@
     "printer": "Printer",
     "support": "Click Group",
     "messages": "Messages",
-    "gym": "Gym"
+    "gym": "Gym",
+    "server": "Server"
   },
   "appearance": {
     "title": "Appearance",

@@ -45,6 +45,10 @@ export const serverInfoSchema = z.object({
   fingerprint: z.string().nullable(),
   gym: z.object({ code: z.string(), name: z.string() }).nullable(),
   license: licenseSummarySchema.nullable(),
+  /** The server's identity (XXXX-XXXX); null on a server without its LAN port. */
+  identity: z.string().nullable().optional(),
+  /** What the server PC still needs to be set up (OF-d). */
+  setup: z.enum(['license', 'owner']).nullable().optional(),
 });
 
 export type ServerInfo = z.infer<typeof serverInfoSchema>;

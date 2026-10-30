@@ -17,6 +17,7 @@ export type Route =
   | { readonly kind: 'health' }
   | { readonly kind: 'info' }
   | { readonly kind: 'admin'; readonly name: string }
+  | { readonly kind: 'pair' }
   | { readonly kind: 'not_found' };
 
 function under(url: string, prefix: string): string | null {
@@ -38,6 +39,7 @@ export function route(url: string): Route {
   if (pathOnly === '/functions/v1/staff-admin') return { kind: 'staff-admin' };
   if (pathOnly === '/server/v1/health') return { kind: 'health' };
   if (pathOnly === '/server/v1/info') return { kind: 'info' };
+  if (pathOnly === '/server/v1/pair') return { kind: 'pair' };
   const admin = /^\/server\/v1\/admin\/([a-z-]+)$/.exec(pathOnly ?? '')?.[1];
   if (admin !== undefined) return { kind: 'admin', name: admin };
   return { kind: 'not_found' };
@@ -138,8 +140,35 @@ export interface GatewayOptions {
   readonly health: () => unknown;
   /** Which gym and version this is: what a PC shows before it pairs (OF-d). */
   readonly info: () => Promise<unknown>;
-  /** The server's own settings (license, first Owner, clock): from the server PC itself only. */
+  /** The server's own settings (license, first Owner, clock, pairing): from the server PC only. */
   readonly admin?: AdminHandler;
+  /**
+   * Who on the server PC may use them: the server's secret key (gym-server-admin), anyone while the
+   * gym has no staff yet (the first setup), otherwise staff with server.manage. Absent: anyone on
+   * the server PC.
+   */
+  readonly adminAccess?: (headers: IncomingHttpHeaders) => Promise<boolean>;
+  /**
+   * The paired PCs (OF-d). When set, every request from another PC needs its pairing token, except
+   * the health check, the info, pairing itself and Auth's public paths.
+   */
+  readonly pairing?: {
+    readonly isPaired: (token: string) => boolean;
+    readonly pair: (body: unknown) => Promise<AdminAnswer>;
+  };
+}
+
+/** The header the Windows app adds with its pairing token. */
+export const DEVICE_TOKEN_HEADER = 'x-gym-device-token';
+
+/** Routes another PC may use before it is paired (and that hold no gym data). */
+export function isOpenRoute(target: Route): boolean {
+  return (
+    target.kind === 'health' ||
+    target.kind === 'info' ||
+    target.kind === 'pair' ||
+    (target.kind === 'auth' && authPathIsPublic(target.path))
+  );
 }
 
 export interface AdminAnswer {
@@ -221,6 +250,35 @@ async function serveFetch(
   response.end(Buffer.from(await answer.arrayBuffer()));
 }
 
+/** Reads a small JSON body, answers with what the handler says (500 when it throws). */
+function answerJson(
+  request: IncomingMessage,
+  response: ServerResponse,
+  handle: (body: unknown) => Promise<AdminAnswer>,
+): void {
+  readBody(request)
+    .then(async (raw): Promise<AdminAnswer> => {
+      if (raw.length > ADMIN_BODY_LIMIT) return { status: 413, body: { error: 'too_large' } };
+      let body: unknown = null;
+      if (raw.length > 0) {
+        try {
+          body = JSON.parse(raw.toString('utf8'));
+        } catch {
+          return { status: 400, body: { error: 'invalid_json' } };
+        }
+      }
+      return handle(body);
+    })
+    .then(
+      (answer) => {
+        sendJson(request, response, answer.status, answer.body);
+      },
+      () => {
+        sendJson(request, response, 500, { error: 'internal' });
+      },
+    );
+}
+
 /** gym-server's request handler. */
 export function createGateway(options: GatewayOptions): http.RequestListener {
   return (request, response) => {
@@ -240,37 +298,38 @@ export function createGateway(options: GatewayOptions): http.RequestListener {
       sendJson(request, response, 404, { message: 'no_route' });
       return;
     }
+    if (!fromServerPc && options.pairing && !isOpenRoute(target)) {
+      const token = header(request.headers, DEVICE_TOKEN_HEADER);
+      if (token === undefined || !options.pairing.isPaired(token)) {
+        sendJson(request, response, 401, { message: 'pc_not_paired' });
+        return;
+      }
+    }
     if (target.kind === 'health') {
       sendJson(request, response, 200, options.health());
       return;
     }
+    if (target.kind === 'pair') {
+      const { pairing } = options;
+      if (request.method !== 'POST' || pairing === undefined) {
+        sendJson(request, response, 404, { message: 'no_route' });
+        return;
+      }
+      answerJson(request, response, (body) => pairing.pair(body));
+      return;
+    }
     if (target.kind === 'admin') {
-      if (!fromServerPc || options.admin === undefined) {
+      const { admin, adminAccess } = options;
+      if (!fromServerPc || admin === undefined) {
         sendJson(request, response, 403, { message: 'admin_not_allowed' });
         return;
       }
-      const handle = options.admin;
-      readBody(request)
-        .then(async (raw) => {
-          if (raw.length > ADMIN_BODY_LIMIT) return { status: 413, body: { error: 'too_large' } };
-          let body: unknown = null;
-          if (raw.length > 0) {
-            try {
-              body = JSON.parse(raw.toString('utf8'));
-            } catch {
-              return { status: 400, body: { error: 'invalid_json' } };
-            }
-          }
-          return handle(request.method ?? 'GET', target.name, body);
-        })
-        .then(
-          (answer) => {
-            sendJson(request, response, answer.status, answer.body);
-          },
-          () => {
-            sendJson(request, response, 500, { error: 'internal' });
-          },
-        );
+      answerJson(request, response, async (body) => {
+        if (adminAccess && !(await adminAccess(request.headers))) {
+          return { status: 403, body: { error: 'not_allowed' } };
+        }
+        return admin(request.method ?? 'GET', target.name, body);
+      });
       return;
     }
     if (target.kind === 'info') {

@@ -10,6 +10,7 @@ import { AppProviders } from '@/app/providers';
 import { registerPwa } from '@/app/pwa';
 import { AuthProvider } from '@/features/auth/auth-provider';
 import { AuthGate } from '@/features/auth/auth-gate';
+import { ServerLinkGate } from '@/features/server/server-link-gate';
 import { VersionGate } from '@/features/server/version-gate';
 import { startPreferenceSync } from '@/lib/i18n';
 import { router } from '@/router';
@@ -26,13 +27,15 @@ if (!container) throw new Error('Missing #root element in index.html');
 createRoot(container).render(
   <StrictMode>
     <AppProviders>
-      <VersionGate>
-        <AuthProvider>
-          <AuthGate>
-            <RouterProvider router={router} />
-          </AuthGate>
-        </AuthProvider>
-      </VersionGate>
+      <AuthProvider>
+        <ServerLinkGate>
+          <VersionGate>
+            <AuthGate>
+              <RouterProvider router={router} />
+            </AuthGate>
+          </VersionGate>
+        </ServerLinkGate>
+      </AuthProvider>
     </AppProviders>
   </StrictMode>,
 );

@@ -13,9 +13,17 @@
 //
 // Extra arguments after `--` go to Playwright (e.g. -- e2e/staff.spec.ts).
 import { spawn } from 'node:child_process';
+import { randomUUID } from 'node:crypto';
 import path from 'node:path';
 import { existsSync } from 'node:fs';
 import { parseArgs } from 'node:util';
+import {
+  generateLicenseKey,
+  importLicenseSigningKey,
+  keyRingOf,
+  signActivation,
+  signLicense,
+} from '@gym/core';
 import { runPgTap } from '../pgtap.ts';
 import { dataPaths, devDataRoot, REPO } from '../paths.ts';
 import { DEV_PORTS } from '../ports.ts';
@@ -40,6 +48,9 @@ const { values: flags, positionals } = parseArgs({
 const all = !flags.pgtap && !flags.e2e && !flags.int && !flags.desktop;
 /** The desktop test's own server, on other ports and with no demo gym: its one gym is the test's. */
 const DESKTOP_PORTS = { postgres: 44432, auth: 44499, rest: 44430, gateway: 44421 };
+const DESKTOP_LAN_PORT = 44200;
+const SETUP_PORTS = { postgres: 42432, auth: 42499, rest: 42430, gateway: 42421 };
+const SETUP_MACHINE = '0V5Q-1BD4-TS11-N9TC-9402';
 const root = devDataRoot();
 const log = (line: string) => {
   console.log(line);
@@ -83,7 +94,53 @@ async function desktop(): Promise<number> {
   stopLeftovers(desktopOptions);
   removeServer(desktopRoot);
   createServer({ ...desktopOptions, seed: false });
-  const server = await startServer(desktopOptions);
+  // HTTPS and discovery on ports of their own, so a real server on this PC never answers instead.
+  const server = await startServer({
+    ...desktopOptions,
+    lanPort: DESKTOP_LAN_PORT,
+    discoveryPort: DESKTOP_LAN_PORT + 1,
+  });
+  // A second server, new and unlicensed, for the first setup on the server PC (OF-d): it takes a
+  // license signed with a throwaway key, made here.
+  const setupRoot = `${root}-setup`;
+  const setupOptions = { dataRoot: setupRoot, ports: SETUP_PORTS, log };
+  stopLeftovers(setupOptions);
+  removeServer(setupRoot);
+  createServer({ ...setupOptions, seed: false });
+  const key = await importLicenseSigningKey((await generateLicenseKey('test-setup')).privateJwk);
+  const setupServer = await startServer({
+    ...setupOptions,
+    license: { keys: keyRingOf(key), machineCode: SETUP_MACHINE },
+  });
+  const today = new Date().toISOString().slice(0, 10);
+  const setupGymId = randomUUID();
+  const setupLicense = await signLicense(
+    {
+      licenseId: randomUUID(),
+      kid: 'test-setup',
+      gymId: setupGymId,
+      gymCode: 'setup-test',
+      gymName: 'جیمی ڕێکخستن',
+      type: 'perpetual',
+      maxBranches: null,
+      maxDevices: null,
+      features: [],
+      issuedOn: today,
+      expiresOn: null,
+      updatesUntil: `${String(Number(today.slice(0, 4)) + 1)}${today.slice(4)}`,
+    },
+    key,
+  );
+  const setupActivation = await signActivation(
+    {
+      activationId: randomUUID(),
+      kid: 'test-setup',
+      gymId: setupGymId,
+      machineCode: SETUP_MACHINE.replaceAll('-', ''),
+      issuedOn: today,
+    },
+    key,
+  );
   try {
     log('\nbuilding the offline edition (apps/app/dist-offline) and the Windows shell');
     const built =
@@ -96,11 +153,19 @@ async function desktop(): Promise<number> {
       {
         GYM_OFFLINE_WEB_ROOT: path.join(REPO, 'apps', 'app', 'dist-offline'),
         GYM_SERVER_URL: server.url,
+        // For pairing: the server's HTTPS port, and its secret key to make a pairing code.
+        GYM_SERVER_LAN_PORT: String(DESKTOP_LAN_PORT),
+        GYM_SERVER_SECRET_KEY: server.backend.SECRET_KEY,
         GYM_E2E_BACKEND: server.db.data.backendFile,
+        GYM_SETUP_SERVER_URL: setupServer.url,
+        GYM_SETUP_MACHINE_CODE: SETUP_MACHINE,
+        GYM_SETUP_LICENSE: setupLicense,
+        GYM_SETUP_ACTIVATION: setupActivation,
       },
     );
   } finally {
     await server.stop();
+    await setupServer.stop();
   }
 }
 

@@ -51,6 +51,7 @@ import { Route as SettingsDisplayRouteImport } from './routes/settings/display'
 import { Route as SettingsGymRouteImport } from './routes/settings/gym'
 import { Route as SettingsMessagesRouteImport } from './routes/settings/messages'
 import { Route as SettingsPrinterRouteImport } from './routes/settings/printer'
+import { Route as SettingsServerRouteImport } from './routes/settings/server'
 import { Route as SettingsSupportRouteImport } from './routes/settings/support'
 import { Route as ShopIndexRouteImport } from './routes/shop/index'
 import { Route as ShopProductsRouteImport } from './routes/shop/products'
@@ -282,6 +283,11 @@ const SettingsPrinterRoute = SettingsPrinterRouteImport.update({
   path: '/printer',
   getParentRoute: () => SettingsRouteRoute,
 } as any)
+const SettingsServerRoute = SettingsServerRouteImport.update({
+  id: '/server',
+  path: '/server',
+  getParentRoute: () => SettingsRouteRoute,
+} as any)
 const SettingsSupportRoute = SettingsSupportRouteImport.update({
   id: '/support',
   path: '/support',
@@ -417,6 +423,7 @@ export interface FileRoutesByFullPath {
   '/settings/gym': typeof SettingsGymRoute
   '/settings/messages': typeof SettingsMessagesRoute
   '/settings/printer': typeof SettingsPrinterRoute
+  '/settings/server': typeof SettingsServerRoute
   '/settings/support': typeof SettingsSupportRoute
   '/shop/products': typeof ShopProductsRoute
   '/shop/stock': typeof ShopStockRoute
@@ -473,6 +480,7 @@ export interface FileRoutesByTo {
   '/settings/gym': typeof SettingsGymRoute
   '/settings/messages': typeof SettingsMessagesRoute
   '/settings/printer': typeof SettingsPrinterRoute
+  '/settings/server': typeof SettingsServerRoute
   '/settings/support': typeof SettingsSupportRoute
   '/shop/products': typeof ShopProductsRoute
   '/shop/stock': typeof ShopStockRoute
@@ -538,6 +546,7 @@ export interface FileRoutesById {
   '/settings/gym': typeof SettingsGymRoute
   '/settings/messages': typeof SettingsMessagesRoute
   '/settings/printer': typeof SettingsPrinterRoute
+  '/settings/server': typeof SettingsServerRoute
   '/settings/support': typeof SettingsSupportRoute
   '/shop/products': typeof ShopProductsRoute
   '/shop/stock': typeof ShopStockRoute
@@ -604,6 +613,7 @@ export interface FileRouteTypes {
     | '/settings/gym'
     | '/settings/messages'
     | '/settings/printer'
+    | '/settings/server'
     | '/settings/support'
     | '/shop/products'
     | '/shop/stock'
@@ -660,6 +670,7 @@ export interface FileRouteTypes {
     | '/settings/gym'
     | '/settings/messages'
     | '/settings/printer'
+    | '/settings/server'
     | '/settings/support'
     | '/shop/products'
     | '/shop/stock'
@@ -724,6 +735,7 @@ export interface FileRouteTypes {
     | '/settings/gym'
     | '/settings/messages'
     | '/settings/printer'
+    | '/settings/server'
     | '/settings/support'
     | '/shop/products'
     | '/shop/stock'
@@ -1083,6 +1095,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsPrinterRouteImport
       parentRoute: typeof SettingsRouteRoute
     }
+    '/settings/server': {
+      id: '/settings/server'
+      path: '/server'
+      fullPath: '/settings/server'
+      preLoaderRoute: typeof SettingsServerRouteImport
+      parentRoute: typeof SettingsRouteRoute
+    }
     '/settings/support': {
       id: '/settings/support'
       path: '/support'
@@ -1317,6 +1336,7 @@ interface SettingsRouteRouteChildren {
   SettingsGymRoute: typeof SettingsGymRoute
   SettingsMessagesRoute: typeof SettingsMessagesRoute
   SettingsPrinterRoute: typeof SettingsPrinterRoute
+  SettingsServerRoute: typeof SettingsServerRoute
   SettingsSupportRoute: typeof SettingsSupportRoute
   SettingsIndexRoute: typeof SettingsIndexRoute
 }
@@ -1328,6 +1348,7 @@ const SettingsRouteRouteChildren: SettingsRouteRouteChildren = {
   SettingsGymRoute: SettingsGymRoute,
   SettingsMessagesRoute: SettingsMessagesRoute,
   SettingsPrinterRoute: SettingsPrinterRoute,
+  SettingsServerRoute: SettingsServerRoute,
   SettingsSupportRoute: SettingsSupportRoute,
   SettingsIndexRoute: SettingsIndexRoute,
 }

@@ -49,6 +49,9 @@
     "support": {
       "grant": "Let Click Group see the gym's data"
     },
+    "server": {
+      "manage": "Manage the offline server and connect PCs"
+    },
     "members": {
       "view": "View members",
       "create": "Add members",

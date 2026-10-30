@@ -17,7 +17,9 @@ import {
   queryAsync,
   type Database,
 } from './database.ts';
-import { adminHandler } from './admin.ts';
+import { adminAccess } from './access.ts';
+import { adminHandler, pairAnswer } from './admin.ts';
+import { answerDiscovery } from './discovery.ts';
 import { createGateway } from './gateway.ts';
 import { runScheduledJobs, type JobRunner } from './jobs.ts';
 import {
@@ -30,6 +32,7 @@ import { dataPaths, toolPaths, type ToolPaths } from './paths.ts';
 import type { LicenseSummary } from './license.ts';
 import { startLicenseService, type LicenseService } from './license-service.ts';
 import { rotateLogs } from './log.ts';
+import { startPairingService, type PairingService } from './pairing-service.ts';
 import { thisMachineCode } from './machine.ts';
 import type { StackPorts } from './ports.ts';
 import {
@@ -167,6 +170,8 @@ export interface StartOptions extends StackOptions {
    * code; the installed server uses the shipped keys and this PC's code.
    */
   readonly license?: { readonly keys?: LicenseKeyRing; readonly machineCode?: string };
+  /** UDP port of discovery (with lanPort); default 47201. */
+  readonly discoveryPort?: number;
 }
 
 export interface ServerStatus {
@@ -185,6 +190,10 @@ export interface ServerInfo {
   readonly gym: { readonly code: string; readonly name: string } | null;
   /** The license and its warnings (never the codes); null when the server doesn't check one. */
   readonly license: LicenseSummary | null;
+  /** The server's identity (XXXX-XXXX) a PC compares when it pairs; null without the LAN port. */
+  readonly identity: string | null;
+  /** What the server PC still needs: its license (no gym yet), then its first Owner. */
+  readonly setup: 'license' | 'owner' | null;
 }
 
 export interface RunningServer {
@@ -208,6 +217,13 @@ async function serverGym(db: Database): Promise<ServerInfo['gym']> {
   if (rows.length !== 1) return null;
   const [code = '', name = ''] = (rows[0] ?? '').split('\t');
   return { code, name };
+}
+
+/** What the first setup still needs, on a server that checks a license. */
+async function serverSetup(db: Database, gym: ServerInfo['gym']): Promise<ServerInfo['setup']> {
+  if (gym === null) return 'license';
+  const staff = await queryAsync(db, 'select count(*) from public.staff_users');
+  return staff[0] === '0' ? 'owner' : null;
 }
 
 function listen(server: http.Server, port: number, host?: string): Promise<void> {
@@ -236,9 +252,13 @@ export async function startServer(options: StartOptions): Promise<RunningServer>
   const servers: http.Server[] = [];
   let jobs: JobRunner | null = null;
   let license: LicenseService | null = null;
+  let pairing: PairingService | null = null;
+  let discovery: { stop: () => void } | null = null;
   const stop = async () => {
     jobs?.stop();
     license?.stop();
+    pairing?.stop();
+    discovery?.stop();
     await Promise.all(
       servers.map(
         (server) =>
@@ -317,13 +337,27 @@ export async function startServer(options: StartOptions): Promise<RunningServer>
       });
     }
     const licenseService = license;
-    const info = async (): Promise<ServerInfo> => ({
-      edition: 'offline',
-      version: SERVER_VERSION,
-      fingerprint: certificate?.fingerprint ?? null,
-      gym: await serverGym(db),
-      license: licenseService?.summary() ?? null,
-    });
+    // PCs on the LAN pair with the server (OF-d); without the LAN port only this PC reaches it.
+    if (certificate !== null) {
+      pairing = startPairingService({
+        dataRoot: options.dataRoot,
+        fingerprint: certificate.fingerprint,
+        log,
+      });
+    }
+    const pairingService = pairing;
+    const info = async (): Promise<ServerInfo> => {
+      const gym = await serverGym(db);
+      return {
+        edition: 'offline',
+        version: SERVER_VERSION,
+        fingerprint: certificate?.fingerprint ?? null,
+        gym,
+        license: licenseService?.summary() ?? null,
+        identity: pairingService?.identity ?? null,
+        setup: licenseService === null ? null : await serverSetup(db, gym),
+      };
+    };
     const tokens = roleTokens(db.secrets);
     const handler = createGateway({
       keys: {
@@ -344,7 +378,20 @@ export async function startServer(options: StartOptions): Promise<RunningServer>
       ),
       health: status,
       info,
-      ...(licenseService === null ? {} : { admin: adminHandler(licenseService) }),
+      ...(licenseService === null && pairingService === null
+        ? {}
+        : {
+            admin: adminHandler({ license: licenseService, pairing: pairingService }),
+            adminAccess: adminAccess(db, url),
+          }),
+      ...(pairingService === null
+        ? {}
+        : {
+            pairing: {
+              isPaired: (token: string) => pairingService.pcFor(token) !== null,
+              pair: (body: unknown) => pairAnswer(pairingService, body),
+            },
+          }),
     });
     const loopback = http.createServer(handler);
     servers.push(loopback);
@@ -354,6 +401,18 @@ export async function startServer(options: StartOptions): Promise<RunningServer>
       servers.push(lan);
       await listen(lan, options.lanPort);
       log(`HTTPS for the LAN on port ${String(options.lanPort)} (${certificate.fingerprint})`);
+      const lanPort = options.lanPort;
+      discovery = await answerDiscovery(
+        async () => ({
+          v: 1,
+          port: lanPort,
+          identity: pairingService?.identity ?? '',
+          gym: await serverGym(db),
+          version: SERVER_VERSION,
+        }),
+        log,
+        options.discoveryPort,
+      );
     }
     if (options.jobs) {
       jobs = runScheduledJobs(async (sql) => {

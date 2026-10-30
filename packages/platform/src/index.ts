@@ -24,3 +24,15 @@ export { haptic, type HapticKind } from './haptics';
 export { saveFile, type FileToSave, type SaveResult } from './save-file';
 export { canPrint, canPrintSilently, listPrinters, printPage } from './printer';
 export { openWhatsApp, whatsAppOpener, type WhatsAppOpener } from './open-whatsapp';
+export {
+  canLinkServer,
+  findServers,
+  pairWithServer,
+  probeServer,
+  serverLinkStatus,
+  linkThisPcAsServer,
+  type FoundServer,
+  type PairResult,
+  type ProbedServer,
+  type ServerLinkStatus,
+} from './server-link';

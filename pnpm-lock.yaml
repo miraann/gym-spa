@@ -374,6 +374,9 @@ importers:
 
   apps/desktop:
     devDependencies:
+      '@gym/core':
+        specifier: workspace:*
+        version: link:../../packages/core
       '@gym/platform':
         specifier: workspace:*
         version: link:../../packages/platform

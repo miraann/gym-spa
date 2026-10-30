@@ -15,6 +15,7 @@
     "test:e2e": "pnpm build && playwright test"
   },
   "devDependencies": {
+    "@gym/core": "workspace:*",
     "@gym/platform": "workspace:*",
     "@playwright/test": "^1.63.0",
     "electron": "^44.5.1",

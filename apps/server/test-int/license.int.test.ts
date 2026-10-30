@@ -59,7 +59,8 @@ describe.skipIf(!ready)('the license on an offline server', () => {
   async function admin(method: 'GET' | 'POST', name: string, body?: unknown) {
     const response = await fetch(`${server.url}/server/v1/admin/${name}`, {
       method,
-      headers: { 'content-type': 'application/json' },
+      // The server's secret key, as gym-server-admin sends it (access.ts).
+      headers: { 'content-type': 'application/json', apikey: server.backend.SECRET_KEY },
       ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     });
     return { status: response.status, body: (await response.json()) as Record<string, unknown> };

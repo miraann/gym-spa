@@ -5,15 +5,20 @@
 //   gym-server-admin license --license <code or .txt> [--activation <code or .txt>]
 //   gym-server-admin owner --username <name> --full-name "<name>"  the first Owner (once)
 //   gym-server-admin clock-accept                                after a wrong clock was corrected
+//   gym-server-admin pairing-code                                a code to pair a new PC (OF-d)
+//   gym-server-admin pcs [--remove <id>]                         the paired PCs
 //
 // --data <folder>  the server's data folder, for its ports (default C:\ProgramData\gym-spa\server)
 // --dev            the development server instead (pnpm server:dev start)
 //
-// It only talks to gym-server on 127.0.0.1, which answers these only to the server PC itself.
+// It only talks to gym-server on 127.0.0.1, which answers these only to the server PC itself, and
+// shows the server's secret key, read from the data folder: only the server's account and
+// Administrators can read it, so run it as an administrator.
 import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { parseArgs } from 'node:util';
 import { readServerConfig } from '../config.ts';
+import { dataPaths, devDataRoot } from '../paths.ts';
 import { DEV_PORTS } from '../ports.ts';
 
 const { values: args, positionals } = parseArgs({
@@ -25,14 +30,29 @@ const { values: args, positionals } = parseArgs({
     activation: { type: 'string' },
     username: { type: 'string' },
     'full-name': { type: 'string' },
+    remove: { type: 'string' },
   },
 });
 
+function dataRoot(): string {
+  if (args.dev) return devDataRoot();
+  return args.data ?? path.join(process.env.ProgramData ?? 'C:\\ProgramData', 'gym-spa', 'server');
+}
+
 function gatewayPort(): number {
-  if (args.dev) return DEV_PORTS.gateway;
-  const dataRoot =
-    args.data ?? path.join(process.env.ProgramData ?? 'C:\\ProgramData', 'gym-spa', 'server');
-  return readServerConfig(dataRoot).ports.gateway;
+  return args.dev ? DEV_PORTS.gateway : readServerConfig(dataRoot()).ports.gateway;
+}
+
+/** The server's secret key, from its data folder. */
+function secretKey(): string {
+  const file = dataPaths(dataRoot()).secrets;
+  try {
+    const secrets = JSON.parse(readFileSync(file, 'utf8')) as { secretKey?: unknown };
+    if (typeof secrets.secretKey === 'string') return secrets.secretKey;
+  } catch {
+    // Unreadable: the message below.
+  }
+  throw new Error(`Could not read ${file}: run this as an administrator on the server PC.`);
 }
 
 /** A code given as itself, or as the .txt file the seller panel downloads. */
@@ -48,7 +68,7 @@ async function call(method: 'GET' | 'POST', name: string, body?: unknown): Promi
     `http://127.0.0.1:${String(gatewayPort())}/server/v1/admin/${name}`,
     {
       method,
-      headers: { 'content-type': 'application/json' },
+      headers: { 'content-type': 'application/json', apikey: secretKey() },
       ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     },
   );
@@ -78,8 +98,16 @@ async function main(): Promise<void> {
     );
   } else if (command === 'clock-accept') {
     answer = await call('POST', 'clock-accept');
+  } else if (command === 'pairing-code') {
+    answer = await call('POST', 'pairing-code');
+  } else if (command === 'pcs' && args.remove !== undefined) {
+    answer = await call('POST', 'pcs-remove', { id: args.remove });
+  } else if (command === 'pcs') {
+    answer = await call('GET', 'pcs');
   } else {
-    console.log('usage: gym-server-admin license | owner | clock-accept (see the file header)');
+    console.log(
+      'usage: gym-server-admin license | owner | clock-accept | pairing-code | pcs (see the file header)',
+    );
     process.exitCode = 1;
     return;
   }
