@@ -48,6 +48,21 @@ export type LogRow = WithNulls<
   'actor_id' | 'actor_email' | 'gym_id' | 'gym_code' | 'target_admin_id' | 'target_email' | 'reason'
 >;
 export type MeRow = Functions['seller_me']['Returns'][number];
+export type LicenseRow = WithNulls<
+  Functions['seller_licenses']['Returns'][number],
+  | 'max_branches'
+  | 'max_devices'
+  | 'expires_on'
+  | 'updates_until'
+  | 'created_by_email'
+  | 'revoked_at'
+  | 'revoked_by_email'
+  | 'revoke_reason'
+>;
+export type ActivationRow = WithNulls<
+  Functions['seller_activations']['Returns'][number],
+  'created_by_email' | 'deactivated_at' | 'deactivated_by_email' | 'deactivate_reason'
+>;
 
 /**
  * A SQL argument that may be null. The generated types can't say so for parameters without a
@@ -132,6 +147,29 @@ export function useAdmins() {
   });
 }
 
+/** Every license (or one gym's), newest first. enabled: false for a gym that has none (online). */
+export function useLicenses(gymId: string | null, enabled = true) {
+  const client = useSellerClient();
+  return useQuery({
+    queryKey: ['licenses', gymId],
+    enabled,
+    queryFn: async (): Promise<LicenseRow[]> =>
+      rows(client.rpc('seller_licenses', gymId === null ? {} : { p_gym_id: gymId })),
+    refetchInterval: REFRESH_MS,
+  });
+}
+
+/** One gym's server PC activations, newest first. */
+export function useActivations(gymId: string) {
+  const client = useSellerClient();
+  return useQuery({
+    queryKey: ['activations', gymId],
+    queryFn: async (): Promise<ActivationRow[]> =>
+      rows(client.rpc('seller_activations', { p_gym_id: gymId })),
+    refetchInterval: REFRESH_MS,
+  });
+}
+
 const LOG_PAGE = 50;
 
 /** The seller log, newest first, in pages; gymId narrows it to one gym. */
@@ -158,6 +196,14 @@ export function useAuditLog(gymId: string | null) {
 function afterGymChange(queryClient: QueryClient): Promise<void> {
   return Promise.all([
     queryClient.invalidateQueries({ queryKey: ['gyms'] }),
+    queryClient.invalidateQueries({ queryKey: ['log'] }),
+  ]).then(() => undefined);
+}
+
+function afterLicenseChange(queryClient: QueryClient): Promise<void> {
+  return Promise.all([
+    queryClient.invalidateQueries({ queryKey: ['licenses'] }),
+    queryClient.invalidateQueries({ queryKey: ['activations'] }),
     queryClient.invalidateQueries({ queryKey: ['log'] }),
   ]).then(() => undefined);
 }
@@ -253,6 +299,81 @@ export function useCreateGym() {
     mutationFn: (request: Extract<SellerAdminRequest, { action: 'create_gym' }>) =>
       callSellerAdmin(client, request),
     onSuccess: () => afterGymChange(queryClient),
+  });
+}
+
+/** An offline gym's record (spec §2.6, MT-5): its id, permanent code and names, nothing else. */
+export function useCreateOfflineGym() {
+  const client = useSellerClient();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (gym: {
+      code: string;
+      nameCkb: string;
+      nameEn: string | null;
+      nameAr: string | null;
+    }): Promise<string> => {
+      const gymId = crypto.randomUUID();
+      const { error } = await client.rpc('seller_create_offline_gym', {
+        p_gym_id: gymId,
+        p_code: gym.code,
+        p_name_ckb: gym.nameCkb,
+        ...(gym.nameEn === null ? {} : { p_name_en: gym.nameEn }),
+        ...(gym.nameAr === null ? {} : { p_name_ar: gym.nameAr }),
+      });
+      if (error) throw fromDatabase(error);
+      return gymId;
+    },
+    onSuccess: () => afterGymChange(queryClient),
+  });
+}
+
+/** A signed license code, issued by the seller-admin function and stored before it answers. */
+export function useIssueLicense() {
+  const client = useSellerClient();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (request: Extract<SellerAdminRequest, { action: 'issue_license' }>) =>
+      callSellerAdmin(client, request),
+    onSuccess: () => afterLicenseChange(queryClient),
+  });
+}
+
+/** An activation code for the gym's server PC. */
+export function useIssueActivation() {
+  const client = useSellerClient();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (request: Extract<SellerAdminRequest, { action: 'issue_activation' }>) =>
+      callSellerAdmin(client, request),
+    onSuccess: () => afterLicenseChange(queryClient),
+  });
+}
+
+/** Revoking a license or deactivating a PC: records only, each with a reason. */
+export function useLicenseRecord() {
+  const client = useSellerClient();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      kind,
+      id,
+      reason,
+    }: {
+      kind: 'revoke_license' | 'deactivate_activation';
+      id: string;
+      reason: string;
+    }) => {
+      const { error } =
+        kind === 'revoke_license'
+          ? await client.rpc('seller_revoke_license', { p_license_id: id, p_reason: reason })
+          : await client.rpc('seller_deactivate_activation', {
+              p_activation_id: id,
+              p_reason: reason,
+            });
+      if (error) throw fromDatabase(error);
+    },
+    onSuccess: () => afterLicenseChange(queryClient),
   });
 }
 

@@ -11,20 +11,43 @@ import { Link } from '@tanstack/react-router';
 import { Building2Icon, PlusIcon, SearchIcon } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useGyms, type GymRow } from '@/lib/api';
+import { useGyms, useLicenses, type GymRow, type LicenseRow } from '@/lib/api';
 import { panelErrorKey } from '@/lib/errors';
 import { useFormat } from '@/lib/format';
 import { usePreferences } from '@/lib/preferences';
 import { FormError } from '@/shell/form-error';
+import { LicenseStateBadge, LicenseTerm, currentLicense } from '@/licenses/license-cards';
 import { GymStateBadge, gymState, type GymState } from './gym-state';
 
-const FILTERS = ['all', 'active', 'grace', 'read_only', 'suspended', 'locked'] as const;
+const FILTERS = ['all', 'active', 'grace', 'read_only', 'suspended', 'locked', 'offline'] as const;
 type Filter = (typeof FILTERS)[number];
 
-function PaidUntil({ gym }: { readonly gym: GymRow }) {
+/** An online gym's state, or an offline gym's license state. */
+function StateBadge({
+  gym,
+  licenses,
+}: {
+  readonly gym: GymRow;
+  readonly licenses: readonly LicenseRow[] | undefined;
+}) {
+  if (gym.edition === 'online') return <GymStateBadge state={gymState(gym)} />;
+  if (licenses === undefined) return null;
+  return <LicenseStateBadge license={currentLicense(licenses, gym.id)} />;
+}
+
+function PaidUntil({
+  gym,
+  licenses,
+}: {
+  readonly gym: GymRow;
+  readonly licenses: readonly LicenseRow[] | undefined;
+}) {
   const { t } = useTranslation('seller');
   const format = useFormat();
-  if (gym.edition === 'offline') return <span>{t('gyms.offline')}</span>;
+  if (gym.edition === 'offline') {
+    const license = currentLicense(licenses ?? [], gym.id);
+    return license === null ? <span>{t('gyms.offline')}</span> : <LicenseTerm license={license} />;
+  }
   if (gym.paid_until === null) return <span>{t('gyms.noEnd')}</span>;
   // The end of the paid day: one millisecond before paid_until is that day.
   return <span>{format.date(Date.parse(gym.paid_until) - 1)}</span>;
@@ -51,12 +74,16 @@ export function GymsPage() {
   const { language } = usePreferences();
   const layout = useLayout();
   const gyms = useGyms();
+  const licenses = useLicenses(null).data;
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<Filter>('all');
 
   const shown = (gyms.data ?? []).filter(
     (gym) =>
-      (filter === 'all' || gymState(gym) === (filter satisfies GymState)) &&
+      (filter === 'all' ||
+        (filter === 'offline'
+          ? gym.edition === 'offline'
+          : gym.edition === 'online' && gymState(gym) === (filter satisfies GymState))) &&
       matchesSearch(query, gym.code, gym.name_ckb, gym.name_en, gym.name_ar),
   );
 
@@ -95,7 +122,11 @@ export function GymsPage() {
               setFilter(each);
             }}
           >
-            {each === 'all' ? t('gyms.all') : t(`state.${each}`)}
+            {each === 'all'
+              ? t('gyms.all')
+              : each === 'offline'
+                ? t('gyms.offline')
+                : t(`state.${each}`)}
           </Chip>
         ))}
       </ChipRow>
@@ -126,13 +157,13 @@ export function GymsPage() {
                   <span className="truncate text-base">
                     {localizedName(gymNames(gym), language)}
                   </span>
-                  <GymStateBadge state={gymState(gym)} />
+                  <StateBadge gym={gym} licenses={licenses} />
                 </span>
                 <span dir="ltr" className="font-mono text-sm text-muted-foreground">
                   {gym.code}
                 </span>
                 <span className="flex flex-wrap justify-between gap-2 text-sm text-muted-foreground">
-                  <PaidUntil gym={gym} />
+                  <PaidUntil gym={gym} licenses={licenses} />
                   <Usage gym={gym} />
                 </span>
               </Link>
@@ -166,10 +197,10 @@ export function GymsPage() {
                   </td>
                   <td className="px-4 py-3">{localizedName(gymNames(gym), language)}</td>
                   <td className="px-4 py-3">
-                    <GymStateBadge state={gymState(gym)} />
+                    <StateBadge gym={gym} licenses={licenses} />
                   </td>
                   <td className="px-4 py-3">
-                    <PaidUntil gym={gym} />
+                    <PaidUntil gym={gym} licenses={licenses} />
                   </td>
                   <td className="px-4 py-3 text-muted-foreground">
                     <Usage gym={gym} />

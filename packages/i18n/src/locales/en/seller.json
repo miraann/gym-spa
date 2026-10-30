@@ -204,7 +204,13 @@
     "doneDescription": "Give these details to the gym's Owner.",
     "link": "Login link",
     "linkHint": "This link fills in the gym code by itself.",
-    "openGym": "Open the gym"
+    "openGym": "Open the gym",
+    "edition": "Edition",
+    "online": "Online",
+    "offline": "Offline",
+    "onlineHint": "Runs in the cloud, on a subscription. The gym's first Owner is made here.",
+    "offlineHint": "Runs on a PC inside the gym, without internet. Only its record is made here; its license and server PC come next.",
+    "offlineDone": "Offline gym created. Now issue it a license."
   },
   "admins": {
     "title": "Panel admins",
@@ -280,7 +286,11 @@
       "admin_password_reset": "New temporary password given",
       "recovery_codes_created": "New recovery codes made",
       "recovery_code_used": "Recovery code used",
-      "recovery_code_rejected": "Wrong recovery code typed"
+      "recovery_code_rejected": "Wrong recovery code typed",
+      "license_issued": "License issued",
+      "license_revoked": "License revoked",
+      "activation_issued": "Server PC activated",
+      "activation_deactivated": "Server PC deactivated"
     }
   },
   "errors": {
@@ -310,6 +320,14 @@
     "gym_not_found": "This gym was not found.",
     "support_not_granted": "This gym hasn't let you see its data, or the time is over.",
     "member_not_found": "This member wasn't found.",
+    "online_gym": "Only an offline gym has licenses.",
+    "invalid_license_date": "That date doesn't work: yearly at most 2 years, updates at most 5 years, both after today.",
+    "invalid_machine_code": "This code is incomplete or has a wrong character. Read it again.",
+    "no_license": "Issue a license first.",
+    "already_activated": "This gym already has an active PC. Deactivate it first.",
+    "license_key_missing": "The signing key isn't set up, so no code can be issued.",
+    "license_not_found": "This license was not found.",
+    "activation_not_found": "This PC was not found.",
     "network": "The server could not be reached. Check your internet and try again.",
     "unexpected": "Something went wrong. Try again."
   },
@@ -388,6 +406,86 @@
     "visitMethods": {
       "card": "By card",
       "manual": "By hand"
+    }
+  },
+  "license": {
+    "title": "Licenses",
+    "empty": "No license issued yet.",
+    "yearly": "Yearly",
+    "perpetual": "Perpetual",
+    "current": "Current",
+    "yearlyUntil": "Works until {{date}}",
+    "perpetualUntil": "Never stops · updates until {{date}}",
+    "updatesEnding": "Updates end in {{days}} days",
+    "updatesEnded": "Updates have ended; the installed version keeps working.",
+    "limits": "{{branches}} branches · {{devices}} devices",
+    "issuedBy": "Issued on {{date}} · {{email}}",
+    "key": "Signing key:",
+    "testKey": "Signed with a test key: no real server accepts it.",
+    "revokedLine": "Revoked on {{date}} · reason: {{reason}}",
+    "reason": "Reason",
+    "copy": "Copy",
+    "copied": "Copied.",
+    "copyFailed": "Couldn't copy; select the code and copy it yourself.",
+    "download": "Download as a file",
+    "state": {
+      "none": "No license",
+      "active": "Active",
+      "ending": "{{days}} days left",
+      "grace": "Grace period: {{days}} days",
+      "expired": "Expired",
+      "revoked": "Revoked"
+    },
+    "issue": {
+      "title": "Issue a license",
+      "description": "The code is signed with Click Group's signing key. Send it to the gym to enter on its server PC.",
+      "type": "Type",
+      "lastDay": "Last working day",
+      "updatesUntil": "Updates until",
+      "yearlyHint": "Works through {{date}}, then 30 days of grace, then the gym becomes view-only.",
+      "perpetualHint": "Never stops; only versions built through {{date}} can be installed.",
+      "confirm": "Issue",
+      "doneTitle": "License issued",
+      "doneDescription": "Send this code to the gym, or give it as a file. It also stays here to copy again.",
+      "close": "Done"
+    },
+    "dateProblems": {
+      "tooSoon": "Choose a day after today.",
+      "tooFarYearly": "A yearly license runs at most 2 years.",
+      "tooFarPerpetual": "Updates run at most 5 years.",
+      "invalid": "Choose a valid date."
+    },
+    "revoke": {
+      "title": "Revoke license",
+      "description": "This is only recorded here: the server PC can't be reached, and a yearly license still runs out on its date.",
+      "confirm": "Revoke",
+      "done": "License revoked."
+    }
+  },
+  "server": {
+    "title": "Server PC",
+    "none": "No PC activated yet.",
+    "needsLicense": "Issue a license first, then activate the server PC.",
+    "active": "Active",
+    "activeSince": "Active since {{date}} · {{email}}",
+    "activationCode": "Activation code",
+    "machineCode": "Machine code",
+    "machineCodeHint": "The code the server PC shows: 20 letters and digits.",
+    "machineCodeOk": "The code is valid:",
+    "history": "Earlier PCs",
+    "deactivatedLine": "Deactivated on {{date}} · reason: {{reason}}",
+    "activate": {
+      "title": "Activate a PC",
+      "description": "Get the machine code from the gym (by phone or WhatsApp), then send them back the activation code.",
+      "confirm": "Activate",
+      "doneTitle": "PC activated",
+      "doneDescription": "Send this code to the gym. It works only on that PC."
+    },
+    "deactivate": {
+      "title": "Deactivate PC",
+      "description": "This is only recorded here; afterwards you can activate a new PC.",
+      "confirm": "Deactivate",
+      "done": "PC deactivated."
     }
   }
 }

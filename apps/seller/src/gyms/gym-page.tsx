@@ -15,11 +15,17 @@ import {
 } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useGym, type GymRow, type GymStateAction } from '@/lib/api';
+import { useGym, useLicenses, type GymRow, type GymStateAction } from '@/lib/api';
 import { panelErrorKey } from '@/lib/errors';
 import { useFormat } from '@/lib/format';
 import { usePreferences } from '@/lib/preferences';
 import { FormError } from '@/shell/form-error';
+import {
+  LicenseStateBadge,
+  LicensesCard,
+  ServerPcCard,
+  currentLicense,
+} from '@/licenses/license-cards';
 import { LogList } from '@/log/log-list';
 import { SupportCard } from '@/support/support-pages';
 import { GymStateDialog, LimitsDialog, RenameDialog, SubscriptionDialog } from './gym-dialogs';
@@ -44,16 +50,122 @@ export function gymLoginLink(code: string): string {
 
 type Open = 'subscription' | 'limits' | 'rename' | null;
 
-function GymDetails({ gym }: { readonly gym: GymRow }) {
+/** An online gym's subscription, usage, limits, support access and login link. */
+function OnlineCards({
+  gym,
+  onOpen,
+}: {
+  readonly gym: GymRow;
+  readonly onOpen: (open: 'subscription' | 'limits') => void;
+}) {
   const { t } = useTranslation('seller');
   const format = useFormat();
+  const state = gymState(gym);
+  const never = t('common.never');
+  const when = (value: string | null) => (value === null ? never : format.dateTime(value));
+  return (
+    <div className="grid gap-4 md:grid-cols-2">
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between gap-2">
+          <CardTitle>{t('gym.subscriptionTitle')}</CardTitle>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              onOpen('subscription');
+            }}
+          >
+            {t('gym.changeSubscription')}
+          </Button>
+        </CardHeader>
+        <CardContent>
+          <dl className="grid gap-3">
+            <Fact label={t('gym.paidUntil')}>
+              {gym.paid_until === null
+                ? t('gyms.noEnd')
+                : format.date(Date.parse(gym.paid_until) - 1)}
+            </Fact>
+            {state === 'grace' && gym.paid_until !== null && (
+              <Fact label={t('state.grace')}>
+                {t('gym.graceUntil', {
+                  date: format.date(Date.parse(gym.paid_until) + GRACE_DAYS * DAY_MS - 1),
+                })}
+              </Fact>
+            )}
+            <Fact label={t('gym.created')}>{format.date(gym.created_at)}</Fact>
+          </dl>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>{t('gym.usageTitle')}</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-3">
+          <dl className="grid grid-cols-2 gap-3">
+            <Fact label={t('gym.members')}>{format.number(gym.members)}</Fact>
+            <Fact label={t('gym.activeMembers')}>{format.number(gym.active_members)}</Fact>
+            <Fact label={t('gym.branches')}>{format.number(gym.active_branches)}</Fact>
+            <Fact label={t('gym.staff')}>{format.number(gym.active_staff)}</Fact>
+            <Fact label={t('gym.devices')}>{format.number(gym.active_devices)}</Fact>
+            <Fact label={t('gym.lastLogin')}>{when(gym.last_login_at)}</Fact>
+            <Fact label={t('gym.lastDevice')}>{when(gym.last_device_seen_at)}</Fact>
+          </dl>
+          <p className="text-sm text-muted-foreground">{t('gym.membersNote')}</p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between gap-2">
+          <CardTitle>{t('gym.limitsTitle')}</CardTitle>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              onOpen('limits');
+            }}
+          >
+            {t('gym.changeLimits')}
+          </Button>
+        </CardHeader>
+        <CardContent>
+          <dl className="grid grid-cols-2 gap-3">
+            <Fact label={t('gym.maxBranches')}>
+              {gym.max_branches === null ? t('gym.noLimit') : format.number(gym.max_branches)}
+            </Fact>
+            <Fact label={t('gym.maxDevices')}>
+              {gym.max_devices === null ? t('gym.noLimit') : format.number(gym.max_devices)}
+            </Fact>
+          </dl>
+        </CardContent>
+      </Card>
+
+      <SupportCard gymId={gym.id} online />
+
+      <Card>
+        <CardHeader>
+          <CardTitle>{t('gym.loginLink')}</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-2">
+          <code dir="ltr" className="rounded-xl bg-muted px-3 py-2 text-sm break-all select-all">
+            {gymLoginLink(gym.code)}
+          </code>
+          <p className="text-sm text-muted-foreground">{t('gym.codeNote')}</p>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function GymDetails({ gym }: { readonly gym: GymRow }) {
+  const { t } = useTranslation('seller');
   const { language } = usePreferences();
   const [open, setOpen] = useState<Open>(null);
   const [stateAction, setStateAction] = useState<GymStateAction | null>(null);
   const state = gymState(gym);
   const online = gym.edition === 'online';
-  const never = t('common.never');
-  const when = (value: string | null) => (value === null ? never : format.dateTime(value));
+  const licenses = useLicenses(gym.id, !online);
+  const license = online ? null : currentLicense(licenses.data ?? [], gym.id);
 
   return (
     <div className="flex flex-col gap-4">
@@ -68,24 +180,26 @@ function GymDetails({ gym }: { readonly gym: GymRow }) {
         <div className="flex flex-col gap-1">
           <span className="flex flex-wrap items-center gap-2">
             <h1 className="text-2xl">{localizedName(gymNames(gym), language)}</h1>
-            {online && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setOpen('rename');
-                }}
-              >
-                <PencilIcon data-icon="inline-start" />
-                {t('gym.rename')}
-              </Button>
-            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setOpen('rename');
+              }}
+            >
+              <PencilIcon data-icon="inline-start" />
+              {t('gym.rename')}
+            </Button>
           </span>
           <span className="flex items-center gap-2 text-sm text-muted-foreground">
             <span dir="ltr" className="font-mono">
               {gym.code}
             </span>
-            <GymStateBadge state={state} />
+            {online ? (
+              <GymStateBadge state={state} />
+            ) : (
+              licenses.isSuccess && <LicenseStateBadge license={license} />
+            )}
           </span>
         </div>
         {online && (
@@ -139,100 +253,19 @@ function GymDetails({ gym }: { readonly gym: GymRow }) {
         </Alert>
       )}
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between gap-2">
-            <CardTitle>{t('gym.subscriptionTitle')}</CardTitle>
-            {online && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setOpen('subscription');
-                }}
-              >
-                {t('gym.changeSubscription')}
-              </Button>
-            )}
-          </CardHeader>
-          <CardContent>
-            <dl className="grid gap-3">
-              <Fact label={t('gym.paidUntil')}>
-                {gym.paid_until === null
-                  ? t('gyms.noEnd')
-                  : format.date(Date.parse(gym.paid_until) - 1)}
-              </Fact>
-              {state === 'grace' && gym.paid_until !== null && (
-                <Fact label={t('state.grace')}>
-                  {t('gym.graceUntil', {
-                    date: format.date(Date.parse(gym.paid_until) + GRACE_DAYS * DAY_MS - 1),
-                  })}
-                </Fact>
-              )}
-              <Fact label={t('gym.created')}>{format.date(gym.created_at)}</Fact>
-            </dl>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>{t('gym.usageTitle')}</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-3">
-            <dl className="grid grid-cols-2 gap-3">
-              <Fact label={t('gym.members')}>{format.number(gym.members)}</Fact>
-              <Fact label={t('gym.activeMembers')}>{format.number(gym.active_members)}</Fact>
-              <Fact label={t('gym.branches')}>{format.number(gym.active_branches)}</Fact>
-              <Fact label={t('gym.staff')}>{format.number(gym.active_staff)}</Fact>
-              <Fact label={t('gym.devices')}>{format.number(gym.active_devices)}</Fact>
-              <Fact label={t('gym.lastLogin')}>{when(gym.last_login_at)}</Fact>
-              <Fact label={t('gym.lastDevice')}>{when(gym.last_device_seen_at)}</Fact>
-            </dl>
-            <p className="text-sm text-muted-foreground">{t('gym.membersNote')}</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between gap-2">
-            <CardTitle>{t('gym.limitsTitle')}</CardTitle>
-            {online && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setOpen('limits');
-                }}
-              >
-                {t('gym.changeLimits')}
-              </Button>
-            )}
-          </CardHeader>
-          <CardContent>
-            <dl className="grid grid-cols-2 gap-3">
-              <Fact label={t('gym.maxBranches')}>
-                {gym.max_branches === null ? t('gym.noLimit') : format.number(gym.max_branches)}
-              </Fact>
-              <Fact label={t('gym.maxDevices')}>
-                {gym.max_devices === null ? t('gym.noLimit') : format.number(gym.max_devices)}
-              </Fact>
-            </dl>
-          </CardContent>
-        </Card>
-
-        <SupportCard gymId={gym.id} online={online} />
-
-        <Card>
-          <CardHeader>
-            <CardTitle>{t('gym.loginLink')}</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-2">
-            <code dir="ltr" className="rounded-xl bg-muted px-3 py-2 text-sm break-all select-all">
-              {gymLoginLink(gym.code)}
-            </code>
-            <p className="text-sm text-muted-foreground">{t('gym.codeNote')}</p>
-          </CardContent>
-        </Card>
-      </div>
+      {online ? (
+        <OnlineCards
+          gym={gym}
+          onOpen={(value) => {
+            setOpen(value);
+          }}
+        />
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2">
+          <LicensesCard gymId={gym.id} gymCode={gym.code} />
+          <ServerPcCard gymId={gym.id} gymCode={gym.code} />
+        </div>
+      )}
 
       <section className="flex flex-col gap-3">
         <h2 className="text-lg">{t('gym.logTitle')}</h2>
