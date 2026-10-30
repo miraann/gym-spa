@@ -12,7 +12,7 @@ import { FormError } from '@/shell/form-error';
 
 type LogAction = keyof SellerTexts['log']['actions'];
 
-/** The actions of platform.audit_logs (its check constraint), each with a label. */
+/** The actions of platform.audit_logs and platform.license_events, each with a label. */
 const LOG_ACTIONS = [
   'gym_created',
   'gym_renamed',
@@ -29,6 +29,10 @@ const LOG_ACTIONS = [
   'recovery_codes_created',
   'recovery_code_used',
   'recovery_code_rejected',
+  'license_issued',
+  'license_revoked',
+  'activation_issued',
+  'activation_deactivated',
 ] as const satisfies readonly LogAction[];
 
 function logAction(value: string): LogAction | null {

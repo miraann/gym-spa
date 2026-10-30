@@ -5,11 +5,14 @@ import {
   summarizeError,
   type TokenVerifier,
 } from '@gym/staff-admin/server';
+import type { LicenseSigningKey } from '@gym/core';
 import { SellerAdminError, type SellerAdminErrorKey } from './errors.ts';
 import {
   addAdmin,
   createGym,
   deactivateAdmin,
+  issueActivation,
+  issueLicense,
   reactivateAdmin,
   resetAdminPassword,
   resetAdminTwoStep,
@@ -51,6 +54,8 @@ export interface SellerAdminHandlerOptions {
   readonly log?: SellerAdminLog;
   readonly temporaryPassword?: () => string;
   readonly newId?: () => string;
+  /** The license signing key, loaded once from the function's secret; absent when it has none. */
+  readonly licenseKey?: () => Promise<LicenseSigningKey>;
 }
 
 function failure(key: SellerAdminErrorKey): Response {
@@ -73,6 +78,10 @@ function run(deps: SellerAdminDeps, request: SellerAdminRequest): Promise<unknow
       return resetAdminPassword(deps, request);
     case 'use_recovery_code':
       return useRecoveryCode(deps, request);
+    case 'issue_license':
+      return issueLicense(deps, request);
+    case 'issue_activation':
+      return issueActivation(deps, request);
   }
 }
 
@@ -127,6 +136,7 @@ export function createSellerAdminHandler(
         callerId: check.userId,
         ...(options.temporaryPassword ? { temporaryPassword: options.temporaryPassword } : {}),
         ...(options.newId ? { newId: options.newId } : {}),
+        ...(options.licenseKey ? { licenseKey: options.licenseKey } : {}),
       };
       return jsonResponse(200, await run(deps, parsed.data));
     } catch (error) {

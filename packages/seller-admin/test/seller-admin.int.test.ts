@@ -1,4 +1,14 @@
-import { staffEmail } from '@gym/core';
+import {
+  addMonthsToDate,
+  baghdadDateOf,
+  generateLicenseKey,
+  importLicenseSigningKey,
+  keyRingOf,
+  staffEmail,
+  verifyActivationCode,
+  verifyLicenseCode,
+  type LicenseSigningKey,
+} from '@gym/core';
 import type { Database } from '@gym/db';
 import { createClient } from '@supabase/supabase-js';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -395,6 +405,103 @@ describe('recovery codes', () => {
     // They set up a new device right away.
     saraSession = await sara.setUpTwoStep(client);
     expect((await saraSession.client.rpc('seller_gyms')).error).toBeNull();
+  });
+});
+
+describe('offline licenses', () => {
+  const offlineGymId = crypto.randomUUID();
+  const offlineCode = code('off');
+  let key: LicenseSigningKey;
+  let signing: ReturnType<typeof handler>;
+
+  beforeAll(async () => {
+    key = await importLicenseSigningKey((await generateLicenseKey('test-int')).privateJwk);
+    signing = createSellerAdminHandler({
+      verifyToken: ports.verifyToken,
+      admin: ports.admin,
+      callerFor: ports.callerFor,
+      log: (entry) => logs.push(entry),
+      licenseKey: () => Promise.resolve(key),
+    });
+    const made = await asUser(aliSession.accessToken).rpc('seller_create_offline_gym', {
+      p_gym_id: offlineGymId,
+      p_code: offlineCode,
+      p_name_ckb: 'جیمی ئۆفلاین',
+    });
+    expect(made.error).toBeNull();
+  });
+
+  afterAll(() => {
+    // The log entries stay (append-only), like the seller log's.
+    localSql(`delete from platform.activations where gym_id = '${offlineGymId}';
+      delete from platform.licenses where gym_id = '${offlineGymId}';
+      delete from public.gyms where id = '${offlineGymId}';`);
+  });
+
+  const license = {
+    action: 'issue_license',
+    gymId: offlineGymId,
+    type: 'yearly',
+    maxBranches: 1,
+    maxDevices: 5,
+    validUntil: addMonthsToDate(baghdadDateOf(Date.now()), 12),
+  };
+
+  it('a license is signed, and the database stores exactly that code', async () => {
+    const answer = await send(aliSession.accessToken, license, signing);
+    expect(answer.status, JSON.stringify(answer.body)).toBe(200);
+    const checked = await verifyLicenseCode(String(answer.body.code), keyRingOf(key));
+    expect(checked).toMatchObject({
+      ok: true,
+      value: { gymId: offlineGymId, gymCode: offlineCode, gymName: 'جیمی ئۆفلاین', maxDevices: 5 },
+    });
+    const stored = await asUser(aliSession.accessToken).rpc('seller_licenses', {
+      p_gym_id: offlineGymId,
+    });
+    expect(stored.data?.map((row) => [row.code, row.created_by_email])).toEqual([
+      [answer.body.code, ali.email],
+    ]);
+    const log = await asUser(aliSession.accessToken).rpc('seller_audit_log', {
+      p_gym_id: offlineGymId,
+    });
+    expect(log.data?.map((entry) => entry.action)).toEqual(['license_issued', 'gym_created']);
+  });
+
+  it('an online gym has no license, and without a key nothing is signed', async () => {
+    const online = gyms[0];
+    if (!online) throw new Error('no gym');
+    expect(await send(aliSession.accessToken, { ...license, gymId: online.id }, signing)).toEqual({
+      status: 409,
+      body: { error: 'online_gym' },
+    });
+    expect(await send(aliSession.accessToken, license)).toEqual({
+      status: 503,
+      body: { error: 'license_key_missing' },
+    });
+  });
+
+  it('the server PC is activated once; a second one waits for the first to be deactivated', async () => {
+    const activate = {
+      action: 'issue_activation',
+      gymId: offlineGymId,
+      machineCode: '0v5q-1bd4-ts11-n9tc-94o2',
+    };
+    const answer = await send(aliSession.accessToken, activate, signing);
+    expect(answer.status, JSON.stringify(answer.body)).toBe(200);
+    expect(await verifyActivationCode(String(answer.body.code), keyRingOf(key))).toMatchObject({
+      ok: true,
+      value: { gymId: offlineGymId, machineCode: '0V5Q1BD4TS11N9TC9402' },
+    });
+    expect(await send(aliSession.accessToken, activate, signing)).toEqual({
+      status: 409,
+      body: { error: 'already_activated' },
+    });
+    const deactivated = await asUser(aliSession.accessToken).rpc('seller_deactivate_activation', {
+      p_activation_id: String(answer.body.activationId),
+      p_reason: 'کۆمپیوتەری نوێ',
+    });
+    expect(deactivated.error).toBeNull();
+    expect((await send(aliSession.accessToken, activate, signing)).status).toBe(200);
   });
 });
 

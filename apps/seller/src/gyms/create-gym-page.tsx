@@ -11,6 +11,7 @@ import {
   toLatinDigits,
 } from '@gym/core';
 import type { CreateGymResult } from '@gym/seller-admin';
+import { ChoiceGroup } from '@gym/ui/blocks/choice-group';
 import { CopyableSecret } from '@gym/ui/blocks/copyable-secret';
 import { PageHeader } from '@gym/ui/blocks/page-header';
 import { ResponsiveDialog } from '@gym/ui/blocks/responsive-dialog';
@@ -27,13 +28,14 @@ import {
 import { Input } from '@gym/ui/components/input';
 import { Spinner } from '@gym/ui/components/spinner';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Link } from '@tanstack/react-router';
-import { CircleCheckIcon, TriangleAlertIcon } from 'lucide-react';
+import { Link, useNavigate } from '@tanstack/react-router';
+import { CircleCheckIcon, CloudIcon, ServerIcon, TriangleAlertIcon } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { z } from 'zod';
-import { useCreateGym } from '@/lib/api';
+import { toast } from 'sonner';
+import { useCreateGym, useCreateOfflineGym } from '@/lib/api';
 import { panelErrorKey, type PanelErrorKey } from '@/lib/errors';
 import { FormError } from '@/shell/form-error';
 import { SubscriptionPicker } from './gym-dialogs';
@@ -66,6 +68,17 @@ const schema = z.object({
 });
 type FormInput = z.input<typeof schema>;
 type Values = z.output<typeof schema>;
+
+type Edition = 'online' | 'offline';
+/** An offline gym's record has only these (its Owner and branches are made on its own server PC). */
+const offlineSchema = schema.pick({ code: true, nameCkb: true, nameEn: true, nameAr: true });
+type OfflineValues = z.output<typeof offlineSchema>;
+const OFFLINE_FIELDS = ['code', 'nameCkb', 'nameEn', 'nameAr'] as const;
+
+/** What the confirmation is about: an online gym with its Owner, or an offline gym's record. */
+type Pending =
+  | { readonly edition: 'online'; readonly values: Values }
+  | { readonly edition: 'offline'; readonly values: OfflineValues };
 
 const MESSAGES = [
   'codeReserved',
@@ -132,15 +145,22 @@ function Done({ result }: { readonly result: CreateGymResult }) {
   );
 }
 
-/** A new online gym with its first Owner (spec §2.6): the code is permanent, so it is confirmed. */
+/**
+ * A new gym (spec §2.6): online with its first Owner, or an offline gym's record (MT-5). The code
+ * is permanent, so it is confirmed.
+ */
 export function CreateGymPage() {
   const { t } = useTranslation('seller');
+  const navigate = useNavigate();
   const create = useCreateGym();
+  const createOffline = useCreateOfflineGym();
+  const [edition, setEdition] = useState<Edition>('online');
+  const pendingSave = create.isPending || createOffline.isPending;
   const [subscription, setSubscription] = useState(() => ({
     date: addMonthsToDate(baghdadDateOf(Date.now()), 1),
     noEnd: false,
   }));
-  const [pending, setPending] = useState<Values | null>(null);
+  const [pending, setPending] = useState<Pending | null>(null);
   const [error, setError] = useState<PanelErrorKey | null>(null);
   const [result, setResult] = useState<CreateGymResult | null>(null);
   const form = useForm<FormInput, unknown, Values>({
@@ -165,30 +185,64 @@ export function CreateGymPage() {
 
   if (result !== null) return <Done result={result} />;
 
-  const review = form.handleSubmit((values) => {
+  const reviewOnline = form.handleSubmit((values) => {
     setError(null);
     if (!subscription.noEnd && subscription.date === '') {
       setError('invalid_request');
       return;
     }
-    setPending(values);
+    setPending({ edition: 'online', values });
   });
+
+  const reviewOffline = async () => {
+    setError(null);
+    if (!(await form.trigger([...OFFLINE_FIELDS]))) return;
+    const parsed = offlineSchema.safeParse(form.getValues());
+    if (parsed.success) setPending({ edition: 'offline', values: parsed.data });
+  };
+
+  const confirmOffline = (values: OfflineValues) => {
+    createOffline.mutate(
+      {
+        code: values.code,
+        nameCkb: values.nameCkb,
+        nameEn: values.nameEn || null,
+        nameAr: values.nameAr || null,
+      },
+      {
+        onSuccess: (gymId) => {
+          setPending(null);
+          toast.success(t('createGym.offlineDone'));
+          void navigate({ to: '/gyms/$gymId', params: { gymId } });
+        },
+        onError: (thrown) => {
+          setPending(null);
+          setError(panelErrorKey(thrown));
+        },
+      },
+    );
+  };
 
   const confirm = () => {
     if (pending === null) return;
+    if (pending.edition === 'offline') {
+      confirmOffline(pending.values);
+      return;
+    }
+    const values = pending.values;
     create.mutate(
       {
         action: 'create_gym',
-        code: pending.code,
-        nameCkb: pending.nameCkb,
-        nameEn: pending.nameEn || null,
-        nameAr: pending.nameAr || null,
-        firstBranchName: pending.branchName,
+        code: values.code,
+        nameCkb: values.nameCkb,
+        nameEn: values.nameEn || null,
+        nameAr: values.nameAr || null,
+        firstBranchName: values.branchName,
         paidUntil: subscription.noEnd ? null : paidUntilFromDate(subscription.date),
         owner: {
-          username: pending.ownerUsername,
-          fullName: pending.ownerFullName,
-          phone: pending.ownerPhone || null,
+          username: values.ownerUsername,
+          fullName: values.ownerFullName,
+          phone: values.ownerPhone || null,
         },
       },
       {
@@ -225,9 +279,37 @@ export function CreateGymPage() {
       <PageHeader title={t('createGym.title')} />
       <form
         noValidate
-        onSubmit={(event) => void review(event)}
+        onSubmit={(event) => {
+          if (edition === 'online') {
+            void reviewOnline(event);
+            return;
+          }
+          event.preventDefault();
+          void reviewOffline();
+        }}
         className="flex max-w-2xl flex-col gap-4"
       >
+        <Card>
+          <CardHeader>
+            <CardTitle>{t('createGym.edition')}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <FieldGroup>
+              <ChoiceGroup
+                label={t('createGym.edition')}
+                value={edition}
+                onChange={setEdition}
+                choices={[
+                  { value: 'online', label: t('createGym.online'), icon: CloudIcon },
+                  { value: 'offline', label: t('createGym.offline'), icon: ServerIcon },
+                ]}
+              />
+              <FieldDescription>
+                {edition === 'online' ? t('createGym.onlineHint') : t('createGym.offlineHint')}
+              </FieldDescription>
+            </FieldGroup>
+          </CardContent>
+        </Card>
         <Card>
           <CardHeader>
             <CardTitle>{t('createGym.gymSection')}</CardTitle>
@@ -242,38 +324,42 @@ export function CreateGymPage() {
               {text('nameCkb', t('createGym.nameCkb'))}
               {text('nameEn', t('createGym.nameEn'), { dir: 'ltr' })}
               {text('nameAr', t('createGym.nameAr'))}
-              {text('branchName', t('createGym.branch'))}
+              {edition === 'online' && text('branchName', t('createGym.branch'))}
             </FieldGroup>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>{t('createGym.subscriptionSection')}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <SubscriptionPicker
-              date={subscription.date}
-              noEnd={subscription.noEnd}
-              onChange={setSubscription}
-            />
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>{t('createGym.ownerSection')}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <FieldGroup>
-              <FieldDescription>{t('createGym.ownerNote')}</FieldDescription>
-              {text('ownerUsername', t('createGym.ownerUsername'), {
-                dir: 'ltr',
-                hint: t('createGym.ownerUsernameHint'),
-              })}
-              {text('ownerFullName', t('createGym.ownerFullName'))}
-              {text('ownerPhone', t('createGym.ownerPhone'), { dir: 'ltr' })}
-            </FieldGroup>
-          </CardContent>
-        </Card>
+        {edition === 'online' && (
+          <>
+            <Card>
+              <CardHeader>
+                <CardTitle>{t('createGym.subscriptionSection')}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <SubscriptionPicker
+                  date={subscription.date}
+                  noEnd={subscription.noEnd}
+                  onChange={setSubscription}
+                />
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle>{t('createGym.ownerSection')}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <FieldGroup>
+                  <FieldDescription>{t('createGym.ownerNote')}</FieldDescription>
+                  {text('ownerUsername', t('createGym.ownerUsername'), {
+                    dir: 'ltr',
+                    hint: t('createGym.ownerUsernameHint'),
+                  })}
+                  {text('ownerFullName', t('createGym.ownerFullName'))}
+                  {text('ownerPhone', t('createGym.ownerPhone'), { dir: 'ltr' })}
+                </FieldGroup>
+              </CardContent>
+            </Card>
+          </>
+        )}
         <FormError error={error} />
         <Button type="submit" size="lg" className="self-start">
           {t('createGym.submit')}
@@ -283,7 +369,7 @@ export function CreateGymPage() {
       <ResponsiveDialog
         open={pending !== null}
         onOpenChange={(open) => {
-          if (!open && !create.isPending) setPending(null);
+          if (!open && !pendingSave) setPending(null);
         }}
         title={t('createGym.confirmTitle')}
         description={t('createGym.confirmDescription')}
@@ -291,22 +377,22 @@ export function CreateGymPage() {
           <>
             <Button
               variant="outline"
-              disabled={create.isPending}
+              disabled={pendingSave}
               onClick={() => {
                 setPending(null);
               }}
             >
               {t('createGym.change')}
             </Button>
-            <Button disabled={create.isPending} onClick={confirm}>
-              {create.isPending && <Spinner />}
+            <Button disabled={pendingSave} onClick={confirm}>
+              {pendingSave && <Spinner />}
               {t('createGym.confirm')}
             </Button>
           </>
         }
       >
         <p dir="ltr" data-testid="confirm-code" className="text-center font-mono text-3xl">
-          {pending?.code}
+          {pending?.values.code}
         </p>
         <Alert variant="warning">
           <TriangleAlertIcon />

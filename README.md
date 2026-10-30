@@ -45,7 +45,7 @@ Run from the repository root:
 | `pnpm test` | Unit tests (Vitest): formatting, translations, Sorani spelling, fonts, lint rules, connection state |
 | `pnpm test:e2e` | Build against the local backend (`--mode e2e`, `apps/app/.env.e2e`), then run Playwright tests for the web app (login, PIN, lock, lost connection, RTL), the Windows app (encrypted sessions, storage and workers on `app://`, security rules) and the seller panel (on the web deployment's own output: the gym app with the panel under `/seller/`). Needs `pnpm db:start`, and `pnpm db:functions` for the panel |
 | `pnpm test:int` | Integration tests of the staff module (`packages/staff-admin`) and the seller module (`packages/seller-admin`) against the local Supabase: the real Auth admin API (with TOTP and the access token hook) and database. Needs `pnpm db:start` |
-| `pnpm db:functions` | Serve the Edge Functions locally at http://127.0.0.1:54321/functions/v1/staff-admin and `.../seller-admin` (`supabase functions serve`). Leave it running in its own terminal |
+| `pnpm db:functions` | Serve the Edge Functions locally at http://127.0.0.1:54321/functions/v1/staff-admin and `.../seller-admin` (`supabase functions serve`). First puts a throwaway `test-` license signing key into `supabase/functions/.env` when there is none ([Licenses](#licenses)). Leave it running in its own terminal |
 | `pnpm test:deno` | The staff and seller modules in Deno, the Edge Functions' runtime: type-checks each function, runs the unit cases, then HTTP tests against the served functions. Needs `pnpm db:start` and `pnpm db:functions` |
 | `pnpm lint` | ESLint, including the project rules below |
 | `pnpm typecheck` | TypeScript type checking for every package |
@@ -65,6 +65,8 @@ Run from the repository root:
 | `pnpm bootstrap:admin` | Create a gym's first Owner: `--gym <code>`, and the gym itself if it doesn't exist yet (its code can never change). Add `--remote` for a cloud project (see [A cloud project](#a-cloud-project)) |
 | `pnpm bootstrap:platform-admin` | Create a Click Group platform admin for the seller panel: `--email`, `--full-name`; prints a temporary password once. `--remote` for the cloud project ([Seller panel](#seller-panel-click-group)) |
 | `pnpm platform-admin:reset-2fa` | Last resort of the [recovery procedure](#recovery-procedure): removes a platform admin's two-step devices (`--email`), and with `--password` gives a new temporary password. `--remote` for the cloud project |
+| `pnpm license:new-key` | Click Group's license signing key, made once on Click Group's PC: `--kid <id>`; writes one encrypted backup file, the public key into `packages/core`, and the private key into the cloud project's secret ([Licenses](#licenses)) |
+| `pnpm license:restore-key` | Puts a backup's key back into the cloud project's secret: `--file <backup>` ([Licenses](#licenses)) |
 | `pnpm smoke:staff-admin` | Smoke test of the staff module as a gym's Owner: creates `smoke.test`, checks that its temporary password logs in and must be changed, deactivates it and checks that its login is refused. Prints only the staff id, never a password. `--remote` for the cloud project (needs the publishable key: `SUPABASE_PUBLISHABLE_KEY` in `supabase/.env.local`, or the app's `apps/app/.env.local` for the same project); local needs `pnpm db:functions` |
 | `pnpm staff-logins:move` | Once, after the MT-1 migrations, on a project that already had staff: moves their logins to their gym's address. Only shows what it would change; `--apply` changes it. `--remote` for a cloud project |
 | `pnpm release:migrations` | The release flow's cloud migrations ([Releasing](#releasing)): lists the migrations the cloud lacks and whether each is purely additive. `--rehearse` also applies them to a local copy of the cloud's schema; `--push` then runs the cloud dry run and pushes |
@@ -473,7 +475,7 @@ A separate domain isolates the panel completely from the gym app (its own origin
 
 What needs Supabase Auth's admin API goes through the Edge Function `seller-admin` (`packages/seller-admin`, built on the staff module). Everything else the panel does (subscription dates, suspend, lock, usage, the log, new recovery codes) is a `seller_*` database function it calls directly. Online only: the offline edition has no seller panel.
 
-- **Actions:** `create_gym` (the gym with its first Owner, whose temporary password is returned once), `add_admin` (a temporary password once), `deactivate_admin` and `reactivate_admin` (the account, and a ban on the login), `reset_admin_two_step` (removes another admin's lost device and voids their recovery codes), `reset_admin_password` (a temporary password once), and `use_recovery_code` (for the signed-in admin).
+- **Actions:** `issue_license` and `issue_activation` (signed codes for offline gyms, see [Licenses](#licenses)), `create_gym` (the gym with its first Owner, whose temporary password is returned once), `add_admin` (a temporary password once), `deactivate_admin` and `reactivate_admin` (the account, and a ban on the login), `reset_admin_two_step` (removes another admin's lost device and voids their recovery codes), `reset_admin_password` (a temporary password once), and `use_recovery_code` (for the signed-in admin).
 - **Checks before anything changes:** the bearer token against the project's published keys (like `staff-admin`, `verify_jwt = false`), then the request (Zod), then **two-step login: the token must be `aal2`** (`mfa_required`), except for `use_recovery_code`, which works after the password alone. Every action then starts with a `seller_*` database call under the same token, which checks for an active platform admin with two-step login again. Nobody changes their own account here (`cannot_change_own_admin`).
 - **Undo, like the staff module:** a login whose rows can't be written is deleted again (`writeRowsOrUndo` and `withAddressFreed` in `packages/staff-admin/src/accounts.ts`, shared by both modules). A login left behind when the undo fails too is freed by the next attempt, but only when the database says so (`staff_admin_orphan()` for a gym's Owner, `platform_admin_orphan()` for a platform admin). When a change in Auth worked but its record didn't, the answer is `record_failed`, and doing it again finishes it.
 - **Using a recovery code** uses it up and logs it in the database first, then removes the signed-in admin's two-step device; the panel then sets up a new one. If Auth fails after that, the code stays used (logged) and they use another.
@@ -498,6 +500,46 @@ A lost or stolen laptop with an open panel session: another admin **deactivates*
 - **Member counts** (step 2h, migration `20261022100000_seller_member_counts.sql`, tests `280-seller-member-counts.test.sql`): `seller_member_counts()` returns each gym's number of members (archived ones left out) and of active members. Numbers only, never a name; the panel shows them with the other usage counts. A separate function, so older panels keep working (expand first).
 - The **seller log** (`platform.audit_logs`, read with `seller_audit_log()`) records every seller action: who, when, which gym or admin, what changed, and the reason. Nobody can change or delete it. Changes made by a script have no actor.
 - Seller writes to a gym's tables run under the platform admin's own session, so the gym's own audit log names them too.
+
+### Licenses
+
+Offline gyms run on their own server PC and follow a signed license instead of a subscription (spec §2.6, step MT-5). The seller panel issues the codes; activation and enforcement on the offline server come with the offline packaging phase.
+
+- **Codes:** a license is `GSL1.<payload>.<signature>` and a server PC's activation `GSA1.<payload>.<signature>`: base64url JSON signed with Ed25519 (`packages/core/src/license.ts`, WebCrypto, the same code in Deno, Node and Electron). A license names the gym (id, code, Kurdish name), yearly or perpetual, max branches and devices, and its dates; an activation binds the gym to one PC's machine code, so a renewal needs only a new license code. About 350 characters: they are pasted or saved as a `.txt` file, never typed. A machine code is `XXXX-XXXX-XXXX-XXXX-XXXX` with 4 check characters, so a typo read over the phone is caught before anything is signed.
+- **In the panel:** new gym → edition **ئۆفلاین** makes the gym's record (code and names only). Its page issues licenses (yearly up to 2 years ahead, perpetual "updates until" up to 5), activates one server PC at a time, and records revoking and deactivating with a reason (records only: an offline PC can't be reached). Every one of them is in the seller log.
+- **Database:** `platform.licenses`, `platform.activations`, `platform.license_events` (migration `20261029900000_licenses.sql`, tests `550-licenses.test.sql`). `seller_prepare_license()` / `seller_prepare_activation()` check everything under the platform admin's session before the key is used; `seller_issue_*()` check it again and store a code only when its payload equals the stored fields.
+- **Signing** happens only in the `seller-admin` function (`issue_license`, `issue_activation`), with the private key in its secret **`LICENSE_SIGNING_KEY`** (a JWK with its `kid`). It refuses a revoked kid, and a key whose public half isn't in `LICENSE_PUBLIC_KEYS`, and checks every code it signs. Without the secret, issuing answers `license_key_missing` and everything else works.
+- **Public keys** live in `packages/core/src/license-keys.ts` (`LICENSE_PUBLIC_KEYS`, by kid; `REVOKED_LICENSE_KIDS`). Only public keys ever go there.
+- **Locally,** `pnpm db:functions` puts a throwaway `test-…` key into `supabase/functions/.env` (git-ignored) when there is none. A `test-` kid is never in `LICENSE_PUBLIC_KEYS` (a test checks), so nothing it signs works on a real server; the panel marks such licenses. Never put a real key in that file: the script refuses to run if one is there.
+
+#### The real key
+
+Made once, by Click Group, on Click Group's own PC, in a terminal (not in CI, not through Claude):
+
+```
+pnpm license:new-key --kid 2026-1 [--backup-dir <folder>]
+```
+
+It asks for a Supabase personal access token (hidden; or `SUPABASE_ACCESS_TOKEN`), shows the linked project (`supabase/.temp/project-ref`, or `--project-ref`) and asks to type `yes`. Then it asks for a backup password twice (hidden, at least 12 characters; four or more random words), makes the key pair **in memory**, and:
+
+1. writes **one** encrypted backup file, `gym-spa-license-key-<kid>.gskey` (scrypt + AES-256-GCM), to the Desktop or `--backup-dir` (never inside the repository), and opens it again to check it;
+2. writes the **public** key into `packages/core/src/license-keys.ts`;
+3. sends the private key to the project's secret `LICENSE_SIGNING_KEY` through Supabase's Management API, straight from memory over HTTPS (`supabase secrets set` takes secrets only as command-line arguments or from a file on disk), then checks Supabase lists it with a matching digest;
+4. prints the backup file's path and the public key, and nothing else of the key.
+
+Then: move the backup file to the USB stick and delete it from the PC (and the Recycle Bin); keep the password in Click Group's password manager, never with the stick; commit `license-keys.ts` and release. Until the release, the function refuses to sign with the new key (its public half isn't shipped yet). After the release, check it with `pnpm smoke:license --remote` (a platform admin types their email, password and the 6-digit code): it makes the offline test gym `smoke-offline` the first time (a permanent code; later runs reuse it), issues a 30-day yearly license through `seller-admin`, verifies it with the public keys in `license-keys.ts`, checks that a code with a changed expiry is refused, and revokes it again with a reason. Everything it does is in the seller log. Without `--remote` it runs against the local Supabase and its test key.
+
+`pnpm license:restore-key --file <backup> [--replace]` puts a backup's key back into the secret (a new Supabase project, or the secret removed by mistake). Its public key must already be in `license-keys.ts`.
+
+#### If the key is lost or leaked
+
+- **The secret is gone, the backup isn't** (a new project, a deleted secret): `pnpm license:restore-key --file <backup>`. Nothing else changes.
+- **Lost** (the secret and the backup are both gone, or the backup's password is forgotten): make a new key with a new kid, `pnpm license:new-key --kid <new> --replace`, and release. Keep the old kid's public key in `LICENSE_PUBLIC_KEYS`: licenses and activations it signed keep working. New licenses and renewals are signed with the new key.
+- **Leaked** (the private key may be known to someone else):
+  1. At once: `pnpm license:new-key --kid <new> --replace`, which takes the old key out of the secret, and release `license-keys.ts` right away (a release with only that change). Until then issuing pauses: the function refuses a key whose public half isn't shipped.
+  2. Issue every offline gym's license and activation again with the new key (the panel: issue a license; deactivate and activate its PC again), and give them the new codes.
+  3. In the next release, move the old kid from `LICENSE_PUBLIC_KEYS` to `REVOKED_LICENSE_KIDS`: servers that install it refuse every code the old key signed. A server that never installs that release still accepts the old key; that is a limit we accept.
+  4. Record what happened and when in the seller log's reasons (revoke the old licenses with the reason "key leaked").
 
 ### The Auth hook
 

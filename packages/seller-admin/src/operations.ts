@@ -1,4 +1,15 @@
-import { staffEmail } from '@gym/core';
+import {
+  LicenseKeyError,
+  keyRingOf,
+  normalizeMachineCode,
+  signActivation,
+  signLicense,
+  staffEmail,
+  verifyActivationCode,
+  verifyLicenseCode,
+  type License,
+  type LicenseSigningKey,
+} from '@gym/core';
 import {
   AddressTaken,
   DatabaseError,
@@ -17,6 +28,10 @@ import type {
   CreateGymRequest,
   CreateGymResult,
   DeactivateAdminRequest,
+  IssueActivationRequest,
+  IssueActivationResult,
+  IssueLicenseRequest,
+  IssueLicenseResult,
   ReactivateAdminRequest,
   ResetAdminPasswordRequest,
   ResetAdminPasswordResult,
@@ -45,6 +60,11 @@ export interface SellerAdminDeps {
   readonly temporaryPassword?: () => string;
   /** Tests pass fixed ids; otherwise crypto.randomUUID. */
   readonly newId?: () => string;
+  /**
+   * The license signing key (the LICENSE_SIGNING_KEY secret, checked by importLicenseSigningKey).
+   * Absent: issuing answers license_key_missing, and everything else works.
+   */
+  readonly licenseKey?: () => Promise<LicenseSigningKey>;
 }
 
 /** Keys the database raises (migrations 20261010100500 and 20261010100600) that the panel explains. */
@@ -62,6 +82,12 @@ const DATABASE_KEYS = new Set<SellerAdminErrorKey>([
   'admin_not_found',
   'cannot_change_own_admin',
   'last_platform_admin',
+  'gym_not_found',
+  'online_gym',
+  'invalid_license_date',
+  'invalid_machine_code',
+  'no_license',
+  'already_activated',
 ]);
 
 function isDatabaseKey(value: string): value is SellerAdminErrorKey {
@@ -423,4 +449,126 @@ export async function useRecoveryCode(
     throw authFailed(deps, action, deps.callerId, error);
   }
   return { result: 'ok' };
+}
+
+// Offline licenses ------------------------------------------------------------------------------
+// Spec §2.6, step MT-5. Like creating a gym: the database checks the request under the platform
+// admin's session before the key is touched; then the code is signed and checked with the key's
+// public half; then the database checks everything again and stores it only when the code's
+// payload equals the fields, with the log entry. No Auth call, and nothing to undo: a code that
+// isn't stored is never answered.
+
+/** The signing key, or license_key_missing. Why a key can't be used is logged, never the key. */
+async function signingKey(deps: SellerAdminDeps, action: string): Promise<LicenseSigningKey> {
+  if (deps.licenseKey === undefined) throw new SellerAdminError('license_key_missing');
+  try {
+    return await deps.licenseKey();
+  } catch (error) {
+    deps.log({
+      event: 'license_key_unusable',
+      action,
+      keyProblem: error instanceof LicenseKeyError ? error.problem : 'unexpected',
+    });
+    throw new SellerAdminError('license_key_missing', { cause: error });
+  }
+}
+
+/** A code that fails its own key's check is never handed out (a broken key or runtime). */
+function signedWrongly(deps: SellerAdminDeps, action: string, gymId: string): SellerAdminError {
+  deps.log({
+    event: 'unexpected_error',
+    action,
+    gymId,
+    error: { name: 'SignatureCheckFailed', message: 'a new code failed its key check' },
+  });
+  return new SellerAdminError('unexpected');
+}
+
+export async function issueLicense(
+  deps: SellerAdminDeps,
+  request: IssueLicenseRequest,
+): Promise<IssueLicenseResult> {
+  const { action, gymId, type, maxBranches, maxDevices, validUntil } = request;
+  let prepared;
+  try {
+    prepared = await deps.caller.prepareLicense({
+      gymId,
+      type,
+      maxBranches,
+      maxDevices,
+      validUntil,
+    });
+  } catch (error) {
+    throw refusal(deps, error, { action, fallback: 'unexpected', gymId });
+  }
+
+  const key = await signingKey(deps, action);
+  const license: License = {
+    licenseId: newId(deps),
+    kid: key.kid,
+    gymId,
+    gymCode: prepared.gymCode,
+    gymName: prepared.gymName,
+    type,
+    maxBranches,
+    maxDevices,
+    features: [],
+    issuedOn: prepared.issuedOn,
+    expiresOn: type === 'yearly' ? validUntil : null,
+    updatesUntil: type === 'perpetual' ? validUntil : null,
+  };
+  const code = await signLicense(license, key);
+  if (!(await verifyLicenseCode(code, keyRingOf(key))).ok) throw signedWrongly(deps, action, gymId);
+
+  try {
+    await deps.caller.issueLicense(license, code);
+  } catch (error) {
+    throw refusal(deps, error, { action, fallback: 'unexpected', gymId });
+  }
+  return { licenseId: license.licenseId, code };
+}
+
+export async function issueActivation(
+  deps: SellerAdminDeps,
+  request: IssueActivationRequest,
+): Promise<IssueActivationResult> {
+  const { action, gymId } = request;
+  const machineCode = normalizeMachineCode(request.machineCode);
+  if (machineCode === null) throw new SellerAdminError('invalid_machine_code');
+  let prepared;
+  try {
+    prepared = await deps.caller.prepareActivation(gymId, machineCode);
+  } catch (error) {
+    throw refusal(deps, error, {
+      action,
+      fallback: 'unexpected',
+      taken: 'already_activated',
+      gymId,
+    });
+  }
+
+  const key = await signingKey(deps, action);
+  const activation = {
+    activationId: newId(deps),
+    kid: key.kid,
+    gymId,
+    machineCode: prepared.machineCode,
+    issuedOn: prepared.issuedOn,
+  };
+  const code = await signActivation(activation, key);
+  if (!(await verifyActivationCode(code, keyRingOf(key))).ok) {
+    throw signedWrongly(deps, action, gymId);
+  }
+
+  try {
+    await deps.caller.issueActivation(activation, code);
+  } catch (error) {
+    throw refusal(deps, error, {
+      action,
+      fallback: 'unexpected',
+      taken: 'already_activated',
+      gymId,
+    });
+  }
+  return { activationId: activation.activationId, code };
 }

@@ -16,6 +16,8 @@ export const backend: Backend = localBackend();
 export class Made {
   readonly admins: string[] = [];
   readonly gyms: TestGym[] = [];
+  /** Offline gyms' records: their licenses and activations are platform rows, removed with SQL. */
+  readonly offlineGyms: string[] = [];
 
   async admin(label: string): Promise<TestPlatformAdmin> {
     const admin = await TestPlatformAdmin.create(backend, label);
@@ -29,8 +31,18 @@ export class Made {
     return gym;
   }
 
+  offlineGym(id: string): void {
+    this.offlineGyms.push(id);
+  }
+
   async cleanup(): Promise<void> {
     for (const gym of this.gyms) await gym.cleanup();
+    for (const id of this.offlineGyms) {
+      // The license log stays (append-only), like the seller log.
+      localSql(`delete from platform.activations where gym_id = '${id}';
+        delete from platform.licenses where gym_id = '${id}';
+        delete from public.gyms where id = '${id}';`);
+    }
     localSql(removePlatformAdminsSql(this.admins));
   }
 }

@@ -34,10 +34,13 @@
     "db:functions": "pnpm --filter @gym/supabase functions",
     "db:types": "pnpm --filter @gym/supabase types && prettier --write --log-level warn packages/db/src/database.types.ts",
     "bootstrap:admin": "pnpm --filter @gym/supabase bootstrap:admin",
+    "license:new-key": "pnpm --filter @gym/supabase license:new-key",
+    "license:restore-key": "pnpm --filter @gym/supabase license:restore-key",
     "bootstrap:platform-admin": "pnpm --filter @gym/supabase bootstrap:platform-admin",
     "platform-admin:reset-2fa": "pnpm --filter @gym/supabase platform-admin:reset-2fa",
     "staff-logins:move": "pnpm --filter @gym/supabase staff-logins:move",
     "smoke:staff-admin": "pnpm --filter @gym/supabase smoke:staff-admin",
+    "smoke:license": "pnpm --filter @gym/supabase smoke:license",
     "release:migrations": "pnpm --filter @gym/supabase release:migrations",
     "release:check-live": "pnpm --filter @gym/app check-live"
   },

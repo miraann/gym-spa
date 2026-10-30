@@ -44,7 +44,7 @@ test('an invoice prints on an 80mm roll, in the member’s language', async ({ p
   const invoice = page.getByTestId('member-money').locator('[data-invoice="B2-900001"]');
   await invoice.locator('summary').click();
   await invoice.getByRole('button', { name: 'چاپکردن' }).click();
-  await page.getByRole('menuitem', { name: 'پسوولەی بچووک (80mm)' }).click();
+  await page.getByRole('menuitem', { name: 'وەسڵی بچووک (80mm)' }).click();
   await expect.poll(() => page.evaluate(() => window.printed?.page ?? '')).toContain('80mm');
   const text = await page.evaluate(() => window.printed?.text ?? '');
   for (const part of [

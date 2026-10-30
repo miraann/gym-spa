@@ -1,4 +1,10 @@
-import { staffEmail } from '@gym/core';
+import {
+  licenseDateProblem,
+  readActivationCode,
+  readLicenseCode,
+  staffEmail,
+  type License,
+} from '@gym/core';
 import { AuthAdminError, DatabaseError, type TokenVerifier } from '@gym/staff-admin/server';
 import type {
   NewGym,
@@ -21,6 +27,18 @@ export const TEMPORARY_PASSWORD = 'k7m2p9x4w3h8r6';
 export const NEW_GYM_ID = 'e0000000-0000-4000-8000-0000000000f1';
 /** The one recovery code the signed-in admin has. */
 export const RECOVERY_CODE = 'kkkk-mmmm-nnnn-pppp';
+/** The offline gym the fake database knows, and "today" in Baghdad there. */
+export const OFFLINE_GYM_ID = 'e0000000-0000-4000-8000-0000000000c1';
+export const LICENSE_TODAY = '2026-10-29';
+/** A machine code with a good check (packages/core's tests use the same). */
+export const MACHINE_CODE = '0V5Q1BD4TS11N9TC9402';
+
+export interface FakeActivation {
+  gymId: string;
+  machineCode: string;
+  code: string;
+  active: boolean;
+}
 
 export interface FakeLogin {
   email: string;
@@ -75,6 +93,10 @@ export class FakeSellerWorld {
   readonly logs: SellerAdminLogEntry[] = [];
   /** Seller log entries the database wrote. */
   readonly records: string[] = [];
+  /** Offline gyms by id: the only gyms with licenses. */
+  readonly offlineGyms = new Map([[OFFLINE_GYM_ID, { code: 'hawler-off', name: 'جیمی هەولێر' }]]);
+  readonly licenses = new Map<string, { license: License; code: string }>();
+  readonly activations = new Map<string, FakeActivation>();
   /** What useRecoveryCode answers when the code is wrong (too_many_attempts after 5). */
   wrongCodeAnswer: RecoveryCodeAnswer = 'wrong_code';
   private readonly failures = new Map<Method, Error[]>();
@@ -159,6 +181,21 @@ export class FakeSellerWorld {
     const login = this.logins.get(id);
     if (!login) throw new AuthAdminError('user_not_found', 404, 'User not found');
     return login;
+  }
+
+  private offlineGym(gymId: string): { code: string; name: string } {
+    const gym = this.offlineGyms.get(gymId);
+    if (!gym) throw new DatabaseError('gym_not_found', '22023', 400);
+    return gym;
+  }
+
+  private checkCanActivate(gymId: string): void {
+    if (![...this.licenses.values()].some(({ license }) => license.gymId === gymId)) {
+      throw new DatabaseError('no_license', '22023', 400);
+    }
+    if ([...this.activations.values()].some((a) => a.gymId === gymId && a.active)) {
+      throw new DatabaseError('already_activated', '23505', 409);
+    }
   }
 
   private target(userId: string): FakeAdmin {
@@ -279,6 +316,44 @@ export class FakeSellerWorld {
       }
       this.records.push('recovery_code_used');
       return 'ok';
+    },
+    prepareLicense: async ({ gymId, type, validUntil }) => {
+      await this.call('prepareLicense');
+      const gym = this.offlineGym(gymId);
+      if (licenseDateProblem(type, LICENSE_TODAY, validUntil) !== null) {
+        throw new DatabaseError('invalid_license_date', '22023', 400);
+      }
+      return { gymCode: gym.code, gymName: gym.name, issuedOn: LICENSE_TODAY };
+    },
+    issueLicense: async (license, code) => {
+      await this.call('issueLicense');
+      this.offlineGym(license.gymId);
+      // The database compares the code's payload with the fields it stores.
+      if (JSON.stringify(readLicenseCode(code)) !== JSON.stringify(license)) {
+        throw new DatabaseError('license_code_mismatch', '22023', 400);
+      }
+      this.licenses.set(license.licenseId, { license, code });
+      this.records.push(`license_issued ${license.licenseId}`);
+    },
+    prepareActivation: async (gymId, machineCode) => {
+      await this.call('prepareActivation');
+      this.offlineGym(gymId);
+      this.checkCanActivate(gymId);
+      return { machineCode, issuedOn: LICENSE_TODAY };
+    },
+    issueActivation: async (activation, code) => {
+      await this.call('issueActivation');
+      this.checkCanActivate(activation.gymId);
+      if (JSON.stringify(readActivationCode(code)) !== JSON.stringify(activation)) {
+        throw new DatabaseError('license_code_mismatch', '22023', 400);
+      }
+      this.activations.set(activation.activationId, {
+        gymId: activation.gymId,
+        machineCode: activation.machineCode,
+        code,
+        active: true,
+      });
+      this.records.push(`activation_issued ${activation.activationId}`);
     },
   };
 
