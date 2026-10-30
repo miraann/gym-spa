@@ -79,14 +79,34 @@ export function query(db: Database, sql: string, user: DatabaseUser = 'postgres'
 }
 
 /**
+ * A psql `\set` line for one variable. Inside single quotes psql reads '' as a quote and
+ * backslash escapes like C, so those two and line breaks are written escaped.
+ */
+export function setVariable(name: string, value: string): string {
+  if (!/^[a-z_][a-z0-9_]*$/.test(name)) throw new Error(`Not a variable name: ${name}`);
+  const escaped = value
+    .replaceAll('\\', '\\\\')
+    .replaceAll("'", "''")
+    .replaceAll('\r', '\\r')
+    .replaceAll('\n', '\\n');
+  return `\\set ${name} '${escaped}'\n`;
+}
+
+/**
  * A query's rows as tab-separated lines, without blocking: gym-server answers requests in the same
- * process while its scheduled jobs and checks run.
+ * process while its scheduled jobs and checks run. Values go in as psql variables (`:'name'` in
+ * the SQL), never pasted into it. Both go through stdin as UTF-8: Windows hands command-line
+ * arguments to psql in the ANSI code page, which turns Kurdish into question marks.
  */
 export function queryAsync(
   db: Database,
   sql: string,
-  user: DatabaseUser = 'postgres',
+  options: { readonly user?: DatabaseUser; readonly variables?: Record<string, string> } = {},
 ): Promise<string[]> {
+  const user = options.user ?? 'postgres';
+  const script = `${Object.entries(options.variables ?? {})
+    .map(([name, value]) => setVariable(name, value))
+    .join('')}${sql}`;
   return new Promise((resolve, reject) => {
     const child = spawn(
       exe(db.tools, 'psql'),
@@ -107,8 +127,8 @@ export function queryAsync(
         'postgres',
         '-v',
         'ON_ERROR_STOP=1',
-        '-c',
-        sql,
+        '-f',
+        '-',
       ],
       {
         env: { ...process.env, PGPASSWORD: passwordOf(db.secrets, user), PGCLIENTENCODING: 'UTF8' },
@@ -128,6 +148,7 @@ export function queryAsync(
       if (code === 0) resolve(stdout.split(/\r?\n/).filter((line) => line !== ''));
       else reject(new Error(stderr.trim() || `psql exited with ${String(code)}`));
     });
+    child.stdin.end(script, 'utf8');
   });
 }
 

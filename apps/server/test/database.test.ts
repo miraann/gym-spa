@@ -1,7 +1,7 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { migrationsIn, pendingMigrations } from '../src/database.ts';
+import { migrationsIn, pendingMigrations, setVariable } from '../src/database.ts';
 import { REPO } from '../src/paths.ts';
 import { readTap, tapPassed } from '../src/pgtap.ts';
 import { AUTH, CLOUD_VERSION_FILES, POSTGRES, POSTGREST } from '../src/versions.ts';
@@ -55,6 +55,18 @@ describe('migrations', () => {
   it('reads every file of supabase/migrations', () => {
     const real = path.join(REPO, 'supabase', 'migrations');
     expect(migrationsIn(real, readdirSync(real)).length).toBeGreaterThan(40);
+  });
+});
+
+describe('setVariable', () => {
+  it('writes a psql set line that keeps every character', () => {
+    expect(setVariable('name', 'جیمی هەولێر')).toBe("\\set name 'جیمی هەولێر'\n");
+    expect(setVariable('v', "it's \\ a\r\nb")).toBe("\\set v 'it''s \\\\ a\\r\\nb'\n");
+  });
+
+  it('refuses a variable name psql would read differently', () => {
+    expect(() => setVariable('bad name', 'x')).toThrow('Not a variable name');
+    expect(() => setVariable("x'", 'x')).toThrow('Not a variable name');
   });
 });
 

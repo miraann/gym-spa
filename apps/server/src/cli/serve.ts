@@ -9,8 +9,9 @@
 //
 // The first start makes the database (without the demo gym; the gym comes from its license, OF-b)
 // and leaves the data folder readable only by this account, SYSTEM and Administrators. Every start
-// applies new migrations, keeps the three programs running, opens HTTPS for the LAN and runs the
-// scheduled jobs. Ctrl+C (or the service stopping) stops everything cleanly.
+// applies new migrations, keeps the three programs running, opens HTTPS for the LAN, runs the
+// scheduled jobs and keeps the gym in line with its license (OF-b). Ctrl+C (or the service
+// stopping) stops everything cleanly.
 import { existsSync, mkdirSync } from 'node:fs';
 import path from 'node:path';
 import { parseArgs } from 'node:util';
@@ -51,7 +52,7 @@ async function main(): Promise<void> {
     restrictFolder(dataRoot);
     createServer({ ...options, seed: false });
   }
-  server = await startServer({ ...options, lanPort: config.lanPort, jobs: true });
+  server = await startServer({ ...options, lanPort: config.lanPort, jobs: true, license: {} });
   log(`ready: ${server.url} for this PC, port ${String(config.lanPort)} for the LAN`);
 }
 

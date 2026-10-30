@@ -3,6 +3,7 @@ import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node
 import http from 'node:http';
 import https from 'node:https';
 import path from 'node:path';
+import type { LicenseKeyRing } from '@gym/core';
 import { createStaffAdminHandler, supabaseStaffAdminPorts } from '@gym/staff-admin/server';
 import {
   applyCompat,
@@ -16,6 +17,7 @@ import {
   queryAsync,
   type Database,
 } from './database.ts';
+import { adminHandler } from './admin.ts';
 import { createGateway } from './gateway.ts';
 import { runScheduledJobs, type JobRunner } from './jobs.ts';
 import {
@@ -25,7 +27,10 @@ import {
   type ServerSecrets,
 } from './keys.ts';
 import { dataPaths, toolPaths, type ToolPaths } from './paths.ts';
+import type { LicenseSummary } from './license.ts';
+import { startLicenseService, type LicenseService } from './license-service.ts';
 import { rotateLogs } from './log.ts';
+import { thisMachineCode } from './machine.ts';
 import type { StackPorts } from './ports.ts';
 import {
   gatewayUrl,
@@ -157,6 +162,11 @@ export interface StartOptions extends StackOptions {
   readonly lanPort?: number;
   /** Runs the scheduled jobs (pg_cron's in the cloud). */
   readonly jobs?: boolean;
+  /**
+   * Keeps the gym in line with its license (OF-b). Tests pass a throwaway key ring and machine
+   * code; the installed server uses the shipped keys and this PC's code.
+   */
+  readonly license?: { readonly keys?: LicenseKeyRing; readonly machineCode?: string };
 }
 
 export interface ServerStatus {
@@ -173,6 +183,8 @@ export interface ServerInfo {
   readonly fingerprint: string | null;
   /** The server's gym; null until its license made it (OF-b), or while there are several. */
   readonly gym: { readonly code: string; readonly name: string } | null;
+  /** The license and its warnings (never the codes); null when the server doesn't check one. */
+  readonly license: LicenseSummary | null;
 }
 
 export interface RunningServer {
@@ -181,6 +193,8 @@ export interface RunningServer {
   readonly backend: BackendFile;
   readonly fingerprint: string | null;
   status(): ServerStatus;
+  /** The license service, when this server checks a license. */
+  readonly license: LicenseService | null;
   info(): Promise<ServerInfo>;
   stop(): Promise<void>;
 }
@@ -221,8 +235,10 @@ export async function startServer(options: StartOptions): Promise<RunningServer>
   const programs: Supervised[] = [];
   const servers: http.Server[] = [];
   let jobs: JobRunner | null = null;
+  let license: LicenseService | null = null;
   const stop = async () => {
     jobs?.stop();
+    license?.stop();
     await Promise.all(
       servers.map(
         (server) =>
@@ -290,11 +306,23 @@ export async function startServer(options: StartOptions): Promise<RunningServer>
         programs: each,
       };
     };
+    if (options.license !== undefined) {
+      license = await startLicenseService({
+        db,
+        dataRoot: options.dataRoot,
+        url,
+        machineCode: options.license.machineCode ?? (await thisMachineCode()),
+        log,
+        ...(options.license.keys === undefined ? {} : { keys: options.license.keys }),
+      });
+    }
+    const licenseService = license;
     const info = async (): Promise<ServerInfo> => ({
       edition: 'offline',
       version: SERVER_VERSION,
       fingerprint: certificate?.fingerprint ?? null,
       gym: await serverGym(db),
+      license: licenseService?.summary() ?? null,
     });
     const tokens = roleTokens(db.secrets);
     const handler = createGateway({
@@ -316,6 +344,7 @@ export async function startServer(options: StartOptions): Promise<RunningServer>
       ),
       health: status,
       info,
+      ...(licenseService === null ? {} : { admin: adminHandler(licenseService) }),
     });
     const loopback = http.createServer(handler);
     servers.push(loopback);
@@ -345,6 +374,7 @@ export async function startServer(options: StartOptions): Promise<RunningServer>
       fingerprint: certificate?.fingerprint ?? null,
       status,
       info,
+      license: licenseService,
       stop,
     };
   } catch (error) {

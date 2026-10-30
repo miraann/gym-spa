@@ -2,9 +2,11 @@
 // server on this PC (spec §8, step 1f), the same suites `pnpm db:test` and `pnpm test:e2e` run
 // against the local Supabase in Docker.
 //
-//   pnpm test:offline              a fresh development server (deleted and made again), pgTAP, e2e
+//   pnpm test:offline              a fresh development server (deleted and made again), pgTAP, e2e,
+//                                  then the server's own integration tests (the license, OF-b)
 //   pnpm test:offline --pgtap      pgTAP only
 //   pnpm test:offline --e2e        e2e only
+//   pnpm test:offline --int        the integration tests only (they make their own server)
 //   pnpm test:offline --keep       reuse the server as it is instead of making it again
 //
 // Extra arguments after `--` go to Playwright (e.g. -- e2e/staff.spec.ts).
@@ -28,9 +30,10 @@ const { values: flags, positionals } = parseArgs({
     pgtap: { type: 'boolean', default: false },
     e2e: { type: 'boolean', default: false },
     keep: { type: 'boolean', default: false },
+    int: { type: 'boolean', default: false },
   },
 });
-const both = !flags.pgtap && !flags.e2e;
+const all = !flags.pgtap && !flags.e2e && !flags.int;
 const root = devDataRoot();
 const log = (line: string) => {
   console.log(line);
@@ -61,6 +64,12 @@ function pnpm(args: readonly string[], env: NodeJS.ProcessEnv): Promise<number> 
   });
 }
 
+/** apps/server's integration tests: each makes its own server on other ports. */
+function integration(): Promise<number> {
+  log("\nthe server's integration tests");
+  return pnpm(['--filter', '@gym/server', 'test:int'], {});
+}
+
 /** The app's e2e suite, built for and run against this server. */
 async function e2e(server: RunningServer): Promise<number> {
   const env = {
@@ -77,6 +86,7 @@ async function e2e(server: RunningServer): Promise<number> {
 }
 
 async function main(): Promise<number> {
+  if (flags.int && !flags.pgtap && !flags.e2e) return integration();
   stopLeftovers(options);
   if (!flags.keep || !existsSync(dataPaths(root).secrets)) {
     removeServer(root);
@@ -86,14 +96,15 @@ async function main(): Promise<number> {
   log(`offline server: ${server.url}`);
   let failures = 0;
   try {
-    if (both || flags.pgtap) {
+    if (all || flags.pgtap) {
       log('\npgTAP (supabase/tests)');
       failures += runPgTap(server.db, log);
     }
-    if (both || flags.e2e) failures += await e2e(server);
+    if (all || flags.e2e) failures += await e2e(server);
   } finally {
     await server.stop();
   }
+  if (all || flags.int) failures += await integration();
   return failures;
 }
 

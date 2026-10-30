@@ -487,9 +487,15 @@ importers:
       '@gym/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@gym/db':
+        specifier: workspace:*
+        version: link:../../packages/db
       '@gym/staff-admin':
         specifier: workspace:*
         version: link:../../packages/staff-admin
+      '@supabase/supabase-js':
+        specifier: ^2.117.2
+        version: 2.117.2
     devDependencies:
       '@types/node':
         specifier: ^24.19.1

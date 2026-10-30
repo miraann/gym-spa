@@ -5,7 +5,8 @@
 //   pnpm server:dev init     a new server with the demo gym (seed.sql); --no-seed for an empty one
 //   pnpm server:dev start    runs it in the foreground (Ctrl+C stops it); prints the address and
 //                            writes backend.json for the e2e helpers (GYM_E2E_BACKEND); --lan also
-//                            opens HTTPS on port 47200 for other PCs, --jobs runs the scheduled jobs
+//                            opens HTTPS on port 47200 for other PCs, --jobs runs the scheduled jobs,
+//                            --license checks a license with the shipped keys (gym-server-admin --dev)
 //   pnpm server:dev reset    deletes it and makes a new one
 //   pnpm server:dev stop     stops what an interrupted run left running (its own programs only)
 //   pnpm server:dev psql     psql as postgres (more arguments are passed on)
@@ -23,6 +24,7 @@ const { values: flags, positionals } = parseArgs({
     'no-seed': { type: 'boolean', default: false },
     lan: { type: 'boolean', default: false },
     jobs: { type: 'boolean', default: false },
+    license: { type: 'boolean', default: false },
   },
 });
 const command = positionals[0];
@@ -46,6 +48,7 @@ async function start(): Promise<void> {
     ...options,
     ...(flags.lan === true ? { lanPort: LAN_PORT } : {}),
     jobs: flags.jobs === true,
+    ...(flags.license === true ? { license: {} } : {}),
   });
   console.log(`gym-server: ${server.url}`);
   console.log(`e2e: GYM_E2E_BACKEND=${server.db.data.backendFile}`);

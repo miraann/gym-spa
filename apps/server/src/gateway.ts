@@ -16,6 +16,7 @@ export type Route =
   | { readonly kind: 'staff-admin' }
   | { readonly kind: 'health' }
   | { readonly kind: 'info' }
+  | { readonly kind: 'admin'; readonly name: string }
   | { readonly kind: 'not_found' };
 
 function under(url: string, prefix: string): string | null {
@@ -37,6 +38,8 @@ export function route(url: string): Route {
   if (pathOnly === '/functions/v1/staff-admin') return { kind: 'staff-admin' };
   if (pathOnly === '/server/v1/health') return { kind: 'health' };
   if (pathOnly === '/server/v1/info') return { kind: 'info' };
+  const admin = /^\/server\/v1\/admin\/([a-z-]+)$/.exec(pathOnly ?? '')?.[1];
+  if (admin !== undefined) return { kind: 'admin', name: admin };
   return { kind: 'not_found' };
 }
 
@@ -135,7 +138,19 @@ export interface GatewayOptions {
   readonly health: () => unknown;
   /** Which gym and version this is: what a PC shows before it pairs (OF-d). */
   readonly info: () => Promise<unknown>;
+  /** The server's own settings (license, first Owner, clock): from the server PC itself only. */
+  readonly admin?: AdminHandler;
 }
+
+export interface AdminAnswer {
+  readonly status: number;
+  readonly body: unknown;
+}
+
+export type AdminHandler = (method: string, name: string, body: unknown) => Promise<AdminAnswer>;
+
+/** The largest admin request body (a license and an activation are under 2 KB). */
+const ADMIN_BODY_LIMIT = 64 * 1024;
 
 /** Hop-by-hop headers never go on (RFC 9110), nor the client's own Host. */
 const DROPPED = new Set(['connection', 'keep-alive', 'transfer-encoding', 'upgrade', 'host']);
@@ -227,6 +242,35 @@ export function createGateway(options: GatewayOptions): http.RequestListener {
     }
     if (target.kind === 'health') {
       sendJson(request, response, 200, options.health());
+      return;
+    }
+    if (target.kind === 'admin') {
+      if (!fromServerPc || options.admin === undefined) {
+        sendJson(request, response, 403, { message: 'admin_not_allowed' });
+        return;
+      }
+      const handle = options.admin;
+      readBody(request)
+        .then(async (raw) => {
+          if (raw.length > ADMIN_BODY_LIMIT) return { status: 413, body: { error: 'too_large' } };
+          let body: unknown = null;
+          if (raw.length > 0) {
+            try {
+              body = JSON.parse(raw.toString('utf8'));
+            } catch {
+              return { status: 400, body: { error: 'invalid_json' } };
+            }
+          }
+          return handle(request.method ?? 'GET', target.name, body);
+        })
+        .then(
+          (answer) => {
+            sendJson(request, response, answer.status, answer.body);
+          },
+          () => {
+            sendJson(request, response, 500, { error: 'internal' });
+          },
+        );
       return;
     }
     if (target.kind === 'info') {
