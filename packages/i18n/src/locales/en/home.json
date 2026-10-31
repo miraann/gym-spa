@@ -41,7 +41,21 @@
     "staff": "Staff",
     "staffHint": "Staff accounts and roles",
     "appearance": "Gym look",
-    "appearanceHint": "Color, logo and corner style"
+    "appearanceHint": "Color, logo and corner style",
+    "checkin": "Check-in",
+    "checkinHint": "By card or by name",
+    "cashRegister": "Cash register",
+    "cashRegisterHint": "Open and close the cash register",
+    "shop": "Shop",
+    "shopHint": "Sell products",
+    "lockers": "Lockers",
+    "lockersHint": "Give and release lockers",
+    "spa": "Spa",
+    "spaHint": "Spa bookings",
+    "classes": "Classes",
+    "classesHint": "Schedule and places",
+    "reports": "Reports",
+    "reportsHint": "Daily and monthly"
   },
   "chart": {
     "title": "Today's check-ins by hour",

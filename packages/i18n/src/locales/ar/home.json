@@ -41,7 +41,21 @@
     "staff": "الموظفون",
     "staffHint": "حسابات الموظفين وأدوارهم",
     "appearance": "مظهر النادي",
-    "appearanceHint": "اللون والشعار وشكل الزوايا"
+    "appearanceHint": "اللون والشعار وشكل الزوايا",
+    "checkin": "تسجيل الحضور",
+    "checkinHint": "بالبطاقة أو بالاسم",
+    "cashRegister": "الصندوق",
+    "cashRegisterHint": "فتح الصندوق وإغلاقه",
+    "shop": "المتجر",
+    "shopHint": "بيع المنتجات",
+    "lockers": "الخزائن",
+    "lockersHint": "تسليم الخزائن وتفريغها",
+    "spa": "السبا",
+    "spaHint": "حجوزات السبا",
+    "classes": "الحصص",
+    "classesHint": "الجدول والأماكن",
+    "reports": "التقارير",
+    "reportsHint": "يومية وشهرية"
   },
   "chart": {
     "title": "تسجيلات الحضور اليوم حسب الساعة",

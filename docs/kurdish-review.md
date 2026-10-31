@@ -169,3 +169,4 @@ New dashboard texts Claude wrote following the approved wording above; the app u
 | 150 | Dashboard (D-4) | check-ins / revenue in the last 7 days | هاتنەکانی {{days}} ڕۆژی ڕابردوو / داهاتی {{days}} ڕۆژی ڕابردوو | waiting |
 | 151 | Dashboard (D-4) | today's classes / places taken / running now / none today | کلاسەکانی ئەمڕۆ / {{taken}} لە {{places}} جێگە گیراوە / {{count}} کلاس ئێستا بەردەوامە / ئەمڕۆ کلاس نییە | waiting |
 | 152 | Dashboard (D-4) | personal training sessions today / the time now | دانیشتنەکانی ڕاهێنانی تایبەتی ئەمڕۆ / کاتژمێری ئێستا | waiting |
+| 153 | Home quick actions (D-4e) | lines under the tiles: check-in / cash register / shop / lockers / spa / classes / reports | بە کارت یان بە ناو / کردنەوە و داخستنی قاسە / فرۆشتنی کاڵا / پێدان و بەتاڵکردنەوەی دۆڵاب / نۆرەکانی سپا / خشتە و جێگەی کلاس / ڕۆژانە و مانگانە | waiting |

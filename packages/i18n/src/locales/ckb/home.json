@@ -41,7 +41,21 @@
     "staff": "کارمەندان",
     "staffHint": "هەژمار و ڕۆڵی کارمەندان",
     "appearance": "ڕووکاری جیم",
-    "appearanceHint": "ڕەنگ، لۆگۆ و شێوەی گۆشەکان"
+    "appearanceHint": "ڕەنگ، لۆگۆ و شێوەی گۆشەکان",
+    "checkin": "تۆمارکردنی هاتن",
+    "checkinHint": "بە کارت یان بە ناو",
+    "cashRegister": "قاسە",
+    "cashRegisterHint": "کردنەوە و داخستنی قاسە",
+    "shop": "فرۆشگا",
+    "shopHint": "فرۆشتنی کاڵا",
+    "lockers": "دۆڵابەکان",
+    "lockersHint": "پێدان و بەتاڵکردنەوەی دۆڵاب",
+    "spa": "سپا",
+    "spaHint": "نۆرەکانی سپا",
+    "classes": "کلاسەکان",
+    "classesHint": "خشتە و جێگەی کلاس",
+    "reports": "ڕاپۆرتەکان",
+    "reportsHint": "ڕۆژانە و مانگانە"
   },
   "chart": {
     "title": "هاتنەکانی ئەمڕۆ بەپێی کاتژمێر",
