@@ -17,14 +17,14 @@
   }
 }
 
-/* Kurdish UI font: UniSalar_F_113 by Salar Shwani (one weight; chosen by the user in step D-3).
-   It has no Latin letters or ASCII digits, and its unicode-range keeps it to Arabic-script
+/* Kurdish UI font: UniSalar_F_007 by Salar Shwani (one weight; chosen by the user on 2026-10-31
+   in step D-4h, replacing UniSalar_F_113). Its unicode-range keeps it to Arabic-script
    characters and spaces, so digits (the Western-digit default; phone numbers, card UIDs and
    invoice numbers stay Latin), Latin text and ASCII punctuation come from Vazirmatn.
    test/fonts.test.ts checks its glyphs and this range. */
 @font-face {
   font-family: 'UniSalar';
-  src: url('../assets/fonts/unisalar-f-113.otf') format('opentype');
+  src: url('../assets/fonts/unisalar-f-007.otf') format('opentype');
   font-weight: 400;
   font-style: normal;
   font-display: swap;
