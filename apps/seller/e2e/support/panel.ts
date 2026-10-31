@@ -1,4 +1,4 @@
-import { test as base, expect, type Page } from '@playwright/test';
+import { test as base, expect, type Page, type Locator } from '@playwright/test';
 import { TestGym, type Backend } from '../../../../packages/staff-admin/test/fixture.ts';
 import { localBackend, localSql } from '../../../../packages/staff-admin/test/local.ts';
 import {
@@ -85,4 +85,12 @@ export async function signInReady(page: Page, admin: TestPlatformAdmin): Promise
   if (admin.secret === null) throw new Error('No authenticator secret');
   await submitTotp(page, admin.secret);
   await expect(page.getByRole('heading', { level: 1, name: 'جیمەکان' })).toBeVisible();
+}
+
+/**
+ * The dialog on screen: a form (role dialog) or a question answered yes or no (role alertdialog,
+ * the confirm dialog of step D-5d).
+ */
+export function anyDialog(page: Page): Locator {
+  return page.getByRole('dialog').or(page.getByRole('alertdialog'));
 }

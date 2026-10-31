@@ -2,8 +2,6 @@ import { SearchIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@gym/ui/components/button';
 import { Kbd } from '@gym/ui/components/kbd';
-import { Separator } from '@gym/ui/components/separator';
-import { SidebarTrigger } from '@gym/ui/components/sidebar';
 import { usePageTitle } from '@gym/ui/hooks/use-page-title';
 import { cn } from '@gym/ui/lib/utils';
 import { UserMenu } from '@/features/auth/user-menu';
@@ -16,6 +14,7 @@ import { LanguageMenu } from './language-menu';
 import { ThemeMenu } from './theme-menu';
 import { useGymName } from './use-gym-name';
 
+/** Phones and tablets; desktops have the top nav (top-nav.tsx). */
 export function TopBar({
   layout,
   onOpenSearch,
@@ -37,19 +36,10 @@ export function TopBar({
     <header
       data-slot="top-bar"
       className={cn(
-        'sticky top-0 z-10 box-content flex h-14 shrink-0 items-center gap-2 border-b border-transparent bg-background px-3 pt-[env(safe-area-inset-top)] transition-[border-color] duration-200 supports-backdrop-filter:bg-(--glass) supports-backdrop-filter:backdrop-blur-xl supports-backdrop-filter:backdrop-saturate-150 md:px-4',
+        'sticky top-0 z-10 box-content flex h-14 shrink-0 items-center gap-2 border-b border-transparent bg-background px-3 pt-[env(safe-area-inset-top)] transition-[border-color] duration-200 md:px-4 glass:bg-(--glass) glass:backdrop-blur-md',
         (compactTitle !== null || !phone) && 'border-border/70',
       )}
     >
-      {layout === 'desktop' && (
-        <>
-          <SidebarTrigger />
-          <Separator
-            orientation="vertical"
-            className="data-vertical:h-5 data-vertical:self-center"
-          />
-        </>
-      )}
       {phone && (
         // Phones have no sidebar: the gym's logo and name tell staff where they are, until the
         // page's own title takes the bar's middle.

@@ -110,7 +110,7 @@ test('keeps content clear of the system bars on edge-to-edge screens', async ({ 
     insets: { top: 24, bottom: 16, left: 0, right: 32 },
   });
 
-  // Desktop: the sidebar is always shown.
+  // Desktop: the top bar of pictures.
   await page.setViewportSize({ width: 1280, height: 800 });
   await signIn(page, staff);
   await expect(page.getByRole('heading', HOME_HEADING)).toBeVisible();
@@ -120,10 +120,8 @@ test('keeps content clear of the system bars on edge-to-edge screens', async ({ 
   expect((await header.boundingBox())?.y).toBe(0);
   const searchTop = (await page.getByRole('button', { name: 'گەڕان' }).boundingBox())?.y;
   expect(searchTop).toBeGreaterThanOrEqual(24);
-  const sidebar = page.locator('[data-slot="sidebar-container"]');
-  await expect(sidebar).toHaveCSS('padding-top', '24px');
-  await expect(sidebar).toHaveCSS('padding-bottom', '16px');
-  await expect(sidebar).toHaveCSS('padding-right', '32px');
+  // The body keeps the bar out of the camera cutout.
+  expect(await header.evaluate((element) => element.getBoundingClientRect().right)).toBe(1280 - 32);
   await expect(page.locator('[data-slot="sidebar-inset"]')).toHaveCSS('padding-bottom', '16px');
 
   // Tablet: the rail runs from the status bar to the navigation bar; the body keeps it out of

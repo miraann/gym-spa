@@ -125,10 +125,24 @@
   "bell": {
     "label": "ئاگادارکردنەوەکان",
     "unread": "{{total}} نەخوێندراوە",
-    "empty": "هیچ ئاگادارکردنەوەیەک نییە.",
+    "empty": "هیچ ئاگادارکردنەوەیەکی نوێ نییە",
     "markAll": "هەمووی وەک خوێنراو دیاری بکە",
-    "remindersReady": "{{total}} بیرخستنەوە بۆ ئەمڕۆ ئامادەیە",
-    "lowStock": "{{product}} کەمە لە کۆگا: {{quantity}} ماوە"
+    "today": "ئەمڕۆ",
+    "yesterday": "دوێنێ",
+    "remindersOne": "{{count}} بیرخستنەوەی واتسئاپ ئامادەیە",
+    "remindersMany": "{{count}} بیرخستنەوەی واتسئاپ ئامادەن",
+    "leftOne": "{{count}} ماوە",
+    "leftMany": "{{count}} ماون",
+    "allDone": "هەموویان تەواو کران",
+    "lowOne": "{{count}} کاڵا کەمە لە کۆگا",
+    "lowMany": "{{count}} کاڵا کەمن لە کۆگا",
+    "now": "ئێستا",
+    "minutesAgo": "{{count}} خولەک لەمەوبەر",
+    "hoursAgo": "{{count}} کاتژمێر لەمەوبەر",
+    "seeAll": "بینینی هەموو ئاگادارکردنەوەکان",
+    "unreadRow": "نەخوێندراوە",
+    "branchCount": "{{branch}} {{count}}",
+    "moreUnread": "{{count}}+ نەخوێندراوە"
   },
   "errors": {
     "permission_denied": "دەسەڵاتی ئەمەت نییە.",

@@ -1,5 +1,6 @@
 import { LOCKER_ZONES, lockerStatus, type LockerZone } from '@gym/core';
 import { localizedName } from '@gym/i18n';
+import { AddTile } from '@gym/ui/blocks/add-tile';
 import { Chip, ChipRow } from '@gym/ui/blocks/chip-row';
 import { PageHeader } from '@gym/ui/blocks/page-header';
 import { Button } from '@gym/ui/components/button';
@@ -8,7 +9,7 @@ import { Field, FieldLabel } from '@gym/ui/components/field';
 import { NativeSelect, NativeSelectOption } from '@gym/ui/components/native-select';
 import { Skeleton } from '@gym/ui/components/skeleton';
 import { cn } from '@gym/ui/lib/utils';
-import { KeyRoundIcon, PlusIcon, TagIcon } from 'lucide-react';
+import { KeyRoundIcon, TagIcon } from 'lucide-react';
 import { useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { RequirePermission } from '@/components/no-access';
@@ -87,16 +88,6 @@ function Lockers() {
                 {t('prices.open')}
               </Button>
             )}
-            {mayManage && branchId !== '' && (
-              <Button
-                onClick={() => {
-                  setAdding(true);
-                }}
-              >
-                <PlusIcon aria-hidden />
-                {t('add.open')}
-              </Button>
-            )}
           </>
         }
       />
@@ -119,6 +110,14 @@ function Lockers() {
           </NativeSelect>
         </Field>
       )}
+      {mayManage && branchId !== '' && (
+        <AddTile
+          label={t('add.open')}
+          onClick={() => {
+            setAdding(true);
+          }}
+        />
+      )}
       {branches.isSuccess && branchId === '' ? (
         <p className="text-muted-foreground">{t('page.noBranch')}</p>
       ) : map.isPending ? (
@@ -137,16 +136,6 @@ function Lockers() {
             </EmptyMedia>
             <EmptyDescription>{t('page.empty')}</EmptyDescription>
           </EmptyHeader>
-          {mayManage && (
-            <Button
-              onClick={() => {
-                setAdding(true);
-              }}
-            >
-              <PlusIcon aria-hidden />
-              {t('add.open')}
-            </Button>
-          )}
         </Empty>
       ) : (
         <>

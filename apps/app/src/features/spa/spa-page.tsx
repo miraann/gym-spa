@@ -7,6 +7,7 @@ import {
   weekStartOf,
 } from '@gym/core';
 import { localizedName } from '@gym/i18n';
+import { AddTile } from '@gym/ui/blocks/add-tile';
 import { ChoiceGroup } from '@gym/ui/blocks/choice-group';
 import { PageHeader } from '@gym/ui/blocks/page-header';
 import { Button } from '@gym/ui/components/button';
@@ -20,9 +21,7 @@ import {
   ChevronRightIcon,
   DoorOpenIcon,
   HandCoinsIcon,
-  PlusIcon,
   SettingsIcon,
-  UserRoundPlusIcon,
 } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -184,38 +183,34 @@ function Spa() {
                 </Link>
               </Button>
             )}
-            {mayBook && branchId !== '' && settings.isSuccess && (
-              <>
-                <Button
-                  variant="outline"
-                  disabled={!online || readOnly}
-                  onClick={() => {
-                    setCreating({
-                      start: { day: today, minute: nowMinute, roomId: null, therapistId: null },
-                      walkIn: true,
-                    });
-                  }}
-                >
-                  <UserRoundPlusIcon data-icon="inline-start" />
-                  {t('calendar.walkIn')}
-                </Button>
-                <Button
-                  disabled={!online || readOnly}
-                  onClick={() => {
-                    setCreating({
-                      start: { day, minute: firstMinute, roomId: null, therapistId: null },
-                      walkIn: false,
-                    });
-                  }}
-                >
-                  <PlusIcon data-icon="inline-start" />
-                  {t('calendar.newBooking')}
-                </Button>
-              </>
-            )}
           </>
         }
       />
+
+      {mayBook && branchId !== '' && settings.isSuccess && (
+        <div className="grid gap-3 sm:grid-cols-2">
+          <AddTile
+            label={t('calendar.newBooking')}
+            disabled={!online || readOnly}
+            onClick={() => {
+              setCreating({
+                start: { day, minute: firstMinute, roomId: null, therapistId: null },
+                walkIn: false,
+              });
+            }}
+          />
+          <AddTile
+            label={t('calendar.walkIn')}
+            disabled={!online || readOnly}
+            onClick={() => {
+              setCreating({
+                start: { day: today, minute: nowMinute, roomId: null, therapistId: null },
+                walkIn: true,
+              });
+            }}
+          />
+        </div>
+      )}
 
       <div className="flex flex-wrap items-end gap-3">
         <BranchSelect

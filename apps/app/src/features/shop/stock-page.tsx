@@ -25,7 +25,7 @@ import { NativeSelect, NativeSelectOption } from '@gym/ui/components/native-sele
 import { Skeleton } from '@gym/ui/components/skeleton';
 import { Spinner } from '@gym/ui/components/spinner';
 import { Textarea } from '@gym/ui/components/textarea';
-import { Link } from '@tanstack/react-router';
+import { Link, useSearch } from '@tanstack/react-router';
 import { TagIcon, TriangleAlertIcon } from 'lucide-react';
 import { useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -55,28 +55,42 @@ type ChangeKind = StockChange['kind'];
  * products.manage); receiving, counting and taking out with inventory.adjust.
  */
 export function StockPage() {
+  // ?low=1 and ?branch= (from the bell): only the products low in stock, in that branch.
+  const { low, branch } = useSearch({ from: '/shop/stock' });
   const maySell = usePermission('pos.sell');
   const mayAdjust = usePermission('inventory.adjust');
   const mayManage = usePermission('products.manage');
   if (!maySell && !mayAdjust && !mayManage) return <NoAccess />;
-  return <Stock mayAdjust={mayAdjust} mayManage={mayManage} />;
+  return (
+    <Stock
+      key={`${String(low)}:${branch ?? ''}`}
+      mayAdjust={mayAdjust}
+      mayManage={mayManage}
+      initialLow={low ?? false}
+      initialBranch={branch}
+    />
+  );
 }
 
 function Stock({
   mayAdjust,
   mayManage,
+  initialLow,
+  initialBranch,
 }: {
   readonly mayAdjust: boolean;
   readonly mayManage: boolean;
+  readonly initialLow: boolean;
+  readonly initialBranch: string | undefined;
 }) {
   const { t } = useTranslation('shop');
   const { language } = usePreferences();
   const format = useFormat();
-  const { branchId, setBranchId, active } = useBranchChoice();
+  const { branchId, setBranchId, active } = useBranchChoice(initialBranch);
   const products = useProducts();
   const levels = useStockLevels(branchId);
   const movements = useStockMovements(branchId, mayAdjust || mayManage);
-  const [onlyLow, setOnlyLow] = useState(false);
+  const [onlyLow, setOnlyLow] = useState(initialLow);
   const [changing, setChanging] = useState<{ product: Product; kind: ChangeKind } | null>(null);
   const stockOf = (id: string) => levels.data?.get(id) ?? 0;
   const counted = (products.data ?? [])

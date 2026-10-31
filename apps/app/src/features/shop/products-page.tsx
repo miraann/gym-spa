@@ -6,6 +6,7 @@ import {
   parseWholeNumber,
 } from '@gym/core';
 import { localizedName } from '@gym/i18n';
+import { AddTile } from '@gym/ui/blocks/add-tile';
 import { GroupedList, GroupedListItem, RowChevron } from '@gym/ui/blocks/list-group';
 import { PageHeader } from '@gym/ui/blocks/page-header';
 import { ResponsiveDialog } from '@gym/ui/blocks/responsive-dialog';
@@ -26,7 +27,7 @@ import { Skeleton } from '@gym/ui/components/skeleton';
 import { Spinner } from '@gym/ui/components/spinner';
 import { groupedRowClass } from '@gym/ui/lib/grouped-list';
 import { Link } from '@tanstack/react-router';
-import { PackageIcon, PlusIcon } from 'lucide-react';
+import { PackageIcon } from 'lucide-react';
 import { useId, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
@@ -208,12 +209,9 @@ function SectionHeader({
   readonly onAdd: () => void;
 }) {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="flex flex-col gap-3">
       <h2 className="text-lg">{title}</h2>
-      <Button onClick={onAdd}>
-        <PlusIcon data-icon="inline-start" />
-        {action}
-      </Button>
+      <AddTile label={action} onClick={onAdd} />
     </div>
   );
 }

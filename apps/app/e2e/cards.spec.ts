@@ -1,6 +1,6 @@
 import { admin } from './support/backend';
 import { addCard, addMember } from './support/members';
-import { expect, lockFromMenu, scanCard, signIn, test, unlock } from './support/app';
+import { anyDialog, expect, lockFromMenu, scanCard, signIn, test, unlock } from './support/app';
 
 // NFC cards (step 2e): keyboard-type readers and the card screens on a member's page. A
 // keyboard-type reader is played by typing the UID and Enter as fast as a reader does.
@@ -32,7 +32,7 @@ test('a receptionist gives a member a card by holding it to a keyboard-type read
   const cards = page.getByTestId('member-cards');
   await expect(cards.getByText('ئەم ئەندامە کارتی نییە.')).toBeVisible();
   await cards.getByRole('button', { name: 'پێدانی کارت' }).click();
-  const dialog = page.getByRole('dialog');
+  const dialog = anyDialog(page);
   await expect(dialog.getByText('کارتەکە لە خوێنەری کارت نزیک بکەرەوە')).toBeVisible();
   // The browser can't use PC/SC readers, and says so.
   await expect(dialog.getByText(/ACR122U/)).toBeVisible();
@@ -71,7 +71,7 @@ test('a number typed by hand is not a scan: it is given with the button', async 
   await page.setViewportSize(DESKTOP);
   await signIn(page, staff, `/members/${id}`);
   await page.getByRole('button', { name: 'پێدانی کارت' }).click();
-  const dialog = page.getByRole('dialog');
+  const dialog = anyDialog(page);
   const field = dialog.getByRole('textbox', { name: 'ژمارەی کارت' });
 
   // People type far slower than a reader: nothing happens until they say so.
@@ -99,7 +99,7 @@ test('a receptionist replaces a lost card and takes a card back', async ({ page,
   const cards = page.getByTestId('member-cards');
 
   await cards.getByRole('button', { name: 'گۆڕینی کارت' }).click();
-  const dialog = page.getByRole('dialog');
+  const dialog = anyDialog(page);
   // Only a manager reports a card stolen (that blocks it).
   await expect(dialog.getByRole('radio', { name: 'دزراو' })).toHaveCount(0);
   // Scanned before saying what happened: the card waits for the reason.
@@ -113,7 +113,7 @@ test('a receptionist replaces a lost card and takes a card back', async ({ page,
   await expect(page.getByText('کارتی ژیلا عەلی گۆڕدرا')).toBeVisible();
   // The new card's fee is offered next (step 3e); not this time.
   await expect(page.getByTestId('charge-dialog')).toBeVisible();
-  await page.getByRole('dialog').getByRole('button', { name: 'پاشگەزبوونەوە' }).click();
+  await anyDialog(page).getByRole('button', { name: 'پاشگەزبوونەوە' }).click();
   await expect(cards.getByTestId('member-card')).toContainText('04 B1 B2 B3 B4 B5 B6');
   const lost = cards.locator('[data-card="04A23BC15D6E80"]');
   await expect(lost.locator('[data-card-reason="lost"]')).toHaveText('ونبوو');
@@ -150,7 +150,7 @@ test('a manager reports a card stolen, and blocks and unblocks cards', async ({ 
   await page.setViewportSize(DESKTOP);
   await signIn(page, manager, `/members/${id}`);
   const cards = page.getByTestId('member-cards');
-  const dialog = page.getByRole('dialog');
+  const dialog = anyDialog(page);
 
   await cards.getByRole('button', { name: 'گۆڕینی کارت' }).click();
   await dialog.getByRole('radio', { name: 'دزراو' }).click();

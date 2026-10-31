@@ -1,4 +1,5 @@
 import { isValidAdminEmail, normalizeAdminEmail } from '@gym/core';
+import { AddTile } from '@gym/ui/blocks/add-tile';
 import { CopyableSecret } from '@gym/ui/blocks/copyable-secret';
 import { PageHeader } from '@gym/ui/blocks/page-header';
 import { ResponsiveDialog } from '@gym/ui/blocks/responsive-dialog';
@@ -16,6 +17,7 @@ import { Field, FieldError, FieldGroup, FieldLabel } from '@gym/ui/components/fi
 import { Input } from '@gym/ui/components/input';
 import { Skeleton } from '@gym/ui/components/skeleton';
 import { Spinner } from '@gym/ui/components/spinner';
+import { ConfirmDialog } from '@gym/ui/blocks/confirm-dialog';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   CircleCheckIcon,
@@ -24,7 +26,6 @@ import {
   ShieldAlertIcon,
   ShieldCheckIcon,
   TriangleAlertIcon,
-  UserPlusIcon,
 } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -162,31 +163,22 @@ function ChangeDialog({
   };
 
   return (
-    <ResponsiveDialog
+    <ConfirmDialog
       open={admin !== null}
       onOpenChange={(open) => {
         if (!open) close();
       }}
+      tone={change === 'reactivate_admin' ? 'primary' : 'destructive'}
       title={t(texts.title, { name: admin?.full_name ?? '' })}
       description={t(texts.description)}
-      footer={
-        <>
-          <Button variant="outline" onClick={close}>
-            {t('common.cancel')}
-          </Button>
-          <Button
-            variant={change === 'reactivate_admin' ? 'default' : 'destructive'}
-            disabled={pending}
-            onClick={confirm}
-          >
-            {pending && <Spinner />}
-            {t(texts.confirm)}
-          </Button>
-        </>
-      }
+      confirmLabel={t(texts.confirm)}
+      cancelLabel={t('common.cancel')}
+      pending={pending}
+      onConfirm={confirm}
+      onCancel={close}
     >
       <FormError error={error} />
-    </ResponsiveDialog>
+    </ConfirmDialog>
   );
 }
 
@@ -328,19 +320,12 @@ export function AdminsPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <PageHeader
-        title={t('admins.title')}
-        actions={
-          <Button
-            size="lg"
-            onClick={() => {
-              setAdding(true);
-            }}
-          >
-            <UserPlusIcon data-icon="inline-start" />
-            {t('admins.add')}
-          </Button>
-        }
+      <PageHeader title={t('admins.title')} />
+      <AddTile
+        label={t('admins.add')}
+        onClick={() => {
+          setAdding(true);
+        }}
       />
       {admins.data && activeCount < 2 && (
         <Alert variant="warning" data-testid="only-one-admin">

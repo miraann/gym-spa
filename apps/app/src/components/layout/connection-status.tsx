@@ -28,8 +28,12 @@ const STYLES: Record<ConnectionState, string> = {
   unreachable: 'border-destructive/50 bg-destructive/10 text-destructive dark:bg-destructive/20',
 };
 
-/** Always-visible connection state (top bar), with details and "Check again" in a popover. */
-export function ConnectionStatus() {
+/**
+ * Always-visible connection state (top bar), with details and "Check again" in a popover. `quiet`
+ * (the desktop top bar, step D-5c): while connected, a small green dot that pulses gently and the
+ * word; no connection and a server that doesn't answer keep their pill, to catch the eye.
+ */
+export function ConnectionStatus({ quiet = false }: { readonly quiet?: boolean }) {
   const { t } = useTranslation();
   const format = useFormat();
   const { state, checkedAt } = useConnection();
@@ -46,6 +50,7 @@ export function ConnectionStatus() {
     offline: t('connection.offlineHint'),
     unreachable: t('connection.unreachableHint'),
   }[state];
+  const dot = quiet && state === 'connected';
 
   return (
     <Popover>
@@ -55,18 +60,25 @@ export function ConnectionStatus() {
           role="status"
           aria-label={`${t('connection.title')}: ${label}`}
           className={cn(
-            'inline-flex h-7 items-center gap-1.5 rounded-full border px-2.5 text-xs font-medium outline-none focus-visible:ring-3 focus-visible:ring-ring/50',
-            STYLES[state],
+            'inline-flex h-7 items-center gap-1.5 rounded-full text-xs font-medium outline-none focus-visible:ring-3 focus-visible:ring-ring/50',
+            dot ? 'px-0.5 text-muted-foreground' : cn('border px-2.5', STYLES[state]),
           )}
         >
-          <Icon
-            aria-hidden
-            className={cn(
-              'size-3.5',
-              state === 'connected' && 'text-success',
-              state === 'checking' && 'animate-spin motion-reduce:animate-none',
-            )}
-          />
+          {dot ? (
+            <span aria-hidden className="relative flex size-2.5">
+              <span className="absolute inset-0 rounded-full bg-success opacity-60 motion-safe:animate-[ping_2s_cubic-bezier(0,0,0.2,1)_infinite]" />
+              <span className="relative size-2.5 rounded-full bg-success" />
+            </span>
+          ) : (
+            <Icon
+              aria-hidden
+              className={cn(
+                'size-3.5',
+                state === 'connected' && 'text-success',
+                state === 'checking' && 'animate-spin motion-reduce:animate-none',
+              )}
+            />
+          )}
           <span className="sr-only sm:not-sr-only">{label}</span>
         </button>
       </PopoverTrigger>

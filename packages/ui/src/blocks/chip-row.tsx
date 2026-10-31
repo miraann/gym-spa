@@ -44,7 +44,7 @@ export function Chip({
     <Component
       data-slot="chip"
       className={cn(
-        'inline-flex h-9 shrink-0 items-center gap-2 rounded-full border px-4 text-sm whitespace-nowrap transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50 motion-reduce:transition-none pointer-coarse:h-11',
+        'inline-flex h-9 shrink-0 items-center gap-2 rounded-full border px-4 text-sm whitespace-nowrap transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50 motion-reduce:transition-none pointer-coarse:h-12',
         selected
           ? 'border-primary bg-primary text-primary-foreground'
           : 'border-border bg-card text-foreground hover:bg-muted',

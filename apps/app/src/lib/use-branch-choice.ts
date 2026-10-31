@@ -3,13 +3,13 @@ import { useMoneyBranch } from '@/features/payments/money-branch';
 import { useAdminBranches } from '@/features/staff/admin-data';
 
 /**
- * The branch a screen shows: chosen here, else this device's branch when the staff member works
- * there, else their first active one ('' when they have none).
+ * The branch a screen shows: chosen here (or `initial`, e.g. from a link), else this device's
+ * branch when the staff member works there, else their first active one ('' when they have none).
  */
-export function useBranchChoice() {
+export function useBranchChoice(initial?: string) {
   const branches = useAdminBranches();
   const fallback = useMoneyBranch(branches.data);
-  const [chosen, setChosen] = useState<string | null>(null);
+  const [chosen, setChosen] = useState<string | null>(initial ?? null);
   const active = (branches.data ?? []).filter((branch) => branch.isActive);
   const branchId =
     chosen !== null && active.some((branch) => branch.id === chosen) ? chosen : fallback;

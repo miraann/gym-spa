@@ -1,4 +1,5 @@
 import { localizedName } from '@gym/i18n';
+import { AddTile } from '@gym/ui/blocks/add-tile';
 import { MasterDetail } from '@gym/ui/blocks/master-detail';
 import {
   GroupedList,
@@ -9,10 +10,9 @@ import {
 import { groupedRowClass } from '@gym/ui/lib/grouped-list';
 import { PageHeader } from '@gym/ui/blocks/page-header';
 import { Badge } from '@gym/ui/components/badge';
-import { Button } from '@gym/ui/components/button';
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia } from '@gym/ui/components/empty';
 import { Link, Outlet, useRouterState } from '@tanstack/react-router';
-import { Building2Icon, CircleOffIcon, PlusIcon } from 'lucide-react';
+import { Building2Icon, CircleOffIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { RequirePermission } from '@/components/no-access';
 import { useActiveAccount } from '@/features/auth/auth-context';
@@ -61,21 +61,13 @@ function BranchList() {
 
   return (
     <div className="flex flex-col gap-4">
-      <PageHeader
-        title={t('list.title')}
-        description={t('list.description')}
-        actions={
-          account?.allBranches && (
-            <Button asChild size="lg">
-              <Link to="/branches/new">
-                <PlusIcon data-icon="inline-start" />
-                {t('list.add')}
-              </Link>
-            </Button>
-          )
-        }
-      />
+      <PageHeader title={t('list.title')} description={t('list.description')} />
       <LimitLine kind="branches" />
+      {account?.allBranches && (
+        <AddTile asChild label={t('list.add')}>
+          <Link to="/branches/new" />
+        </AddTile>
+      )}
       {branches.isPending ? (
         <GroupedListSkeleton rows={3} />
       ) : branches.isError ? (

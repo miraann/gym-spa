@@ -130,6 +130,8 @@ begin
   delete from public.settings;
   delete from public.staff_pins;
   delete from public.staff_branches;
+  -- The bell's read marks of staff who used the local app (e.g. the demo Owner in the e2e runs).
+  delete from public.staff_notification_reads;
   delete from public.staff_users;
   delete from platform.recovery_codes;
   delete from platform.admins;

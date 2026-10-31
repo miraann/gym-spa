@@ -38,7 +38,7 @@ export function StickyActionBar({ children }: { readonly children: ReactNode }) 
       {/* Glass with a solid fallback, like the other floating bars. */}
       <div
         ref={ref}
-        className="pointer-events-auto mx-auto flex max-w-md gap-2 rounded-2xl border bg-card p-2 shadow-lg *:flex-1 supports-backdrop-filter:bg-card/80 supports-backdrop-filter:backdrop-blur-md"
+        className="pointer-events-auto mx-auto flex max-w-md gap-2 rounded-2xl border bg-card p-2 shadow-lg *:flex-1 glass:bg-card/80 glass:backdrop-blur-md"
       >
         {children}
       </div>

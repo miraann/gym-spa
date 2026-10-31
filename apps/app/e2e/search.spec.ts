@@ -1,5 +1,5 @@
 import { formatMemberNumber } from '@gym/core';
-import { expect, scanCard, signIn, test } from './support/app';
+import { openFromMenu, expect, scanCard, signIn, test } from './support/app';
 import { addCard, addMember, memberNumberOf } from './support/members';
 
 // Step 2h: the search (Ctrl+K, and the search button on phones) finds members by name, phone or
@@ -107,7 +107,7 @@ test('a card held to the reader on any screen opens its member', async ({ page, 
   await expect(page.getByTestId('member-cards')).toContainText('04 A2 3B C1 5D 6E 80');
 
   // Nobody's card: it says so, and stays on the page.
-  await page.getByRole('link', { name: 'سەرەکی' }).first().click();
+  await openFromMenu(page, 'سەرەکی');
   await scanCard(page, '04112233445566');
   await expect(page.getByText('ئەم کارتە ئێستا هی هیچ ئەندامێک نییە.')).toBeVisible();
   await expect(page).not.toHaveURL(/\/members\//);

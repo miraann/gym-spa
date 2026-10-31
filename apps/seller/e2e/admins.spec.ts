@@ -1,6 +1,15 @@
 import type { Page } from '@playwright/test';
 import { adminClient } from '../../../packages/staff-admin/test/fixture.ts';
-import { PANEL, backend, expect, run, signInReady, submitLogin, test } from './support/panel';
+import {
+  backend,
+  anyDialog,
+  expect,
+  PANEL,
+  run,
+  signInReady,
+  submitLogin,
+  test,
+} from './support/panel';
 
 // Click Group's platform admins in the panel (spec §2.6): add one, deactivate and reactivate,
 // reset another's two-step login. Nobody changes their own account here.
@@ -29,8 +38,8 @@ test('adds an admin, who gets a temporary password shown once', async ({ page, m
   await page.getByRole('button', { name: 'زیادکردنی بەڕێوەبەر' }).click();
   await page.getByLabel('ئیمەیڵ').fill(email.toUpperCase());
   await page.getByLabel('ناوی تەواو').fill('هاوکاری نوێ');
-  await page.getByRole('dialog').getByRole('button', { name: 'زیادکردن' }).click();
-  const password = (await page.getByRole('dialog').locator('output').textContent()) ?? '';
+  await anyDialog(page).getByRole('button', { name: 'زیادکردن' }).click();
+  const password = (await anyDialog(page).locator('output').textContent()) ?? '';
   expect(password).toMatch(/^[a-z2-9]{14}$/);
   made.admins.push(...(await adminIds(email)));
   await page.getByRole('button', { name: 'تەواو' }).click();
@@ -60,21 +69,18 @@ test("deactivates and reactivates an admin, and resets another's two-step login"
 
   await row.getByRole('button', { name: 'کارەکان' }).click();
   await page.getByRole('menuitem', { name: 'ناچالاککردن' }).click();
-  await page.getByRole('dialog').getByRole('button', { name: 'ناچالاککردن' }).click();
+  await anyDialog(page).getByRole('button', { name: 'ناچالاککردن' }).click();
   await expect(row).toContainText('ناچالاک');
   await expect(colleague.signIn()).rejects.toThrow();
 
   await row.getByRole('button', { name: 'کارەکان' }).click();
   await page.getByRole('menuitem', { name: 'چالاککردنەوە' }).click();
-  await page.getByRole('dialog').getByRole('button', { name: 'چالاککردنەوە' }).click();
+  await anyDialog(page).getByRole('button', { name: 'چالاککردنەوە' }).click();
   await expect(row.getByText('ناچالاک')).toHaveCount(0);
 
   await row.getByRole('button', { name: 'کارەکان' }).click();
   await page.getByRole('menuitem', { name: 'سڕینەوەی ئامێری دوو هەنگاوی' }).click();
-  await page
-    .getByRole('dialog')
-    .getByRole('button', { name: 'سڕینەوەی ئامێری دوو هەنگاوی' })
-    .click();
+  await anyDialog(page).getByRole('button', { name: 'سڕینەوەی ئامێری دوو هەنگاوی' }).click();
   await expect(row).toContainText('ڕێک نەخراوە');
 
   // At their next login they set up a new device.

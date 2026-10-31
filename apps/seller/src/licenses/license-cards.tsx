@@ -11,6 +11,7 @@ import {
   type LicenseType,
 } from '@gym/core';
 import type { SellerTexts } from '@gym/i18n';
+import { AddTile } from '@gym/ui/blocks/add-tile';
 import { ChoiceGroup } from '@gym/ui/blocks/choice-group';
 import { ResponsiveDialog } from '@gym/ui/blocks/responsive-dialog';
 import { Alert, AlertDescription } from '@gym/ui/components/alert';
@@ -41,7 +42,6 @@ import {
   FlaskConicalIcon,
   InfinityIcon,
   MonitorIcon,
-  PlusIcon,
   PowerOffIcon,
   TriangleAlertIcon,
 } from 'lucide-react';
@@ -620,17 +620,14 @@ export function LicensesCard({
           <FileKeyIcon className="size-5 text-muted-foreground" aria-hidden="true" />
           {t('license.title')}
         </CardTitle>
-        <Button
-          size="sm"
+      </CardHeader>
+      <CardContent className="flex flex-col gap-3">
+        <AddTile
+          label={t('license.issue.title')}
           onClick={() => {
             setIssuing(true);
           }}
-        >
-          <PlusIcon data-icon="inline-start" />
-          {t('license.issue.title')}
-        </Button>
-      </CardHeader>
-      <CardContent>
+        />
         {licenses.isPending ? (
           <Skeleton className="h-24 rounded-2xl" />
         ) : licenses.isError ? (
@@ -834,20 +831,17 @@ export function ServerPcCard({
           <MonitorIcon className="size-5 text-muted-foreground" aria-hidden="true" />
           {t('server.title')}
         </CardTitle>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-3">
         {active === null && (
-          <Button
-            size="sm"
+          <AddTile
+            label={t('server.activate.title')}
             disabled={!hasLicense}
             onClick={() => {
               setActivating(true);
             }}
-          >
-            <PlusIcon data-icon="inline-start" />
-            {t('server.activate.title')}
-          </Button>
+          />
         )}
-      </CardHeader>
-      <CardContent className="flex flex-col gap-3">
         {activations.isPending ? (
           <Skeleton className="h-24 rounded-2xl" />
         ) : activations.isError ? (

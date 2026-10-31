@@ -5,20 +5,14 @@ import {
   GroupedListSkeleton,
   RowChevron,
 } from '@gym/ui/blocks/list-group';
+import { AddTile } from '@gym/ui/blocks/add-tile';
 import { MasterDetail } from '@gym/ui/blocks/master-detail';
 import { PageHeader } from '@gym/ui/blocks/page-header';
 import { Badge } from '@gym/ui/components/badge';
-import { Button } from '@gym/ui/components/button';
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-} from '@gym/ui/components/empty';
+import { Empty, EmptyDescription, EmptyHeader, EmptyMedia } from '@gym/ui/components/empty';
 import { groupedRowClass } from '@gym/ui/lib/grouped-list';
 import { Link, Outlet, useRouterState } from '@tanstack/react-router';
-import { CircleOffIcon, ClipboardListIcon, PlusIcon } from 'lucide-react';
+import { CircleOffIcon, ClipboardListIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { RequirePermission } from '@/components/no-access';
 import { usePreferences } from '@/lib/preferences';
@@ -46,18 +40,10 @@ function PlanList() {
 
   return (
     <div className="flex flex-col gap-4">
-      <PageHeader
-        title={t('list.title')}
-        description={t('list.description')}
-        actions={
-          <Button asChild size="lg">
-            <Link to="/plans/new">
-              <PlusIcon data-icon="inline-start" />
-              {t('list.add')}
-            </Link>
-          </Button>
-        }
-      />
+      <PageHeader title={t('list.title')} description={t('list.description')} />
+      <AddTile asChild label={t('list.add')}>
+        <Link to="/plans/new" />
+      </AddTile>
       {plans.isPending ? (
         <GroupedListSkeleton rows={4} />
       ) : plans.isError ? (
@@ -70,14 +56,6 @@ function PlanList() {
             </EmptyMedia>
             <EmptyDescription>{t('list.empty')}</EmptyDescription>
           </EmptyHeader>
-          <EmptyContent>
-            <Button asChild>
-              <Link to="/plans/new">
-                <PlusIcon data-icon="inline-start" />
-                {t('list.add')}
-              </Link>
-            </Button>
-          </EmptyContent>
         </Empty>
       ) : (
         <>

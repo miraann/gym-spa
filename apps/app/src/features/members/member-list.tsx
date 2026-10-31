@@ -11,7 +11,7 @@ import { groupedRowClass } from '@gym/ui/lib/grouped-list';
 import { ColumnVisibilityMenu, DataTable } from '@gym/ui/blocks/data-table';
 import { dataTableFeatures, type DataTableFeatures } from '@gym/ui/lib/data-table-features';
 import { PageHeader } from '@gym/ui/blocks/page-header';
-import { StickyActionBar } from '@gym/ui/blocks/sticky-action-bar';
+import { AddTile } from '@gym/ui/blocks/add-tile';
 import { Button } from '@gym/ui/components/button';
 import {
   Empty,
@@ -27,14 +27,7 @@ import { useSideBySide } from '@gym/ui/hooks/use-side-by-side';
 import { cn } from '@gym/ui/lib/utils';
 import { createColumnHelper, useTable, type ColumnVisibilityState } from '@tanstack/react-table';
 import { Link, useNavigate, useRouterState, useSearch } from '@tanstack/react-router';
-import {
-  ChevronLeftIcon,
-  ChevronRightIcon,
-  FileUpIcon,
-  SearchIcon,
-  UserPlusIcon,
-  UsersIcon,
-} from 'lucide-react';
+import { ChevronLeftIcon, ChevronRightIcon, FileUpIcon, SearchIcon, UsersIcon } from 'lucide-react';
 import { useEffect, useEffectEvent, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { usePermission } from '@/features/auth/use-permissions';
@@ -106,15 +99,6 @@ export function MemberList({ layout }: { readonly layout: 'full' | 'compact' }) 
     if (outOfRange) update({ page: undefined });
   });
 
-  const addButton = canCreate && (
-    <Button asChild size="lg">
-      <Link to="/members/new" search={(previous) => previous}>
-        <UserPlusIcon data-icon="inline-start" />
-        {t('list.add')}
-      </Link>
-    </Button>
-  );
-
   return (
     <div className="flex flex-col gap-4">
       <PageHeader
@@ -134,7 +118,6 @@ export function MemberList({ layout }: { readonly layout: 'full' | 'compact' }) 
                 </Link>
               </Button>
             )}
-            {!phone && addButton}
           </div>
         }
       />
@@ -160,6 +143,12 @@ export function MemberList({ layout }: { readonly layout: 'full' | 'compact' }) 
       </ChipRow>
       <ListFilters search={search} onChange={update} compact={layout === 'compact'} />
 
+      {canCreate && (
+        <AddTile asChild label={t('list.add')}>
+          <Link to="/members/new" search={(previous) => previous} />
+        </AddTile>
+      )}
+
       {result.isPending ? (
         <GroupedListSkeleton rows={5} avatar />
       ) : result.isError ? (
@@ -174,17 +163,15 @@ export function MemberList({ layout }: { readonly layout: 'full' | 'compact' }) 
               {isUnfiltered(params) ? t('list.empty') : t('list.noMatch')}
             </EmptyDescription>
           </EmptyHeader>
-          <EmptyContent>
-            {isUnfiltered(params) ? (
-              addButton
-            ) : (
+          {!isUnfiltered(params) && (
+            <EmptyContent>
               <Button asChild variant="outline">
                 <Link to="." search={{}} replace>
                   {t('list.clear')}
                 </Link>
               </Button>
-            )}
-          </EmptyContent>
+            </EmptyContent>
+          )}
         </Empty>
       ) : showTable ? (
         <MemberTable members={result.data.members} />
@@ -223,8 +210,6 @@ export function MemberList({ layout }: { readonly layout: 'full' | 'compact' }) 
           </Button>
         </nav>
       )}
-
-      {phone && layout === 'full' && canCreate && <StickyActionBar>{addButton}</StickyActionBar>}
     </div>
   );
 }

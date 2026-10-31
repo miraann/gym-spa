@@ -1,12 +1,12 @@
 import { localizedName } from '@gym/i18n';
+import { AddTile } from '@gym/ui/blocks/add-tile';
 import { ResponsiveDialog } from '@gym/ui/blocks/responsive-dialog';
 import { Button } from '@gym/ui/components/button';
-import { Card, CardAction, CardContent, CardHeader, CardTitle } from '@gym/ui/components/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@gym/ui/components/card';
 import { Field, FieldGroup, FieldLabel } from '@gym/ui/components/field';
 import { NativeSelect, NativeSelectOption } from '@gym/ui/components/native-select';
 import { Spinner } from '@gym/ui/components/spinner';
 import { Link } from '@tanstack/react-router';
-import { PackagePlusIcon } from 'lucide-react';
 import { useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
@@ -63,21 +63,16 @@ export function MemberSpaCard({ member }: { readonly member: Member }) {
         <CardTitle>
           <h3>{t('memberSpa.title')}</h3>
         </CardTitle>
-        {canSell && (
-          <CardAction>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setSelling(true);
-              }}
-            >
-              <PackagePlusIcon data-icon="inline-start" />
-              {t('memberSpa.sell')}
-            </Button>
-          </CardAction>
-        )}
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
+        {canSell && (
+          <AddTile
+            label={t('memberSpa.sell')}
+            onClick={() => {
+              setSelling(true);
+            }}
+          />
+        )}
         {shown.length > 0 && (
           <section className="flex flex-col gap-2" aria-label={t('memberSpa.balances')}>
             <h4 className="text-sm text-muted-foreground">{t('memberSpa.balances')}</h4>
