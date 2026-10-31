@@ -1,5 +1,4 @@
 import { localizedName } from '@gym/i18n';
-import { ResponsiveDialog } from '@gym/ui/blocks/responsive-dialog';
 import { StickyActionBar } from '@gym/ui/blocks/sticky-action-bar';
 import { Alert, AlertDescription } from '@gym/ui/components/alert';
 import { Badge } from '@gym/ui/components/badge';
@@ -11,6 +10,7 @@ import { Input } from '@gym/ui/components/input';
 import { Skeleton } from '@gym/ui/components/skeleton';
 import { Spinner } from '@gym/ui/components/spinner';
 import { useSideBySide } from '@gym/ui/hooks/use-side-by-side';
+import { ConfirmDialog } from '@gym/ui/blocks/confirm-dialog';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigate, useParams } from '@tanstack/react-router';
 import { CircleOffIcon, LockIcon, SearchXIcon } from 'lucide-react';
@@ -271,38 +271,27 @@ function BranchStateDialog({
   };
 
   return (
-    <ResponsiveDialog
+    <ConfirmDialog
       open={open}
       onOpenChange={(next) => {
         if (!next) setError(null);
         onOpenChange(next);
       }}
+      tone={deactivating ? 'destructive' : 'primary'}
       title={t(deactivating ? 'detail.deactivateTitle' : 'detail.reactivateTitle', { name })}
       description={t(
         deactivating ? 'detail.deactivateDescription' : 'detail.reactivateDescription',
       )}
-      footer={
-        <>
-          <Button
-            variant={deactivating ? 'destructive' : 'default'}
-            disabled={!online || change.isPending}
-            onClick={confirm}
-          >
-            {change.isPending && <Spinner />}
-            {t(deactivating ? 'detail.deactivate' : 'detail.reactivate')}
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => {
-              onOpenChange(false);
-            }}
-          >
-            {t('detail.cancel')}
-          </Button>
-        </>
-      }
+      confirmLabel={t(deactivating ? 'detail.deactivate' : 'detail.reactivate')}
+      cancelLabel={t('detail.cancel')}
+      disabled={!online}
+      pending={change.isPending}
+      onConfirm={confirm}
+      onCancel={() => {
+        onOpenChange(false);
+      }}
     >
       <AdminError error={error} />
-    </ResponsiveDialog>
+    </ConfirmDialog>
   );
 }

@@ -1,4 +1,10 @@
-import { test as base, expect, type BrowserContext, type Page } from '@playwright/test';
+import {
+  test as base,
+  expect,
+  type BrowserContext,
+  type Page,
+  type Locator,
+} from '@playwright/test';
 import { registerTestDevice, TestData, type TestStaff } from './backend';
 
 /**
@@ -180,4 +186,12 @@ export async function scanCard(page: Page, uid: string): Promise<void> {
     });
   }
   await cdp.detach();
+}
+
+/**
+ * The dialog on screen: a form (role dialog) or a question answered yes or no (role alertdialog,
+ * the confirm dialog of step D-5d).
+ */
+export function anyDialog(page: Page): Locator {
+  return page.getByRole('dialog').or(page.getByRole('alertdialog'));
 }

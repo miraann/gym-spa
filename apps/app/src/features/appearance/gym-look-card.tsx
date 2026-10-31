@@ -20,7 +20,6 @@ import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { ChoiceGroup } from '@gym/ui/blocks/choice-group';
 import { Chip, ChipRow } from '@gym/ui/blocks/chip-row';
-import { ResponsiveDialog } from '@gym/ui/blocks/responsive-dialog';
 import { StickyActionBar } from '@gym/ui/blocks/sticky-action-bar';
 import { Alert, AlertDescription, AlertTitle } from '@gym/ui/components/alert';
 import { Button } from '@gym/ui/components/button';
@@ -40,6 +39,7 @@ import { useConnection } from '@/lib/connection';
 import { saveErrorKey, type SaveErrorKey } from '@/lib/save-error';
 import { useUnsavedChanges } from '@/lib/unsaved-changes';
 import { cn } from '@gym/ui/lib/utils';
+import { ConfirmDialog } from '@gym/ui/blocks/confirm-dialog';
 import { LogoField } from './logo-field';
 import { saveGymLook } from './save-appearance';
 import { GYM_LOOK_QUERY } from './use-gym-appearance';
@@ -251,34 +251,21 @@ export function GymLookCard() {
         <LogoField />
       </CardContent>
 
-      <ResponsiveDialog
+      <ConfirmDialog
         open={confirmOpen}
         onOpenChange={setConfirmOpen}
+        tone="warning"
         title={t('appearance.confirm.title')}
         description={t('appearance.confirm.description')}
-        footer={
-          <>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setConfirmOpen(false);
-              }}
-            >
-              {t('appearance.confirm.back')}
-            </Button>
-            <Button
-              disabled={save.isPending}
-              onClick={() => {
-                save.mutate(draft);
-              }}
-            >
-              {t('appearance.confirm.saveAnyway')}
-            </Button>
-          </>
-        }
+        confirmLabel={t('appearance.confirm.saveAnyway')}
+        cancelLabel={t('appearance.confirm.back')}
+        pending={save.isPending}
+        onConfirm={() => {
+          save.mutate(draft);
+        }}
       >
         <ColorWarnings issues={issues} statusLike={statusLike} />
-      </ResponsiveDialog>
+      </ConfirmDialog>
     </Card>
   );
 }

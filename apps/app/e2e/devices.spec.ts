@@ -2,9 +2,10 @@ import type { Page } from '@playwright/test';
 import pkg from '../package.json' with { type: 'json' };
 import { admin, type TestData } from './support/backend';
 import {
+  anyDialog,
+  expect,
   HOME_HEADING,
   LOGIN_HEADING,
-  expect,
   signIn,
   submitPasswordLogin,
   test,
@@ -207,14 +208,14 @@ test('the devices page renames, sets the language of, moves and deactivates a de
 
   await page.getByRole('radio', { name: /لقی تاقیکردنەوە B2/ }).click();
   await page.getByRole('button', { name: 'گواستنەوە' }).click();
-  await page.getByRole('dialog').getByRole('button', { name: 'گواستنەوە' }).click();
+  await anyDialog(page).getByRole('button', { name: 'گواستنەوە' }).click();
   await expect(page.getByText('ئامێرەکە گوازرایەوە')).toBeVisible();
   await expect
     .poll(async () => (await gymDevices(data)).find((device) => device.id === tabletId))
     .toMatchObject({ branch_id: secondBranch, code: 'D01' });
 
   await page.getByRole('button', { name: 'ناچالاککردن' }).click();
-  await page.getByRole('dialog').getByRole('button', { name: 'ناچالاککردن' }).click();
+  await anyDialog(page).getByRole('button', { name: 'ناچالاککردن' }).click();
   await expect(page.getByText('تابلێتی هۆڵ ناچالاک کرا')).toBeVisible();
   await expect
     .poll(async () => (await gymDevices(data)).find((device) => device.id === tabletId)?.is_active)
@@ -232,7 +233,7 @@ test('deactivating this device locks the app at once', async ({ page, data }) =>
     page.getByText('ئەمە ئەم ئامێرەیە: دوای ناچالاککردن، لێرە کەس ناتوانێت کار بکات.'),
   ).toBeVisible();
   await page.getByRole('button', { name: 'ناچالاککردن' }).click();
-  await page.getByRole('dialog').getByRole('button', { name: 'ناچالاککردن' }).click();
+  await anyDialog(page).getByRole('button', { name: 'ناچالاککردن' }).click();
 
   await expect(page.getByRole('heading', { level: 1, name: 'کێ کار دەکات؟' })).toBeVisible();
   await expect(page.getByText(DEVICE_INACTIVE)).toBeVisible();

@@ -6,7 +6,7 @@ import {
   loginResult,
   signIn as staffSignIn,
 } from '../../../packages/staff-admin/test/fixture.ts';
-import { backend, expect, run, signInReady, test } from './support/panel';
+import { backend, anyDialog, expect, run, signInReady, test } from './support/panel';
 
 // Gyms in the seller panel (spec §2.6): created with their first Owner, then subscription,
 // limits, suspend, lock and reactivate, and what the gym's own staff see of it.
@@ -80,7 +80,7 @@ test("suspend, lock and reactivate: what the gym's staff see, and the gym's log"
 
   // Suspend: read-only, but they still log in.
   await page.getByRole('button', { name: 'ڕاگرتن' }).click();
-  await page.getByRole('dialog').getByRole('button', { name: 'ڕاگرتن' }).click();
+  await anyDialog(page).getByRole('button', { name: 'ڕاگرتن' }).click();
   await expect(page.locator('[data-gym-state]')).toHaveAttribute('data-gym-state', 'suspended');
   const signedIn = await staffSignIn(backend, owner.email, owner.password);
   expect((await signedIn.client.rpc('my_gym').single()).data).toMatchObject({
@@ -90,7 +90,7 @@ test("suspend, lock and reactivate: what the gym's staff see, and the gym's log"
 
   // Lock: a reason is required; then the gym app refuses the login itself.
   await page.getByRole('button', { name: 'قفڵکردن' }).click();
-  const lockDialog = page.getByRole('dialog');
+  const lockDialog = anyDialog(page);
   await lockDialog.getByRole('button', { name: 'قفڵکردن' }).click();
   await expect(lockDialog.getByText('هۆکارێک بنووسە.')).toBeVisible();
   await lockDialog.getByLabel('هۆکار (پێویستە)').fill('هەژماری دزراو');
@@ -108,7 +108,7 @@ test("suspend, lock and reactivate: what the gym's staff see, and the gym's log"
 
   // Reactivate: back to normal.
   await page.getByRole('button', { name: 'چالاککردنەوە' }).click();
-  await page.getByRole('dialog').getByRole('button', { name: 'چالاککردنەوە' }).click();
+  await anyDialog(page).getByRole('button', { name: 'چالاککردنەوە' }).click();
   await expect(page.locator('[data-gym-state]')).toHaveAttribute('data-gym-state', 'active');
   expect(await loginResult(backend, owner.email, owner.password)).toBe('ok');
 
@@ -129,8 +129,8 @@ test('the subscription date and the limits', async ({ page, made }) => {
 
   await page.getByRole('button', { name: 'گۆڕینی بەرواری ئابوونە' }).click();
   await page.getByRole('button', { name: '+3 مانگ' }).click();
-  await page.getByRole('dialog').getByRole('button', { name: 'پاشەکەوتکردن' }).click();
-  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await anyDialog(page).getByRole('button', { name: 'پاشەکەوتکردن' }).click();
+  await expect(anyDialog(page)).toHaveCount(0);
   const expected = paidUntilFromDate(addMonthsToDate(baghdadDateOf(Date.now()), 3));
   const row = await adminClient(backend)
     .from('gyms')
@@ -141,11 +141,11 @@ test('the subscription date and the limits', async ({ page, made }) => {
 
   await page.getByRole('button', { name: 'گۆڕینی سنوورەکان' }).click();
   await page.getByLabel('زۆرترین لق').fill('0');
-  await page.getByRole('dialog').getByRole('button', { name: 'پاشەکەوتکردن' }).click();
+  await anyDialog(page).getByRole('button', { name: 'پاشەکەوتکردن' }).click();
   await expect(page.getByText('سنوور دەبێت لانیکەم 1 بێت، یان بەتاڵ.')).toBeVisible();
   await page.getByLabel('زۆرترین لق').fill('3');
-  await page.getByRole('dialog').getByRole('button', { name: 'پاشەکەوتکردن' }).click();
-  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await anyDialog(page).getByRole('button', { name: 'پاشەکەوتکردن' }).click();
+  await expect(anyDialog(page)).toHaveCount(0);
   const limited = await adminClient(backend)
     .from('gyms')
     .select('max_branches')

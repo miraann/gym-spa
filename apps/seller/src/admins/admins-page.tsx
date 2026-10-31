@@ -17,6 +17,7 @@ import { Field, FieldError, FieldGroup, FieldLabel } from '@gym/ui/components/fi
 import { Input } from '@gym/ui/components/input';
 import { Skeleton } from '@gym/ui/components/skeleton';
 import { Spinner } from '@gym/ui/components/spinner';
+import { ConfirmDialog } from '@gym/ui/blocks/confirm-dialog';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   CircleCheckIcon,
@@ -162,31 +163,22 @@ function ChangeDialog({
   };
 
   return (
-    <ResponsiveDialog
+    <ConfirmDialog
       open={admin !== null}
       onOpenChange={(open) => {
         if (!open) close();
       }}
+      tone={change === 'reactivate_admin' ? 'primary' : 'destructive'}
       title={t(texts.title, { name: admin?.full_name ?? '' })}
       description={t(texts.description)}
-      footer={
-        <>
-          <Button variant="outline" onClick={close}>
-            {t('common.cancel')}
-          </Button>
-          <Button
-            variant={change === 'reactivate_admin' ? 'default' : 'destructive'}
-            disabled={pending}
-            onClick={confirm}
-          >
-            {pending && <Spinner />}
-            {t(texts.confirm)}
-          </Button>
-        </>
-      }
+      confirmLabel={t(texts.confirm)}
+      cancelLabel={t('common.cancel')}
+      pending={pending}
+      onConfirm={confirm}
+      onCancel={close}
     >
       <FormError error={error} />
-    </ResponsiveDialog>
+    </ConfirmDialog>
   );
 }
 

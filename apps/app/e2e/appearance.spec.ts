@@ -102,7 +102,7 @@ test('a custom color that is hard to read or looks like a status color warns bef
   await expect(page.getByText(/لە ڕەنگی دۆخەکان دەچێت/)).toBeVisible();
   await expect(page.getByText('ئەم ڕەنگە باش ناخوێنرێتەوە')).toBeVisible();
   await page.getByRole('button', { name: 'پاشەکەوتکردن' }).click();
-  const confirm = page.getByRole('dialog', { name: 'ئەم ڕەنگە پاشەکەوت بکرێت؟' });
+  const confirm = page.getByRole('alertdialog', { name: 'ئەم ڕەنگە پاشەکەوت بکرێت؟' });
   await expect(confirm).toBeVisible();
   await confirm.getByRole('button', { name: 'گەڕانەوە' }).click();
   expect(await settingValue(data, 'appearance.brand_color')).toBeNull();
@@ -161,7 +161,7 @@ test('the logo is resized to at most 300 KB and shows on the lock screen', async
   await unlock(page, staff);
   await page.getByRole('button', { name: 'لابردنی لۆگۆ' }).click();
   await page
-    .getByRole('dialog', { name: 'لۆگۆ لابدرێت؟' })
+    .getByRole('alertdialog', { name: 'لۆگۆ لابدرێت؟' })
     .getByRole('button', { name: 'لابردن' })
     .click();
   await expect(page.getByText('لۆگۆکە لابرا')).toBeVisible();

@@ -1,7 +1,6 @@
 import { rolePermissionsToSave, type PermissionKey } from '@gym/core';
 import { localizedName } from '@gym/i18n';
 import { Chip, ChipRow } from '@gym/ui/blocks/chip-row';
-import { ResponsiveDialog } from '@gym/ui/blocks/responsive-dialog';
 import { StickyActionBar } from '@gym/ui/blocks/sticky-action-bar';
 import { Alert, AlertDescription } from '@gym/ui/components/alert';
 import { Button } from '@gym/ui/components/button';
@@ -12,6 +11,7 @@ import { Input } from '@gym/ui/components/input';
 import { Skeleton } from '@gym/ui/components/skeleton';
 import { Spinner } from '@gym/ui/components/spinner';
 import { useSideBySide } from '@gym/ui/hooks/use-side-by-side';
+import { ConfirmDialog } from '@gym/ui/blocks/confirm-dialog';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigate, useParams } from '@tanstack/react-router';
 import { LockIcon, SearchXIcon, Trash2Icon, UsersIcon } from 'lucide-react';
@@ -318,36 +318,25 @@ function DeleteRoleDialog({
   };
 
   return (
-    <ResponsiveDialog
+    <ConfirmDialog
       open={open}
       onOpenChange={(next) => {
         if (!next) setError(null);
         onOpenChange(next);
       }}
+      tone="destructive"
       title={t('roles.deleteTitle', { name })}
       description={inUse ? t('errors.role_in_use') : t('roles.deleteDescription')}
-      footer={
-        <>
-          <Button
-            variant="destructive"
-            disabled={inUse || !online || remove.isPending}
-            onClick={confirm}
-          >
-            {remove.isPending && <Spinner />}
-            {t('roles.delete')}
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => {
-              onOpenChange(false);
-            }}
-          >
-            {t('actions.cancel')}
-          </Button>
-        </>
-      }
+      confirmLabel={t('roles.delete')}
+      cancelLabel={t('actions.cancel')}
+      disabled={inUse || !online}
+      pending={remove.isPending}
+      onConfirm={confirm}
+      onCancel={() => {
+        onOpenChange(false);
+      }}
     >
       <AdminError error={error} />
-    </ResponsiveDialog>
+    </ConfirmDialog>
   );
 }

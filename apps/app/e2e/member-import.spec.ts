@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import type { Page } from '@playwright/test';
 import { admin, write, type TestData } from './support/backend';
 import { addCard, addMember } from './support/members';
-import { expect, signIn, test } from './support/app';
+import { anyDialog, expect, signIn, test } from './support/app';
 
 // Importing members from a file (step 2j): the sample member list (samples/, all fake, one
 // intended edge case per row, explained on its second sheet), and a refused import.
@@ -101,7 +101,7 @@ test('a branch manager imports the sample member list', async ({ page, data }) =
   await preview.getByRole('button', { name: /^هەموو/ }).click();
 
   await page.getByRole('button', { name: 'هێنانی 15 ئەندام' }).click();
-  const dialog = page.getByRole('dialog');
+  const dialog = anyDialog(page);
   await expect(dialog).toContainText('2 کارتیش دەدرێن.');
   await dialog.getByRole('button', { name: 'هێنان', exact: true }).click();
 
@@ -225,7 +225,7 @@ test('an import with a row the server refuses saves nothing, and the rest can be
   );
 
   await page.getByRole('button', { name: 'هێنانی 2 ئەندام' }).click();
-  await page.getByRole('dialog').getByRole('button', { name: 'هێنان', exact: true }).click();
+  await anyDialog(page).getByRole('button', { name: 'هێنان', exact: true }).click();
   await expect(page.getByTestId('import-failure')).toContainText('1 ڕیز وەرنەگیران');
   const refused = page.locator('[data-import-row="2"]');
   await expect(refused).toHaveAttribute('data-status', 'error');
@@ -234,7 +234,7 @@ test('an import with a row the server refuses saves nothing, and the rest can be
   expect(await membersOf(data)).toHaveLength(1);
 
   await page.getByRole('button', { name: 'هێنانی 1 ئەندام' }).click();
-  await page.getByRole('dialog').getByRole('button', { name: 'هێنان', exact: true }).click();
+  await anyDialog(page).getByRole('button', { name: 'هێنان', exact: true }).click();
   await expect(page.getByTestId('import-done')).toContainText('1 ئەندام هێنران');
   expect((await membersOf(data)).map((member) => member.full_name)).toEqual([
     'هاوڕێ جەمال',
@@ -260,7 +260,7 @@ async function importCsv(page: Page, name: string, csv: string, count: number): 
   });
   await expect(page.getByTestId('import-preview')).toBeVisible();
   await page.getByRole('button', { name: `هێنانی ${String(count)} ئەندام` }).click();
-  await page.getByRole('dialog').getByRole('button', { name: 'هێنان', exact: true }).click();
+  await anyDialog(page).getByRole('button', { name: 'هێنان', exact: true }).click();
   await expect(page.getByTestId('import-done')).toContainText(`${String(count)} ئەندام هێنران`);
 }
 

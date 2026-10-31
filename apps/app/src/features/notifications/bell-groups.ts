@@ -43,7 +43,7 @@ export function groupBell(notifications: readonly StaffNotification[], since: st
       unread: boolean;
       branches: Map<string, number>;
       total: number;
-      products: Map<string, MessageNames>;
+      products: Map<string, { names: MessageNames; createdAt: string }>;
       createdAt: string;
     }
   >();
@@ -74,9 +74,15 @@ export function groupBell(notifications: readonly StaffNotification[], since: st
     );
     if (notification.kind === 'reminders_ready') {
       row.total += notification.count;
-    } else if (!row.products.has(notification.subjectId)) {
-      row.products.set(notification.subjectId, notification.product);
-      row.total += 1;
+    } else {
+      const seen = row.products.get(notification.subjectId);
+      if (!seen) row.total += 1;
+      if (!seen || notification.createdAt < seen.createdAt) {
+        row.products.set(notification.subjectId, {
+          names: notification.product,
+          createdAt: notification.createdAt,
+        });
+      }
     }
   }
 
@@ -93,7 +99,13 @@ export function groupBell(notifications: readonly StaffNotification[], since: st
         .map(([branchId, count]) => ({ branchId, count }))
         .sort((a, b) => b.count - a.count),
       total: row.total,
-      products: [...row.products.values()],
+      // When they became low; products that became low together by name, so the order is stable.
+      products: [...row.products.values()]
+        .sort(
+          (a, b) =>
+            a.createdAt.localeCompare(b.createdAt) || a.names.ckb.localeCompare(b.names.ckb, 'ckb'),
+        )
+        .map((product) => product.names),
       createdAt: row.createdAt,
     });
     days.set(row.day, list);

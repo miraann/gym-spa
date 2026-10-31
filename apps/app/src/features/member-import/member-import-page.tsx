@@ -19,13 +19,13 @@ import {
 import { localizedName } from '@gym/i18n';
 import { saveFile } from '@gym/platform';
 import { PageHeader } from '@gym/ui/blocks/page-header';
-import { ResponsiveDialog } from '@gym/ui/blocks/responsive-dialog';
 import { StickyActionBar } from '@gym/ui/blocks/sticky-action-bar';
 import { Alert, AlertDescription } from '@gym/ui/components/alert';
 import { Button } from '@gym/ui/components/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@gym/ui/components/card';
 import { Skeleton } from '@gym/ui/components/skeleton';
 import { Spinner } from '@gym/ui/components/spinner';
+import { ConfirmDialog } from '@gym/ui/blocks/confirm-dialog';
 import { Link } from '@tanstack/react-router';
 import {
   ArchiveIcon,
@@ -497,33 +497,23 @@ function ImportSteps({
         </Button>
       </StickyActionBar>
 
-      <ResponsiveDialog
+      <ConfirmDialog
         open={confirmOpen}
         onOpenChange={(open) => {
           if (!importMembers.isPending) onConfirmOpen(open);
         }}
         title={t('import.confirmTitle', { count: payload.length })}
         description={t('import.confirmText')}
-        footer={
-          <>
-            <Button
-              variant="outline"
-              disabled={importMembers.isPending}
-              onClick={() => {
-                onConfirmOpen(false);
-              }}
-            >
-              {t('import.cancel')}
-            </Button>
-            <Button disabled={!canImport} data-testid="import-confirm" onClick={save}>
-              {importMembers.isPending && <Spinner data-icon="inline-start" />}
-              {t('import.confirm')}
-            </Button>
-          </>
-        }
+        confirmLabel={t('import.confirm')}
+        cancelLabel={t('import.cancel')}
+        disabled={!canImport}
+        pending={importMembers.isPending}
+        onConfirm={save}
       >
-        {cardCount > 0 && <p className="text-sm">{t('import.cards', { count: cardCount })}</p>}
-      </ResponsiveDialog>
+        {cardCount > 0 && (
+          <p className="text-center text-sm">{t('import.cards', { count: cardCount })}</p>
+        )}
+      </ConfirmDialog>
     </>
   );
 }

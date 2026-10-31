@@ -15,6 +15,7 @@ import { Field, FieldError, FieldLabel } from '@gym/ui/components/field';
 import { Skeleton } from '@gym/ui/components/skeleton';
 import { Spinner } from '@gym/ui/components/spinner';
 import { Textarea } from '@gym/ui/components/textarea';
+import { ConfirmDialog } from '@gym/ui/blocks/confirm-dialog';
 import {
   ArchiveIcon,
   BanIcon,
@@ -540,47 +541,39 @@ function ReturnCardDialog({
   const [error, setError] = useState<CardErrorKey | null>(null);
 
   return (
-    <ResponsiveDialog
+    <ConfirmDialog
       open
       onOpenChange={(open) => {
         if (!open) onClose();
       }}
       title={t('return.title', { name: member.fullName })}
       description={t('return.description')}
-      footer={
-        <>
-          <Button
-            disabled={!online || end.isPending}
-            onClick={() => {
-              setError(null);
-              end.mutate(card.id, {
-                onSuccess: () => {
-                  haptic('success');
-                  toast.success(t('done.returned'));
-                  onClose();
-                },
-                onError: (thrown) => {
-                  setError(cardErrorKey(thrown, 'return'));
-                },
-              });
-            }}
-          >
-            {end.isPending && <Spinner />}
-            {t('actions.return')}
-          </Button>
-          <Button variant="outline" onClick={onClose}>
-            {t('actions.cancel')}
-          </Button>
-        </>
-      }
+      confirmLabel={t('actions.return')}
+      cancelLabel={t('actions.cancel')}
+      disabled={!online}
+      pending={end.isPending}
+      onConfirm={() => {
+        setError(null);
+        end.mutate(card.id, {
+          onSuccess: () => {
+            haptic('success');
+            toast.success(t('done.returned'));
+            onClose();
+          },
+          onError: (thrown) => {
+            setError(cardErrorKey(thrown, 'return'));
+          },
+        });
+      }}
+      onCancel={onClose}
     >
       <div className="flex flex-col gap-3">
-        <p className="text-sm">
+        <p className="text-center text-sm">
           <CardUid uid={card.uid} className="font-medium" />
         </p>
         <CardError error={error} />
       </div>
-    </ResponsiveDialog>
+    </ConfirmDialog>
   );
 }
 
@@ -686,41 +679,33 @@ function UnblockCardDialog({
   const [error, setError] = useState<CardErrorKey | null>(null);
 
   return (
-    <ResponsiveDialog
+    <ConfirmDialog
       open
       onOpenChange={(open) => {
         if (!open) onClose();
       }}
       title={t('unblock.title')}
       description={t('unblock.description')}
-      footer={
-        <>
-          <Button
-            disabled={!online || unblock.isPending}
-            onClick={() => {
-              setError(null);
-              unblock.mutate(card.id, {
-                onSuccess: () => {
-                  haptic('success');
-                  toast.success(t('done.unblocked'));
-                  onClose();
-                },
-                onError: (thrown) => {
-                  setError(cardErrorKey(thrown, 'unblock'));
-                },
-              });
-            }}
-          >
-            {unblock.isPending && <Spinner />}
-            {t('actions.unblock')}
-          </Button>
-          <Button variant="outline" onClick={onClose}>
-            {t('actions.cancel')}
-          </Button>
-        </>
-      }
+      confirmLabel={t('actions.unblock')}
+      cancelLabel={t('actions.cancel')}
+      disabled={!online}
+      pending={unblock.isPending}
+      onConfirm={() => {
+        setError(null);
+        unblock.mutate(card.id, {
+          onSuccess: () => {
+            haptic('success');
+            toast.success(t('done.unblocked'));
+            onClose();
+          },
+          onError: (thrown) => {
+            setError(cardErrorKey(thrown, 'unblock'));
+          },
+        });
+      }}
+      onCancel={onClose}
     >
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-3 text-center">
         <p className="text-sm">
           <CardUid uid={card.uid} className="font-medium" />
         </p>
@@ -729,6 +714,6 @@ function UnblockCardDialog({
         )}
         <CardError error={error} />
       </div>
-    </ResponsiveDialog>
+    </ConfirmDialog>
   );
 }

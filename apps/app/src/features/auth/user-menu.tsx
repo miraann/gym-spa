@@ -2,18 +2,9 @@ import { LanguagesIcon, LockIcon, LogOutIcon, SunMoonIcon } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@gym/ui/components/alert-dialog';
 import { LanguageRadioItems } from '@/components/layout/language-menu';
 import { ThemeRadioItems } from '@/components/layout/theme-menu';
+import { ConfirmDialog } from '@gym/ui/blocks/confirm-dialog';
 import { Button } from '@gym/ui/components/button';
 import {
   DropdownMenu,
@@ -123,20 +114,20 @@ export function UserMenu({ compact = false }: { readonly compact?: boolean }) {
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <AlertDialog open={confirmLogout} onOpenChange={setConfirmLogout}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{t('menu.logoutTitle')}</AlertDialogTitle>
-            <AlertDialogDescription>{t('menu.logoutDescription')}</AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{t('menu.cancel')}</AlertDialogCancel>
-            <AlertDialogAction variant="destructive" onClick={logout}>
-              {t('menu.logoutConfirm')}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ConfirmDialog
+        open={confirmLogout}
+        onOpenChange={setConfirmLogout}
+        tone="destructive"
+        icon={LogOutIcon}
+        title={t('menu.logoutTitle')}
+        description={t('menu.logoutDescription')}
+        confirmLabel={t('menu.logoutConfirm')}
+        cancelLabel={t('menu.cancel')}
+        onConfirm={() => {
+          setConfirmLogout(false);
+          logout();
+        }}
+      />
     </>
   );
 }

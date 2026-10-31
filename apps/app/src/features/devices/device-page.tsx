@@ -1,7 +1,6 @@
 import { isCleanText, normalizeName } from '@gym/core';
 import { LANGUAGE_CODES, LANGUAGES, localizedName, type Language } from '@gym/i18n';
 import { ChoiceGroup } from '@gym/ui/blocks/choice-group';
-import { ResponsiveDialog } from '@gym/ui/blocks/responsive-dialog';
 import { StickyActionBar } from '@gym/ui/blocks/sticky-action-bar';
 import { Alert, AlertDescription } from '@gym/ui/components/alert';
 import { Badge } from '@gym/ui/components/badge';
@@ -15,6 +14,7 @@ import { RadioGroup, RadioGroupItem } from '@gym/ui/components/radio-group';
 import { Skeleton } from '@gym/ui/components/skeleton';
 import { Spinner } from '@gym/ui/components/spinner';
 import { useSideBySide } from '@gym/ui/hooks/use-side-by-side';
+import { ConfirmDialog } from '@gym/ui/blocks/confirm-dialog';
 import { useParams } from '@tanstack/react-router';
 import { CircleOffIcon, SearchXIcon, TriangleAlertIcon } from 'lucide-react';
 import { useId, useState } from 'react';
@@ -319,7 +319,7 @@ function MoveDevice({
           {t('move.submit')}
         </Button>
       </CardContent>
-      <ResponsiveDialog
+      <ConfirmDialog
         open={confirming}
         onOpenChange={setConfirming}
         title={t('move.confirmTitle', {
@@ -327,25 +327,14 @@ function MoveDevice({
           branch: targetBranch ? localizedName(targetBranch, language) : '',
         })}
         description={t(thisDevice ? 'move.confirmThisDevice' : 'move.confirmDescription')}
-        footer={
-          <>
-            <Button disabled={!online || move.isPending} onClick={confirm}>
-              {move.isPending && <Spinner />}
-              {t('move.submit')}
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setConfirming(false);
-              }}
-            >
-              {t('detail.cancel')}
-            </Button>
-          </>
-        }
+        confirmLabel={t('move.submit')}
+        cancelLabel={t('detail.cancel')}
+        disabled={!online}
+        pending={move.isPending}
+        onConfirm={confirm}
       >
         <AdminError error={error} />
-      </ResponsiveDialog>
+      </ConfirmDialog>
     </Card>
   );
 }
@@ -413,38 +402,24 @@ function DeviceState({
           {t(deactivating ? 'state.deactivate' : 'state.reactivate')}
         </Button>
       </CardContent>
-      <ResponsiveDialog
+      <ConfirmDialog
         open={confirming}
         onOpenChange={setConfirming}
+        tone={deactivating ? 'destructive' : 'primary'}
         title={t(deactivating ? 'state.deactivateTitle' : 'state.reactivateTitle', {
           name: device.name,
         })}
         description={t(
           deactivating ? 'state.deactivateDescription' : 'state.reactivateDescription',
         )}
-        footer={
-          <>
-            <Button
-              variant={deactivating ? 'destructive' : 'default'}
-              disabled={!online || change.isPending}
-              onClick={confirm}
-            >
-              {change.isPending && <Spinner />}
-              {t(deactivating ? 'state.deactivate' : 'state.reactivate')}
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setConfirming(false);
-              }}
-            >
-              {t('detail.cancel')}
-            </Button>
-          </>
-        }
+        confirmLabel={t(deactivating ? 'state.deactivate' : 'state.reactivate')}
+        cancelLabel={t('detail.cancel')}
+        disabled={!online}
+        pending={change.isPending}
+        onConfirm={confirm}
       >
         <AdminError error={error} />
-      </ResponsiveDialog>
+      </ConfirmDialog>
     </Card>
   );
 }
