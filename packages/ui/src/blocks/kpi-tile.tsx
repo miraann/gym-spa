@@ -2,6 +2,7 @@ import type { LucideIcon } from 'lucide-react';
 import { Slot } from 'radix-ui';
 import type { ReactNode } from 'react';
 import { Skeleton } from '../components/skeleton';
+import { TAP_CARD } from '../lib/tap';
 import { cn } from '../lib/utils';
 import { TONE_CLASSES, type Tone } from '../lib/tones';
 import { IconTile } from './icon-tile';
@@ -9,7 +10,7 @@ import { IconTile } from './icon-tile';
 /**
  * A dashboard number (step D-5b): a pastel card in its section tone. The icon tile sits at the
  * reading start with the trend chip at the end; below them the title, the big number in the tone
- * and one muted line. With 18rem of its own room (a container query, not the window) the card
+ * and one muted line; as a link it has the tap effect. With 18rem of its own room (a container query, not the window) the card
  * gets bigger corners, more padding and a larger number. A link (asChild) or a plain card.
  */
 export function KpiTile({
@@ -44,6 +45,7 @@ export function KpiTile({
       data-slot="kpi-tile"
       className={cn(
         'group/kpi @container flex rounded-3xl outline-none focus-visible:ring-3 focus-visible:ring-ring/50',
+        asChild && TAP_CARD,
         className,
       )}
       {...props}

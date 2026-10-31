@@ -1,6 +1,7 @@
 import { PlusIcon } from 'lucide-react';
 import { Slot } from 'radix-ui';
 import type { ComponentProps } from 'react';
+import { TAP_CARD } from '../lib/tap';
 import { cn } from '../lib/utils';
 
 /**
@@ -40,7 +41,9 @@ export function AddTile({
   );
 
   const classes = cn(
-    'group/add flex items-center justify-center rounded-card border-2 border-dashed border-primary/35 bg-accent/45 text-center shadow-sm transition-colors duration-200 outline-none hover:border-primary/60 hover:bg-accent focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 motion-reduce:transition-none',
+    'group/add flex items-center justify-center rounded-card border-2 border-dashed border-primary/35 bg-accent/45 text-center shadow-sm outline-none hover:border-primary/60 hover:bg-accent focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50',
+    TAP_CARD,
+    'transition-[scale,box-shadow,background-color,border-color] motion-reduce:transition-none',
     shape === 'tile'
       ? 'min-h-48 w-full flex-col gap-3 p-6'
       : 'min-h-16 w-full gap-3 px-4 py-3 pointer-coarse:min-h-18',

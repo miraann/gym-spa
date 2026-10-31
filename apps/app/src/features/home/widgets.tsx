@@ -4,6 +4,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { IconTile } from '@gym/ui/blocks/icon-tile';
 import { KpiTile } from '@gym/ui/blocks/kpi-tile';
+import { TAP_CARD } from '@gym/ui/lib/tap';
 import { TONE_CLASSES as TONES, type Tone } from '@gym/ui/lib/tones';
 import { cn } from '@gym/ui/lib/utils';
 import type { AppPath } from '@/app/navigation';
@@ -227,7 +228,10 @@ export function StatRow({
     <Link
       to={to}
       data-testid={testId}
-      className="flex flex-col gap-3 rounded-card bg-card p-4 shadow-sm ring-1 ring-foreground/6 transition-shadow duration-200 outline-none hover:shadow-md focus-visible:ring-3 focus-visible:ring-ring/50 dark:ring-foreground/7"
+      className={cn(
+        'flex flex-col gap-3 rounded-card bg-card p-4 shadow-sm ring-1 ring-foreground/6 outline-none hover:shadow-md focus-visible:ring-3 focus-visible:ring-ring/50 dark:ring-foreground/7',
+        TAP_CARD,
+      )}
     >
       <span className="flex items-center gap-3">
         <IconTile icon={icon} tone={tone} />

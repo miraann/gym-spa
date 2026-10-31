@@ -6,7 +6,14 @@ import { Empty, EmptyDescription, EmptyHeader, EmptyMedia } from '@gym/ui/compon
 import { Field, FieldLabel } from '@gym/ui/components/field';
 import { NativeSelect, NativeSelectOption } from '@gym/ui/components/native-select';
 import { Skeleton } from '@gym/ui/components/skeleton';
-import { HistoryIcon, TriangleAlertIcon } from 'lucide-react';
+import {
+  HistoryIcon,
+  PencilIcon,
+  PlusIcon,
+  Trash2Icon,
+  TriangleAlertIcon,
+  type LucideIcon,
+} from 'lucide-react';
 import { useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { RequirePermission } from '@/components/no-access';
@@ -163,6 +170,7 @@ function AuditRow({ entry, who }: { readonly entry: AuditEntry; readonly who: st
         }}
       >
         <Badge variant={entry.action === 'delete' ? 'destructive' : 'secondary'}>
+          <ActionIcon action={entry.action} />
           {t(`actions.${entry.action}`)}
         </Badge>
         <span dir="ltr" className="font-mono text-sm">
@@ -223,4 +231,16 @@ function AuditRow({ entry, who }: { readonly entry: AuditEntry; readonly who: st
       )}
     </li>
   );
+}
+
+/** Each kind of change has its icon, so a removal is never told by its color alone (step D-5e). */
+const ACTION_ICONS: Readonly<Record<'insert' | 'update' | 'delete', LucideIcon>> = {
+  insert: PlusIcon,
+  update: PencilIcon,
+  delete: Trash2Icon,
+};
+
+function ActionIcon({ action }: { readonly action: 'insert' | 'update' | 'delete' }) {
+  const Icon = ACTION_ICONS[action];
+  return <Icon aria-hidden data-icon="inline-start" />;
 }

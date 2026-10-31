@@ -31,7 +31,7 @@ export function HourlyChart({ hourly }: { readonly hourly: readonly number[] }) 
           barCategoryGap="28%"
           style={{ width: '100%', height: '100%' }}
         >
-          <CartesianGrid vertical={false} stroke="var(--border)" strokeDasharray="0" />
+          <CartesianGrid vertical={false} stroke="var(--border)" strokeDasharray="3 3" />
           <XAxis
             dataKey="label"
             reversed={rtl}

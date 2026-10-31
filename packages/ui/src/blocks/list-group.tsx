@@ -2,6 +2,7 @@ import { ChevronRightIcon } from 'lucide-react';
 import { Slot } from 'radix-ui';
 import type { ComponentProps, ReactNode } from 'react';
 import { groupedRowClass } from '../lib/grouped-list';
+import { TAP_GRID_CARD } from '../lib/tap';
 import { cn } from '../lib/utils';
 
 /**
@@ -55,7 +56,11 @@ export function ListRow({
 }) {
   const Comp = asChild ? Slot.Root : 'div';
   return (
-    <GroupedListItem data-slot="list-row" inset={Boolean(leading)}>
+    <GroupedListItem
+      data-slot="list-row"
+      inset={Boolean(leading)}
+      className={cn(asChild && TAP_GRID_CARD)}
+    >
       <Comp
         className={cn(
           asChild
