@@ -4804,6 +4804,7 @@ export type Database = {
         Returns: undefined;
       };
       dashboard_summary: { Args: { p_branch_id?: string }; Returns: Json };
+      dashboard_trends: { Args: { p_branch_id?: string }; Returns: Json };
       device_heartbeat: {
         Args: { p_app_version: string; p_device_id: string };
         Returns: undefined;

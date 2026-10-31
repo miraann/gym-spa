@@ -158,3 +158,14 @@ Also decided by the user on 2026-10-30: grace period = **ماوەی زیادە**
 | 148 | Windows updates (11c) | update notice hint: the app closes, installs the new version and opens again, locked | ئەپەکە دادەخرێت، وەشانە نوێیەکە دادەمەزرێت و دووبارە دەکرێتەوە، پاشان قفڵ دەبێت. بە پینەکەت بیکەرەوە. | OK |
 
 The installer's own buttons (Next, Install, Finish) stay in English: NSIS has no Sorani translation.
+
+## Waiting for the user's review (step D-4, 2026-10-30)
+
+New dashboard texts Claude wrote following the approved wording above; the app uses them until the user changes them.
+
+| # | Where | Meaning (English) | Kurdish | Status |
+|---|---|---|---|---|
+| 149 | Dashboard (D-4) | +12% / −8% / the same, against yesterday up to this time | {{percent}} زیاتر لە دوێنێ تا ئەم کاتە / {{percent}} کەمتر لە دوێنێ تا ئەم کاتە / وەک دوێنێ تا ئەم کاتە | waiting |
+| 150 | Dashboard (D-4) | check-ins / revenue in the last 7 days | هاتنەکانی {{days}} ڕۆژی ڕابردوو / داهاتی {{days}} ڕۆژی ڕابردوو | waiting |
+| 151 | Dashboard (D-4) | today's classes / places taken / running now / none today | کلاسەکانی ئەمڕۆ / {{taken}} لە {{places}} جێگە گیراوە / {{count}} کلاس ئێستا بەردەوامە / ئەمڕۆ کلاس نییە | waiting |
+| 152 | Dashboard (D-4) | personal training sessions today / the time now | دانیشتنەکانی ڕاهێنانی تایبەتی ئەمڕۆ / کاتژمێری ئێستا | waiting |

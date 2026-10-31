@@ -13,7 +13,24 @@
     "revenueToday": "Today's revenue",
     "insideNow": "{{count}} inside now",
     "spaToday": "Today's spa bookings",
-    "owedNow": "Owed now: {{amount}}"
+    "owedNow": "Owed now: {{amount}}",
+    "trend": {
+      "up": "{{percent}} more than yesterday by this time",
+      "down": "{{percent}} less than yesterday by this time",
+      "same": "The same as yesterday by this time"
+    },
+    "week": {
+      "checkins": "Check-ins in the last {{days}} days",
+      "takings": "Revenue in the last {{days}} days"
+    },
+    "classes": {
+      "title": "Today's classes",
+      "places": "{{taken}} of {{places}} places taken",
+      "now": "{{count}} running now",
+      "none": "No classes today"
+    },
+    "ptToday": "Personal training sessions today",
+    "clock": "The time now"
   },
   "quick": {
     "title": "Quick actions",
