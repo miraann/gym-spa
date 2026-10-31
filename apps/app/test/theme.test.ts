@@ -5,13 +5,17 @@ import {
   BRAND_PRESETS,
   CONTRAST_NON_TEXT,
   CONTRAST_TEXT,
+  brandShades,
   brandVariables,
   contrastRatio,
+  isInSrgbGamut,
   oklchToHex,
   oklchToRgb,
+  type BrandPreset,
+  type Oklch,
   type Rgb,
 } from '@gym/core';
-import { describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 /**
  * The Calm Bento tokens in packages/ui's theme.css must meet WCAG AA in light and dark mode, and the colors
@@ -65,16 +69,32 @@ function evaluate(value: string): string {
   );
 }
 
-function oklchColor(value: string, name: string): Rgb {
+function oklch(value: string, name: string): Oklch {
   const match = /^oklch\(\s*([\d.]+) ([\d.]+) ([\d.]+)\s*\)$/.exec(evaluate(value));
   if (!match) throw new Error(`${name} is not an opaque oklch() color: ${value}`);
-  return oklchToRgb({ l: Number(match[1]), c: Number(match[2]), h: Number(match[3]) });
+  return { l: Number(match[1]), c: Number(match[2]), h: Number(match[3]) };
+}
+
+function oklchColor(value: string, name: string): Rgb {
+  return oklchToRgb(oklch(value, name));
 }
 
 /** An opaque token color. */
 function color(mode: Mode, name: string): Rgb {
   return oklchColor(resolve(mode, name), `${name} (${mode})`);
 }
+
+/** The variables a preset sets at runtime on top of the defaults, until the returned restore. */
+function withPreset(mode: Mode, preset: BrandPreset): () => void {
+  const saved = TOKENS[mode];
+  TOKENS[mode] = new Map([...saved, ...Object.entries(brandVariables(preset))]);
+  return () => {
+    TOKENS[mode] = saved;
+  };
+}
+
+/** Every check below runs with the default tokens and with each preset's variables. */
+const LOOKS: readonly (BrandPreset | 'default')[] = ['default', ...BRAND_PRESETS];
 
 /** `color` drawn at this opacity over `under` (what bg-warning/10 looks like on a card). */
 function over(colorRgb: Rgb, opacity: number, under: Rgb): Rgb {
@@ -109,7 +129,17 @@ const PAIRS: readonly (readonly [string, string])[] = [
   ['--sidebar-primary', '--sidebar-primary-foreground'],
 ];
 
-describe.each<Mode>(['light', 'dark'])('%s mode', (mode) => {
+describe.each(
+  LOOKS.flatMap((look) => (['light', 'dark'] as const).map((mode) => [look, mode] as const)),
+)('%s look, %s mode', (look, mode) => {
+  let restore: (() => void) | undefined;
+  beforeAll(() => {
+    if (look !== 'default') restore = withPreset(mode, look);
+  });
+  afterAll(() => {
+    restore?.();
+  });
+
   it.each(SURFACES.flatMap((surface) => TEXT_ON_SURFACES.map((text) => [text, surface])))(
     '%s is readable on %s',
     (text, surface) => {
@@ -150,21 +180,46 @@ describe.each<Mode>(['light', 'dark'])('%s mode', (mode) => {
       expect(resolve(mode, status)).not.toContain('--brand');
     }
   });
+
+  // A tinted page has as much of the hue as sRGB allows, never more (the browser would clip it).
+  it.runIf(look !== 'default' && brandShades(look).tint === 'tinted')(
+    'draws its tinted surfaces inside sRGB',
+    () => {
+      const opaque = ['--sidebar', '--muted', '--secondary'];
+      if (mode === 'light') opaque.push('--border', '--input');
+      for (const surface of [...SURFACES, ...opaque]) {
+        expect(isInSrgbGamut(oklch(resolve(mode, surface), surface)), surface).toBe(true);
+      }
+    },
+  );
+});
+
+/** OKLab of an OKLCH color, for the color distance ΔE_OK. */
+function oklab({ l, c, h }: Oklch): [number, number, number] {
+  return [l, c * Math.cos((h * Math.PI) / 180), c * Math.sin((h * Math.PI) / 180)];
+}
+
+// A brand color must never be mistaken for allowed, warning or denied: every preset's shade is at
+// least 30° of hue and ΔE_OK 0.1 from each status color of its mode (step D-5a, no exceptions).
+describe.each(BRAND_PRESETS)('the %s preset next to the status colors', (preset) => {
+  it.each<Mode>(['light', 'dark'])('keeps its distance in %s mode', (mode) => {
+    const shade = brandShades(preset)[mode];
+    for (const status of ['--success', '--warning', '--destructive']) {
+      const other = oklch(resolve(mode, status), status);
+      const hue = Math.abs(shade.h - other.h) % 360;
+      expect(Math.min(hue, 360 - hue), `${status} hue`).toBeGreaterThanOrEqual(30);
+      const [a, b] = [oklab(shade), oklab(other)];
+      const distance = Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
+      expect(distance, `${status} ΔE_OK`).toBeGreaterThanOrEqual(0.1);
+    }
+  });
 });
 
 // The dashboard's vivid marks and its brand tile follow the gym's color: they must work with every
 // preset, in light and dark mode (a custom color gets the contrast check of Appearance settings).
 describe.each(BRAND_PRESETS)('the vivid tokens with the %s preset', (preset) => {
-  const withPreset = (mode: Mode) => {
-    const saved = TOKENS[mode];
-    TOKENS[mode] = new Map([...saved, ...Object.entries(brandVariables(preset))]);
-    return () => {
-      TOKENS[mode] = saved;
-    };
-  };
-
   it.each<Mode>(['light', 'dark'])('marks stand out on cards and the page (%s)', (mode) => {
-    const restore = withPreset(mode);
+    const restore = withPreset(mode, preset);
     try {
       for (const surface of SURFACES) {
         expect(contrastRatio(color(mode, '--vivid'), color(mode, surface))).toBeGreaterThanOrEqual(
@@ -179,7 +234,7 @@ describe.each(BRAND_PRESETS)('the vivid tokens with the %s preset', (preset) => 
   it.each<Mode>(['light', 'dark'])(
     'keeps button text readable on both ends of the button gradient (%s)',
     (mode) => {
-      const restore = withPreset(mode);
+      const restore = withPreset(mode, preset);
       try {
         const gradient = evaluate(resolve(mode, '--gradient-primary'));
         const stops = [...gradient.matchAll(/oklch\([^)]*\)/g)];
@@ -196,7 +251,7 @@ describe.each(BRAND_PRESETS)('the vivid tokens with the %s preset', (preset) => 
   );
 
   it('keeps text readable on both ends of the brand gradient', () => {
-    const restore = withPreset('light');
+    const restore = withPreset('light', preset);
     try {
       const gradient = evaluate(resolve('light', '--gradient-brand'));
       const stops = [...gradient.matchAll(/oklch\([^)]*\)/g)];

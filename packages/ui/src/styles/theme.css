@@ -265,24 +265,40 @@ body {
   --brand-dark-l: 0.7;
   --brand-dark-c: 0.16;
   --brand-dark-foreground: oklch(0.17 0.03 var(--brand-dark-h));
+  /* The page tint (step D-5a): lightness and chroma of the surfaces, with the brand's hue. These
+     are the calm defaults; a tinted preset (midnight, royal, rose) washes the page, the bars and
+     the borders with its hue, while cards stay almost white (core's brandVariables). */
+  --brand-tint-page: 0.972 0.006;
+  --brand-tint-card: 0.995 0.002;
+  --brand-tint-bar: 0.985 0.004;
+  --brand-tint-muted: 0.945 0.008;
+  --brand-tint-secondary: 0.94 0.012;
+  --brand-tint-border: 0.91 0.01;
+  --brand-tint-input: 0.885 0.014;
+  --brand-tint-dark-page: 0.17 0.012;
+  --brand-tint-dark-card: 0.215 0.014;
+  --brand-tint-dark-popover: 0.235 0.016;
+  --brand-tint-dark-bar: 0.195 0.013;
+  --brand-tint-dark-muted: 0.25 0.016;
+  --brand-tint-dark-secondary: 0.27 0.02;
 
-  --background: oklch(0.972 0.006 var(--brand-h));
+  --background: oklch(var(--brand-tint-page) var(--brand-h));
   --foreground: oklch(0.2 0.02 var(--brand-h));
-  --card: oklch(0.995 0.002 var(--brand-h));
+  --card: oklch(var(--brand-tint-card) var(--brand-h));
   --card-foreground: var(--foreground);
   --popover: var(--card);
   --popover-foreground: var(--foreground);
   --primary: oklch(var(--brand-l) var(--brand-c) var(--brand-h));
   --primary-foreground: var(--brand-foreground);
-  --secondary: oklch(0.94 0.012 var(--brand-h));
+  --secondary: oklch(var(--brand-tint-secondary) var(--brand-h));
   --secondary-foreground: oklch(0.28 0.04 var(--brand-h));
-  --muted: oklch(0.945 0.008 var(--brand-h));
+  --muted: oklch(var(--brand-tint-muted) var(--brand-h));
   --muted-foreground: oklch(0.49 0.02 var(--brand-h));
   /* A soft tint of the brand (selected rows, the active menu item). */
   --accent: oklch(0.94 0.04 var(--brand-h));
   --accent-foreground: oklch(var(--brand-l) var(--brand-c) var(--brand-h));
-  --border: oklch(0.91 0.01 var(--brand-h));
-  --input: oklch(0.885 0.014 var(--brand-h));
+  --border: oklch(var(--brand-tint-border) var(--brand-h));
+  --input: oklch(var(--brand-tint-input) var(--brand-h));
   --ring: var(--primary);
 
   /* Section tones (step D-4, the user's choice of 2026-10-30): each part of the app has its own
@@ -335,7 +351,7 @@ body {
   /* Corner style: soft. Every radius derives from it (see @theme inline). */
   --radius: 1rem;
 
-  --sidebar: oklch(0.985 0.004 var(--brand-h));
+  --sidebar: oklch(var(--brand-tint-bar) var(--brand-h));
   --sidebar-foreground: var(--foreground);
   --sidebar-primary: var(--primary);
   --sidebar-primary-foreground: var(--primary-foreground);
@@ -354,19 +370,19 @@ body {
     0 2px 6px oklch(var(--shadow-tint) / 0.06), 0 12px 32px -8px oklch(var(--shadow-tint) / 0.16),
     0 24px 56px -16px oklch(var(--shadow-tint) / 0.18);
   /* Frosted bars: see-through enough to show what scrolls under them. */
-  --glass: oklch(0.985 0.004 var(--brand-h) / 0.78);
+  --glass: oklch(var(--brand-tint-bar) var(--brand-h) / 0.78);
 }
 
 .dark {
-  --background: oklch(0.17 0.012 var(--brand-h));
+  --background: oklch(var(--brand-tint-dark-page) var(--brand-h));
   --foreground: oklch(0.955 0.006 var(--brand-h));
-  --card: oklch(0.215 0.014 var(--brand-h));
-  --popover: oklch(0.235 0.016 var(--brand-h));
+  --card: oklch(var(--brand-tint-dark-card) var(--brand-h));
+  --popover: oklch(var(--brand-tint-dark-popover) var(--brand-h));
   --primary: oklch(var(--brand-dark-l) var(--brand-dark-c) var(--brand-dark-h));
   --primary-foreground: var(--brand-dark-foreground);
-  --secondary: oklch(0.27 0.02 var(--brand-h));
+  --secondary: oklch(var(--brand-tint-dark-secondary) var(--brand-h));
   --secondary-foreground: oklch(0.93 0.01 var(--brand-h));
-  --muted: oklch(0.25 0.016 var(--brand-h));
+  --muted: oklch(var(--brand-tint-dark-muted) var(--brand-h));
   --muted-foreground: oklch(0.72 0.02 var(--brand-h));
   --accent: oklch(0.29 0.06 var(--brand-dark-h));
   --accent-foreground: oklch(0.88 0.07 var(--brand-dark-h));
@@ -386,7 +402,7 @@ body {
   --destructive: oklch(0.74 0.16 25);
   --destructive-foreground: oklch(0.2 0.04 25);
 
-  --sidebar: oklch(0.195 0.013 var(--brand-h));
+  --sidebar: oklch(var(--brand-tint-dark-bar) var(--brand-h));
   --sidebar-accent: oklch(0.29 0.06 var(--brand-dark-h));
   --sidebar-accent-foreground: oklch(0.88 0.07 var(--brand-dark-h));
 
@@ -409,7 +425,7 @@ body {
   --elevation-3:
     0 2px 8px oklch(0 0 0 / 0.35), 0 20px 48px -12px oklch(0 0 0 / 0.6),
     inset 0 1px 0 oklch(1 0 0 / 0.06);
-  --glass: oklch(0.2 0.013 var(--brand-h) / 0.74);
+  --glass: oklch(var(--brand-tint-dark-bar) var(--brand-h) / 0.74);
 }
 
 @layer base {

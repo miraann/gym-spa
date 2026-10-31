@@ -9,6 +9,7 @@ import {
   looksLikeStatusColor,
   oklchToHex,
   parseBrandColor,
+  tintSurface,
   type BrandColor,
   type ContrastIssue,
 } from '@gym/core';
@@ -310,14 +311,13 @@ function LookPresets({
             !customOpen &&
             draft.brandColor === look.brandColor &&
             draft.cornerStyle === look.cornerStyle;
+          const mode = look.key === 'midnight' ? 'dark' : 'light';
           const { light, dark } = brandShades(look.brandColor);
-          const shade = look.key === 'midnight' ? dark : light;
-          const surface =
-            look.key === 'midnight'
-              ? `oklch(0.2 0.02 ${String(light.h)})`
-              : `oklch(0.965 0.015 ${String(light.h)})`;
+          const shade = mode === 'dark' ? dark : light;
+          // The look's own page, so a tinted look shows its wash of color.
+          const surface = tintSurface(look.brandColor, mode, 'page');
           const line =
-            look.key === 'midnight'
+            mode === 'dark'
               ? `oklch(0.32 0.03 ${String(light.h)})`
               : `oklch(0.88 0.03 ${String(light.h)})`;
           const radius = CORNER_RADIUS[look.cornerStyle];

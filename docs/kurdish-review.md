@@ -176,3 +176,5 @@ New dashboard texts Claude wrote following the approved wording above; the app u
 | 157 | Bell (D-4g) | 1 / several products low in stock | {{count}} کاڵا کەمە لە کۆگا / {{count}} کاڵا کەمن لە کۆگا | waiting |
 | 158 | Bell (D-4g) | times: now / minutes ago / hours ago | ئێستا / {{count}} خولەک لەمەوبەر / {{count}} کاتژمێر لەمەوبەر | waiting |
 | 159 | Bell (D-4g) | nothing new (was "هیچ ئاگادارکردنەوەیەک نییە.") / see all / unread (for screen readers) | هیچ ئاگادارکردنەوەیەکی نوێ نییە / بینینی هەموو ئاگادارکردنەوەکان / نەخوێندراوە | waiting |
+| 160 | Appearance (D-5a) | brand colors: royal purple / rose | مۆری شاهانە / پەمەیی | approved by the user on 2026-10-31 |
+| 161 | Appearance (D-5a) | ready-made looks: white / royal / rose (midnight stays «شەو») | سپی / شاهانە / گوڵی | approved by the user on 2026-10-31 |
