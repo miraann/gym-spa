@@ -29,7 +29,8 @@ import { useGymName } from './use-gym-name';
  * 3D pictures with their names, the gym at the reading start and the staff member's buttons at the
  * end. The daily pages (home, check-in) have their own place; every other group is one place that
  * opens its pages, or the page itself when only one of them is open to the staff member. The page
- * being shown sits in a soft brand box, its picture on the brand gradient.
+ * being shown sits in a soft brand box, its picture on the brand gradient; the other pictures sit
+ * on faint circles (step D-5c).
  */
 export function TopNav({ onOpenSearch }: { readonly onOpenSearch: () => void }) {
   const { t } = useTranslation(['common', 'nav']);
@@ -57,7 +58,7 @@ export function TopNav({ onOpenSearch }: { readonly onOpenSearch: () => void }) 
               {gymName ?? t('app.fullName')}
             </span>
             <span className="flex items-center gap-2">
-              <ConnectionStatus />
+              <ConnectionStatus quiet />
               <span dir="ltr" data-slot="app-version" className="text-xs text-muted-foreground">
                 {import.meta.env.VITE_APP_VERSION}
               </span>
@@ -119,12 +120,13 @@ function Place({
     <>
       <span
         className={cn(
-          'flex size-14 items-center justify-center rounded-full transition-[translate,scale] duration-200 ease-spring group-hover/place:-translate-y-0.5 group-active/place:scale-95 motion-reduce:transition-none',
-          isActive &&
-            'bg-primary bg-(image:--gradient-primary) shadow-[0_8px_20px_-6px_var(--glow)]',
+          'flex size-16 items-center justify-center rounded-full transition-[translate,scale] duration-200 ease-spring group-hover/place:-translate-y-0.5 group-active/place:scale-95 motion-reduce:transition-none',
+          isActive
+            ? 'bg-primary bg-(image:--gradient-primary) shadow-[0_8px_20px_-6px_var(--glow)]'
+            : 'bg-muted',
         )}
       >
-        <NavArt art={art} className={isActive ? 'size-9' : 'size-11'} />
+        <NavArt art={art} className={isActive ? 'size-10' : 'size-12'} />
       </span>
       <span
         data-slot="top-nav-label"
@@ -140,7 +142,7 @@ function Place({
 }
 
 function placeClass(isActive: boolean) {
-  return cn(PLACE, isActive ? 'bg-accent ring-1 ring-primary/25' : 'hover:bg-muted/70');
+  return cn(PLACE, isActive ? 'bg-accent ring-1 ring-primary/30' : 'hover:bg-muted/70');
 }
 
 function TopNavLink({ item }: { readonly item: OpenNavItem }) {

@@ -79,8 +79,11 @@ function RailItem({ item }: { readonly item: OpenNavItem }) {
       </span>
     </>
   );
-  const className =
-    'group/rail flex min-h-14 w-full flex-col items-center justify-center gap-1 rounded-2xl py-1.5 outline-none focus-visible:ring-3 focus-visible:ring-ring/50';
+  // The page being shown sits in the same soft brand box as on the top bar (step D-5c).
+  const className = cn(
+    'group/rail flex min-h-14 w-full flex-col items-center justify-center gap-1 rounded-2xl py-1.5 outline-none focus-visible:ring-3 focus-visible:ring-ring/50',
+    isActive && 'bg-sidebar-accent ring-1 ring-primary/30',
+  );
 
   return (
     <Tooltip>
