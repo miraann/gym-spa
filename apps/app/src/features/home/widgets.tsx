@@ -2,7 +2,9 @@ import { Link } from '@tanstack/react-router';
 import { ArrowDownIcon, ArrowUpIcon, EqualIcon, type LucideIcon } from 'lucide-react';
 import { useEffect, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Skeleton } from '@gym/ui/components/skeleton';
+import { IconTile } from '@gym/ui/blocks/icon-tile';
+import { KpiTile } from '@gym/ui/blocks/kpi-tile';
+import { TONE_CLASSES as TONES, type Tone } from '@gym/ui/lib/tones';
 import { cn } from '@gym/ui/lib/utils';
 import type { AppPath } from '@/app/navigation';
 import { useFormat } from '@/lib/format';
@@ -12,41 +14,7 @@ import { useFormat } from '@/lib/format';
 // against yesterday, a 7-day sparkline, a meter, and the clock.
 
 /** A section tone (theme.css): the card's tint, its icon tile and its number. */
-export type Tone = 'blue' | 'pink' | 'indigo' | 'cyan' | 'violet';
-
-const TONES: Readonly<Record<Tone, { card: string; tile: string; text: string; stroke: string }>> =
-  {
-    blue: {
-      card: 'bg-tone-blue/8 ring-tone-blue/20',
-      tile: 'bg-tone-blue',
-      text: 'text-tone-blue',
-      stroke: 'text-tone-blue',
-    },
-    pink: {
-      card: 'bg-tone-pink/8 ring-tone-pink/20',
-      tile: 'bg-tone-pink',
-      text: 'text-tone-pink',
-      stroke: 'text-tone-pink',
-    },
-    indigo: {
-      card: 'bg-tone-indigo/8 ring-tone-indigo/20',
-      tile: 'bg-tone-indigo',
-      text: 'text-tone-indigo',
-      stroke: 'text-tone-indigo',
-    },
-    cyan: {
-      card: 'bg-tone-cyan/8 ring-tone-cyan/20',
-      tile: 'bg-tone-cyan',
-      text: 'text-tone-cyan',
-      stroke: 'text-tone-cyan',
-    },
-    violet: {
-      card: 'bg-tone-violet/8 ring-tone-violet/20',
-      tile: 'bg-tone-violet',
-      text: 'text-tone-violet',
-      stroke: 'text-tone-violet',
-    },
-  };
+export type { Tone };
 
 /** Today against yesterday up to this time: an arrow, the percent, and the sentence for readers. */
 export function TrendChip({ percent }: { readonly percent: number | null }) {
@@ -110,11 +78,11 @@ export function Sparkline({
   const last = points.at(-1);
 
   return (
-    <figure className={cn('relative m-0', TONES[tone].stroke)} dir="ltr">
+    <figure className={cn('relative m-0', TONES[tone].text)} dir="ltr">
       {/* Days run left to right like the numbers on a chart; the figure keeps that in RTL too. */}
       <svg
         viewBox={`0 0 ${width} ${height}`}
-        className={cn('h-9 w-full overflow-visible', TONES[tone].stroke)}
+        className={cn('h-9 w-full overflow-visible', TONES[tone].text)}
         preserveAspectRatio="none"
         aria-hidden
       >
@@ -177,12 +145,12 @@ export function Meter({
       aria-valuemin={0}
       aria-valuemax={max}
       aria-valuenow={value}
-      className={cn('h-2.5 w-full overflow-hidden rounded-full', TONES[tone].card)}
+      className={cn('h-2.5 w-full overflow-hidden rounded-full', TONES[tone].soft)}
     >
       <div
         className={cn(
           'h-full rounded-full transition-[width] duration-500 ease-spring motion-reduce:transition-none',
-          TONES[tone].tile,
+          TONES[tone].fill,
         )}
         style={{ width: `${(share * 100).toFixed(1)}%` }}
       />
@@ -190,9 +158,9 @@ export function Meter({
   );
 }
 
-/** A dashboard number: a pastel card in its tone that opens its page. */
+/** A dashboard number: a pastel card in its tone that opens its page (KpiTile, step D-5b). */
 export function StatCard({
-  icon: Icon,
+  icon,
   tone,
   label,
   value,
@@ -218,50 +186,26 @@ export function StatCard({
   readonly className?: string;
 }) {
   if (!pending && value === null) return null;
-  const colors = TONES[tone];
   return (
-    <Link
-      to={to}
-      data-testid={testId}
-      className={cn(
-        'group/stat flex flex-col gap-3 rounded-card p-4 shadow-sm ring-1 transition-[translate,box-shadow] duration-200 ease-spring outline-none hover:shadow-md focus-visible:ring-3 focus-visible:ring-ring/50 motion-safe:hover:-translate-y-0.5 md:min-h-44 md:p-5',
-        colors.card,
-        className,
-      )}
+    <KpiTile
+      asChild
+      icon={icon}
+      tone={tone}
+      label={label}
+      value={value}
+      note={note}
+      trend={trend}
+      footer={footer}
+      className={cn('md:min-h-44', className)}
     >
-      <span className="flex items-start justify-between gap-2">
-        <span
-          className={cn(
-            'flex size-12 shrink-0 items-center justify-center rounded-xl text-tone-foreground shadow-md',
-            colors.tile,
-          )}
-        >
-          <Icon aria-hidden className="size-6" />
-        </span>
-        {trend}
-      </span>
-      <span className="flex flex-1 flex-col justify-end gap-1">
-        <span className="text-base leading-snug">{label}</span>
-        {value === null ? (
-          <Skeleton className="h-10 w-20" />
-        ) : (
-          <span
-            className={cn('text-4xl leading-none font-extrabold tabular-nums', colors.text)}
-            data-value
-          >
-            {value}
-          </span>
-        )}
-        {note && <span className="text-sm text-muted-foreground">{note}</span>}
-      </span>
-      {footer}
-    </Link>
+      <Link to={to} data-testid={testId} />
+    </KpiTile>
   );
 }
 
 /** A smaller number as a row (the reference's list cards): icon tile, label and note, number. */
 export function StatRow({
-  icon: Icon,
+  icon,
   tone,
   label,
   value,
@@ -279,7 +223,6 @@ export function StatRow({
   readonly to: AppPath;
   readonly testId: string;
 }) {
-  const colors = TONES[tone];
   return (
     <Link
       to={to}
@@ -287,19 +230,12 @@ export function StatRow({
       className="flex flex-col gap-3 rounded-card bg-card p-4 shadow-sm ring-1 ring-foreground/6 transition-shadow duration-200 outline-none hover:shadow-md focus-visible:ring-3 focus-visible:ring-ring/50 dark:ring-foreground/7"
     >
       <span className="flex items-center gap-3">
-        <span
-          className={cn(
-            'flex size-11 shrink-0 items-center justify-center rounded-xl text-tone-foreground shadow-md',
-            colors.tile,
-          )}
-        >
-          <Icon aria-hidden className="size-5.5" />
-        </span>
+        <IconTile icon={icon} tone={tone} />
         <span className="flex min-w-0 flex-1 flex-col">
           <span className="truncate">{label}</span>
           {note && <span className="truncate text-sm text-muted-foreground">{note}</span>}
         </span>
-        <span className={cn('text-3xl font-extrabold tabular-nums', colors.text)} data-value>
+        <span className={cn('text-3xl font-extrabold tabular-nums', TONES[tone].text)} data-value>
           {value}
         </span>
       </span>

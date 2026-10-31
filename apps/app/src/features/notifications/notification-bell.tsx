@@ -4,6 +4,7 @@ import { Button } from '@gym/ui/components/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@gym/ui/components/popover';
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from '@gym/ui/components/sheet';
 import { useLayout } from '@gym/ui/hooks/use-layout';
+import { IconTile } from '@gym/ui/blocks/icon-tile';
 import { cn } from '@gym/ui/lib/utils';
 import { Link } from '@tanstack/react-router';
 import {
@@ -39,9 +40,9 @@ import {
 import { useHasBell } from './use-has-bell';
 
 /** Each kind's look: its icon on a tile of its own color (low stock is a warning). */
-const KINDS: Readonly<Record<BellKind, { icon: LucideIcon; tile: string }>> = {
-  reminders_ready: { icon: MessageCircleMoreIcon, tile: 'bg-tone-blue text-tone-foreground' },
-  low_stock: { icon: PackageIcon, tile: 'bg-warning text-warning-foreground' },
+const KINDS: Readonly<Record<BellKind, { icon: LucideIcon; tone: 'blue' | 'warning' }>> = {
+  reminders_ready: { icon: MessageCircleMoreIcon, tone: 'blue' },
+  low_stock: { icon: PackageIcon, tone: 'warning' },
 };
 
 /**
@@ -289,7 +290,6 @@ function BellRowLink({
   const branches = useAdminBranches().data ?? [];
   const several = branches.filter((branch) => branch.isActive).length > 1;
   const kind = KINDS[row.kind];
-  const Icon = kind.icon;
   const count = format.number(row.total);
   const title =
     row.kind === 'reminders_ready'
@@ -331,11 +331,7 @@ function BellRowLink({
   );
   const content = (
     <>
-      <span
-        className={cn('flex size-10 shrink-0 items-center justify-center rounded-xl', kind.tile)}
-      >
-        <Icon aria-hidden className="size-5" />
-      </span>
+      <IconTile icon={kind.icon} tone={kind.tone} size="sm" />
       <span className="flex min-w-0 flex-1 flex-col gap-0.5">
         <span className="truncate leading-snug">{title}</span>
         {detail && <span className="truncate text-sm text-muted-foreground">{detail}</span>}
