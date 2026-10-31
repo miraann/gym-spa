@@ -6,7 +6,7 @@ import { cn } from './utils';
  */
 export function groupedRowClass(selected = false): string {
   return cn(
-    'flex w-full items-center gap-3 px-4 py-3 text-start transition-colors duration-150 outline-none hover:bg-muted/60 focus-visible:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset active:bg-muted',
+    'flex h-full w-full items-center gap-3 px-4 py-3 text-start transition-colors duration-150 outline-none hover:bg-muted/60 focus-visible:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset active:bg-muted',
     selected && 'bg-accent hover:bg-accent',
   );
 }
