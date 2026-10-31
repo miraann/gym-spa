@@ -125,10 +125,24 @@
   "bell": {
     "label": "Notifications",
     "unread": "{{total}} unread",
-    "empty": "No notifications.",
+    "empty": "No new notifications",
     "markAll": "Mark all read",
-    "remindersReady": "{{total}} reminders are ready for today",
-    "lowStock": "{{product}} is low in stock: {{quantity}} left"
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "remindersOne": "{{count}} WhatsApp reminder ready",
+    "remindersMany": "{{count}} WhatsApp reminders ready",
+    "leftOne": "{{count}} left",
+    "leftMany": "{{count}} left",
+    "allDone": "All done",
+    "lowOne": "{{count}} product low in stock",
+    "lowMany": "{{count}} products low in stock",
+    "now": "Now",
+    "minutesAgo": "{{count}} min ago",
+    "hoursAgo": "{{count}} h ago",
+    "seeAll": "See all notifications",
+    "unreadRow": "Unread",
+    "branchCount": "{{branch}} {{count}}",
+    "moreUnread": "{{count}}+ unread"
   },
   "errors": {
     "permission_denied": "You don't have permission for this.",

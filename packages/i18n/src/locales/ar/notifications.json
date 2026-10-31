@@ -125,10 +125,24 @@
   "bell": {
     "label": "الإشعارات",
     "unread": "{{total}} غير مقروءة",
-    "empty": "لا توجد إشعارات.",
+    "empty": "لا توجد إشعارات جديدة",
     "markAll": "تعليم الكل كمقروء",
-    "remindersReady": "{{total}} تذكيرًا جاهزًا لليوم",
-    "lowStock": "{{product}} قليل في المخزن: بقي {{quantity}}"
+    "today": "اليوم",
+    "yesterday": "أمس",
+    "remindersOne": "{{count}} تذكير واتساب جاهز",
+    "remindersMany": "تذكيرات واتساب جاهزة: {{count}}",
+    "leftOne": "بقي {{count}}",
+    "leftMany": "المتبقي: {{count}}",
+    "allDone": "أُنجزت كلها",
+    "lowOne": "{{count}} منتج ناقص في المخزون",
+    "lowMany": "منتجات ناقصة في المخزون: {{count}}",
+    "now": "الآن",
+    "minutesAgo": "منذ {{count}} دقيقة",
+    "hoursAgo": "منذ {{count}} ساعة",
+    "seeAll": "عرض كل الإشعارات",
+    "unreadRow": "غير مقروء",
+    "branchCount": "{{branch}} {{count}}",
+    "moreUnread": "أكثر من {{count}} غير مقروءة"
   },
   "errors": {
     "permission_denied": "ليست لديك صلاحية لهذا.",

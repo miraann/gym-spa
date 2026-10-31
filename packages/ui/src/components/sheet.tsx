@@ -118,7 +118,7 @@ function SheetGrabber() {
       <div
         aria-hidden
         data-slot="sheet-grabber"
-        className="absolute inset-x-0 top-0 flex h-12 cursor-grab touch-none justify-center pt-2 active:cursor-grabbing"
+        className="absolute inset-x-0 top-0 mx-auto flex h-12 w-40 cursor-grab touch-none justify-center pt-2 active:cursor-grabbing"
         onPointerDown={(event) => {
           const sheet = event.currentTarget.closest<HTMLElement>('[data-slot="sheet-content"]');
           if (!sheet || event.button !== 0) return;
