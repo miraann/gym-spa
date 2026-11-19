@@ -8,7 +8,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { Page } from '@playwright/test';
-import { LOGIN_HEADING, expect, signIn, test as base } from './support/app';
+import { anyDialog, expect, LOGIN_HEADING, signIn, test as base } from './support/app';
 
 const DIST = fileURLToPath(new URL('../dist', import.meta.url));
 const TYPES: Record<string, string> = {
@@ -128,7 +128,7 @@ test('inside the app the notice says the app locks, and asks first when a form i
 
   await page.getByLabel('ناوی تەواو').fill('ئارام کەریم');
   await notice.getByRole('button', { name: 'نوێکردنەوە' }).click();
-  const dialog = page.getByRole('dialog');
+  const dialog = anyDialog(page);
   await expect(dialog).toContainText('گۆڕانکارییەکان هێشتا پاشەکەوت نەکراون');
   // Later: nothing happens, the typing stays and so does the notice.
   await dialog.getByRole('button', { name: 'دواتر' }).click();
@@ -138,7 +138,7 @@ test('inside the app the notice says the app locks, and asks first when a form i
 
   await notice.getByRole('button', { name: 'نوێکردنەوە' }).click();
   const reloaded = page.waitForEvent('load');
-  await page.getByRole('dialog').getByRole('button', { name: 'هەر نوێی بکەرەوە' }).click();
+  await anyDialog(page).getByRole('button', { name: 'هەر نوێی بکەرەوە' }).click();
   await reloaded;
   // A reload locks the app; the new version needs no more updating.
   await expect(page.locator('[data-auth-screen]')).toBeVisible();

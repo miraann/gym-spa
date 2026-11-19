@@ -1,5 +1,5 @@
 import { admin, type TestData } from './support/backend';
-import { expect, signIn, test } from './support/app';
+import { anyDialog, expect, signIn, test } from './support/app';
 
 // Branches (step 1e-3): adding one (the server gives its code), changing it, deactivating and
 // reactivating it, the last active branch, and the gym's branch limit.
@@ -41,15 +41,15 @@ test('an Owner adds a branch, changes it, and keeps one branch active', async ({
   await expect.poll(async () => (await branchRow(data, 'B2'))?.phone).toBe('0750 111 2222');
 
   await page.getByRole('button', { name: 'ناچالاککردن' }).click();
-  await page.getByRole('dialog').getByRole('button', { name: 'ناچالاککردن' }).click();
+  await anyDialog(page).getByRole('button', { name: 'ناچالاککردن' }).click();
   await expect(page.getByText('لقی ئازادی ناچالاک کرا')).toBeVisible();
   await expect.poll(async () => (await branchRow(data, 'B2'))?.is_active).toBe(false);
 
   // B1 is now the only active branch: the server keeps it.
   await page.locator('[data-branch="B1"]').click();
   await page.getByRole('button', { name: 'ناچالاککردن' }).click();
-  await page.getByRole('dialog').getByRole('button', { name: 'ناچالاککردن' }).click();
-  await expect(page.getByRole('dialog').getByRole('alert')).toHaveText(
+  await anyDialog(page).getByRole('button', { name: 'ناچالاککردن' }).click();
+  await expect(anyDialog(page).getByRole('alert')).toHaveText(
     'جیمەکە دەبێت لانیکەم یەک لقی چالاکی هەبێت.',
   );
   expect((await branchRow(data, 'B1'))?.is_active).toBe(true);

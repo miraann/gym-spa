@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@gym/ui/components/car
 import { Skeleton } from '@gym/ui/components/skeleton';
 import { Spinner } from '@gym/ui/components/spinner';
 import { cn } from '@gym/ui/lib/utils';
+import { ConfirmDialog } from '@gym/ui/blocks/confirm-dialog';
 import { CameraIcon, ImageUpIcon, TrashIcon, TriangleAlertIcon, UserRoundIcon } from 'lucide-react';
 import { useLocation } from '@tanstack/react-router';
 import { useEffect, useRef, useState } from 'react';
@@ -285,31 +286,17 @@ export function MemberPhotoCard({ member }: { readonly member: Member }) {
         )}
       </ResponsiveDialog>
 
-      <ResponsiveDialog
+      <ConfirmDialog
         open={confirmRemove}
         onOpenChange={setConfirmRemove}
+        tone="destructive"
         title={t('photo.removeTitle', { name: member.fullName })}
         description={t('photo.removeDescription')}
-        footer={
-          <>
-            <Button
-              variant="destructive"
-              disabled={removePhoto.isPending || !online}
-              onClick={remove}
-            >
-              {removePhoto.isPending && <Spinner />}
-              {t('photo.remove')}
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setConfirmRemove(false);
-              }}
-            >
-              {t('photo.back')}
-            </Button>
-          </>
-        }
+        confirmLabel={t('photo.remove')}
+        cancelLabel={t('photo.back')}
+        disabled={!online}
+        pending={removePhoto.isPending}
+        onConfirm={remove}
       />
     </Card>
   );

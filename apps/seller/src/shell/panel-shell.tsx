@@ -116,7 +116,7 @@ export function PanelShell() {
         </aside>
       )}
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-10 flex min-h-14 items-center gap-2 border-b bg-background/95 px-4 supports-backdrop-filter:bg-background/80 supports-backdrop-filter:backdrop-blur">
+        <header className="sticky top-0 z-10 flex min-h-14 items-center gap-2 border-b bg-background/95 px-4 glass:bg-background/80 glass:backdrop-blur-md">
           {layout === 'phone' && (
             <>
               <Sheet open={menuOpen} onOpenChange={setMenuOpen}>

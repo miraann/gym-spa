@@ -2,14 +2,14 @@ import type { Locator, Page } from '@playwright/test';
 import { admin } from './support/backend';
 import { HOME_HEADING, autoRegisterDevices, expect, signIn, test } from './support/app';
 
-// Navigation by width (CLAUDE.md → Design): desktop sidebar, tablet rail, phone tab bar, and the
-// layout guards (rail labels, bottom padding).
+// Navigation by width (CLAUDE.md → Design): the desktop top bar of pictures (step D-4), tablet rail,
+// phone tab bar, and the layout guards (labels, bottom padding).
 
 const PHONE = { width: 390, height: 844 };
 // Short enough that the rail has to scroll, like a landscape tablet with a long menu.
 const TABLET = { width: 1024, height: 440 };
-const DESKTOP = { width: 1440, height: 900 };
 
+const TOP_NAV = '[data-slot="top-nav"]';
 const SIDEBAR = '[data-slot="sidebar-container"]';
 const RAIL = '[data-slot="nav-rail"]';
 const TAB_BAR = '[data-slot="tab-bar"]';
@@ -27,17 +27,42 @@ function tabEditor(page: Page): Locator {
   return page.getByRole('dialog', { name: 'تابەکانم' });
 }
 
-test('desktops get the full sidebar', async ({ page, staff }) => {
-  await page.setViewportSize(DESKTOP);
+test('desktops get the top bar of pictures, whose groups open their pages', async ({
+  page,
+  data,
+}) => {
+  // An owner: the longest menu, on the narrowest desktop.
+  const staff = await data.staff({ role: 'owner', branchIds: [], allBranches: true });
+  await page.setViewportSize({ width: 1280, height: 800 });
   await signIn(page, staff);
   await expect(page.getByRole('heading', HOME_HEADING)).toBeVisible();
 
-  await expect(page.locator(SIDEBAR)).toBeVisible();
+  const nav = page.locator(TOP_NAV);
+  await expect(nav).toBeVisible();
+  await expect(page.locator(SIDEBAR)).toHaveCount(0);
   await expect(page.locator(RAIL)).toHaveCount(0);
   await expect(page.locator(TAB_BAR)).toHaveCount(0);
-  // Kurdish reads right to left: the sidebar is on the right.
-  const box = await page.locator(SIDEBAR).boundingBox();
-  expect((box?.x ?? 0) + (box?.width ?? 0)).toBe(DESKTOP.width);
+  // Every place fits: the row never scrolls and no label is cut.
+  const menu = nav.getByRole('navigation');
+  expect(await menu.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(true);
+  const cut = await menu
+    .locator('[data-slot="top-nav-label"]')
+    .evaluateAll((labels) =>
+      labels
+        .filter((label) => label.scrollWidth > label.clientWidth)
+        .map((label) => label.textContent),
+    );
+  expect(cut).toEqual([]);
+  // Kurdish reads right to left: the gym is at the right, the page shown is marked.
+  const mark = await nav.getByRole('link').first().boundingBox();
+  expect((mark?.x ?? 0) + (mark?.width ?? 0)).toBeGreaterThan(1280 - 120);
+  await expect(menu.getByRole('link', { name: 'سەرەکی' })).toHaveAttribute('aria-current', 'page');
+
+  // A group opens its pages.
+  await menu.locator('[data-nav-group="management"]').click();
+  await page.getByRole('menuitem', { name: 'ڕۆڵ و دەسەڵاتەکان' }).click();
+  await expect(page).toHaveURL(/\/roles/);
+  await expect(menu.locator('[data-nav-group="management"]')).toHaveClass(/bg-accent/);
 });
 
 test('tablets get an icon rail whose labels never overflow', async ({ page, data }) => {

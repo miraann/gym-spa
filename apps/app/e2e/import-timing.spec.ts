@@ -124,7 +124,7 @@ async function importBig(page: Page, file: Buffer): Promise<void> {
   await page.locator('[data-import-row="2"]').getByRole('checkbox').click();
   await page.getByRole('button', { name: `هێنانی ${String(ROWS)} ئەندام` }).click();
   await timed('  importing (one call)', async () => {
-    await page.getByRole('dialog').getByRole('button', { name: 'هێنان', exact: true }).click();
+    await page.getByRole('alertdialog').getByRole('button', { name: 'هێنان', exact: true }).click();
     await expect(page.getByTestId('import-done')).toBeVisible({ timeout: 60_000 });
   });
   await page.getByTestId('undo-import').click();

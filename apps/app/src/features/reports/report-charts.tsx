@@ -1,13 +1,17 @@
 import { getDirection, resources } from '@gym/i18n';
-import { Bar, BarChart, CartesianGrid, Tooltip, XAxis, YAxis } from 'recharts';
+import { CartesianGrid, Line, LineChart, Tooltip, XAxis, YAxis } from 'recharts';
 import { useTranslation } from 'react-i18next';
 import { useFormat } from '@/lib/format';
 import { usePreferences } from '@/lib/preferences';
 
+/** Each day's point is drawn while there are at most this many days; more would crowd the line. */
+const MAX_DOTS = 31;
+
 /**
- * One number per day as bars: one series, so no legend (the heading names it); thin bars with
- * rounded tops in the brand color, a recessive grid and a tooltip per bar. Days run in the reading
- * direction. The table under it holds the same numbers.
+ * One number per day as a line (step D-5e): one series, so no legend (the heading names it); a
+ * 3px line in the gym's vivid color with its days marked (while there are at most 31), a dashed
+ * recessive grid, and a crosshair with the day's number. Days run in the reading direction. The
+ * table under it holds the same numbers.
  */
 export function DayChart({
   points,
@@ -30,14 +34,13 @@ export function DayChart({
 
   return (
     <div className="h-56 w-full" aria-hidden dir="ltr" data-testid="report-chart">
-      <BarChart
+      <LineChart
         responsive
         data={data}
-        margin={{ top: 8, right: 4, bottom: 0, left: 4 }}
-        barCategoryGap="24%"
+        margin={{ top: 8, right: 8, bottom: 0, left: 8 }}
         style={{ width: '100%', height: '100%' }}
       >
-        <CartesianGrid vertical={false} stroke="var(--border)" />
+        <CartesianGrid vertical={false} stroke="var(--border)" strokeDasharray="3 3" />
         <XAxis
           dataKey="tick"
           reversed={rtl}
@@ -56,7 +59,7 @@ export function DayChart({
           tickFormatter={(value: number) => format.number(value)}
         />
         <Tooltip
-          cursor={{ fill: 'var(--muted)' }}
+          cursor={{ stroke: 'var(--border)', strokeWidth: 1 }}
           contentStyle={{
             background: 'var(--popover)',
             border: '1px solid var(--border)',
@@ -71,8 +74,22 @@ export function DayChart({
           }}
           formatter={(value) => [show(Number(value)), label]}
         />
-        <Bar dataKey="value" fill="var(--chart-1)" radius={[4, 4, 0, 0]} maxBarSize={18} />
-      </BarChart>
+        <Line
+          dataKey="value"
+          type="monotone"
+          stroke="var(--vivid)"
+          strokeWidth={3}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          dot={
+            data.length <= MAX_DOTS
+              ? { r: 4, fill: 'var(--vivid)', stroke: 'var(--card)', strokeWidth: 2 }
+              : false
+          }
+          activeDot={{ r: 6, fill: 'var(--vivid)', stroke: 'var(--card)', strokeWidth: 2 }}
+          isAnimationActive={false}
+        />
+      </LineChart>
     </div>
   );
 }

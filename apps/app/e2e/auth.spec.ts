@@ -285,15 +285,16 @@ test("staff who lose access to the device's branch can't unlock it", async ({ pa
 
 test('the menu shows only what the role allows', async ({ page, staff, data }) => {
   await signIn(page, staff);
-  const sidebar = page.locator('[data-slot="sidebar"]').first();
-  await expect(sidebar.getByText('ئەندامان', { exact: true })).toBeVisible();
-  await expect(sidebar.getByText('ڕۆڵ و دەسەڵاتەکان')).toHaveCount(0);
+  const nav = page.locator('[data-slot="top-nav"]');
+  await expect(nav.getByText('ئەندامان', { exact: true })).toBeVisible();
+  await expect(nav.locator('[data-nav-group="management"]')).toHaveCount(0);
 
   const manager = await data.staff({ role: 'admin', branchIds: [await branchOf(staff)] });
   await lockFromMenu(page);
   await page.getByRole('button', { name: 'کارمەندێکی تر' }).click();
   await submitPasswordLogin(page, manager);
-  await expect(sidebar.getByText('ڕۆڵ و دەسەڵاتەکان')).toBeVisible();
+  await nav.locator('[data-nav-group="management"]').click();
+  await expect(page.getByRole('menuitem', { name: 'ڕۆڵ و دەسەڵاتەکان' })).toBeVisible();
 });
 
 // The gym at login (spec §2.6) ------------------------------------------------------------------

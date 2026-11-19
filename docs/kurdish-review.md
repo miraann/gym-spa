@@ -158,3 +158,23 @@ Also decided by the user on 2026-10-30: grace period = **ماوەی زیادە**
 | 148 | Windows updates (11c) | update notice hint: the app closes, installs the new version and opens again, locked | ئەپەکە دادەخرێت، وەشانە نوێیەکە دادەمەزرێت و دووبارە دەکرێتەوە، پاشان قفڵ دەبێت. بە پینەکەت بیکەرەوە. | OK |
 
 The installer's own buttons (Next, Install, Finish) stay in English: NSIS has no Sorani translation.
+
+## Waiting for the user's review (step D-4, 2026-10-30)
+
+New dashboard texts Claude wrote following the approved wording above; the app uses them until the user changes them.
+
+| # | Where | Meaning (English) | Kurdish | Status |
+|---|---|---|---|---|
+| 149 | Dashboard (D-4) | +12% / −8% / the same, against yesterday up to this time | {{percent}} زیاتر لە دوێنێ تا ئەم کاتە / {{percent}} کەمتر لە دوێنێ تا ئەم کاتە / وەک دوێنێ تا ئەم کاتە | waiting |
+| 150 | Dashboard (D-4) | check-ins / revenue in the last 7 days | هاتنەکانی {{days}} ڕۆژی ڕابردوو / داهاتی {{days}} ڕۆژی ڕابردوو | waiting |
+| 151 | Dashboard (D-4) | today's classes / places taken / running now / none today | کلاسەکانی ئەمڕۆ / {{taken}} لە {{places}} جێگە گیراوە / {{count}} کلاس ئێستا بەردەوامە / ئەمڕۆ کلاس نییە | waiting |
+| 152 | Dashboard (D-4) | personal training sessions today / the time now | دانیشتنەکانی ڕاهێنانی تایبەتی ئەمڕۆ / کاتژمێری ئێستا | waiting |
+| 153 | Home quick actions (D-4e) | lines under the tiles: check-in / cash register / shop / lockers / spa / classes / reports | بە کارت یان بە ناو / کردنەوە و داخستنی قاسە / فرۆشتنی کاڵا / پێدان و بەتاڵکردنەوەی دۆڵاب / نۆرەکانی سپا / خشتە و جێگەی کلاس / ڕۆژانە و مانگانە | waiting |
+| 154 | Bell (D-4g) | day headings: today / yesterday | ئەمڕۆ / دوێنێ | waiting |
+| 155 | Bell (D-4g) | 1 / several WhatsApp reminders ready | {{count}} بیرخستنەوەی واتسئاپ ئامادەیە / {{count}} بیرخستنەوەی واتسئاپ ئامادەن | waiting |
+| 156 | Bell (D-4g) | still to send: 1 / several / all done | {{count}} ماوە / {{count}} ماون / هەموویان تەواو کران | waiting |
+| 157 | Bell (D-4g) | 1 / several products low in stock | {{count}} کاڵا کەمە لە کۆگا / {{count}} کاڵا کەمن لە کۆگا | waiting |
+| 158 | Bell (D-4g) | times: now / minutes ago / hours ago | ئێستا / {{count}} خولەک لەمەوبەر / {{count}} کاتژمێر لەمەوبەر | waiting |
+| 159 | Bell (D-4g) | nothing new (was "هیچ ئاگادارکردنەوەیەک نییە.") / see all / unread (for screen readers) | هیچ ئاگادارکردنەوەیەکی نوێ نییە / بینینی هەموو ئاگادارکردنەوەکان / نەخوێندراوە | waiting |
+| 160 | Appearance (D-5a) | brand colors: royal purple / rose | مۆری شاهانە / پەمەیی | approved by the user on 2026-10-31 |
+| 161 | Appearance (D-5a) | ready-made looks: white / royal / rose (midnight stays «شەو») | سپی / شاهانە / گوڵی | approved by the user on 2026-10-31 |

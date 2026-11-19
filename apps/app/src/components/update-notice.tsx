@@ -1,7 +1,7 @@
-import { ResponsiveDialog } from '@gym/ui/blocks/responsive-dialog';
 import { Alert, AlertDescription, AlertTitle } from '@gym/ui/components/alert';
 import { Button } from '@gym/ui/components/button';
 import { Spinner } from '@gym/ui/components/spinner';
+import { ConfirmDialog } from '@gym/ui/blocks/confirm-dialog';
 import { RefreshCwIcon } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -52,26 +52,15 @@ export function UpdateNotice({ hint = true }: { readonly hint?: boolean }) {
           </Button>
         </AlertDescription>
       </Alert>
-      <ResponsiveDialog
+      <ConfirmDialog
         open={confirming}
         onOpenChange={setConfirming}
+        tone="destructive"
         title={t('pwa.unsavedTitle')}
         description={t('pwa.unsavedText')}
-        footer={
-          <>
-            <Button variant="destructive" onClick={update}>
-              {t('pwa.updateAnyway')}
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setConfirming(false);
-              }}
-            >
-              {t('actions.later')}
-            </Button>
-          </>
-        }
+        confirmLabel={t('pwa.updateAnyway')}
+        cancelLabel={t('actions.later')}
+        onConfirm={update}
       />
     </>
   );

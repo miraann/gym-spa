@@ -1,15 +1,9 @@
 import { daysBetween, isFrozenOn, subscriptionState, type SubscriptionState } from '@gym/core';
 import { localizedName } from '@gym/i18n';
+import { AddTile } from '@gym/ui/blocks/add-tile';
 import { Badge } from '@gym/ui/components/badge';
 import { Button } from '@gym/ui/components/button';
-import {
-  Card,
-  CardAction,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@gym/ui/components/card';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@gym/ui/components/card';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,7 +19,6 @@ import {
   ClockIcon,
   EllipsisIcon,
   HandCoinsIcon,
-  PlusIcon,
   RepeatIcon,
   SnowflakeIcon,
   type LucideIcon,
@@ -120,18 +113,13 @@ export function MemberSubscriptionsCard({ member }: { readonly member: Member })
     <Card data-testid="member-subscriptions">
       <CardHeader>
         <CardTitle>{t('card.title')}</CardTitle>
-        {canSell && member.status === 'active' && (
-          <CardAction>
-            <Button asChild variant="outline">
-              <Link to="/members/$memberId/sell" params={{ memberId: member.id }}>
-                <PlusIcon data-icon="inline-start" />
-                {t('card.sell')}
-              </Link>
-            </Button>
-          </CardAction>
-        )}
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
+        {canSell && member.status === 'active' && (
+          <AddTile asChild label={t('card.sell')}>
+            <Link to="/members/$memberId/sell" params={{ memberId: member.id }} />
+          </AddTile>
+        )}
         {subscriptions.isPending ? (
           <Skeleton className="h-16 rounded-xl" />
         ) : subscriptions.isError ? (

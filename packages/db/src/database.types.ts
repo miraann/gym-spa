@@ -4481,6 +4481,14 @@ export type Database = {
         };
       };
       audit_tables: { Args: Record<PropertyKey, never>; Returns: string[] };
+      bell_reminders_left: {
+        Args: { p_since: string };
+        Returns: {
+          branch_id: string;
+          left_count: number;
+          remind_on: string;
+        }[];
+      };
       block_card: {
         Args: { p_card_id: string; p_reason: string };
         Returns: {
@@ -4804,6 +4812,7 @@ export type Database = {
         Returns: undefined;
       };
       dashboard_summary: { Args: { p_branch_id?: string }; Returns: Json };
+      dashboard_trends: { Args: { p_branch_id?: string }; Returns: Json };
       device_heartbeat: {
         Args: { p_app_version: string; p_device_id: string };
         Returns: undefined;

@@ -1,7 +1,7 @@
 import { admin, type TestData } from './support/backend';
 import { addCard, addMember } from './support/members';
 import { addPlan, addSale } from './support/sales';
-import { expect, scanCard, signIn, test } from './support/app';
+import { openFromMenu, expect, scanCard, signIn, test } from './support/app';
 
 // Payments and debts (step 3e): paying what is owed (dinars, then dollars with change), voiding
 // today's mistakes and giving money back, the card replacement fee, and the payments page.
@@ -187,7 +187,7 @@ test("the payments page lists who owes and today's money", async ({ page, data }
   await expect(invoice.getByTestId('invoice-due')).toHaveText('20,000 د.ع');
 
   // In the app (a reload would lock it).
-  await page.getByRole('link', { name: 'پارەدانەکان' }).first().click();
+  await openFromMenu(page, 'پارەدانەکان');
   await expect(page.getByTestId('today-total')).toHaveText('کۆی ئەمڕۆ: 20,000 د.ع');
   await expect(page.getByRole('list', { name: 'پارەدانەکانی ئەمڕۆ' })).toContainText('B2-R000001');
 });

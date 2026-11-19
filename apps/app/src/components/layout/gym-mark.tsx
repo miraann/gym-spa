@@ -26,7 +26,13 @@ export function GymMark({
       // Logos are made for white paper (receipts print them too), so they sit on white in dark
       // mode as well; a dark logo would vanish on the dark background.
       <span className={cn(box, 'bg-white p-[8%] ring-1 ring-black/5')}>
-        <img src={logo} alt="" decoding="async" className="size-full object-contain" />
+        <img
+          src={logo}
+          alt=""
+          decoding="async"
+          data-slot="gym-logo"
+          className="size-full object-contain"
+        />
       </span>
     );
   }

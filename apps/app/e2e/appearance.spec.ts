@@ -102,7 +102,7 @@ test('a custom color that is hard to read or looks like a status color warns bef
   await expect(page.getByText(/لە ڕەنگی دۆخەکان دەچێت/)).toBeVisible();
   await expect(page.getByText('ئەم ڕەنگە باش ناخوێنرێتەوە')).toBeVisible();
   await page.getByRole('button', { name: 'پاشەکەوتکردن' }).click();
-  const confirm = page.getByRole('dialog', { name: 'ئەم ڕەنگە پاشەکەوت بکرێت؟' });
+  const confirm = page.getByRole('alertdialog', { name: 'ئەم ڕەنگە پاشەکەوت بکرێت؟' });
   await expect(confirm).toBeVisible();
   await confirm.getByRole('button', { name: 'گەڕانەوە' }).click();
   expect(await settingValue(data, 'appearance.brand_color')).toBeNull();
@@ -161,12 +161,12 @@ test('the logo is resized to at most 300 KB and shows on the lock screen', async
   await unlock(page, staff);
   await page.getByRole('button', { name: 'لابردنی لۆگۆ' }).click();
   await page
-    .getByRole('dialog', { name: 'لۆگۆ لابدرێت؟' })
+    .getByRole('alertdialog', { name: 'لۆگۆ لابدرێت؟' })
     .getByRole('button', { name: 'لابردن' })
     .click();
   await expect(page.getByText('لۆگۆکە لابرا')).toBeVisible();
   expect(await settingValue(data, 'appearance.logo')).toBeNull();
-  await expect(page.locator('header img')).toHaveCount(0);
+  await expect(page.locator('header [data-slot="gym-logo"]')).toHaveCount(0);
 });
 
 test('staff without the right see the gym look as a note, and set their own look', async ({
@@ -204,7 +204,7 @@ test('staff without the right see the gym look as a note, and set their own look
   await otherDevice.close();
 });
 
-test('on phones the brand chips scroll edge to edge and the save bar keeps clear of content', async ({
+test('on phones the brand swatches wrap inside their card and the save bar keeps clear of content', async ({
   page,
   data,
 }) => {
@@ -218,23 +218,20 @@ test('on phones the brand chips scroll edge to edge and the save bar keeps clear
   expect(settingsTabs?.x).toBe(16);
   expect(settingsTabs?.width).toBe(PHONE.width - 32);
 
-  // The brand chips sit in a card: their row reaches the card's edges, and scrolls.
-  const row = page.locator('[data-slot="chip-row"]').first();
+  // The brand colors are round swatches (step D-5f) that wrap inside their card, none cut off.
+  const swatches = page.getByRole('group', { name: 'ڕەنگی سەرەکی' }).getByRole('button');
+  await expect(swatches).toHaveCount(10);
   const card = await page.locator('#main [data-slot="card"]').first().boundingBox();
-  const rowBox = await row.boundingBox();
-  expect(rowBox?.x).toBe(card?.x);
-  expect(rowBox?.width).toBe(card?.width);
-  expect(await row.evaluate((element) => element.scrollWidth > element.clientWidth)).toBe(true);
-  // Kurdish reads from the right: the first chip starts 16px inside the row, and the last one
-  // scrolls fully into view with 16px after it.
-  const rowRight = (rowBox?.x ?? 0) + (rowBox?.width ?? 0);
-  const first = await row.getByRole('button').first().boundingBox();
-  expect(rowRight - ((first?.x ?? 0) + (first?.width ?? 0))).toBeGreaterThanOrEqual(16);
-  await row.evaluate((element) => {
-    element.scrollTo({ left: -element.scrollWidth });
-  });
-  const lastBox = await row.getByRole('button').last().boundingBox();
-  expect((lastBox?.x ?? 0) - (rowBox?.x ?? 0)).toBeGreaterThanOrEqual(15); // sub-pixel scroll
+  for (const swatch of await swatches.all()) {
+    const box = await swatch.boundingBox();
+    expect(box?.x).toBeGreaterThanOrEqual(card?.x ?? 0);
+    expect((box?.x ?? 0) + (box?.width ?? 0)).toBeLessThanOrEqual(
+      (card?.x ?? 0) + (card?.width ?? 0),
+    );
+  }
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
+    true,
+  );
 
   // The save bar floats above the tab bar, and the page ends above the save bar.
   const bar = page.locator('[data-slot="sticky-action-bar"] > div');

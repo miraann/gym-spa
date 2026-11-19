@@ -79,7 +79,7 @@ export function TagInput({
                 <button
                   type="button"
                   aria-label={t('form.removeTag', { tag })}
-                  className="inline-flex size-5 items-center justify-center rounded-full hover:bg-muted pointer-coarse:size-7"
+                  className="relative inline-flex size-5 items-center justify-center rounded-full hover:bg-muted pointer-coarse:size-7 pointer-coarse:after:absolute pointer-coarse:after:-inset-2.5"
                   onClick={() => {
                     onChange(value.filter((each) => each !== tag));
                   }}

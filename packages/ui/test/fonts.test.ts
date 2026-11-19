@@ -12,7 +12,7 @@ const VAZIRMATN_FILES = fileURLToPath(
   new URL('../node_modules/@fontsource-variable/vazirmatn/files/', import.meta.url),
 );
 const UNISALAR_FILE = fileURLToPath(
-  new URL('../src/assets/fonts/unisalar-f-113.otf', import.meta.url),
+  new URL('../src/assets/fonts/unisalar-f-007.otf', import.meta.url),
 );
 const STYLES_FILE = fileURLToPath(new URL('../src/styles/theme.css', import.meta.url));
 

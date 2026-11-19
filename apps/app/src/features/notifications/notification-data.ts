@@ -11,6 +11,7 @@ import {
 } from '@gym/core';
 import { isLanguage, type Language } from '@gym/i18n';
 import { requireClient, useActingClient } from '@/features/staff/admin-data';
+import { BELL_DAYS } from './bell-groups';
 import type { GymTemplate } from './message-text';
 
 // Messages to members and the staff notifications (Phase 9). The database decides and records
@@ -245,7 +246,9 @@ export type StaffNotification =
       readonly id: string;
       readonly kind: 'reminders_ready';
       readonly branchId: string;
+      readonly subjectId: string;
       readonly notifyOn: string;
+      readonly createdAt: string;
       readonly read: boolean;
       readonly count: number;
     }
@@ -253,16 +256,15 @@ export type StaffNotification =
       readonly id: string;
       readonly kind: 'low_stock';
       readonly branchId: string;
+      readonly subjectId: string;
       readonly notifyOn: string;
+      readonly createdAt: string;
       readonly read: boolean;
       readonly product: MessageNames;
       readonly quantity: number;
     };
 
-/** How far back the bell looks. */
-const BELL_DAYS = 30;
-
-/** The bell: the last 30 days' notifications of the staff member's branches and permissions. */
+/** The bell: the last 7 days' notifications of the staff member's branches and permissions. */
 export function useStaffNotifications(enabled: boolean) {
   const { client, actor } = useActingClient();
   return useQuery({
@@ -270,15 +272,17 @@ export function useStaffNotifications(enabled: boolean) {
     enabled: enabled && client !== undefined,
     refetchInterval: 60_000,
     queryFn: async (): Promise<StaffNotification[]> => {
-      const since = baghdadDateOf(Date.now() - BELL_DAYS * 86_400_000);
+      const since = baghdadDateOf(Date.now() - (BELL_DAYS - 1) * 86_400_000);
       const { data, error } = await requireClient(client)
         .from('staff_notifications')
         // The read marks are the staff member's own (RLS).
-        .select('id, kind, branch_id, notify_on, details, staff_notification_reads (id)')
+        .select(
+          'id, kind, branch_id, subject_id, notify_on, created_at, details, staff_notification_reads (id)',
+        )
         .gte('notify_on', since)
         .order('notify_on', { ascending: false })
         .order('created_at', { ascending: false })
-        .limit(50);
+        .limit(500);
       if (error) throw error;
       const notifications: StaffNotification[] = [];
       for (const row of data) {
@@ -287,7 +291,9 @@ export function useStaffNotifications(enabled: boolean) {
         const base = {
           id: row.id,
           branchId: row.branch_id,
+          subjectId: row.subject_id,
           notifyOn: row.notify_on,
+          createdAt: row.created_at,
           read: row.staff_notification_reads.length > 0,
         };
         if (row.kind === 'reminders_ready') {
@@ -308,6 +314,31 @@ export function useStaffNotifications(enabled: boolean) {
         }
       }
       return notifications;
+    },
+  });
+}
+
+/**
+ * The bell's "still to send": per day of the last 7 and branch, the reminders not done yet
+ * (bell_reminders_left; only staff who send messages see reminders).
+ */
+export function useBellRemindersLeft(enabled: boolean) {
+  const { client, actor } = useActingClient();
+  return useQuery({
+    queryKey: [NOTIFICATIONS_QUERY, actor, 'bell', 'left'],
+    enabled: enabled && client !== undefined,
+    refetchInterval: 60_000,
+    queryFn: async (): Promise<ReadonlyMap<string, number>> => {
+      const since = baghdadDateOf(Date.now() - (BELL_DAYS - 1) * 86_400_000);
+      const { data, error } = await requireClient(client).rpc('bell_reminders_left', {
+        p_since: since,
+      });
+      if (error) throw error;
+      // Per day, every branch together.
+      const left = new Map<string, number>();
+      for (const row of data)
+        left.set(row.remind_on, (left.get(row.remind_on) ?? 0) + row.left_count);
+      return left;
     },
   });
 }

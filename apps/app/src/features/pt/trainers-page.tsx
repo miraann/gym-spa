@@ -1,5 +1,6 @@
 import { isCleanText, normalizeName, parseWholeNumber } from '@gym/core';
 import { localizedName } from '@gym/i18n';
+import { AddTile } from '@gym/ui/blocks/add-tile';
 import { GroupedList, GroupedListItem, RowChevron } from '@gym/ui/blocks/list-group';
 import { PageHeader } from '@gym/ui/blocks/page-header';
 import { ResponsiveDialog } from '@gym/ui/blocks/responsive-dialog';
@@ -13,7 +14,7 @@ import { Skeleton } from '@gym/ui/components/skeleton';
 import { Spinner } from '@gym/ui/components/spinner';
 import { groupedRowClass } from '@gym/ui/lib/grouped-list';
 import { Link } from '@tanstack/react-router';
-import { ChartColumnIcon, PlusIcon } from 'lucide-react';
+import { ChartColumnIcon } from 'lucide-react';
 import { useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
@@ -116,19 +117,15 @@ function Trainers() {
       </section>
 
       <section className="flex flex-col gap-3">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-lg">{t('page.packages')}</h2>
-          {mayManage && (
-            <Button
-              onClick={() => {
-                setEditing('new');
-              }}
-            >
-              <PlusIcon data-icon="inline-start" />
-              {t('page.addPackage')}
-            </Button>
-          )}
-        </div>
+        <h2 className="text-lg">{t('page.packages')}</h2>
+        {mayManage && (
+          <AddTile
+            label={t('page.addPackage')}
+            onClick={() => {
+              setEditing('new');
+            }}
+          />
+        )}
         {packages.isPending ? (
           <Skeleton className="h-24 rounded-3xl" />
         ) : packages.isError ? (

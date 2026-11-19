@@ -5,12 +5,12 @@ import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { ListGroup, ListRow, ListRowIcon } from '@gym/ui/blocks/list-group';
 import { PageHeader } from '@gym/ui/blocks/page-header';
-import { ResponsiveDialog } from '@gym/ui/blocks/responsive-dialog';
 import { Alert, AlertDescription, AlertTitle } from '@gym/ui/components/alert';
 import { Button } from '@gym/ui/components/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@gym/ui/components/card';
 import { Skeleton } from '@gym/ui/components/skeleton';
 import { Spinner } from '@gym/ui/components/spinner';
+import { ConfirmDialog } from '@gym/ui/blocks/confirm-dialog';
 import { RequirePermission } from '@/components/no-access';
 import { useActingClient } from '@/features/staff/admin-data';
 import type { AppSupabaseClient } from '@/lib/backend';
@@ -166,35 +166,20 @@ function ServerPageContent() {
         )}
       </section>
 
-      <ResponsiveDialog
+      <ConfirmDialog
         open={removing !== null}
         onOpenChange={(open) => {
           if (!open) setRemoving(null);
         }}
+        tone="destructive"
         title={t('page.removeTitle', { name: removing?.name ?? '' })}
         description={t('page.removeText')}
-        footer={
-          <>
-            <Button
-              variant="destructive"
-              disabled={remove.isPending}
-              onClick={() => {
-                if (removing) remove.mutate(removing.id);
-              }}
-            >
-              {remove.isPending && <Spinner />}
-              {t('page.remove')}
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setRemoving(null);
-              }}
-            >
-              {t('page.cancel')}
-            </Button>
-          </>
-        }
+        confirmLabel={t('page.remove')}
+        cancelLabel={t('page.cancel')}
+        pending={remove.isPending}
+        onConfirm={() => {
+          if (removing) remove.mutate(removing.id);
+        }}
       />
     </div>
   );

@@ -37,7 +37,10 @@
       "classic": "Classic",
       "midnight": "Midnight",
       "gold": "Gold",
-      "sport": "Sport"
+      "sport": "Sport",
+      "white": "White",
+      "royal": "Royal",
+      "rose": "Rose"
     },
     "brand": {
       "label": "Brand color",
@@ -49,7 +52,9 @@
         "gray": "Gray",
         "midnight": "Midnight blue",
         "gold": "Gold",
-        "teal": "Teal"
+        "teal": "Teal",
+        "royal": "Royal purple",
+        "rose": "Rose"
       },
       "custom": "Custom color",
       "picker": "Pick a color",

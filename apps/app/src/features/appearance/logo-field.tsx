@@ -14,6 +14,7 @@ import { ResponsiveDialog } from '@gym/ui/blocks/responsive-dialog';
 import { Alert, AlertDescription } from '@gym/ui/components/alert';
 import { Button } from '@gym/ui/components/button';
 import { Spinner } from '@gym/ui/components/spinner';
+import { ConfirmDialog } from '@gym/ui/blocks/confirm-dialog';
 import { useAuthController } from '@/features/auth/auth-context';
 import { setGymLogo, useGymLogo } from '@/lib/appearance';
 import { useConnection } from '@/lib/connection';
@@ -222,32 +223,18 @@ export function LogoField() {
         )}
       </ResponsiveDialog>
 
-      <ResponsiveDialog
+      <ConfirmDialog
         open={confirmRemove}
         onOpenChange={setConfirmRemove}
+        tone="destructive"
         title={t('appearance.logo.removeTitle')}
         description={t('appearance.logo.removeDescription')}
-        footer={
-          <>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setConfirmRemove(false);
-              }}
-            >
-              {t('appearance.confirm.back')}
-            </Button>
-            <Button
-              variant="destructive"
-              disabled={remove.isPending}
-              onClick={() => {
-                remove.mutate();
-              }}
-            >
-              {t('appearance.logo.removeConfirm')}
-            </Button>
-          </>
-        }
+        confirmLabel={t('appearance.logo.removeConfirm')}
+        cancelLabel={t('appearance.confirm.back')}
+        pending={remove.isPending}
+        onConfirm={() => {
+          remove.mutate();
+        }}
       />
     </section>
   );

@@ -14,6 +14,7 @@ import {
   MessageCircleIcon,
   RotateCcwIcon,
 } from 'lucide-react';
+import { useSearch } from '@tanstack/react-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { RequirePermission } from '@/components/no-access';
@@ -33,21 +34,28 @@ function previousDay(date: string): string {
   return baghdadDateOf(Date.parse(`${date}T12:00:00+03:00`) - 86_400_000);
 }
 
-/** /notifications (notifications.send): who to contact today, one by one. */
+/**
+ * /notifications (notifications.send): who to contact today, one by one; `day` (?day=, from the
+ * bell) opens another day.
+ */
 export function RemindersPage() {
+  const { day } = useSearch({ from: '/notifications' });
   return (
     <RequirePermission permission="notifications.send">
-      <Reminders />
+      {/* A new day from the bell starts the page again on that day. */}
+      <Reminders key={day ?? ''} initialDay={day} />
     </RequirePermission>
   );
 }
 
-function Reminders() {
+function Reminders({ initialDay }: { readonly initialDay?: string }) {
   const { t } = useTranslation('notifications');
   const format = useFormat();
   const today = useBaghdadToday();
   const templateName = useTemplateName();
-  const [day, setDay] = useState(today);
+  const [day, setDay] = useState(
+    initialDay !== undefined && initialDay <= today ? initialDay : today,
+  );
   const [showAll, setShowAll] = useState(false);
   const [kind, setKind] = useState<MessageTemplateKey | null>(null);
   const [sending, setSending] = useState<Reminder | null>(null);

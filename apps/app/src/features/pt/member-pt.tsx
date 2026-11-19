@@ -1,8 +1,9 @@
 import { localizedName } from '@gym/i18n';
+import { AddTile } from '@gym/ui/blocks/add-tile';
 import { ChoiceGroup } from '@gym/ui/blocks/choice-group';
 import { ResponsiveDialog } from '@gym/ui/blocks/responsive-dialog';
 import { Button } from '@gym/ui/components/button';
-import { Card, CardAction, CardContent, CardHeader, CardTitle } from '@gym/ui/components/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@gym/ui/components/card';
 import { Field, FieldDescription, FieldGroup, FieldLabel } from '@gym/ui/components/field';
 import { NativeSelect, NativeSelectOption } from '@gym/ui/components/native-select';
 import { Spinner } from '@gym/ui/components/spinner';
@@ -61,20 +62,16 @@ export function MemberPtCard({ member }: { readonly member: Member }) {
         <CardTitle>
           <h3>{t('member.title')}</h3>
         </CardTitle>
-        {canSell && (
-          <CardAction>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setSelling(true);
-              }}
-            >
-              {t('member.sell')}
-            </Button>
-          </CardAction>
-        )}
       </CardHeader>
-      <CardContent>
+      <CardContent className="flex flex-col gap-3">
+        {canSell && (
+          <AddTile
+            label={t('member.sell')}
+            onClick={() => {
+              setSelling(true);
+            }}
+          />
+        )}
         {packages.isError ? (
           <PtError error={ptErrorKey(packages.error, 'load_member_packages')} />
         ) : owned.length === 0 ? (

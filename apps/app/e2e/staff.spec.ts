@@ -1,6 +1,7 @@
 import { admin, type TestData } from './support/backend';
 import {
   autoRegisterDevices,
+  anyDialog,
   expect,
   lockFromMenu,
   signIn,
@@ -59,7 +60,7 @@ test('an Owner adds a staff member, who logs in with the temporary password', as
   await expect(page.getByRole('checkbox', { name: /لقی یەکەم/ })).toBeChecked();
   await page.getByRole('button', { name: 'دروستکردنی هەژمار' }).click();
 
-  const dialog = page.getByRole('dialog');
+  const dialog = anyDialog(page);
   await expect(dialog.getByText('وشەی نهێنیی کاتی').first()).toBeVisible();
   const password = (await dialog.locator('output').textContent()) ?? '';
   expect(password).toMatch(/^[a-z2-9]{14}$/);
@@ -112,7 +113,7 @@ test('a branch manager changes a staff member, removes their PIN, and deactivate
 
   // Their PIN goes; they set a new one at their next password login.
   await page.getByRole('button', { name: 'سڕینەوەی پین' }).click();
-  await page.getByRole('dialog').getByRole('button', { name: 'سڕینەوەی پین' }).click();
+  await anyDialog(page).getByRole('button', { name: 'سڕینەوەی پین' }).click();
   await expect(page.getByText(`پینی ${target.fullName} سڕایەوە`)).toBeVisible();
   const { data: pins } = await admin()
     .from('staff_pins')
@@ -121,7 +122,7 @@ test('a branch manager changes a staff member, removes their PIN, and deactivate
   expect(pins).toEqual([]);
 
   await page.getByRole('button', { name: 'ناچالاککردن' }).click();
-  await page.getByRole('dialog').getByRole('button', { name: 'ناچالاککردن' }).click();
+  await anyDialog(page).getByRole('button', { name: 'ناچالاککردن' }).click();
   await expect(page.getByText(`${target.fullName} ناچالاک کرا`)).toBeVisible();
   expect((await staffRow(data, target.username)).is_active).toBe(false);
   // Deactivated staff leave the default list.
@@ -130,7 +131,7 @@ test('a branch manager changes a staff member, removes their PIN, and deactivate
   await expect(page.locator(`[data-staff="${target.username}"]`)).toBeVisible();
 
   await page.getByRole('button', { name: 'چالاککردنەوە' }).click();
-  await page.getByRole('dialog').getByRole('button', { name: 'چالاککردنەوە' }).click();
+  await anyDialog(page).getByRole('button', { name: 'چالاککردنەوە' }).click();
   await expect(page.getByText(`${target.fullName} چالاک کرایەوە`)).toBeVisible();
   expect((await staffRow(data, target.username)).is_active).toBe(true);
 });
@@ -200,7 +201,8 @@ test('switching staff with a PIN never shows the previous staff member their lis
   await expect(page.locator('[data-auth-screen]')).toHaveCount(0);
 
   // The Owner opens the staff list (in the app, so its data stays in memory).
-  await page.getByRole('link', { name: 'کارمەندان', exact: true }).click();
+  await page.locator('[data-nav-group="management"]').click();
+  await page.getByRole('menuitem', { name: 'کارمەندان', exact: true }).click();
   await expect(page.locator(`[data-staff="${hidden.username}"]`)).toBeVisible();
 
   // Locking keeps the page open behind the lock; the manager unlocks with their PIN.

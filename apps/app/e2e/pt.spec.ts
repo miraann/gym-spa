@@ -1,6 +1,6 @@
 import { admin, write } from './support/backend';
 import { addMember } from './support/members';
-import { expect, signIn, test } from './support/app';
+import { openFromMenu, expect, signIn, test } from './support/app';
 
 // Personal training (step 7f): the Owner adds a package, sells it on a member's page with their
 // trainer, logs a session from the trainers' page, and reads the trainers' report.
@@ -37,7 +37,7 @@ test('the Owner sells personal training, logs a session and reads the report', a
   await expect(page.getByText('پاکێجەکە پاشەکەوت کرا.')).toBeVisible();
 
   // Sold on the member's page, reached from the search.
-  await page.getByRole('link', { name: 'ئەندامان' }).first().click();
+  await openFromMenu(page, 'ئەندامان');
   await page.getByText('ئارام کەریم').first().click();
   const card = page.getByTestId('member-pt');
   await card.getByRole('button', { name: 'فرۆشتنی پاکێج' }).click();
@@ -60,7 +60,7 @@ test('the Owner sells personal training, logs a session and reads the report', a
   ]);
 
   // The trainers' report.
-  await page.getByRole('link', { name: 'ڕاهێنەران' }).first().click();
+  await openFromMenu(page, 'ڕاهێنەران');
   await expect(page.locator('[data-pt-client="ئارام کەریم"]')).toContainText('9 لە 10 ماوە');
   await page.getByRole('link', { name: 'ڕاپۆرتی ڕاهێنەران' }).click();
   // The device's branch, where the session was logged.

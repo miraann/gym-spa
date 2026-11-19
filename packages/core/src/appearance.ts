@@ -13,6 +13,8 @@ import {
 
 // Gym look: settings rows for every branch ------------------------------------------------------
 
+export type Mode = 'light' | 'dark';
+
 export const APPEARANCE_SETTINGS = {
   brandColor: 'appearance.brand_color',
   cornerStyle: 'appearance.corner_style',
@@ -31,6 +33,8 @@ export const BRAND_PRESETS = [
   'midnight',
   'gold',
   'teal',
+  'royal',
+  'rose',
 ] as const;
 export type BrandPreset = (typeof BRAND_PRESETS)[number];
 /** A preset name, or a custom color as lowercase `#rrggbb`. */
@@ -38,21 +42,47 @@ export type BrandColor = BrandPreset | `#${string}`;
 export const DEFAULT_BRAND_COLOR: BrandColor = 'indigo';
 
 /**
- * The light- and dark-mode shades of each preset; all pass every contrast check (tested). The
- * dark shade may turn the hue a little: a light indigo at the same hue would look blue.
+ * How much the brand hue washes over the page, the bars and the borders: "calm" is a near-neutral
+ * page; "tinted" gives them a clear wash of the hue (navy, lilac, rose), while cards stay almost
+ * white in light mode. Text, muted text and status colors never change.
  */
-const PRESET_SHADES: Readonly<Record<BrandPreset, { light: Oklch; dark: Oklch }>> = {
+export type PageTint = 'calm' | 'tinted';
+
+export interface BrandShades {
+  readonly light: Oklch;
+  readonly dark: Oklch;
+  readonly tint: PageTint;
+}
+
+/**
+ * The light- and dark-mode shades of each preset and its page tint. All pass every contrast check,
+ * and each shade is at least 30° of hue and ΔE_OK 0.1 from the status colors (tested). The dark
+ * shade may turn the hue a little: a light indigo at the same hue would look blue.
+ */
+const PRESET_SHADES: Readonly<Record<BrandPreset, BrandShades>> = {
   // The same as the default tokens in packages/ui's theme.css (a test keeps them equal).
-  indigo: { light: { l: 0.51, c: 0.23, h: 277 }, dark: { l: 0.7, c: 0.16, h: 284 } },
-  blue: { light: { l: 0.52, c: 0.19, h: 256 }, dark: { l: 0.7, c: 0.15, h: 256 } },
-  purple: { light: { l: 0.5, c: 0.22, h: 303 }, dark: { l: 0.7, c: 0.17, h: 303 } },
-  gray: { light: { l: 0.45, c: 0.025, h: 265 }, dark: { l: 0.74, c: 0.02, h: 265 } },
-  // Deep navy, nearly black: a calm, dark look.
-  midnight: { light: { l: 0.3, c: 0.06, h: 265 }, dark: { l: 0.84, c: 0.05, h: 265 } },
-  // Deep gold for a premium look; a bright gold in dark mode.
-  gold: { light: { l: 0.48, c: 0.1, h: 78 }, dark: { l: 0.8, c: 0.13, h: 85 } },
-  // A sporty teal, kept out of the status green's hues (STATUS_HUES).
-  teal: { light: { l: 0.5, c: 0.1, h: 172 }, dark: { l: 0.76, c: 0.13, h: 172 } },
+  indigo: { light: { l: 0.51, c: 0.23, h: 277 }, dark: { l: 0.7, c: 0.16, h: 284 }, tint: 'calm' },
+  blue: { light: { l: 0.52, c: 0.19, h: 256 }, dark: { l: 0.7, c: 0.15, h: 256 }, tint: 'calm' },
+  purple: { light: { l: 0.5, c: 0.22, h: 303 }, dark: { l: 0.7, c: 0.17, h: 303 }, tint: 'calm' },
+  gray: { light: { l: 0.45, c: 0.025, h: 265 }, dark: { l: 0.74, c: 0.02, h: 265 }, tint: 'calm' },
+  // Deep navy on a navy page; a sky blue in dark mode.
+  midnight: {
+    light: { l: 0.3, c: 0.07, h: 258 },
+    dark: { l: 0.72, c: 0.14, h: 255 },
+    tint: 'tinted',
+  },
+  // An antique gold; a champagne gold in dark mode. Both keep 30° away from the amber warning.
+  gold: { light: { l: 0.43, c: 0.08, h: 88 }, dark: { l: 0.86, c: 0.1, h: 107 }, tint: 'calm' },
+  // A sporty teal, kept 30° away from the status green.
+  teal: { light: { l: 0.43, c: 0.07, h: 188 }, dark: { l: 0.79, c: 0.12, h: 186 }, tint: 'calm' },
+  // A deep royal purple on a lilac page.
+  royal: {
+    light: { l: 0.44, c: 0.2, h: 304 },
+    dark: { l: 0.72, c: 0.17, h: 305 },
+    tint: 'tinted',
+  },
+  // Rose on a rose page: the red-pink of a colorful look, kept clear of the status red.
+  rose: { light: { l: 0.53, c: 0.2, h: 340 }, dark: { l: 0.73, c: 0.15, h: 342 }, tint: 'tinted' },
 };
 
 /**
@@ -64,6 +94,9 @@ export const LOOK_PRESETS = [
   { key: 'midnight', brandColor: 'midnight', cornerStyle: 'medium' },
   { key: 'gold', brandColor: 'gold', cornerStyle: 'sharp' },
   { key: 'sport', brandColor: 'teal', cornerStyle: 'soft' },
+  { key: 'white', brandColor: 'blue', cornerStyle: 'soft' },
+  { key: 'royal', brandColor: 'royal', cornerStyle: 'soft' },
+  { key: 'rose', brandColor: 'rose', cornerStyle: 'soft' },
 ] as const satisfies readonly {
   key: string;
   brandColor: BrandPreset;
@@ -102,19 +135,60 @@ export function parseCornerStyle(value: unknown): CornerStyle | null {
 
 // Brand color math --------------------------------------------------------------------------------
 
-export type Mode = 'light' | 'dark';
+type Surface = 'page' | 'card' | 'popover' | 'bar' | 'muted' | 'secondary' | 'border' | 'input';
 
-/** The page backgrounds and cards the brand color sits on (the tokens in styles.css). */
-function surfaces(mode: Mode, hue: number): Oklch[] {
-  return mode === 'light'
-    ? [
-        { l: 0.972, c: 0.006, h: hue },
-        { l: 0.995, c: 0.002, h: hue },
-      ]
-    : [
-        { l: 0.17, c: 0.012, h: hue },
-        { l: 0.215, c: 0.014, h: hue },
-      ];
+/**
+ * Lightness and chroma of the surfaces each page tint gives, with the brand's hue (the
+ * --brand-tint-* variables; the calm ones are the defaults in packages/ui's theme.css, a test keeps
+ * them equal). Light popovers are cards; dark borders and inputs are see-through white.
+ */
+const TINT_SURFACES: Readonly<
+  Record<PageTint, Record<Mode, Partial<Record<Surface, { l: number; c: number }>>>>
+> = {
+  calm: {
+    light: {
+      page: { l: 0.972, c: 0.006 },
+      card: { l: 0.995, c: 0.002 },
+      bar: { l: 0.985, c: 0.004 },
+      muted: { l: 0.945, c: 0.008 },
+      secondary: { l: 0.94, c: 0.012 },
+      border: { l: 0.91, c: 0.01 },
+      input: { l: 0.885, c: 0.014 },
+    },
+    dark: {
+      page: { l: 0.17, c: 0.012 },
+      card: { l: 0.215, c: 0.014 },
+      popover: { l: 0.235, c: 0.016 },
+      bar: { l: 0.195, c: 0.013 },
+      muted: { l: 0.25, c: 0.016 },
+      secondary: { l: 0.27, c: 0.02 },
+    },
+  },
+  tinted: {
+    light: {
+      page: { l: 0.966, c: 0.015 },
+      card: { l: 0.992, c: 0.003 },
+      bar: { l: 0.975, c: 0.011 },
+      muted: { l: 0.935, c: 0.02 },
+      secondary: { l: 0.93, c: 0.025 },
+      border: { l: 0.895, c: 0.025 },
+      input: { l: 0.87, c: 0.03 },
+    },
+    dark: {
+      page: { l: 0.17, c: 0.03 },
+      card: { l: 0.215, c: 0.034 },
+      popover: { l: 0.235, c: 0.036 },
+      bar: { l: 0.195, c: 0.032 },
+      muted: { l: 0.25, c: 0.035 },
+      secondary: { l: 0.27, c: 0.04 },
+    },
+  },
+};
+
+/** The page backgrounds and cards the brand color sits on. */
+function surfaces(mode: Mode, hue: number, tint: PageTint): Oklch[] {
+  const { page, card, popover } = TINT_SURFACES[tint][mode];
+  return [page, card, popover].flatMap((each) => (each ? [{ ...each, h: hue }] : []));
 }
 
 const LIGHT_TEXT = (hue: number): Oklch => ({ l: 0.985, c: 0.006, h: hue });
@@ -132,8 +206,8 @@ function foregroundFor(color: Oklch): Oklch {
 }
 
 /** The weakest contrast of the color against the mode's page background and cards. */
-function contrastOnSurfaces(color: Oklch, mode: Mode): number {
-  return Math.min(...surfaces(mode, color.h).map((surface) => contrast(color, surface)));
+function contrastOnSurfaces(color: Oklch, mode: Mode, tint: PageTint = 'calm'): number {
+  return Math.min(...surfaces(mode, color.h, tint).map((surface) => contrast(color, surface)));
 }
 
 /** Lowers chroma until the color fits in sRGB, keeping lightness and hue. */
@@ -155,18 +229,23 @@ function darkShadeOf(color: Oklch): Oklch {
   return shade;
 }
 
-export interface BrandShades {
-  readonly light: Oklch;
-  readonly dark: Oklch;
-}
-
-/** The light- and dark-mode shades of a brand color. A custom color is used as-is in light mode. */
+/**
+ * The light- and dark-mode shades of a brand color and its page tint. A custom color is used
+ * as-is in light mode, on a calm page.
+ */
 export function brandShades(color: BrandColor): BrandShades {
   if (isBrandPreset(color)) return PRESET_SHADES[color];
   const rgb = parseHex(color);
   if (!rgb) return PRESET_SHADES.indigo;
   const light = rgbToOklch(rgb);
-  return { light, dark: darkShadeOf(light) };
+  return { light, dark: darkShadeOf(light), tint: 'calm' };
+}
+
+/** A brand color's page or card in this mode, as CSS (the look previews in Appearance settings). */
+export function tintSurface(color: BrandColor, mode: Mode, surface: 'page' | 'card'): string {
+  const { light, dark, tint } = brandShades(color);
+  const value = TINT_SURFACES[tint][mode][surface] ?? { l: 1, c: 0 };
+  return css({ ...value, h: (mode === 'light' ? light : dark).h });
 }
 
 function round(value: number, digits: number): string {
@@ -182,8 +261,15 @@ function css({ l, c, h }: Oklch): string {
  * styles.css at runtime, so nothing reloads).
  */
 export function brandVariables(color: BrandColor): Record<string, string> {
-  const { light, dark } = brandShades(color);
+  const { light, dark, tint } = brandShades(color);
+  const tints = Object.entries(TINT_SURFACES[tint]).flatMap(([mode, values]) =>
+    Object.entries(values).map(([surface, { l, c }]): [string, string] => [
+      `--brand-tint-${mode === 'dark' ? 'dark-' : ''}${surface}`,
+      `${round(l, 3)} ${round(c, 3)}`,
+    ]),
+  );
   return {
+    ...Object.fromEntries(tints),
     '--brand-h': round(light.h, 1),
     '--brand-l': round(light.l, 3),
     '--brand-c': round(light.c, 3),
@@ -217,7 +303,7 @@ export function checkBrandContrast(color: BrandColor): ContrastIssue[] {
     if (contrast(foregroundFor(shade), shade) < CONTRAST_TEXT) {
       issues.push({ mode, problem: 'text_on_brand' });
     }
-    const onPage = contrastOnSurfaces(shade, mode);
+    const onPage = contrastOnSurfaces(shade, mode, shades.tint);
     if (onPage < CONTRAST_TEXT) issues.push({ mode, problem: 'brand_as_text' });
     if (onPage < CONTRAST_NON_TEXT) issues.push({ mode, problem: 'brand_as_icon' });
   }

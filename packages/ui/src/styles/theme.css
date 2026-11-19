@@ -4,14 +4,27 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* Kurdish UI font: UniSalar_F_113 by Salar Shwani (one weight; chosen by the user in step D-3).
-   It has no Latin letters or ASCII digits, and its unicode-range keeps it to Arabic-script
+/* Frosted glass, only on floating bars (CLAUDE.md → Design): where the browser can blur and the
+   viewer hasn't asked for less transparency. Everywhere else, including browsers that don't know
+   that setting, the bar keeps its solid background. Bars use a 12px blur (backdrop-blur-md) and
+   nothing more: it is drawn on every scroll frame, and cheap Android tablets and older reception
+   PCs feel a larger one. */
+@custom-variant glass {
+  @supports (backdrop-filter: blur(1px)) {
+    @media (prefers-reduced-transparency: no-preference) {
+      @slot;
+    }
+  }
+}
+
+/* Kurdish UI font: UniSalar_F_007 by Salar Shwani (one weight; chosen by the user on 2026-10-31
+   in step D-4h, replacing UniSalar_F_113). Its unicode-range keeps it to Arabic-script
    characters and spaces, so digits (the Western-digit default; phone numbers, card UIDs and
    invoice numbers stay Latin), Latin text and ASCII punctuation come from Vazirmatn.
    test/fonts.test.ts checks its glyphs and this range. */
 @font-face {
   font-family: 'UniSalar';
-  src: url('../assets/fonts/unisalar-f-113.otf') format('opentype');
+  src: url('../assets/fonts/unisalar-f-007.otf') format('opentype');
   font-weight: 400;
   font-style: normal;
   font-display: swap;
@@ -200,6 +213,15 @@ body {
   --color-card: var(--card);
   --color-foreground: var(--foreground);
   --color-background: var(--background);
+  --color-vivid: var(--vivid);
+  --color-tone-blue: var(--tone-blue);
+  --color-tone-pink: var(--tone-pink);
+  --color-tone-indigo: var(--tone-indigo);
+  --color-tone-cyan: var(--tone-cyan);
+  --color-tone-violet: var(--tone-violet);
+  --color-tone-foreground: var(--tone-foreground);
+  --color-vivid-track: var(--vivid-track);
+  --color-glow: var(--glow);
   /* With the soft corners (--radius: 1rem) these are Tailwind's usual sizes: controls rounded-xl
      (12px), cards rounded-2xl (16px), sheets and dialogs rounded-3xl (24px). The medium and
      sharp corner styles shrink them all together. rounded-card (20px) is for cards and grouped
@@ -243,25 +265,53 @@ body {
   --brand-dark-l: 0.7;
   --brand-dark-c: 0.16;
   --brand-dark-foreground: oklch(0.17 0.03 var(--brand-dark-h));
+  /* The page tint (step D-5a): lightness and chroma of the surfaces, with the brand's hue. These
+     are the calm defaults; a tinted preset (midnight, royal, rose) washes the page, the bars and
+     the borders with its hue, while cards stay almost white (core's brandVariables). */
+  --brand-tint-page: 0.972 0.006;
+  --brand-tint-card: 0.995 0.002;
+  --brand-tint-bar: 0.985 0.004;
+  --brand-tint-muted: 0.945 0.008;
+  --brand-tint-secondary: 0.94 0.012;
+  --brand-tint-border: 0.91 0.01;
+  --brand-tint-input: 0.885 0.014;
+  --brand-tint-dark-page: 0.17 0.012;
+  --brand-tint-dark-card: 0.215 0.014;
+  --brand-tint-dark-popover: 0.235 0.016;
+  --brand-tint-dark-bar: 0.195 0.013;
+  --brand-tint-dark-muted: 0.25 0.016;
+  --brand-tint-dark-secondary: 0.27 0.02;
 
-  --background: oklch(0.972 0.006 var(--brand-h));
+  --background: oklch(var(--brand-tint-page) var(--brand-h));
   --foreground: oklch(0.2 0.02 var(--brand-h));
-  --card: oklch(0.995 0.002 var(--brand-h));
+  --card: oklch(var(--brand-tint-card) var(--brand-h));
   --card-foreground: var(--foreground);
   --popover: var(--card);
   --popover-foreground: var(--foreground);
   --primary: oklch(var(--brand-l) var(--brand-c) var(--brand-h));
   --primary-foreground: var(--brand-foreground);
-  --secondary: oklch(0.94 0.012 var(--brand-h));
+  --secondary: oklch(var(--brand-tint-secondary) var(--brand-h));
   --secondary-foreground: oklch(0.28 0.04 var(--brand-h));
-  --muted: oklch(0.945 0.008 var(--brand-h));
+  --muted: oklch(var(--brand-tint-muted) var(--brand-h));
   --muted-foreground: oklch(0.49 0.02 var(--brand-h));
   /* A soft tint of the brand (selected rows, the active menu item). */
   --accent: oklch(0.94 0.04 var(--brand-h));
   --accent-foreground: oklch(var(--brand-l) var(--brand-c) var(--brand-h));
-  --border: oklch(0.91 0.01 var(--brand-h));
-  --input: oklch(0.885 0.014 var(--brand-h));
+  --border: oklch(var(--brand-tint-border) var(--brand-h));
+  --input: oklch(var(--brand-tint-input) var(--brand-h));
   --ring: var(--primary);
+
+  /* Section tones (step D-4, the user's choice of 2026-10-30): each part of the app has its own
+     color on the dashboard's tiles and the cards' icon tiles. Fixed, never the brand; never a
+     status hue (green, amber, red keep their meaning); in this order, which keeps neighbours
+     apart for color-blind staff (checked with the dataviz palette validator, light and dark).
+     White icons on them; a tone as text only for big numbers (3:1). */
+  --tone-blue: oklch(0.57 0.2 255);
+  --tone-pink: oklch(0.58 0.22 338);
+  --tone-indigo: oklch(0.53 0.22 280);
+  --tone-cyan: oklch(0.58 0.12 220);
+  --tone-violet: oklch(0.56 0.22 305);
+  --tone-foreground: oklch(0.99 0 0);
 
   --success: oklch(0.49 0.13 150);
   --success-foreground: oklch(0.985 0 0);
@@ -276,10 +326,32 @@ body {
   --chart-4: oklch(0.42 0.18 var(--brand-h));
   --chart-5: oklch(0.82 0.07 var(--brand-h));
 
+  /* The dashboard's live widgets (gauges, counters, sparklines, meters) and its brand tile: the
+     gym's own hue, brighter and more saturated, never a second hue, so every preset and custom
+     color stays itself and never drifts towards a status color. --vivid is for marks (arcs, bars,
+     lines), not text; --vivid-track is the empty part of a gauge or meter. The brand gradient
+     runs from the brand color to a deeper shade of it, so text on it is never lighter than on
+     the plain brand color (its contrast is tested). */
+  --vivid: oklch(calc(var(--brand-l) + 0.06) calc(var(--brand-c) + 0.03) var(--brand-h));
+  --vivid-track: oklch(0.92 0.03 var(--brand-h));
+  --glow: oklch(var(--brand-l) var(--brand-c) var(--brand-h) / 0.28);
+  --gradient-brand: linear-gradient(
+    135deg,
+    oklch(var(--brand-l) var(--brand-c) var(--brand-h)),
+    oklch(calc(var(--brand-l) - 0.09) var(--brand-c) calc(var(--brand-h) + 8))
+  );
+  /* Filled main buttons, the selected tab and the add tile's plus: the mode's own brand color
+     running into a slightly deeper shade, so their text keeps the plain button's contrast. */
+  --gradient-primary: linear-gradient(
+    135deg,
+    var(--primary),
+    oklch(calc(var(--brand-l) - 0.07) var(--brand-c) calc(var(--brand-h) + 8))
+  );
+
   /* Corner style: soft. Every radius derives from it (see @theme inline). */
   --radius: 1rem;
 
-  --sidebar: oklch(0.985 0.004 var(--brand-h));
+  --sidebar: oklch(var(--brand-tint-bar) var(--brand-h));
   --sidebar-foreground: var(--foreground);
   --sidebar-primary: var(--primary);
   --sidebar-primary-foreground: var(--primary-foreground);
@@ -298,24 +370,30 @@ body {
     0 2px 6px oklch(var(--shadow-tint) / 0.06), 0 12px 32px -8px oklch(var(--shadow-tint) / 0.16),
     0 24px 56px -16px oklch(var(--shadow-tint) / 0.18);
   /* Frosted bars: see-through enough to show what scrolls under them. */
-  --glass: oklch(0.985 0.004 var(--brand-h) / 0.78);
+  --glass: oklch(var(--brand-tint-bar) var(--brand-h) / 0.78);
 }
 
 .dark {
-  --background: oklch(0.17 0.012 var(--brand-h));
+  --background: oklch(var(--brand-tint-dark-page) var(--brand-h));
   --foreground: oklch(0.955 0.006 var(--brand-h));
-  --card: oklch(0.215 0.014 var(--brand-h));
-  --popover: oklch(0.235 0.016 var(--brand-h));
+  --card: oklch(var(--brand-tint-dark-card) var(--brand-h));
+  --popover: oklch(var(--brand-tint-dark-popover) var(--brand-h));
   --primary: oklch(var(--brand-dark-l) var(--brand-dark-c) var(--brand-dark-h));
   --primary-foreground: var(--brand-dark-foreground);
-  --secondary: oklch(0.27 0.02 var(--brand-h));
+  --secondary: oklch(var(--brand-tint-dark-secondary) var(--brand-h));
   --secondary-foreground: oklch(0.93 0.01 var(--brand-h));
-  --muted: oklch(0.25 0.016 var(--brand-h));
+  --muted: oklch(var(--brand-tint-dark-muted) var(--brand-h));
   --muted-foreground: oklch(0.72 0.02 var(--brand-h));
   --accent: oklch(0.29 0.06 var(--brand-dark-h));
   --accent-foreground: oklch(0.88 0.07 var(--brand-dark-h));
   --border: oklch(1 0 0 / 8%);
   --input: oklch(1 0 0 / 13%);
+
+  --tone-blue: oklch(0.63 0.17 255);
+  --tone-pink: oklch(0.65 0.2 338);
+  --tone-indigo: oklch(0.58 0.19 282);
+  --tone-cyan: oklch(0.635 0.12 212);
+  --tone-violet: oklch(0.62 0.2 308);
 
   --success: oklch(0.72 0.15 150);
   --success-foreground: oklch(0.2 0.03 150);
@@ -324,9 +402,20 @@ body {
   --destructive: oklch(0.74 0.16 25);
   --destructive-foreground: oklch(0.2 0.04 25);
 
-  --sidebar: oklch(0.195 0.013 var(--brand-h));
+  --sidebar: oklch(var(--brand-tint-dark-bar) var(--brand-h));
   --sidebar-accent: oklch(0.29 0.06 var(--brand-dark-h));
   --sidebar-accent-foreground: oklch(0.88 0.07 var(--brand-dark-h));
+
+  --vivid: oklch(
+    calc(var(--brand-dark-l) + 0.04) calc(var(--brand-dark-c) + 0.03) var(--brand-dark-h)
+  );
+  --vivid-track: oklch(0.3 0.03 var(--brand-dark-h));
+  --glow: oklch(var(--brand-dark-l) var(--brand-dark-c) var(--brand-dark-h) / 0.22);
+  --gradient-primary: linear-gradient(
+    135deg,
+    var(--primary),
+    oklch(calc(var(--brand-dark-l) - 0.06) var(--brand-dark-c) calc(var(--brand-dark-h) + 8))
+  );
 
   /* On a dark page shadows barely show: a faint light edge on top gives cards their shape. */
   --elevation-1: 0 1px 2px oklch(0 0 0 / 0.3), inset 0 1px 0 oklch(1 0 0 / 0.04);
@@ -336,7 +425,7 @@ body {
   --elevation-3:
     0 2px 8px oklch(0 0 0 / 0.35), 0 20px 48px -12px oklch(0 0 0 / 0.6),
     inset 0 1px 0 oklch(1 0 0 / 0.06);
-  --glass: oklch(0.2 0.013 var(--brand-h) / 0.74);
+  --glass: oklch(var(--brand-tint-dark-bar) var(--brand-h) / 0.74);
 }
 
 @layer base {

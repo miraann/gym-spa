@@ -1,7 +1,7 @@
 -- Appearance: the gym's look in settings (brand color, corners, logo) and each staff member's own
 -- look on staff_users (spec §6.1).
 begin;
-select plan(34);
+select plan(35);
 select tests.create_fixture();
 select tests.create_auth_user('new_a');
 
@@ -25,6 +25,11 @@ select ok(
     and app.is_valid_setting('appearance.brand_color', '"gold"')
     and app.is_valid_setting('appearance.brand_color', '"teal"'),
   'the presets of the ready-made looks (step D-3) are valid brand colors'
+);
+select ok(
+  app.is_valid_setting('appearance.brand_color', '"royal"')
+    and app.is_valid_setting('appearance.brand_color', '"rose"'),
+  'the presets of the D-5 looks are valid brand colors'
 );
 select ok(app.is_valid_setting('appearance.brand_color', '"#2563eb"'), 'a custom #rrggbb is a valid brand color');
 select ok(not app.is_valid_setting('appearance.brand_color', '"#2563EB"'), 'custom colors are lowercase');

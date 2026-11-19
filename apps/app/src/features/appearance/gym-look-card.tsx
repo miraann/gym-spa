@@ -9,6 +9,7 @@ import {
   looksLikeStatusColor,
   oklchToHex,
   parseBrandColor,
+  tintSurface,
   type BrandColor,
   type ContrastIssue,
 } from '@gym/core';
@@ -18,8 +19,6 @@ import { useEffect, useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { ChoiceGroup } from '@gym/ui/blocks/choice-group';
-import { Chip, ChipRow } from '@gym/ui/blocks/chip-row';
-import { ResponsiveDialog } from '@gym/ui/blocks/responsive-dialog';
 import { StickyActionBar } from '@gym/ui/blocks/sticky-action-bar';
 import { Alert, AlertDescription, AlertTitle } from '@gym/ui/components/alert';
 import { Button } from '@gym/ui/components/button';
@@ -39,6 +38,7 @@ import { useConnection } from '@/lib/connection';
 import { saveErrorKey, type SaveErrorKey } from '@/lib/save-error';
 import { useUnsavedChanges } from '@/lib/unsaved-changes';
 import { cn } from '@gym/ui/lib/utils';
+import { ConfirmDialog } from '@gym/ui/blocks/confirm-dialog';
 import { LogoField } from './logo-field';
 import { saveGymLook } from './save-appearance';
 import { GYM_LOOK_QUERY } from './use-gym-appearance';
@@ -46,9 +46,66 @@ import { GYM_LOOK_QUERY } from './use-gym-appearance';
 /** The example in the custom color hint: the default brand color as a code. */
 const EXAMPLE_HEX = oklchToHex(brandShades('indigo').light);
 
-function swatch(color: BrandColor): string {
+function swatch(color: BrandColor, alpha = 1): string {
   const { l, c, h } = brandShades(color).light;
-  return `oklch(${String(l)} ${String(c)} ${String(h)})`;
+  return `oklch(${String(l)} ${String(c)} ${String(h)} / ${String(alpha)})`;
+}
+
+/** Any color: the custom color's swatch before one is chosen. */
+const ANY_COLOR =
+  'conic-gradient(from 0deg, oklch(0.6 0.2 30), oklch(0.6 0.2 150), oklch(0.6 0.2 270), oklch(0.6 0.2 30))';
+
+/**
+ * A brand color as a round swatch with its name under it (step D-5f): 40px, a 48px target on touch
+ * screens, the chosen one ringed in the current brand color with a soft glow in its own color. The
+ * swatches show colors that aren't the theme's yet, so they are the one place colors come from
+ * brandShades() instead of tokens.
+ */
+function Swatch({
+  label,
+  color,
+  glow,
+  selected,
+  onClick,
+}: {
+  readonly label: string;
+  /** The color, or null for "any color" (the custom color not chosen yet). */
+  readonly color: string | null;
+  /** The color, see-through, for the chosen swatch's glow. */
+  readonly glow: string | null;
+  readonly selected: boolean;
+  readonly onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      aria-pressed={selected}
+      onClick={onClick}
+      className="group/swatch flex w-18 flex-col items-center gap-1.5 rounded-2xl px-1 py-1.5 outline-none focus-visible:ring-3 focus-visible:ring-ring/50 pointer-coarse:min-h-12"
+    >
+      <span
+        aria-hidden
+        className={cn(
+          'flex size-10 items-center justify-center rounded-full ring-offset-2 ring-offset-card transition-[scale,box-shadow] duration-200 ease-spring group-active/swatch:scale-95 motion-reduce:transition-none',
+          selected ? 'ring-2 ring-primary' : 'ring-1 ring-foreground/10',
+        )}
+        style={{
+          background: color ?? ANY_COLOR,
+          boxShadow: selected && glow ? `0 6px 16px -4px ${glow}` : undefined,
+        }}
+      >
+        {selected && <CheckIcon className="size-5 text-white drop-shadow" />}
+      </span>
+      <span
+        className={cn(
+          'line-clamp-2 text-center text-xs leading-tight',
+          selected ? 'text-foreground' : 'text-muted-foreground',
+        )}
+      >
+        {label}
+      </span>
+    </button>
+  );
 }
 
 /** The gym's look (needs settings.edit and all branches): brand color, corners and logo. */
@@ -129,33 +186,29 @@ export function GymLookCard() {
             <h3 id="brand-color">{t('appearance.brand.label')}</h3>
             <p className="text-sm text-muted-foreground">{t('appearance.brand.hint')}</p>
           </div>
-          <ChipRow label={t('appearance.brand.label')}>
-            {BRAND_PRESETS.map((preset) => {
-              const selected = !customOpen && draft.brandColor === preset;
-              return (
-                <Chip
-                  key={preset}
-                  type="button"
-                  selected={selected}
-                  aria-pressed={selected}
-                  onClick={() => {
-                    setCustomOpen(false);
-                    choose(preset);
-                  }}
-                >
-                  <span
-                    aria-hidden
-                    className="size-4 rounded-full ring-2 ring-background"
-                    style={{ backgroundColor: swatch(preset) }}
-                  />
-                  {t(`appearance.brand.presets.${preset}`)}
-                </Chip>
-              );
-            })}
-            <Chip
-              type="button"
+          <div
+            role="group"
+            aria-label={t('appearance.brand.label')}
+            className="flex flex-wrap gap-x-2 gap-y-3"
+          >
+            {BRAND_PRESETS.map((preset) => (
+              <Swatch
+                key={preset}
+                label={t(`appearance.brand.presets.${preset}`)}
+                color={swatch(preset)}
+                glow={swatch(preset, 0.6)}
+                selected={!customOpen && draft.brandColor === preset}
+                onClick={() => {
+                  setCustomOpen(false);
+                  choose(preset);
+                }}
+              />
+            ))}
+            <Swatch
+              label={t('appearance.brand.custom')}
+              color={customOpen ? swatch(draft.brandColor) : null}
+              glow={customOpen ? swatch(draft.brandColor, 0.6) : null}
               selected={customOpen}
-              aria-pressed={customOpen}
               onClick={() => {
                 setCustomOpen(true);
                 // Start from the current color, as a hex the gym can then adjust.
@@ -163,19 +216,8 @@ export function GymLookCard() {
                   choose(oklchToHex(brandShades(draft.brandColor).light) as BrandColor);
                 }
               }}
-            >
-              <span
-                aria-hidden
-                className="size-4 rounded-full ring-2 ring-background"
-                style={{
-                  background: customOpen
-                    ? swatch(draft.brandColor)
-                    : 'conic-gradient(from 0deg, oklch(0.6 0.2 30), oklch(0.6 0.2 150), oklch(0.6 0.2 270), oklch(0.6 0.2 30))',
-                }}
-              />
-              {t('appearance.brand.custom')}
-            </Chip>
-          </ChipRow>
+            />
+          </div>
 
           {customOpen && <CustomColor value={draft.brandColor} onChange={choose} />}
           <ColorWarnings issues={issues} statusLike={statusLike} />
@@ -250,34 +292,21 @@ export function GymLookCard() {
         <LogoField />
       </CardContent>
 
-      <ResponsiveDialog
+      <ConfirmDialog
         open={confirmOpen}
         onOpenChange={setConfirmOpen}
+        tone="warning"
         title={t('appearance.confirm.title')}
         description={t('appearance.confirm.description')}
-        footer={
-          <>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setConfirmOpen(false);
-              }}
-            >
-              {t('appearance.confirm.back')}
-            </Button>
-            <Button
-              disabled={save.isPending}
-              onClick={() => {
-                save.mutate(draft);
-              }}
-            >
-              {t('appearance.confirm.saveAnyway')}
-            </Button>
-          </>
-        }
+        confirmLabel={t('appearance.confirm.saveAnyway')}
+        cancelLabel={t('appearance.confirm.back')}
+        pending={save.isPending}
+        onConfirm={() => {
+          save.mutate(draft);
+        }}
       >
         <ColorWarnings issues={issues} statusLike={statusLike} />
-      </ResponsiveDialog>
+      </ConfirmDialog>
     </Card>
   );
 }
@@ -310,14 +339,13 @@ function LookPresets({
             !customOpen &&
             draft.brandColor === look.brandColor &&
             draft.cornerStyle === look.cornerStyle;
+          const mode = look.key === 'midnight' ? 'dark' : 'light';
           const { light, dark } = brandShades(look.brandColor);
-          const shade = look.key === 'midnight' ? dark : light;
-          const surface =
-            look.key === 'midnight'
-              ? `oklch(0.2 0.02 ${String(light.h)})`
-              : `oklch(0.965 0.015 ${String(light.h)})`;
+          const shade = mode === 'dark' ? dark : light;
+          // The look's own page, so a tinted look shows its wash of color.
+          const surface = tintSurface(look.brandColor, mode, 'page');
           const line =
-            look.key === 'midnight'
+            mode === 'dark'
               ? `oklch(0.32 0.03 ${String(light.h)})`
               : `oklch(0.88 0.03 ${String(light.h)})`;
           const radius = CORNER_RADIUS[look.cornerStyle];

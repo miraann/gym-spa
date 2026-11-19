@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { deflateSync } from 'node:zlib';
 import { admin, write, type TestData } from './support/backend';
-import { expect, signIn, test } from './support/app';
+import { anyDialog, expect, signIn, test } from './support/app';
 
 // Member photos (step 2c): taken with the camera or picked from a file, resized by the app, kept in
 // Postgres, shown on the member's page and in the list.
@@ -125,7 +125,7 @@ test('a receptionist adds a photo from a file, sees it in the list, and removes 
 
   await page.locator('[data-member="000001"]').click();
   await page.getByRole('button', { name: 'لابردنی وێنە' }).click();
-  await page.getByRole('dialog').getByRole('button', { name: 'لابردنی وێنە' }).click();
+  await anyDialog(page).getByRole('button', { name: 'لابردنی وێنە' }).click();
   await expect(page.getByText('وێنەکە لابرا')).toBeVisible();
   expect(await storedPhoto(id)).toBeNull();
 });

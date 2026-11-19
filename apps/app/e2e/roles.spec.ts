@@ -1,5 +1,5 @@
 import { admin, type TestData } from './support/backend';
-import { expect, signIn, test } from './support/app';
+import { anyDialog, expect, signIn, test } from './support/app';
 
 // Roles and permissions (step 1e-2): the permission table (خشتەی دەسەڵاتەکان), custom roles, and
 // the roles nobody may change here.
@@ -65,7 +65,7 @@ test('an Admin makes a role from another role, changes it, and deletes it', asyn
     .toEqual(receptionist.filter((key) => !key.startsWith('payments.')));
 
   await page.getByRole('button', { name: 'سڕینەوەی ڕۆڵ' }).click();
-  await page.getByRole('dialog').getByRole('button', { name: 'سڕینەوەی ڕۆڵ' }).click();
+  await anyDialog(page).getByRole('button', { name: 'سڕینەوەی ڕۆڵ' }).click();
   await expect(page.getByText('ڕۆڵی یارمەتیدەر سڕایەوە')).toBeVisible();
   expect((await rolePermissions(data, 'یارمەتیدەر')).deletedAt).not.toBeNull();
   await expect(page.locator('[data-role="یارمەتیدەر"]')).toHaveCount(0);

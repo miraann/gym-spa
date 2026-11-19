@@ -17,6 +17,7 @@ import { Input } from '@gym/ui/components/input';
 import { Skeleton } from '@gym/ui/components/skeleton';
 import { Spinner } from '@gym/ui/components/spinner';
 import { useSideBySide } from '@gym/ui/hooks/use-side-by-side';
+import { ConfirmDialog } from '@gym/ui/blocks/confirm-dialog';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useParams } from '@tanstack/react-router';
 import { InfoIcon, LockIcon, SearchXIcon } from 'lucide-react';
@@ -404,40 +405,22 @@ function AccountActions({ member }: { readonly member: StaffMember }) {
         )}
       </CardContent>
 
-      <ResponsiveDialog
+      <ConfirmDialog
         open={texts !== null}
         onOpenChange={(isOpen) => {
           if (!isOpen) setConfirming(null);
         }}
+        tone={confirming === 'deactivate' || confirming === 'reset_pin' ? 'destructive' : 'primary'}
         title={texts ? t(texts.title, { name: member.fullName }) : ''}
         description={texts ? t(texts.description, { name: member.fullName }) : undefined}
-        footer={
-          <>
-            <Button
-              variant={
-                confirming === 'deactivate' || confirming === 'reset_pin'
-                  ? 'destructive'
-                  : 'default'
-              }
-              disabled={!online || run.isPending}
-              onClick={confirm}
-            >
-              {run.isPending && <Spinner />}
-              {texts ? t(texts.confirm) : ''}
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setConfirming(null);
-              }}
-            >
-              {t('actions.cancel')}
-            </Button>
-          </>
-        }
+        confirmLabel={texts ? t(texts.confirm) : ''}
+        cancelLabel={t('actions.cancel')}
+        disabled={!online}
+        pending={run.isPending}
+        onConfirm={confirm}
       >
         <AdminError error={error} />
-      </ResponsiveDialog>
+      </ConfirmDialog>
 
       <RenameDialog member={member} open={renaming} onOpenChange={setRenaming} />
       <TemporaryPasswordDialog

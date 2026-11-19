@@ -14,7 +14,6 @@ import type { CreateGymResult } from '@gym/seller-admin';
 import { ChoiceGroup } from '@gym/ui/blocks/choice-group';
 import { CopyableSecret } from '@gym/ui/blocks/copyable-secret';
 import { PageHeader } from '@gym/ui/blocks/page-header';
-import { ResponsiveDialog } from '@gym/ui/blocks/responsive-dialog';
 import { Alert, AlertDescription } from '@gym/ui/components/alert';
 import { Button } from '@gym/ui/components/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@gym/ui/components/card';
@@ -26,7 +25,7 @@ import {
   FieldLabel,
 } from '@gym/ui/components/field';
 import { Input } from '@gym/ui/components/input';
-import { Spinner } from '@gym/ui/components/spinner';
+import { ConfirmDialog } from '@gym/ui/blocks/confirm-dialog';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Link, useNavigate } from '@tanstack/react-router';
 import { CircleCheckIcon, CloudIcon, ServerIcon, TriangleAlertIcon } from 'lucide-react';
@@ -366,30 +365,21 @@ export function CreateGymPage() {
         </Button>
       </form>
 
-      <ResponsiveDialog
+      <ConfirmDialog
         open={pending !== null}
         onOpenChange={(open) => {
           if (!open && !pendingSave) setPending(null);
         }}
+        tone="warning"
         title={t('createGym.confirmTitle')}
         description={t('createGym.confirmDescription')}
-        footer={
-          <>
-            <Button
-              variant="outline"
-              disabled={pendingSave}
-              onClick={() => {
-                setPending(null);
-              }}
-            >
-              {t('createGym.change')}
-            </Button>
-            <Button disabled={pendingSave} onClick={confirm}>
-              {pendingSave && <Spinner />}
-              {t('createGym.confirm')}
-            </Button>
-          </>
-        }
+        confirmLabel={t('createGym.confirm')}
+        cancelLabel={t('createGym.change')}
+        pending={pendingSave}
+        onConfirm={confirm}
+        onCancel={() => {
+          if (!pendingSave) setPending(null);
+        }}
       >
         <p dir="ltr" data-testid="confirm-code" className="text-center font-mono text-3xl">
           {pending?.values.code}
@@ -398,7 +388,7 @@ export function CreateGymPage() {
           <TriangleAlertIcon />
           <AlertDescription>{t('createGym.codePermanent')}</AlertDescription>
         </Alert>
-      </ResponsiveDialog>
+      </ConfirmDialog>
     </div>
   );
 }
